@@ -756,6 +756,7 @@ export class NotificationManager extends EventEmitter implements INotificationAP
     private activeNotifications: Map<string, NotificationOptions> = new Map();
     private eventManager: EventManager;
     private notificationCounter: number = 0;
+    private recentMessages: Map<string, number> = new Map(); // 최근 메시지 추적
 
     constructor(config: NotificationConfig = {}) {
         super();
@@ -789,6 +790,19 @@ export class NotificationManager extends EventEmitter implements INotificationAP
      * 기본 알림 표시
      */
     show(options: NotificationOptions): string {
+        // 중복 메시지 확인 (2초 이내 동일 메시지 방지)
+        const messageKey = `${options.type}-${options.message}`;
+        const lastShown = this.recentMessages.get(messageKey);
+        if (lastShown && Date.now() - lastShown < 2000) {
+            return ''; // 중복 메시지 무시
+        }
+        this.recentMessages.set(messageKey, Date.now());
+        
+        // 오래된 메시지 기록 정리
+        setTimeout(() => {
+            this.recentMessages.delete(messageKey);
+        }, 2000);
+        
         const id = this.generateNotificationId();
         const notification = {
             ...options,

@@ -2,6 +2,15 @@ import { App, Modal, Setting, DropdownComponent, ToggleComponent, TextComponent 
 import { InsertionOptions, InsertionMode } from '../../application/TextInsertionHandler';
 
 /**
+ * 텍스트 템플릿 인터페이스
+ */
+interface TextTemplate {
+    name: string;
+    format: string;
+    content: string;
+}
+
+/**
  * 포맷 옵션 컴포넌트 - 텍스트 삽입 시 포맷팅 옵션 설정
  * 
  * 주요 기능:

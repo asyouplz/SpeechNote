@@ -157,6 +157,9 @@ export class FileUploadManager {
                 message: error instanceof Error ? error.message : 'Unknown error'
             });
             throw error;
+        } finally {
+            // 리소스 정리 (AudioContext 등)
+            this.cleanup();
         }
     }
 
