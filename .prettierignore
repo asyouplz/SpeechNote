@@ -1,0 +1,10 @@
+node_modules/
+dist/
+main.js
+main.js.map
+coverage/
+*.min.js
+*.min.css
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

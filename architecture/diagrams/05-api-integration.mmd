@@ -1,0 +1,81 @@
+%%{init: {'theme':'dark'}}%%
+
+graph TB
+    subgraph "Plugin Internal"
+        TS[Transcription Service]
+        WS[Whisper Service]
+        HTTP[HTTP Client]
+        RETRY[Retry Strategy]
+        RL[Rate Limiter]
+        AUTH[Auth Manager]
+        CACHE[Response Cache]
+    end
+    
+    subgraph "Whisper API Integration"
+        EP[API Endpoint]
+        REQ[Request Builder]
+        RESP[Response Parser]
+        ERR[Error Handler]
+    end
+    
+    subgraph "OpenAI Whisper API"
+        WHISPER[/v1/audio/transcriptions]
+        AUTH_API[Authentication]
+        QUOTA[Quota Management]
+        PROCESS[Audio Processing]
+    end
+    
+    subgraph "Error Handling"
+        E400[400 Bad Request]
+        E401[401 Unauthorized]
+        E429[429 Rate Limited]
+        E500[500 Server Error]
+        ENET[Network Error]
+    end
+    
+    %% Main flow
+    TS --> WS
+    WS --> AUTH
+    AUTH --> REQ
+    REQ --> RL
+    RL --> RETRY
+    RETRY --> HTTP
+    HTTP --> EP
+    EP --> WHISPER
+    
+    %% Authentication flow
+    WHISPER --> AUTH_API
+    AUTH_API -->|Valid| QUOTA
+    AUTH_API -->|Invalid| E401
+    
+    %% Processing flow
+    QUOTA -->|Available| PROCESS
+    QUOTA -->|Exceeded| E429
+    PROCESS -->|Success| RESP
+    PROCESS -->|Error| E500
+    
+    %% Response flow
+    RESP --> CACHE
+    CACHE --> WS
+    WS --> TS
+    
+    %% Error flows
+    E400 --> ERR
+    E401 --> ERR
+    E429 --> ERR
+    E500 --> ERR
+    ENET --> ERR
+    ERR --> RETRY
+    RETRY -->|Retryable| HTTP
+    RETRY -->|Non-retryable| TS
+    
+    %% Request structure
+    REQ -.->|FormData| FORM[Audio File<br/>Model: whisper-1<br/>Language: auto/specified<br/>Response Format: json<br/>Temperature: 0-1]
+    
+    %% Response structure  
+    RESP -.->|JSON| JSON[Text: string<br/>Language: string<br/>Duration: number<br/>Segments: array]
+    
+    style WHISPER fill:#ff6b6b,stroke:#ff4757,stroke-width:3px
+    style TS fill:#4834d4,stroke:#3742fa,stroke-width:2px
+    style WS fill:#00b894,stroke:#00cec9,stroke-width:2px
+    style ERR fill:#fdcb6e,stroke:#f39c12,stroke-width:2px

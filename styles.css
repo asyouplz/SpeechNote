@@ -1,0 +1,244 @@
+/* Speech-to-Text Plugin Styles */
+
+/* Import settings styles */
+@import url('./src/ui/settings/settings.css');
+
+/* File Picker Modal */
+.speech-to-text-file-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 1em;
+}
+
+.speech-to-text-file-item {
+    padding: 0.5em 1em;
+    margin: 0.25em 0;
+    background-color: var(--background-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.speech-to-text-file-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.speech-to-text-file-item:active {
+    background-color: var(--background-modifier-active-hover);
+}
+
+/* Transcription Modal */
+.speech-to-text-modal {
+    min-width: 400px;
+}
+
+.speech-to-text-progress {
+    margin: 1em 0;
+}
+
+.speech-to-text-progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: var(--background-secondary);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.speech-to-text-progress-fill {
+    height: 100%;
+    background-color: var(--interactive-accent);
+    transition: width 0.3s ease;
+}
+
+.speech-to-text-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    margin: 1em 0;
+    padding: 0.75em;
+    background-color: var(--background-secondary);
+    border-radius: 4px;
+}
+
+.speech-to-text-status-icon {
+    font-size: 1.2em;
+}
+
+.speech-to-text-status-text {
+    flex: 1;
+}
+
+/* Settings */
+.speech-to-text-settings {
+    padding: 1em 0;
+}
+
+.speech-to-text-api-key-input {
+    font-family: monospace;
+}
+
+/* Error Messages */
+.speech-to-text-error {
+    color: var(--text-error);
+    background-color: var(--background-modifier-error);
+    padding: 0.75em;
+    border-radius: 4px;
+    margin: 1em 0;
+}
+
+.speech-to-text-warning {
+    color: var(--text-warning);
+    background-color: var(--background-modifier-warning);
+    padding: 0.75em;
+    border-radius: 4px;
+    margin: 1em 0;
+}
+
+.speech-to-text-success {
+    color: var(--text-success);
+    background-color: var(--background-modifier-success);
+    padding: 0.75em;
+    border-radius: 4px;
+    margin: 1em 0;
+}
+
+/* Loading Animation */
+.speech-to-text-loading {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 20px;
+}
+
+.speech-to-text-loading div {
+    position: absolute;
+    top: 8px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--interactive-accent);
+    animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.speech-to-text-loading div:nth-child(1) {
+    left: 8px;
+    animation: speech-to-text-loading1 0.6s infinite;
+}
+
+.speech-to-text-loading div:nth-child(2) {
+    left: 8px;
+    animation: speech-to-text-loading2 0.6s infinite;
+}
+
+.speech-to-text-loading div:nth-child(3) {
+    left: 32px;
+    animation: speech-to-text-loading2 0.6s infinite;
+}
+
+.speech-to-text-loading div:nth-child(4) {
+    left: 56px;
+    animation: speech-to-text-loading3 0.6s infinite;
+}
+
+@keyframes speech-to-text-loading1 {
+    0% {
+        transform: scale(0);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes speech-to-text-loading3 {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(0);
+    }
+}
+
+@keyframes speech-to-text-loading2 {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(24px, 0);
+    }
+}
+
+/* Timestamp Styles */
+.speech-to-text-timestamp {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    font-family: monospace;
+    margin-right: 0.5em;
+}
+
+.speech-to-text-timestamp-inline {
+    display: inline-block;
+    background-color: var(--background-secondary);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+}
+
+.speech-to-text-timestamp-sidebar {
+    position: absolute;
+    left: -100px;
+    width: 90px;
+    text-align: right;
+}
+
+/* History View */
+.speech-to-text-history {
+    padding: 1em;
+}
+
+.speech-to-text-history-item {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    padding: 0.75em;
+    margin: 0.5em 0;
+    background-color: var(--background-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.speech-to-text-history-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.speech-to-text-history-icon {
+    font-size: 1.5em;
+}
+
+.speech-to-text-history-info {
+    flex: 1;
+}
+
+.speech-to-text-history-file {
+    font-weight: 500;
+}
+
+.speech-to-text-history-date {
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.speech-to-text-history-status {
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+    font-size: 0.85em;
+}
+
+.speech-to-text-history-status.success {
+    background-color: var(--background-modifier-success);
+    color: var(--text-success);
+}
+
+.speech-to-text-history-status.error {
+    background-color: var(--background-modifier-error);
+    color: var(--text-error);
+}

@@ -1,0 +1,81 @@
+%%{init: {'theme':'base', 'sequence': {'showSequenceNumbers': true}}}%%
+
+sequenceDiagram
+    participant User
+    participant UI as UI Layer
+    participant Plugin as Plugin Core
+    participant TS as Transcription Service
+    participant AP as Audio Processor
+    participant WS as Whisper Service
+    participant FM as File Manager
+    participant Cache
+    participant Editor
+    
+    %% Main transcription flow
+    User->>UI: Select M4A file
+    UI->>Plugin: Execute transcribe command
+    Plugin->>TS: transcribe(file)
+    
+    %% Check cache first
+    TS->>Cache: checkCache(fileHash)
+    alt Cache Hit
+        Cache-->>TS: Cached result
+        TS-->>Plugin: Return cached text
+        Plugin->>Editor: Insert text
+        Editor-->>User: Display transcribed text
+    else Cache Miss
+        %% File validation and processing
+        TS->>AP: validate(file)
+        AP->>FM: getFileMetadata(file)
+        FM-->>AP: File metadata
+        AP-->>TS: Validation result
+        
+        alt File Valid
+            TS->>AP: process(file)
+            AP->>FM: readBinary(file)
+            FM-->>AP: ArrayBuffer
+            AP->>AP: Extract audio metadata
+            AP->>AP: Validate size (<25MB)
+            AP-->>TS: ProcessedAudio
+            
+            %% API call
+            TS->>WS: transcribe(audio, options)
+            Note over WS: Add to rate limiter queue
+            WS->>WS: Build FormData
+            WS->>WS: Add auth headers
+            
+            loop Retry Logic
+                WS->>Whisper API: POST /transcriptions
+                alt Success
+                    Whisper API-->>WS: Transcription result
+                else Rate Limited (429)
+                    Whisper API-->>WS: 429 Error
+                    Note over WS: Wait with backoff
+                else Server Error (5xx)
+                    Whisper API-->>WS: Server error
+                    Note over WS: Retry with backoff
+                else Client Error (4xx)
+                    Whisper API-->>WS: Client error
+                    Note over WS: No retry
+                end
+            end
+            
+            WS-->>TS: WhisperResponse
+            
+            %% Post-processing
+            TS->>TS: Format text
+            TS->>TS: Apply templates
+            TS->>Cache: store(fileHash, result)
+            
+            %% Insert to editor
+            TS-->>Plugin: Formatted text
+            Plugin->>Editor: insertText(text, position)
+            Editor-->>User: Display transcribed text
+            
+        else File Invalid
+            AP-->>TS: Validation error
+            TS-->>Plugin: Error
+            Plugin->>UI: Show error message
+            UI-->>User: Error notification
+        end
+    end

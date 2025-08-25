@@ -1,0 +1,105 @@
+%%{init: {'theme':'base', 'themeVariables': { 'primaryColor':'#ff6b6b', 'primaryTextColor':'#fff', 'primaryBorderColor':'#ff4757', 'lineColor':'#5f27cd', 'secondaryColor':'#4834d4', 'tertiaryColor':'#dfe6e9'}}}%%
+
+graph TB
+    subgraph "User Interface Layer"
+        UI[UI Components]
+        CMD[Command Palette]
+        MODAL[Modals & Dialogs]
+        SETTINGS[Settings Tab]
+        STATUS[Status Bar]
+    end
+    
+    subgraph "Application Control Layer"
+        PLUGIN[Plugin Core]
+        CMDH[Command Handler]
+        EVTM[Event Manager]
+        STMGR[State Manager]
+        DI[Dependency Container]
+    end
+    
+    subgraph "Business Logic Layer"
+        TS[Transcription Service]
+        AP[Audio Processor]
+        TF[Text Formatter]
+        VM[Validation Manager]
+    end
+    
+    subgraph "Infrastructure Services"
+        WS[Whisper Service]
+        FM[File Manager]
+        SM[Settings Manager]
+        CACHE[Cache Manager]
+        LOG[Logger]
+        ERR[Error Handler]
+    end
+    
+    subgraph "External Dependencies"
+        OBS[Obsidian API]
+        WHISPER[OpenAI Whisper API]
+        FS[File System]
+    end
+    
+    %% UI Layer connections
+    UI --> PLUGIN
+    CMD --> CMDH
+    MODAL --> EVTM
+    SETTINGS --> SM
+    STATUS --> STMGR
+    
+    %% Application Layer connections
+    PLUGIN --> DI
+    DI --> TS
+    DI --> AP
+    DI --> WS
+    CMDH --> TS
+    EVTM --> STMGR
+    STMGR --> UI
+    
+    %% Business Logic connections
+    TS --> AP
+    TS --> WS
+    TS --> TF
+    TS --> CACHE
+    AP --> VM
+    AP --> FM
+    TF --> LOG
+    
+    %% Infrastructure connections
+    WS --> WHISPER
+    WS --> ERR
+    FM --> OBS
+    FM --> FS
+    SM --> OBS
+    CACHE --> FS
+    LOG --> FS
+    ERR --> LOG
+    ERR --> UI
+    
+    %% Styling
+    style UI fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style CMD fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style MODAL fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style SETTINGS fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style STATUS fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    
+    style PLUGIN fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style CMDH fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style EVTM fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style STMGR fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style DI fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    
+    style TS fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style AP fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style TF fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style VM fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    
+    style WS fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style FM fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style SM fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style CACHE fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style LOG fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style ERR fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    
+    style OBS fill:#ffebee,stroke:#b71c1c,stroke-width:3px
+    style WHISPER fill:#ffebee,stroke:#b71c1c,stroke-width:3px
+    style FS fill:#ffebee,stroke:#b71c1c,stroke-width:3px

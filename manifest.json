@@ -1,0 +1,11 @@
+{
+    "id": "obsidian-speech-to-text",
+    "name": "Speech to Text",
+    "version": "1.0.0",
+    "minAppVersion": "0.15.0",
+    "description": "Convert audio recordings to text using OpenAI Whisper API",
+    "author": "Taesun Lee",
+    "authorUrl": "https://github.com/taesunlee",
+    "fundingUrl": "",
+    "isDesktopOnly": false
+}
