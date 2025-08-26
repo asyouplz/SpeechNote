@@ -1,0 +1,592 @@
+/**
+ * 알림 시스템 스타일
+ */
+
+/* Toast 알림 */
+.toast-container {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    padding: 20px;
+    max-width: 400px;
+}
+
+.toast-container--top-right {
+    top: 0;
+    right: 0;
+}
+
+.toast-container--top-left {
+    top: 0;
+    left: 0;
+}
+
+.toast-container--bottom-right {
+    bottom: 0;
+    right: 0;
+}
+
+.toast-container--bottom-left {
+    bottom: 0;
+    left: 0;
+}
+
+.toast-container--top-center {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.toast-container--bottom-center {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+}
+
+.toast--show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast--hide {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+.toast-container--top-left .toast,
+.toast-container--bottom-left .toast {
+    transform: translateX(-100%);
+}
+
+.toast-container--top-left .toast--show,
+.toast-container--bottom-left .toast--show {
+    transform: translateX(0);
+}
+
+.toast-container--top-left .toast--hide,
+.toast-container--bottom-left .toast--hide {
+    transform: translateX(-100%);
+}
+
+.toast--success {
+    border-color: var(--text-success);
+}
+
+.toast--error {
+    border-color: var(--text-error);
+}
+
+.toast--warning {
+    border-color: var(--text-warning);
+}
+
+.toast--info {
+    border-color: var(--interactive-accent);
+}
+
+.toast__icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.toast--success .toast__icon {
+    color: var(--text-success);
+}
+
+.toast--error .toast__icon {
+    color: var(--text-error);
+}
+
+.toast--warning .toast__icon {
+    color: var(--text-warning);
+}
+
+.toast--info .toast__icon {
+    color: var(--interactive-accent);
+}
+
+.toast__icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.toast__content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast__title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-normal);
+}
+
+.toast__message {
+    color: var(--text-muted);
+    word-wrap: break-word;
+}
+
+.toast__close {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.toast__close:hover {
+    color: var(--text-normal);
+}
+
+.toast__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.toast__action {
+    padding: 4px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.toast__action:hover {
+    background: var(--background-modifier-hover);
+}
+
+.toast__action--primary {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.toast__action--primary:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.toast__action--danger {
+    background: var(--text-error);
+    color: white;
+    border-color: var(--text-error);
+}
+
+.toast__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--background-modifier-border);
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+.toast__progress-fill {
+    height: 100%;
+    background: var(--interactive-accent);
+    transition: width 0.3s ease;
+}
+
+/* Modal 알림 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay--hide {
+    animation: fadeOut 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.modal {
+    background: var(--background-primary);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: auto;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.modal__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.modal__close {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.modal__close:hover {
+    color: var(--text-normal);
+}
+
+.modal__content {
+    padding: 20px;
+    color: var(--text-normal);
+}
+
+.modal__footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 20px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.modal__action {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.modal__action:hover {
+    background: var(--background-modifier-hover);
+}
+
+.modal__action--primary {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.modal__action--primary:hover {
+    background: var(--interactive-accent-hover);
+}
+
+.modal__action--danger {
+    background: var(--text-error);
+    color: white;
+    border-color: var(--text-error);
+}
+
+/* StatusBar 알림 */
+.status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 20px;
+    background: var(--background-secondary);
+    border-top: 1px solid var(--background-modifier-border);
+    color: var(--text-normal);
+    z-index: 9999;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.status-bar--show {
+    transform: translateY(0);
+}
+
+.status-bar--success {
+    background: var(--text-success);
+    color: white;
+}
+
+.status-bar--error {
+    background: var(--text-error);
+    color: white;
+}
+
+.status-bar--warning {
+    background: var(--text-warning);
+    color: white;
+}
+
+.status-bar--info {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+/* 원형 진행률 */
+.circular-progress {
+    display: inline-block;
+    position: relative;
+}
+
+.semi-circular-progress {
+    display: inline-block;
+    position: relative;
+}
+
+/* 로딩 인디케이터 */
+.loading-spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.loading-spinner svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.loading-spinner--small svg {
+    width: 16px;
+    height: 16px;
+}
+
+.loading-spinner--medium svg {
+    width: 24px;
+    height: 24px;
+}
+
+.loading-spinner--large svg {
+    width: 32px;
+    height: 32px;
+}
+
+.loading-message {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+/* 펄스 로더 */
+.loading-pulse {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--interactive-accent);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(0.8);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+.loading-pulse--small .pulse-dot {
+    width: 6px;
+    height: 6px;
+}
+
+.loading-pulse--large .pulse-dot {
+    width: 10px;
+    height: 10px;
+}
+
+/* 스켈레톤 로더 */
+.loading-skeleton {
+    width: 100%;
+}
+
+.skeleton-line {
+    background: var(--background-modifier-border);
+    border-radius: 4px;
+    width: 100%;
+}
+
+.skeleton-animated {
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-animated::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    to {
+        left: 100%;
+    }
+}
+
+/* 도트 로더 */
+.loading-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dots-container {
+    display: flex;
+    gap: 4px;
+}
+
+.dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: dot-bounce 1.4s ease-in-out infinite;
+}
+
+.dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes dot-bounce {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-10px);
+    }
+}
+
+/* 상태 아이콘 */
+.status-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-icon__icon {
+    width: 20px;
+    height: 20px;
+}
+
+.status-icon__icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.status-icon--success .status-icon__icon {
+    color: var(--text-success);
+}
+
+.status-icon--error .status-icon__icon {
+    color: var(--text-error);
+}
+
+.status-icon--warning .status-icon__icon {
+    color: var(--text-warning);
+}
+
+.status-icon--info .status-icon__icon {
+    color: var(--interactive-accent);
+}
+
+.status-icon__message {
+    color: var(--text-normal);
+    font-size: 14px;
+}
+
+/* 스크린 리더 전용 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
