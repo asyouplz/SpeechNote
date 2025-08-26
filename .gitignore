@@ -1,20 +1,50 @@
-# Node modules
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
 
 # Build outputs
 dist/
 build/
+out/
 *.js
 *.js.map
+*.d.ts
+!*.config.js
+!*.config.mjs
+!jest.config.*
+!tests/**/*.js
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+junit.xml
+tests/**/*.actual.*
+tests/**/*.error.*
+tests/**/*.output.*
+tests/**/__snapshots__/
 
 # IDE
 .vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
 .idea/
 *.iml
+*.sublime-*
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
 
 # Logs
 logs/
@@ -22,6 +52,8 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
 # Environment variables
 .env
@@ -29,16 +61,58 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env*.local
 
-# Testing
-coverage/
+# Package managers
+.npm
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 
 # Obsidian
 .obsidian/
 data.json
+.obsidian-test/
 
 # Temporary files
 *.tmp
 *.temp
 *.swp
 *~
+*.bak
+*.backup
+.cache/
+.temp/
+tmp/
+
+# Performance & Profiling
+*.cpuprofile
+*.heapsnapshot
+.clinic/
+
+# Bundle analysis
+bundle-stats.html
+bundle-report.html
+.webpack-bundle-analyzer/
+
+# Security
+*.key
+*.pem
+*.p12
+*.pfx
+.secrets/
+
+# Root optimization
+*.pid
+*.seed
+*.pid.lock
+.eslintcache
+.stylelintcache
+.parcel-cache/
+
+# Test artifacts
+test-data/
+mocks/**/*.snapshot
+__mocks__/**/*.snapshot
