@@ -651,5 +651,188 @@ navigator.clipboard.writeText(
 
 ---
 
-*최종 업데이트: 2025-08-22*  
-*버전: 1.0.0*
+## Phase 4 추가 트러블슈팅
+
+### 테스트 실행 문제
+
+#### Jest 테스트가 실패함
+
+**증상**
+- 모든 테스트가 실패 상태
+- Obsidian API를 찾을 수 없다는 에러
+
+**해결 방법**
+```typescript
+// tests/mocks/obsidian.mock.ts 생성
+export const mockApp = {
+    workspace: {
+        getActiveViewOfType: jest.fn(),
+        activeLeaf: null
+    },
+    vault: {
+        adapter: {
+            read: jest.fn(),
+            write: jest.fn()
+        }
+    },
+    plugins: {
+        plugins: {}
+    }
+};
+
+// 테스트 파일에서 사용
+jest.mock('obsidian', () => ({
+    App: jest.fn().mockImplementation(() => mockApp),
+    Plugin: jest.fn(),
+    Editor: jest.fn(),
+    TFile: jest.fn()
+}));
+```
+
+### 성능 최적화 문제
+
+#### 메모리 누수 감지
+
+**증상**
+- 장시간 사용 시 메모리 증가
+- 브라우저 느려짐
+
+**해결 방법**
+```typescript
+// 메모리 프로파일러 사용
+import { memoryProfiler } from '@/utils/memory/MemoryProfiler';
+
+// 모니터링 시작
+memoryProfiler.startProfiling();
+
+// 누수 감지 시 콜백
+memoryProfiler.onLeakDetected((leak) => {
+    console.error('Memory leak detected:', leak);
+    
+    // 자동 정리 시도
+    if (leak.type === 'dom-leak') {
+        // DOM 노드 정리
+        document.querySelectorAll('.obsolete').forEach(el => el.remove());
+    }
+    
+    if (leak.type === 'listener-leak') {
+        // 이벤트 리스너 정리
+        eventManager.removeAllListeners();
+    }
+});
+```
+
+#### 번들 크기 초과
+
+**증상**
+- 빌드 시 경고 메시지
+- 로딩 시간 증가
+
+**해결 방법**
+```bash
+# 번들 분석
+ANALYZE=true npm run build
+
+# 최적화된 빌드
+npm run build:optimized
+
+# 불필요한 의존성 제거
+npm prune --production
+```
+
+### Phase 4에서 수정된 버그
+
+#### 무한 재귀 호출 (Critical)
+
+**이전 코드 (버그)**
+```typescript
+private addStatusBarItem() {
+    const statusBarItem = this.addStatusBarItem(); // 무한 재귀
+}
+```
+
+**수정된 코드**
+```typescript
+private createStatusBarItem() {
+    const statusBarItem = this.addStatusBarItem(); // 정상 호출
+}
+```
+
+#### TypeScript 설정 충돌 (Critical)
+
+**문제**
+- `sourceMap`과 `inlineSourceMap` 동시 설정
+
+**해결**
+```json
+// tsconfig.json
+{
+    "compilerOptions": {
+        "inlineSourceMap": true
+        // sourceMap 옵션 제거
+    }
+}
+```
+
+#### WhisperService API 검증 실패 (High)
+
+**문제**
+- 너무 작은 테스트 오디오 사용
+
+**해결**
+```typescript
+// 이전: 100 바이트
+const testAudio = new ArrayBuffer(100);
+
+// 수정: 1KB
+const testAudio = new ArrayBuffer(1024);
+```
+
+### 최적화 설정
+
+#### Lazy Loading 활성화
+
+```typescript
+// LazyLoader 사용
+import { LazyLoader } from '@/core/LazyLoader';
+
+// 모듈 동적 로드
+const module = await LazyLoader.loadModule('StatisticsDashboard');
+
+// 백그라운드 프리로드
+LazyLoader.preloadModules(['AdvancedSettings', 'AudioSettings']);
+```
+
+#### 캐시 시스템 활용
+
+```typescript
+// 전역 캐시 사용
+import { globalCache } from '@/infrastructure/cache/MemoryCache';
+
+// API 응답 캐싱
+const data = await globalCache.getOrSet(
+    'api.transcription',
+    async () => await whisperService.transcribe(audio),
+    { ttl: 5 * 60 * 1000 } // 5분
+);
+```
+
+#### 배치 요청 처리
+
+```typescript
+// BatchRequestManager 사용
+import { batchManager } from '@/infrastructure/api/BatchRequestManager';
+
+// 여러 요청 배치 처리
+const results = await Promise.all([
+    batchManager.addRequest('/api/user', 'GET'),
+    batchManager.addRequest('/api/settings', 'GET'),
+    batchManager.addRequest('/api/stats', 'GET')
+]);
+```
+
+---
+
+*최종 업데이트: 2025-08-25*  
+*버전: 1.0.0*  
+*Phase 4 Task 4.5 완료*

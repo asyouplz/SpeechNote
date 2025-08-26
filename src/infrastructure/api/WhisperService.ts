@@ -457,8 +457,8 @@ export class WhisperService implements IWhisperService {
         this.apiKey = key;
         
         try {
-            // 최소한의 테스트 요청
-            const testAudio = new ArrayBuffer(100);
+            // 유효한 크기의 테스트 오디오 생성 (1KB)
+            const testAudio = new ArrayBuffer(1024);
             await this.performTranscription(testAudio, {
                 responseFormat: 'text'
             });

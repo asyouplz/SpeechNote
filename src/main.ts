@@ -45,7 +45,7 @@ export default class SpeechToTextPlugin extends Plugin {
             this.registerEventHandlers();
             
             // Add status bar item
-            this.addStatusBarItem();
+            this.createStatusBarItem();
             
             new Notice('Speech-to-Text plugin loaded successfully');
         } catch (error) {
@@ -238,7 +238,7 @@ export default class SpeechToTextPlugin extends Plugin {
         }
     }
 
-    private addStatusBarItem() {
+    private createStatusBarItem() {
         const statusBarItem = this.addStatusBarItem();
         
         // Update status bar based on state
