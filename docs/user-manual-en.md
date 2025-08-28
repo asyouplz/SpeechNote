@@ -4,10 +4,11 @@
 
 ![Speech to Text Plugin Logo](./assets/logo-placeholder.png)
 
-**Version 2.0.0** | **Last Updated: 2025-08-25**
+**Version 3.0.0** | **Last Updated: 2025-08-28**
 
 [![Obsidian](https://img.shields.io/badge/Obsidian-%3E%3D0.15.0-purple.svg)](https://obsidian.md)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20API-orange.svg)](https://platform.openai.com)
+[![Deepgram](https://img.shields.io/badge/Deepgram-Nova%202%20API-blue.svg)](https://developers.deepgram.com)
 
 [Quick Start](#1-quick-start) | [Installation](#2-installation-guide) | [Features](#3-key-features) | [FAQ](#7-frequently-asked-questions) | [Troubleshooting](#8-troubleshooting)
 
@@ -39,9 +40,10 @@
 Settings → Community plugins → Search "Speech to Text" → Install → Enable
 ```
 
-#### 🔑 Step 2: Configure API Key
+#### 🔑 Step 2: Choose Provider & Configure API Key
 ```
-Settings → Speech to Text → Enter API Key → Save
+Settings → Speech to Text → Select Provider (Auto/Whisper/Deepgram)
+→ Enter corresponding API Key → Save
 ```
 
 #### 🎙️ Step 3: Start Transcribing
@@ -69,14 +71,15 @@ Cmd/Ctrl + P → "Transcribe audio file" → Select file → Done!
 
 ## 2. Installation Guide
 
-### 🆕 Phase 3 Update Highlights
+### 🆕 v3.0.0 Deepgram Integration Highlights
 
-#### Major Improvements
-- **🔐 Enhanced Security**: API key encryption and secure storage
-- **📊 Progress Display**: Real-time progress indicators and notification system
-- **⚡ Performance Optimization**: 30% memory usage reduction, improved async processing
-- **🔄 Settings Migration**: Automatic settings upgrade and backup
-- **💾 Export/Import Settings**: Settings backup and restore functionality
+#### Major Features
+- **🎯 Multiple Provider Support**: Choose between OpenAI Whisper and Deepgram Nova 2
+- **🚀 Large File Processing**: Support for files up to 2GB with Deepgram
+- **🔄 Auto Provider Selection**: Automatic optimal provider selection based on file
+- **🛡️ Fallback Mechanism**: Automatic provider switching on failure
+- **⚡ Enhanced Performance**: 30% faster processing with Deepgram
+- **🌐 Extended Format Support**: WebM, OGG, FLAC additional formats
 
 ### System Requirements
 
