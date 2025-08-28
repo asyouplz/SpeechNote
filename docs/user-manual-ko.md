@@ -518,50 +518,90 @@ graph LR
 
 ## 5. 설정 가이드
 
-### 🆕 향상된 설정 탭 (Phase 3)
+### 🆕 Multi-Provider 설정 UI (v3.1.0)
 
-#### 새로운 설정 섹션
+새로운 Multi-Provider 설정 UI는 다양한 음성 인식 서비스를 효율적으로 관리할 수 있도록 완전히 재설계되었습니다.
 
-##### 보안 설정
+#### 주요 개선사항
+- **탭 기반 네비게이션**: General, Provider, Advanced, Metrics 탭으로 체계적 구성
+- **Progressive Disclosure**: 사용자 레벨에 맞춘 단계적 설정 표시
+- **실시간 API 키 검증**: 입력 즉시 유효성 확인
+- **시각적 상태 표시**: 명확한 인디케이터와 진행률
+- **A/B 테스팅**: Provider 성능 비교 분석
+- **메트릭 대시보드**: 실시간 사용량 및 성능 모니터링
+
+### Provider 설정
+
+#### Provider 선택
 ```yaml
-API 키 암호화: 활성 (항상)
-암호화 알고리즘: AES-256-GCM
-키 순환 주기: 30일
-접근 로그: 활성/비활성
+Transcription Provider:
+  - Auto (권장): 파일별 최적 Provider 자동 선택
+  - OpenAI Whisper: 높은 정확도, 25MB 제한
+  - Deepgram Nova 2: 빠른 속도, 2GB 지원
 ```
 
-##### 성능 설정
+#### API 키 관리
 ```yaml
-메모리 관리:
-  자동 정리: 활성
-  임계값: 100MB
-  정리 주기: 5분
+API 키 입력:
+  OpenAI: sk-proj-xxxxx... [Validate]
+  Deepgram: xxxxxxxx... [Validate]
   
-비동기 처리:
-  동시 작업 수: 3
-  타임아웃: 30초
-  재시도 횟수: 3
+키 보안:
+  - AES-256 암호화 저장
+  - 자동 마스킹 표시
+  - 검증 상태 표시 (✅/❌/⏳)
 ```
 
-##### 알림 설정
+### 고급 설정 (Advanced)
+
+#### 네트워크 설정
 ```yaml
-알림 유형:
-  시작 알림: 활성
-  진행 알림: 활성
-  완료 알림: 활성
-  에러 알림: 활성
-  
-알림 위치:
-  우측 상단
-  
-알림 지속 시간:
-  일반: 3초
-  에러: 10초
+Timeout 설정: 30초 (10-120초)
+Retry 정책: Exponential Backoff
+최대 재시도: 3회
+Rate Limiting: 활성
 ```
 
-### 설정 화면 구성
+#### 성능 최적화
+```yaml
+청크 크기: 5MB (1-10MB)
+동시 처리: 3개 파일
+메모리 관리: 자동 최적화
+캐시 활성화: 예
+```
 
-![Settings Overview](./assets/settings-overview-placeholder.png)
+#### A/B 테스팅
+```yaml
+A/B 테스트: 활성/비활성
+테스트 비율: 50/50
+샘플 크기: 100 변환
+비교 모드: Random Split
+```
+
+### 메트릭 모니터링
+
+#### 실시간 대시보드
+```yaml
+Provider 상태:
+  Whisper: ● Operational (142ms)
+  Deepgram: ● Operational (89ms)
+  
+오늘의 사용량:
+  변환 수: 24
+  총 시간: 2h 15m
+  데이터: 142MB
+  예상 비용: ~₩1,500
+```
+
+### 설정 백업 및 복원
+```yaml
+설정 내보내기: [Export to JSON]
+설정 가져오기: [Import from file]
+자동 백업: 매주 월요일
+백업 위치: .obsidian/plugins/speech-to-text/backups/
+```
+
+📖 **상세 가이드**: [Multi-Provider 설정 UI 가이드](./ui-settings-guide.md)를 참조하세요.
 
 ### 일반 설정 (General)
 

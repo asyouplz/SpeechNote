@@ -3,8 +3,23 @@ import type { ISettingsManager, ILogger } from '../../types';
 
 // 설정 타입 정의
 export interface PluginSettings {
+    // Legacy API key (for backward compatibility)
     apiKey: string;
     encryptedApiKey?: string;
+    
+    // Multi-provider support
+    provider?: 'auto' | 'whisper' | 'deepgram';
+    whisperApiKey?: string;
+    deepgramApiKey?: string;
+    selectionStrategy?: 'cost_optimized' | 'performance_optimized' | 'quality_optimized' | 'round_robin' | 'ab_test';
+    
+    // Provider optimization settings
+    costLimit?: number;
+    qualityThreshold?: number;
+    abTestEnabled?: boolean;
+    abTestSplit?: number;
+    
+    // Original settings
     model: 'whisper-1';
     language: string;
     autoInsert: boolean;
@@ -22,6 +37,9 @@ export interface PluginSettings {
 // 기본 설정값
 const DEFAULT_SETTINGS: PluginSettings = {
     apiKey: '',
+    provider: 'auto',
+    selectionStrategy: 'performance_optimized',
+    abTestSplit: 50,
     model: 'whisper-1',
     language: 'auto',
     autoInsert: true,
