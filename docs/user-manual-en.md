@@ -520,50 +520,90 @@ Special characters displayed without escaping.
 
 ## 5. Settings Guide
 
-### 🆕 Enhanced Settings Tab (Phase 3)
+### 🆕 Multi-Provider Settings UI (v3.1.0)
 
-#### New Settings Sections
+The new Multi-Provider Settings UI has been completely redesigned to efficiently manage multiple speech recognition services.
 
-##### Security Settings
+#### Major Improvements
+- **Tab-based Navigation**: Organized into General, Provider, Advanced, and Metrics tabs
+- **Progressive Disclosure**: Settings displayed progressively based on user level
+- **Real-time API Key Validation**: Instant validity checking upon input
+- **Visual Status Indicators**: Clear indicators and progress displays
+- **A/B Testing**: Provider performance comparison and analysis
+- **Metrics Dashboard**: Real-time usage and performance monitoring
+
+### Provider Settings
+
+#### Provider Selection
 ```yaml
-API Key Encryption: Enabled (Always)
-Encryption Algorithm: AES-256-GCM
-Key Rotation Period: 30 days
-Access Logging: Enable/Disable
+Transcription Provider:
+  - Auto (Recommended): Automatic optimal provider selection per file
+  - OpenAI Whisper: High accuracy, 25MB limit
+  - Deepgram Nova 2: Fast processing, 2GB support
 ```
 
-##### Performance Settings
+#### API Key Management
 ```yaml
-Memory Management:
-  Auto Cleanup: Enabled
-  Threshold: 100MB
-  Cleanup Interval: 5 minutes
+API Key Input:
+  OpenAI: sk-proj-xxxxx... [Validate]
+  Deepgram: xxxxxxxx... [Validate]
   
-Async Processing:
-  Concurrent Tasks: 3
-  Timeout: 30 seconds
-  Retry Attempts: 3
+Key Security:
+  - AES-256 encrypted storage
+  - Automatic masking display
+  - Validation status indicators (✅/❌/⏳)
 ```
 
-##### Notification Settings
+### Advanced Settings
+
+#### Network Settings
 ```yaml
-Notification Types:
-  Start Notification: Enabled
-  Progress Updates: Enabled
-  Completion Alert: Enabled
-  Error Alerts: Enabled
-  
-Notification Position:
-  Top Right
-  
-Notification Duration:
-  General: 3 seconds
-  Errors: 10 seconds
+Timeout Settings: 30s (10-120s)
+Retry Policy: Exponential Backoff
+Max Retries: 3 attempts
+Rate Limiting: Enabled
 ```
 
-### Settings Overview
+#### Performance Optimization
+```yaml
+Chunk Size: 5MB (1-10MB)
+Concurrent Processing: 3 files
+Memory Management: Auto-optimize
+Cache Enabled: Yes
+```
 
-![Settings Overview](./assets/settings-overview-placeholder.png)
+#### A/B Testing
+```yaml
+A/B Test: Enable/Disable
+Test Ratio: 50/50
+Sample Size: 100 transcriptions
+Comparison Mode: Random Split
+```
+
+### Metrics Monitoring
+
+#### Real-time Dashboard
+```yaml
+Provider Status:
+  Whisper: ● Operational (142ms)
+  Deepgram: ● Operational (89ms)
+  
+Today's Usage:
+  Transcriptions: 24
+  Total Duration: 2h 15m
+  Data Processed: 142MB
+  Estimated Cost: ~$1.20
+```
+
+### Settings Backup & Restore
+```yaml
+Export Settings: [Export to JSON]
+Import Settings: [Import from file]
+Auto Backup: Every Monday
+Backup Location: .obsidian/plugins/speech-to-text/backups/
+```
+
+📖 **Detailed Guide**: See [Multi-Provider Settings UI Guide](./ui-settings-guide.md) for comprehensive information.
 
 ### General Settings
 
