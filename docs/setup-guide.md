@@ -25,9 +25,15 @@
   - Path Intellisense
   - GitLens
 
-### OpenAI API 키
+### API 키 준비
+
+#### OpenAI API 키 (Whisper 사용 시)
 - [OpenAI Platform](https://platform.openai.com/)에서 API 키 발급
 - Whisper API 사용 권한 확인
+
+#### Deepgram API 키 (Deepgram 사용 시)
+- [Deepgram Console](https://console.deepgram.com/)에서 계정 생성
+- API 키 발급 및 관리
 
 ## 프로젝트 설정
 
@@ -63,7 +69,11 @@ pnpm install
 touch .env
 
 # .env 파일에 다음 내용 추가
-OPENAI_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_openai_key_here
+DEEPGRAM_API_KEY=your_deepgram_key_here
+
+# Provider 설정 (선택사항: whisper, deepgram, auto)
+DEFAULT_PROVIDER=auto
 ```
 
 ⚠️ **주의**: `.env` 파일은 `.gitignore`에 포함되어 있어 Git에 커밋되지 않습니다.
@@ -145,6 +155,11 @@ cp main.js manifest.json styles.css test-vault/.obsidian/plugins/speech-to-text/
 2. 테스트 vault 열기
 3. Settings → Community plugins → Turn on community plugins
 4. Installed plugins에서 "Speech to Text" 활성화
+5. Speech to Text 설정에서 Provider 선택:
+   - **Auto**: 파일에 따라 자동 선택 (권장)
+   - **Whisper**: OpenAI Whisper 사용
+   - **Deepgram**: Deepgram Nova 2 사용
+6. 선택한 Provider의 API 키 입력
 
 ### 4. 개발 중 자동 리로드
 개발 중 변경사항을 자동으로 반영하려면:
@@ -337,10 +352,20 @@ chmod 644 main.js manifest.json styles.css
 
 ### API 관련 문제
 
-#### API 키 인증 실패
-1. API 키 형식 확인 (sk-로 시작하는 48자)
+#### OpenAI API 키 인증 실패
+1. API 키 형식 확인 (`sk-`로 시작)
 2. API 키 권한 확인 (Whisper API 접근 가능)
 3. 네트워크 연결 확인
+
+#### Deepgram API 키 인증 실패
+1. API 키 형식 확인 (40자 16진수 문자열)
+2. Deepgram Console에서 키 상태 확인
+3. 프로젝트 권한 확인
+
+#### Provider 자동 선택 문제
+1. 두 Provider의 API 키 모두 설정 확인
+2. Fallback 설정 활성화 확인
+3. 파일 형식 및 크기 호환성 확인
 
 #### Rate Limit 오류
 - API 호출 제한 확인
@@ -352,6 +377,7 @@ chmod 644 main.js manifest.json styles.css
 ### 공식 문서
 - [Obsidian Plugin Developer Docs](https://docs.obsidian.md/Plugins/Getting+started/Build+a+plugin)
 - [OpenAI API Documentation](https://platform.openai.com/docs)
+- [Deepgram API Documentation](https://developers.deepgram.com/docs)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/)
 
 ### 커뮤니티
@@ -384,5 +410,5 @@ chmod 644 main.js manifest.json styles.css
 
 ---
 
-*최종 업데이트: 2025-08-22*
-*문서 버전: 1.0.0*
+*최종 업데이트: 2025-08-28*
+*문서 버전: 3.0.0*
