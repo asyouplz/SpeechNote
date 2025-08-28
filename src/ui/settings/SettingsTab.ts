@@ -6,6 +6,7 @@ import { ShortcutSettings } from './components/ShortcutSettings';
 import { AdvancedSettings } from './components/AdvancedSettings';
 import { GeneralSettings } from './components/GeneralSettings';
 import { AudioSettings } from './components/AudioSettings';
+import { ProviderSettings } from './components/ProviderSettings';
 
 /**
  * 설정 탭 UI 컴포넌트
@@ -18,6 +19,7 @@ export class SettingsTab extends PluginSettingTab {
     private advancedSettings: AdvancedSettings;
     private generalSettings: GeneralSettings;
     private audioSettings: AudioSettings;
+    private providerSettings: ProviderSettings;
 
     constructor(app: App, plugin: SpeechToTextPlugin) {
         super(app, plugin);
@@ -29,6 +31,7 @@ export class SettingsTab extends PluginSettingTab {
         this.advancedSettings = new AdvancedSettings(plugin);
         this.generalSettings = new GeneralSettings(plugin);
         this.audioSettings = new AudioSettings(plugin);
+        this.providerSettings = new ProviderSettings(plugin);
     }
 
     display(): void {
@@ -41,7 +44,7 @@ export class SettingsTab extends PluginSettingTab {
 
         // 섹션별 설정
         this.createGeneralSection(containerEl);
-        this.createApiSection(containerEl);
+        this.createProviderSection(containerEl); // 새로운 Provider 섹션
         this.createAudioSection(containerEl);
         this.createAdvancedSection(containerEl);
         this.createShortcutSection(containerEl);
@@ -80,99 +83,11 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     /**
-     * API 설정 섹션
+     * Provider 설정 섹션
      */
-    private createApiSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'API', 'OpenAI API 설정');
-        
-        // API 키 입력
-        const apiKeySetting = new Setting(sectionEl)
-            .setName('API Key')
-            .setDesc('OpenAI API 키를 입력하세요. (sk-로 시작)');
-
-        // 마스킹된 입력 필드
-        const inputEl = apiKeySetting.controlEl.createEl('input', {
-            type: 'password',
-            placeholder: 'sk-...',
-            cls: 'api-key-input'
-        });
-
-        const currentKey = this.plugin.settings.apiKey;
-        if (currentKey) {
-            inputEl.value = this.maskApiKey(currentKey);
-            inputEl.setAttribute('data-has-value', 'true');
-        }
-
-        // 토글 버튼 (보이기/숨기기)
-        const toggleBtn = apiKeySetting.controlEl.createEl('button', {
-            text: '👁',
-            cls: 'api-key-toggle'
-        });
-        
-        let isVisible = false;
-        toggleBtn.addEventListener('click', () => {
-            isVisible = !isVisible;
-            if (isVisible) {
-                inputEl.type = 'text';
-                inputEl.value = currentKey || '';
-                toggleBtn.textContent = '🙈';
-            } else {
-                inputEl.type = 'password';
-                inputEl.value = currentKey ? this.maskApiKey(currentKey) : '';
-                toggleBtn.textContent = '👁';
-            }
-        });
-
-        // 검증 버튼
-        const validateBtn = apiKeySetting.controlEl.createEl('button', {
-            text: '검증',
-            cls: 'mod-cta api-key-validate'
-        });
-
-        validateBtn.addEventListener('click', async () => {
-            const value = inputEl.value;
-            if (!value || value === this.maskApiKey(currentKey)) {
-                new Notice('API 키를 입력해주세요');
-                return;
-            }
-
-            validateBtn.disabled = true;
-            validateBtn.textContent = '검증 중...';
-
-            const isValid = await this.apiKeyValidator.validate(value);
-            
-            if (isValid) {
-                this.plugin.settings.apiKey = value;
-                await this.plugin.saveSettings();
-                new Notice('✅ API 키가 검증되었습니다');
-                inputEl.setAttribute('data-valid', 'true');
-            } else {
-                new Notice('❌ 유효하지 않은 API 키입니다');
-                inputEl.setAttribute('data-valid', 'false');
-            }
-
-            validateBtn.disabled = false;
-            validateBtn.textContent = '검증';
-        });
-
-        // 입력 변경 시 저장
-        inputEl.addEventListener('change', async () => {
-            const value = inputEl.value;
-            if (value && value !== this.maskApiKey(currentKey)) {
-                // 형식 검증
-                if (!value.startsWith('sk-')) {
-                    new Notice('API 키는 "sk-"로 시작해야 합니다');
-                    return;
-                }
-                
-                this.plugin.settings.apiKey = value;
-                await this.plugin.saveSettings();
-                inputEl.setAttribute('data-has-value', 'true');
-            }
-        });
-
-        // API 사용량 표시
-        this.createApiUsageDisplay(sectionEl);
+    private createProviderSection(containerEl: HTMLElement): void {
+        const sectionEl = this.createSection(containerEl, 'Provider', 'Transcription Provider 설정');
+        this.providerSettings.render(sectionEl);
     }
 
     /**

@@ -1,0 +1,378 @@
+/**
+ * Provider Settings UI Styles
+ * 
+ * Design Principles:
+ * 1. Consistency with Obsidian's design language
+ * 2. Clear visual hierarchy
+ * 3. Responsive and accessible
+ * 4. Smooth transitions and feedback
+ */
+
+/* === Container Styles === */
+.provider-settings-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.provider-settings-header h3 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.provider-settings-header .setting-item-description {
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+/* === Connection Status === */
+.connection-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.connection-status.connected {
+    background-color: var(--interactive-success);
+    color: var(--text-on-accent);
+}
+
+.connection-status.disconnected {
+    background-color: var(--background-modifier-error);
+    color: var(--text-error);
+}
+
+/* === API Key Inputs === */
+.api-keys-container {
+    margin: 1rem 0;
+}
+
+.api-key-input {
+    flex-grow: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    font-family: monospace;
+    min-width: 300px;
+}
+
+.api-key-input:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.api-key-input.valid {
+    border-color: var(--interactive-success);
+}
+
+.api-key-input.invalid {
+    border-color: var(--text-error);
+}
+
+.api-key-input[data-has-value="true"] {
+    background-color: var(--background-secondary);
+}
+
+/* === Control Buttons === */
+.visibility-toggle,
+.validate-btn {
+    margin-left: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.visibility-toggle {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    font-size: 1.1em;
+}
+
+.visibility-toggle:hover {
+    background: var(--background-modifier-hover);
+}
+
+.validate-btn {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    font-weight: 500;
+}
+
+.validate-btn:hover:not(:disabled) {
+    background: var(--interactive-accent-hover);
+}
+
+.validate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* === Advanced Settings === */
+.advanced-settings-container {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--background-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.advanced-settings-container .setting-item {
+    margin-bottom: 1rem;
+}
+
+/* === A/B Test Settings === */
+.ab-test-settings {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--background-primary-alt);
+    border-radius: 6px;
+}
+
+.split-display {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: var(--background-primary);
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.split-display span {
+    padding: 0.25rem 0.5rem;
+    background: var(--background-secondary);
+    border-radius: 3px;
+}
+
+/* === Metrics Container === */
+.metrics-container {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--background-secondary);
+    border-radius: 8px;
+}
+
+.metrics-container h4 {
+    margin-bottom: 1rem;
+    color: var(--text-normal);
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+/* === Provider Stats === */
+.provider-stats {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--background-primary);
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.provider-stats h5 {
+    margin-bottom: 0.75rem;
+    color: var(--text-normal);
+    font-weight: 600;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+/* === Stat Value Colors === */
+.stat-excellent {
+    color: var(--interactive-success) !important;
+}
+
+.stat-good {
+    color: var(--text-accent) !important;
+}
+
+.stat-fair {
+    color: var(--text-warning) !important;
+}
+
+.stat-poor {
+    color: var(--text-error) !important;
+}
+
+/* === Comparison Chart === */
+.comparison-chart {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: var(--background-primary);
+    border-radius: 6px;
+}
+
+.comparison-chart h5 {
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.chart-bars {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 150px;
+    margin-bottom: 1rem;
+}
+
+.chart-bar {
+    width: 80px;
+    background: linear-gradient(to top, var(--interactive-accent), var(--interactive-accent-hover));
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.chart-bar:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.chart-bar.whisper {
+    background: linear-gradient(to top, #10a37f, #1ac5a0);
+}
+
+.chart-bar.deepgram {
+    background: linear-gradient(to top, #635bff, #8b85ff);
+}
+
+.bar-label {
+    position: absolute;
+    bottom: -25px;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.chart-legend {
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--text-muted);
+    padding-top: 2rem;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+/* === Animations === */
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* === Responsive Design === */
+@media (max-width: 768px) {
+    .api-key-input {
+        min-width: 200px;
+    }
+    
+    .stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .chart-bars {
+        height: 120px;
+    }
+    
+    .chart-bar {
+        width: 60px;
+    }
+}
+
+/* === Dark Mode Adjustments === */
+.theme-dark .connection-status.connected {
+    background-color: rgba(16, 163, 127, 0.2);
+    color: #10a37f;
+}
+
+.theme-dark .connection-status.disconnected {
+    background-color: rgba(255, 87, 87, 0.2);
+    color: #ff5757;
+}
+
+.theme-dark .advanced-settings-container {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.theme-dark .provider-stats {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* === Accessibility === */
+.setting-item:focus-within {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+/* === Tooltips === */
+.setting-item[aria-describedby] {
+    position: relative;
+}
+
+.tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem 0.75rem;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    font-size: 0.85em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.setting-item:hover .tooltip {
+    opacity: 1;
+}

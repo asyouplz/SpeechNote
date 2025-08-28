@@ -175,6 +175,12 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/speech
 
 ### ⚙️ 주요 설정 (Main Settings)
 
+#### 🎨 새로운 Multi-Provider 설정 UI
+- **탭 기반 네비게이션**: General, Provider, Advanced, Metrics 탭으로 구분
+- **Progressive Disclosure**: 필요한 설정만 단계적으로 표시
+- **실시간 검증**: API 키 유효성 즉시 확인
+- **시각적 피드백**: 상태 인디케이터와 진행률 표시
+
 | 설정 | 설명 | 기본값 |
 |------|------|--------|
 | **Provider** | 변환 Provider 선택 | Auto |
@@ -188,6 +194,17 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/speech
 | **Max File Size** | 최대 파일 크기 | Provider별 자동 |
 | **Fallback Provider** | 장애 시 대체 Provider | 활성화 |
 | **Smart Routing** | 파일별 최적 Provider 선택 | 활성화 |
+| **A/B Testing** | Provider 성능 비교 테스트 | 비활성화 |
+| **Metrics Display** | 실시간 메트릭 표시 | 활성화 |
+
+#### 📊 고급 설정 (Advanced Settings)
+- **네트워크 설정**: Timeout, Retry 정책, Rate Limiting
+- **성능 최적화**: 청크 크기, 동시 처리, 메모리 관리
+- **캐시 관리**: 캐시 크기, 유효 기간, 통계
+- **A/B 테스팅**: Provider 비교, 성능 분석
+- **메트릭 모니터링**: 사용량 추적, 오류율, 응답 시간
+
+📖 상세 설정 가이드: [Multi-Provider 설정 UI 가이드](docs/ui-settings-guide.md)
 
 ### 🌍 언어 옵션 (Language Options)
 - `auto`: 자동 감지 (기본값)
