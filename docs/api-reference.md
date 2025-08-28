@@ -17,9 +17,10 @@
 이 문서는 Obsidian Speech-to-Text 플러그인의 주요 API를 설명합니다. 모든 public 클래스, 메서드, 인터페이스에 대한 상세 정보를 제공합니다.
 
 ### API 버전
-- **현재 버전**: 1.0.0
+- **현재 버전**: 3.0.0
 - **최소 Obsidian 버전**: 0.15.0
-- **TypeScript 버전**: 4.7.4
+- **TypeScript 버전**: 5.0.4
+- **지원 Provider**: OpenAI Whisper, Deepgram Nova 2
 
 ---
 
@@ -70,9 +71,67 @@ export default class MyPlugin extends SpeechToTextPlugin {
 
 ## 서비스 인터페이스 (Service Interfaces)
 
-### WhisperService
+### ITranscriber 인터페이스
 
-OpenAI Whisper API와 통신하는 핵심 서비스입니다. Circuit Breaker 패턴과 지수 백오프 재시도 전략을 구현합니다.
+모든 음성 변환 Provider가 구현해야 하는 공통 인터페이스입니다.
+
+```typescript
+interface ITranscriber {
+  /**
+   * Provider 이름
+   */
+  readonly name: string;
+  
+  /**
+   * 음성을 텍스트로 변환합니다.
+   * @param audio - 오디오 버퍼 데이터
+   * @param options - Provider별 옵션
+   * @returns 변환된 텍스트와 메타데이터
+   */
+  transcribe(
+    audio: ArrayBuffer,
+    options?: TranscriptionOptions
+  ): Promise<TranscriptionResponse>;
+  
+  /**
+   * Provider 상태를 확인합니다.
+   */
+  isAvailable(): Promise<boolean>;
+  
+  /**
+   * 지원하는 파일 형식을 반환합니다.
+   */
+  getSupportedFormats(): string[];
+  
+  /**
+   * 최대 파일 크기를 반환합니다.
+   */
+  getMaxFileSize(): number;
+  
+  /**
+   * 진행 중인 요청을 취소합니다.
+   */
+  cancel(): void;
+}
+```
+
+### Provider별 기능 비교
+
+| 기능 | Whisper | Deepgram |
+|-----|---------|----------|
+| **최대 파일 크기** | 25MB | 2GB |
+| **지원 형식** | m4a, mp3, wav, mp4 | m4a, mp3, wav, mp4, webm, ogg, flac |
+| **언어 지원** | 50+ 언어 | 40+ 언어 |
+| **실시간 스트리밍** | ❌ | ✅ (예정) |
+| **화자 분리** | ❌ | ✅ |
+| **자동 문장부호** | ✅ | ✅ |
+| **단어 타임스탬프** | ✅ | ✅ |
+| **API 응답 속도** | 중간 | 빠름 |
+| **비용** | $0.006/분 | $0.0043/분 |
+
+### WhisperAdapter
+
+OpenAI Whisper API를 위한 어댑터 클래스입니다.
 
 ```typescript
 class WhisperService implements IWhisperService {
@@ -113,14 +172,62 @@ class WhisperService implements IWhisperService {
 }
 ```
 
-#### WhisperOptions 상세
+#### TranscriptionOptions 상세
 ```typescript
-interface WhisperOptions {
-  model?: 'whisper-1';           // 사용할 모델
+interface TranscriptionOptions {
+  // 공통 옵션
+  provider?: 'whisper' | 'deepgram' | 'auto';  // Provider 선택
   language?: string;              // 언어 코드 (ko, en, ja 등)
+  
+  // Whisper 전용 옵션
+  model?: 'whisper-1';           // Whisper 모델
   prompt?: string;                // 컨텍스트 프롬프트 (최대 224 토큰)
   temperature?: number;           // 0-1 사이 값, 창의성 조절
   responseFormat?: 'json' | 'text' | 'verbose_json';  // 응답 형식
+  
+  // Deepgram 전용 옵션
+  tier?: 'nova-2' | 'nova' | 'enhanced' | 'base';  // Deepgram 티어
+  punctuate?: boolean;            // 자동 문장부호
+  diarize?: boolean;              // 화자 분리
+  smart_format?: boolean;         // 스마트 포매팅
+  utterances?: boolean;           // 발화 구분
+  detect_language?: boolean;      // 자동 언어 감지
+}
+```
+
+### DeepgramAdapter
+
+Deepgram Nova 2 API를 위한 어댑터 클래스입니다.
+
+```typescript
+class DeepgramAdapter implements ITranscriber {
+  readonly name = 'deepgram';
+  
+  /**
+   * Deepgram API를 사용하여 음성을 변환합니다.
+   * @param audio - 오디오 버퍼
+   * @param options - Deepgram 옵션
+   * @example
+   * const result = await deepgramAdapter.transcribe(audioBuffer, {
+   *   language: 'ko',
+   *   tier: 'nova-2',
+   *   smart_format: true
+   * });
+   */
+  async transcribe(
+    audio: ArrayBuffer,
+    options?: TranscriptionOptions
+  ): Promise<TranscriptionResponse>;
+  
+  /**
+   * 실시간 스트리밍 변환을 시작합니다.
+   * @param stream - 오디오 스트림
+   * @param onResult - 결과 콜백
+   */
+  async startStreaming(
+    stream: ReadableStream,
+    onResult: (result: Partial<TranscriptionResponse>) => void
+  ): Promise<void>;
 }
 ```
 
@@ -247,9 +354,25 @@ class SettingsManager implements ISettingsManager {
 #### PluginSettings 타입
 ```typescript
 interface PluginSettings {
-  apiKey: string;                 // OpenAI API 키
-  encryptedApiKey?: string;       // 암호화된 API 키
-  model: 'whisper-1';            // Whisper 모델
+  // Provider 설정
+  provider: 'whisper' | 'deepgram' | 'auto';  // Provider 선택
+  openaiApiKey?: string;         // OpenAI API 키
+  deepgramApiKey?: string;       // Deepgram API 키
+  encryptedOpenaiKey?: string;   // 암호화된 OpenAI 키
+  encryptedDeepgramKey?: string; // 암호화된 Deepgram 키
+  
+  // Whisper 설정
+  whisperModel: 'whisper-1';     // Whisper 모델
+  whisperPrompt?: string;         // Whisper 프롬프트
+  whisperTemperature?: number;    // Whisper 온도
+  
+  // Deepgram 설정
+  deepgramTier: 'nova-2' | 'nova' | 'enhanced' | 'base';  // Deepgram 티어
+  deepgramPunctuate: boolean;     // 자동 문장부호
+  deepgramDiarize: boolean;       // 화자 분리
+  deepgramSmartFormat: boolean;   // 스마트 포매팅
+  
+  // 공통 설정
   language: string;              // 기본 언어 (auto, ko, en 등)
   autoInsert: boolean;           // 자동 삽입 여부
   insertPosition: 'cursor' | 'end' | 'beginning';  // 삽입 위치
@@ -258,15 +381,84 @@ interface PluginSettings {
   enableCache: boolean;          // 캐시 활성화
   cacheTTL: number;             // 캐시 유효 시간 (밀리초)
   enableDebugLogging: boolean;  // 디버그 로깅
-  prompt?: string;              // 기본 프롬프트
-  temperature?: number;         // 기본 온도 설정
-  responseFormat?: 'json' | 'text' | 'verbose_json';  // 응답 형식
+  enableFallback: boolean;       // Fallback Provider 사용
+  smartRouting: boolean;         // 스마트 라우팅 사용
+}
+```
+
+### TranscriberFactory
+
+Provider 선택과 인스턴스 생성을 담당하는 팩토리 클래스입니다.
+
+```typescript
+class TranscriberFactory {
+  /**
+   * 지정된 Provider의 인스턴스를 생성합니다.
+   * @param provider - Provider 이름
+   * @param settings - 설정 객체
+   * @returns Transcriber 인스턴스
+   */
+  static create(
+    provider: 'whisper' | 'deepgram' | 'auto',
+    settings: PluginSettings
+  ): ITranscriber;
+  
+  /**
+   * 파일에 가장 적합한 Provider를 선택합니다.
+   * @param file - 오디오 파일
+   * @param settings - 설정 객체
+   * @returns 최적 Provider
+   */
+  static selectBestProvider(
+    file: TFile,
+    settings: PluginSettings
+  ): 'whisper' | 'deepgram';
+  
+  /**
+   * 모든 사용 가능한 Provider를 반환합니다.
+   * @param settings - 설정 객체
+   * @returns 사용 가능한 Provider 목록
+   */
+  static getAvailableProviders(
+    settings: PluginSettings
+  ): string[];
+}
+```
+
+### ProviderSelector
+
+파일 특성에 따른 최적 Provider 선택 로직을 구현합니다.
+
+```typescript
+class ProviderSelector {
+  /**
+   * 파일 크기와 형식을 고려하여 최적 Provider를 선택합니다.
+   * @param fileInfo - 파일 정보
+   * @param preferences - 사용자 선호
+   * @returns 추천 Provider
+   */
+  selectProvider(
+    fileInfo: FileInfo,
+    preferences: ProviderPreferences
+  ): ProviderRecommendation;
+  
+  /**
+   * Provider 성능 메트릭을 반환합니다.
+   */
+  getProviderMetrics(): Map<string, ProviderMetrics>;
+  
+  /**
+   * Fallback 체인을 구성합니다.
+   * @param primary - 기본 Provider
+   * @returns Fallback Provider 순서
+   */
+  getFallbackChain(primary: string): string[];
 }
 ```
 
 ### FileUploadManager
 
-대용량 오디오 파일 처리 및 업로드를 관리합니다. 자동 압축과 메타데이터 추출을 지원합니다.
+대용량 오디오 파일 처리 및 업로드를 관리합니다. Provider별 최적화를 지원합니다.
 
 ```typescript
 class FileUploadManager {
@@ -331,10 +523,21 @@ interface AudioFileMetadata {
 }
 ```
 
-#### 지원 형식
-- **오디오 포맷**: m4a, mp3, wav, mp4, mpeg, mpga, webm, ogg
-- **최대 파일 크기**: 25MB (압축 전 50MB까지 자동 압축)
-- **압축 방식**: Web Audio API를 통한 리샘플링 (16kHz 모노)
+#### Provider별 지원 형식
+
+| 형식 | Whisper | Deepgram | 최대 크기 |
+|-----|---------|----------|----------|
+| m4a | ✅ | ✅ | 25MB/2GB |
+| mp3 | ✅ | ✅ | 25MB/2GB |
+| wav | ✅ | ✅ | 25MB/2GB |
+| mp4 | ✅ | ✅ | 25MB/2GB |
+| webm | ❌ | ✅ | -/2GB |
+| ogg | ❌ | ✅ | -/2GB |
+| flac | ❌ | ✅ | -/2GB |
+
+- **압축 방식**: 
+  - Whisper: Web Audio API (16kHz 모노)
+  - Deepgram: 원본 품질 유지 가능
 
 ### EditorService
 
@@ -828,13 +1031,18 @@ interface AppState {
 ### 설정 타입
 
 ```typescript
-/** 플러그인 설정 */
+/** 플러그인 설정 (v3.0.0) */
 interface SpeechToTextSettings {
-  /** OpenAI API 키 */
-  apiKey: string;
+  /** Provider 선택 */
+  provider: 'whisper' | 'deepgram' | 'auto';
   
-  /** Whisper 모델 */
-  model: 'whisper-1';
+  /** API 키 */
+  openaiApiKey?: string;
+  deepgramApiKey?: string;
+  
+  /** Provider별 모델 설정 */
+  whisperModel?: 'whisper-1';
+  deepgramTier?: 'nova-2' | 'nova' | 'enhanced' | 'base';
   
   /** 언어 코드 */
   language: LanguageCode;
@@ -856,6 +1064,13 @@ interface SpeechToTextSettings {
   
   /** 캐시 TTL (밀리초) */
   cacheTTL: number;
+  
+  /** Fallback 설정 */
+  enableFallback: boolean;
+  fallbackProvider?: 'whisper' | 'deepgram';
+  
+  /** 스마트 라우팅 */
+  smartRouting: boolean;
 }
 
 /** 언어 코드 */
@@ -1023,15 +1238,32 @@ class FileSizeExceededError extends BaseError {
 
 ```typescript
 const DEFAULT_SETTINGS: SpeechToTextSettings = {
-  apiKey: '',
-  model: 'whisper-1',
+  // Provider 설정
+  provider: 'auto',
+  openaiApiKey: '',
+  deepgramApiKey: '',
+  
+  // Whisper 기본값
+  whisperModel: 'whisper-1',
+  
+  // Deepgram 기본값
+  deepgramTier: 'nova-2',
+  deepgramPunctuate: true,
+  deepgramSmartFormat: true,
+  deepgramDiarize: false,
+  
+  // 공통 설정
   language: 'auto',
   autoInsert: true,
   insertPosition: 'cursor',
   timestampFormat: 'none',
-  maxFileSize: 25 * 1024 * 1024, // 25MB
+  maxFileSize: 0, // 0 = Provider별 기본값 사용
   enableCache: true,
-  cacheTTL: 3600000 // 1시간
+  cacheTTL: 3600000, // 1시간
+  
+  // 고급 기능
+  enableFallback: true,
+  smartRouting: true
 };
 ```
 
@@ -1187,7 +1419,24 @@ if (!this.app.vault.adapter) {
 
 ### Breaking Changes
 
-#### v1.0.0
+#### v3.0.0 (2025-08-28)
+- **주요 변경사항**:
+  - Deepgram Nova 2 API 통합
+  - 다중 Provider 지원 (Whisper, Deepgram)
+  - 자동 Provider 선택 기능
+  - 대용량 파일 지원 (최대 2GB)
+  - Fallback 메커니즘 구현
+  - 스마트 라우팅 기능
+- **Breaking Changes**:
+  - `apiKey` → `openaiApiKey`, `deepgramApiKey`로 분리
+  - `model` → `whisperModel`로 변경
+  - Provider별 설정 분리
+
+#### v2.0.0 (2025-08-25)
+- Phase 3: UX 개선
+- Phase 4: 성능 최적화
+
+#### v1.0.0 (2025-08-22)
 - 초기 릴리스
 - 기본 API 구조 확립
 
@@ -1249,5 +1498,5 @@ export async function waitForEvent(
 
 ---
 
-*최종 업데이트: 2025-08-22*
-*API 버전: 1.0.0*
+*최종 업데이트: 2025-08-28*
+*API 버전: 3.0.0*

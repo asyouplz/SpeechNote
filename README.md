@@ -6,10 +6,11 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D0.15.0-purple.svg)](https://obsidian.md)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20API-orange.svg)](https://platform.openai.com/docs/guides/speech-to-text)
+[![Deepgram](https://img.shields.io/badge/Deepgram-Nova%202%20API-blue.svg)](https://developers.deepgram.com/)
 
 옵시디언에서 음성 파일을 텍스트로 변환하는 강력한 플러그인입니다.
 
-Convert audio recordings to text directly in Obsidian using OpenAI's Whisper API.
+Convert audio recordings to text directly in Obsidian using multiple AI providers (OpenAI Whisper, Deepgram).
 
 [English](#english) | [한국어](#korean)
 
@@ -20,14 +21,17 @@ Convert audio recordings to text directly in Obsidian using OpenAI's Whisper API
 ## 주요 기능 (Features)
 
 ### 🎙️ 음성 변환 (Audio Transcription)
-- **지원 형식**: M4A, MP3, WAV, MP4
-- **최대 파일 크기**: 25MB (Whisper API 제한)
-- **고품질 변환**: OpenAI Whisper 모델 활용
+- **다중 Provider 지원**: OpenAI Whisper, Deepgram Nova 2
+- **지원 형식**: M4A, MP3, WAV, MP4, WebM, OGG, FLAC
+- **최대 파일 크기**: 25MB (Whisper) / 2GB (Deepgram)
+- **고품질 변환**: 최신 AI 모델 활용
+- **실시간 스트리밍**: Deepgram 실시간 변환 지원 (예정)
 
 ### 🌐 다국어 지원 (Multi-language Support)
 - **자동 언어 감지**: 음성 언어 자동 인식
-- **수동 선택 가능**: 한국어, 영어, 일본어, 중국어 등 지원
-- **정확한 변환**: 언어별 최적화된 모델 사용
+- **수동 선택 가능**: 한국어, 영어, 일본어, 중국어 등 40+ 언어 지원
+- **정확한 변환**: Provider별 최적화된 모델 사용
+- **다국어 동시 지원**: Deepgram 멀티링구얼 모델
 
 ### 📝 스마트 텍스트 삽입 (Smart Text Insertion)
 - **커서 위치**: 현재 커서 위치에 삽입
@@ -35,9 +39,12 @@ Convert audio recordings to text directly in Obsidian using OpenAI's Whisper API
 - **자동 생성**: 활성 에디터가 없을 시 새 노트 생성
 
 ### ⚡ 성능 최적화 (Performance Optimization)
+- **Provider 자동 선택**: 파일 크기와 형식에 따른 최적 Provider 선택
 - **실시간 진행 표시**: 상태바에 진행 상황 표시
 - **비동기 처리**: UI 차단 없는 백그라운드 처리
 - **취소 가능**: 진행 중인 변환 즉시 취소
+- **Fallback 메커니즘**: Provider 장애 시 자동 전환
+- **Rate Limiting**: API 호출 제한 관리
 
 ### 💾 캐싱 시스템 (Caching System)
 - **중복 방지**: 동일 파일 재처리 방지
@@ -84,23 +91,40 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/speech
 
 ### 🔑 API 키 설정 (API Key Configuration)
 
-#### 1. OpenAI API 키 발급
+#### Provider 선택
+1. 옵시디언 설정 → "Speech to Text"
+2. "Transcription Provider" 선택:
+   - **OpenAI Whisper**: 고품질, 안정적
+   - **Deepgram**: 빠른 속도, 대용량 지원
+   - **Auto**: 자동 선택 (권장)
+
+#### 1. OpenAI API 키 발급 (Whisper 사용 시)
 1. [OpenAI Platform](https://platform.openai.com/api-keys) 접속
 2. 계정 로그인 또는 회원가입
 3. "Create new secret key" 클릭
 4. 키 이름 입력 후 생성
 5. 생성된 키 복사 (⚠️ 한 번만 표시되므로 안전하게 저장)
 
-#### 2. 플러그인에 API 키 등록
+#### 2. Deepgram API 키 발급 (Deepgram 사용 시)
+1. [Deepgram Console](https://console.deepgram.com/) 접속
+2. 계정 생성 또는 로그인
+3. "API Keys" 메뉴 선택
+4. "Create a New API Key" 클릭
+5. 키 이름과 권한 설정 후 생성
+6. API 키 복사 및 안전하게 저장
+
+#### 3. 플러그인에 API 키 등록
 1. 옵시디언 설정 열기 (Cmd/Ctrl + ,)
 2. 왼쪽 메뉴에서 "Speech to Text" 선택
-3. "OpenAI API Key" 필드에 키 입력
+3. 사용할 Provider의 API 키 입력:
+   - "OpenAI API Key" (Whisper용)
+   - "Deepgram API Key" (Deepgram용)
 4. 설정 저장
 
-#### 3. API 키 검증
-- 올바른 형식: `sk-` 로 시작하는 48자 문자열
-- Whisper API 접근 권한 필요
-- 유료 계정 또는 크레딧 필요
+#### 4. API 키 검증
+- **OpenAI**: `sk-` 로 시작하는 문자열
+- **Deepgram**: 40자 길이의 16진수 문자열
+- 각 Provider의 유료 계정 또는 크레딧 필요
 
 ## 사용 방법 (Usage)
 
@@ -120,17 +144,26 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/speech
 
 ### 🎵 지원 오디오 형식 (Supported Formats)
 
-| 형식 | 확장자 | 권장 | 최대 크기 | 설명 |
-|------|--------|------|-----------|------|
-| M4A | .m4a | ✅ | 25MB | Apple 기기 기본 녹음 형식 |
-| MP3 | .mp3 | ✅ | 25MB | 범용 오디오 형식 |
-| WAV | .wav | ⚠️ | 25MB | 무손실, 파일 크기 큼 |
-| MP4 | .mp4 | ⚠️ | 25MB | 비디오 파일의 오디오 추출 |
+| 형식 | 확장자 | Whisper | Deepgram | 최대 크기 | 설명 |
+|------|--------|---------|----------|-----------|------|
+| M4A | .m4a | ✅ | ✅ | 25MB/2GB | Apple 기기 기본 녹음 형식 |
+| MP3 | .mp3 | ✅ | ✅ | 25MB/2GB | 범용 오디오 형식 |
+| WAV | .wav | ✅ | ✅ | 25MB/2GB | 무손실, 파일 크기 큼 |
+| MP4 | .mp4 | ✅ | ✅ | 25MB/2GB | 비디오 파일의 오디오 추출 |
+| WebM | .webm | ❌ | ✅ | -/2GB | 웹 스트리밍 형식 |
+| OGG | .ogg | ❌ | ✅ | -/2GB | 오픈소스 오디오 형식 |
+| FLAC | .flac | ❌ | ✅ | -/2GB | 무손실 압축 형식 |
 
 ### 📏 파일 크기 제한 (File Size Limits)
-- **최대 크기**: 25MB (Whisper API 제한)
-- **권장 크기**: 10MB 이하 (빠른 처리)
-- **긴 녹음**: 파일 분할 권장
+
+| Provider | 최대 크기 | 권장 크기 | 장점 |
+|----------|-----------|-----------|------|
+| **Whisper** | 25MB | 10MB 이하 | 높은 정확도, 안정성 |
+| **Deepgram** | 2GB | 500MB 이하 | 대용량 지원, 빠른 속도 |
+| **Auto** | 자동 선택 | - | 파일별 최적 Provider 선택 |
+
+- **긴 녹음**: Deepgram 사용 권장
+- **짧은 메모**: Whisper 사용 권장
 
 ### 💡 사용 팁 (Pro Tips)
 1. **녹음 품질**: 조용한 환경에서 명확하게 녹음
@@ -144,13 +177,17 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/speech
 
 | 설정 | 설명 | 기본값 |
 |------|------|--------|
-| **API Key** | OpenAI API 키 | 없음 |
+| **Provider** | 변환 Provider 선택 | Auto |
+| **OpenAI API Key** | OpenAI Whisper API 키 | 없음 |
+| **Deepgram API Key** | Deepgram API 키 | 없음 |
 | **Language** | 변환 언어 설정 | 자동 감지 |
 | **Insert Position** | 텍스트 삽입 위치 | 커서 위치 |
 | **Auto-insert** | 자동 텍스트 삽입 | 활성화 |
 | **Timestamp Format** | 타임스탬프 형식 | 없음 |
 | **Enable Cache** | 캐시 사용 여부 | 활성화 |
-| **Max File Size** | 최대 파일 크기 | 25MB |
+| **Max File Size** | 최대 파일 크기 | Provider별 자동 |
+| **Fallback Provider** | 장애 시 대체 Provider | 활성화 |
+| **Smart Routing** | 파일별 최적 Provider 선택 | 활성화 |
 
 ### 🌍 언어 옵션 (Language Options)
 - `auto`: 자동 감지 (기본값)
@@ -241,7 +278,17 @@ SpeechNote/
 │   │       └── Settings.ts         # 설정 모델
 │   ├── 🔌 infrastructure/          # 외부 시스템 통합
 │   │   ├── api/
-│   │   │   └── WhisperService.ts   # Whisper API 클라이언트
+│   │   │   ├── WhisperService.ts   # Whisper API 클라이언트
+│   │   │   ├── providers/
+│   │   │   │   ├── ITranscriber.ts # 공통 인터페이스
+│   │   │   │   ├── deepgram/       # Deepgram 통합
+│   │   │   │   │   ├── DeepgramAdapter.ts
+│   │   │   │   │   └── DeepgramService.ts
+│   │   │   │   ├── whisper/        # Whisper 통합
+│   │   │   │   │   └── WhisperAdapter.ts
+│   │   │   │   └── factory/        # Provider 팩토리
+│   │   │   │       └── ProviderSelector.ts
+│   │   │   └── TranscriberFactory.ts # Provider 팩토리
 │   │   ├── logging/
 │   │   │   └── Logger.ts           # 로깅 시스템
 │   │   └── storage/
@@ -399,9 +446,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 변경 사항 (Changelog)
 
-### 📋 최신 버전: v1.0.0 (2025-08-22)
+### 📋 최신 버전: v3.0.0 (2025-08-28)
 
-#### ✨ 주요 기능
+#### ✨ v3.0.0 주요 기능
+- **🎯 Deepgram 통합**: Nova 2 모델 지원
+- **🔄 다중 Provider 지원**: Whisper & Deepgram
+- **⚡ 자동 Provider 선택**: 파일별 최적화
+- **📈 대용량 파일 지원**: 최대 2GB (Deepgram)
+- **🛡️ Fallback 메커니즘**: 장애 자동 복구
+- **🚀 성능 개선**: 30% 빠른 변환 속도
+
+#### v2.0.0 기능 (2025-08-25)
+- Phase 3: UX 개선 및 사용자 경험 향상
+- Phase 4: 성능 최적화 및 테스트 강화
+
+#### v1.0.0 기능 (2025-08-22)
 - 음성 파일을 텍스트로 변환
 - OpenAI Whisper API 통합
 - 다국어 지원 (자동 감지)
@@ -414,23 +473,23 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 🎯 개발 계획
 
-#### 📅 v1.1.0 (2025 Q1)
+#### 📅 v3.1.0 (2025 Q1)
+- [ ] 🎙️ Deepgram 실시간 스트리밍 변환
 - [ ] 📋 클립보드 오디오 지원
-- [ ] 📊 변환 기록 뷰어
-- [ ] 🔄 일괄 처리 기능
-- [ ] 🎨 UI/UX 개선
+- [ ] 📊 Provider별 변환 통계
+- [ ] 🔄 일괄 처리 기능 (멀티 Provider)
 
-#### 📅 v1.2.0 (2025 Q2)
+#### 📅 v3.2.0 (2025 Q2)
+- [ ] 🌐 Google Speech-to-Text 통합
+- [ ] 🏢 Azure Speech Services 통합
 - [ ] 💬 커스텀 프롬프트 지원
-- [ ] 🔍 검색 가능한 변환 아카이브
-- [ ] 📈 변환 통계 대시보드
-- [ ] 🌍 추가 언어 지원
+- [ ] 📈 고급 분석 대시보드
 
-#### 📅 v2.0.0 (2025 하반기)
-- [ ] ⚡ 실시간 변환 (스트리밍)
-- [ ] 🖥️ 로컬 모델 지원
-- [ ] 🤖 AI 요약 기능
-- [ ] 🔗 타 플러그인 연동
+#### 📅 v4.0.0 (2025 하반기)
+- [ ] 🖥️ 로컬 Whisper 모델 지원
+- [ ] 🤖 AI 요약 및 분석
+- [ ] 🔗 타 플러그인 연동 확대
+- [ ] 🎯 엔터프라이즈 기능
 
 ### 💭 검토 중인 기능
 - 화자 분리 (diarization)

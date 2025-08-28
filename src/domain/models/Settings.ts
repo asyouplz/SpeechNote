@@ -14,6 +14,44 @@ export interface SpeechToTextSettings {
     textFormat?: 'plain' | 'markdown' | 'quote' | 'bullet' | 'heading' | 'code' | 'callout';
     addTimestamp?: boolean;
     showFormatOptions?: boolean;
+    
+    // Provider 설정 (Deepgram 마이그레이션)
+    transcription?: {
+        defaultProvider?: 'whisper' | 'deepgram';
+        autoSelect?: boolean;
+        selectionStrategy?: 'manual' | 'cost_optimized' | 'performance_optimized' | 'quality_optimized';
+        fallbackEnabled?: boolean;
+        
+        whisper?: {
+            enabled?: boolean;
+            apiKey?: string;
+            model?: string;
+        };
+        
+        deepgram?: {
+            enabled?: boolean;
+            apiKey?: string;
+            model?: string;
+            tier?: 'nova-2' | 'enhanced' | 'base';
+            features?: {
+                punctuation?: boolean;
+                smartFormat?: boolean;
+                diarization?: boolean;
+                numerals?: boolean;
+            };
+        };
+        
+        abTest?: {
+            enabled?: boolean;
+            trafficSplit?: number;
+            metricTracking?: boolean;
+        };
+        
+        monitoring?: {
+            enabled?: boolean;
+            metricsEndpoint?: string;
+        };
+    };
 }
 
 export type WhisperModel = 'whisper-1';
