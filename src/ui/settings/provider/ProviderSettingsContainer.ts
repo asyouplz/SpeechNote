@@ -3,7 +3,7 @@ import type SpeechToTextPlugin from '../../../main';
 import { TranscriptionProvider, SelectionStrategy } from '../../../infrastructure/api/providers/ITranscriber';
 import { APIKeyManager } from './components/APIKeyManager';
 import { AdvancedSettingsPanel } from './components/AdvancedSettingsPanel';
-import { ProviderMetricsDisplay } from './components/ProviderMetricsDisplay';
+// import { ProviderMetricsDisplay } from './components/ProviderMetricsDisplay';
 
 /**
  * Provider Settings Container
@@ -657,7 +657,7 @@ export class ProviderSettingsContainer {
     // === Save Methods ===
     
     private async saveProviderSelection(provider: string): Promise<void> {
-        this.plugin.settings.provider = provider;
+        this.plugin.settings.provider = provider as 'auto' | 'whisper' | 'deepgram';
         await this.plugin.saveSettings();
     }
     

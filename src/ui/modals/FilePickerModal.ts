@@ -21,10 +21,21 @@ export interface FilePickerResult {
     validation: ValidationResult;
 }
 
+export interface ValidationError {
+    code: string;
+    message: string;
+    field?: string;
+}
+
+export interface ValidationWarning {
+    code: string;
+    message: string;
+}
+
 export interface ValidationResult {
     valid: boolean;
-    errors?: string[];
-    warnings?: string[];
+    errors?: ValidationError[];
+    warnings?: ValidationWarning[];
     metadata?: FileMetadata;
 }
 
@@ -323,10 +334,10 @@ export class FilePickerModal extends Modal {
             const buffer = await this.app.vault.readBinary(file);
             return await this.validator.validate(file, buffer);
         } catch (error) {
-            this.logger?.error('File validation failed', error);
+            this.logger?.error('File validation failed', error as Error);
             return {
                 valid: false,
-                errors: [`검증 실패: ${error.message}`]
+                errors: [{ code: 'VALIDATION_ERROR', message: `검증 실패: ${(error as Error).message}` }]
             };
         }
     }

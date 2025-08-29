@@ -115,7 +115,7 @@ export class AdvancedSettingsPanel {
                     .addOption('none', 'No Fallback')
                     .setValue(this.plugin.settings.fallbackStrategy || 'auto')
                     .onChange(async (value) => {
-                        this.plugin.settings.fallbackStrategy = value;
+                        this.plugin.settings.fallbackStrategy = value as 'auto' | 'none' | 'manual';
                         await this.plugin.saveSettings();
                     });
             });
@@ -382,7 +382,7 @@ export class AdvancedSettingsPanel {
                         .addOption('cost', 'Cost Only')
                         .setValue(this.plugin.settings.abTestMetrics || 'all')
                         .onChange(async (value) => {
-                            this.plugin.settings.abTestMetrics = value;
+                            this.plugin.settings.abTestMetrics = value as 'all' | 'latency' | 'accuracy' | 'cost';
                             await this.plugin.saveSettings();
                         });
                 });

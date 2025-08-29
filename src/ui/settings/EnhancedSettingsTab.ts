@@ -28,7 +28,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         this.settingsAPI = new SettingsAPI();
         this.apiKeyManager = new SecureApiKeyManager();
         this.validator = new SettingsValidator();
-        this.memoryManager = new AutoDisposable();
+        this.memoryManager = new ResourceManager();
         
         // 초기화
         this.initialize();
@@ -46,7 +46,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             this.scheduleAutoSave();
         });
         
-        this.memoryManager.registerDisposable({
+        this.memoryManager.add({
             dispose: () => unsubscribe()
         });
     }

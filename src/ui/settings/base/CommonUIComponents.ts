@@ -59,7 +59,7 @@ export class UIComponentFactory {
                 'aria-valuenow': String(value),
                 'aria-valuemin': '0',
                 'aria-valuemax': String(max),
-                'aria-labelledby': label ? `progress-label-${Date.now()}` : undefined
+                'aria-labelledby': label ? `progress-label-${Date.now()}` : null
             }
         });
         
@@ -211,7 +211,7 @@ export class UIComponentFactory {
                     'role': 'tabpanel',
                     'id': `panel-${tab.id}`,
                     'aria-labelledby': `tab-${tab.id}`,
-                    'hidden': tab.id !== activeTab ? 'true' : undefined
+                    'hidden': tab.id !== activeTab ? 'true' : null
                 }
             });
             
@@ -320,10 +320,9 @@ export class UIComponentFactory {
         errorEl.createDiv({ text: message, cls: 'error-text' });
         
         if (details) {
-            errorEl.createEl('details', details => {
-                details.createEl('summary', { text: '자세히 보기' });
-                details.createEl('pre', { text: details, cls: 'error-details' });
-            });
+            const detailsEl = errorEl.createEl('details');
+            detailsEl.createEl('summary', { text: '자세히 보기' });
+            detailsEl.createEl('pre', { text: details, cls: 'error-details' });
         }
         
         if (onRetry) {
