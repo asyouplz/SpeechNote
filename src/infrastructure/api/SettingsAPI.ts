@@ -282,13 +282,13 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
             return {
                 success: true,
                 imported: importedSettings,
-                warnings: validation.warnings?.map(w => w.message)
+                warnings: (validation as any).warnings?.map((w: any) => w.message)
             };
         } catch (error) {
             return {
                 success: false,
                 imported: {},
-                errors: [`Import failed: ${error.message}`]
+                errors: [`Import failed: ${(error as Error).message}`]
             };
         }
     }
@@ -302,10 +302,10 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
             await this.apiKeyManager.clearApiKey();
         } else if (Array.isArray(scope)) {
             scope.forEach(key => {
-                this.settings[key] = this.defaultSettings[key];
+                (this.settings as any)[key] = (this.defaultSettings as any)[key];
             });
         } else {
-            this.settings[scope] = this.defaultSettings[scope];
+            (this.settings as any)[scope] = (this.defaultSettings as any)[scope];
         }
 
         await this.save();
@@ -316,7 +316,8 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
      * 이벤트 리스너 등록
      */
     on(event: string, listener: Function): Unsubscribe {
-        super.on(event, listener as any);
+        const originalOn = super.on;
+        originalOn.call(this, event, listener as any);
         return () => this.off(event, listener as any);
     }
 

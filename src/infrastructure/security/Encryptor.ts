@@ -19,7 +19,7 @@ export interface IEncryptor {
 /**
  * AES-GCM 암호화 구현
  */
-export class AESEncryptor implements IEncryptor {
+export class Encryptor implements IEncryptor {
     private readonly algorithm = 'AES-GCM';
     private readonly keyLength = 256;
     private readonly iterations = 100000;
@@ -184,7 +184,7 @@ export class SecureApiKeyManager {
     private storageKey = 'encrypted_api_key';
 
     constructor(encryptor?: IEncryptor) {
-        this.encryptor = encryptor || new AESEncryptor();
+        this.encryptor = encryptor || new Encryptor();
     }
 
     /**
@@ -287,7 +287,7 @@ export class SettingsEncryptor {
     private encryptor: IEncryptor;
 
     constructor(encryptor?: IEncryptor) {
-        this.encryptor = encryptor || new AESEncryptor();
+        this.encryptor = encryptor || new Encryptor();
     }
 
     /**

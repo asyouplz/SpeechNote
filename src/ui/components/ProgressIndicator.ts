@@ -105,7 +105,7 @@ export class ProgressIndicator {
         if (showProgressBar) {
             barContainer.style.display = 'block';
             spinner.style.display = 'none';
-            this.updateProgress(0);
+            this.update(0);
         } else {
             barContainer.style.display = 'none';
             spinner.style.display = 'block';

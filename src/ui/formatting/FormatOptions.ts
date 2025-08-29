@@ -5,8 +5,9 @@ import { InsertionOptions, InsertionMode } from '../../application/TextInsertion
  * 텍스트 템플릿 인터페이스
  */
 interface TextTemplate {
+    id: string;
     name: string;
-    format: string;
+    format?: string;
     content: string;
 }
 
@@ -659,21 +660,25 @@ export class FormatOptionsModal extends Modal {
             {
                 id: 'meeting',
                 name: 'Meeting Notes',
+                format: 'markdown',
                 content: '## Meeting Notes - {{date}}\n\n### Attendees\n- \n\n### Agenda\n- \n\n### Discussion\n{{content}}\n\n### Action Items\n- \n\n---\n*Transcribed at {{datetime}}*'
             },
             {
                 id: 'daily',
                 name: 'Daily Note',
+                format: 'markdown',
                 content: '## {{date}}\n\n### Transcription\n{{content}}\n\n### Thoughts\n\n\n### Tasks\n- [ ] \n\n---\n*Created at {{time}}*'
             },
             {
                 id: 'interview',
                 name: 'Interview',
+                format: 'markdown',
                 content: '# Interview Notes\n**Date:** {{date}}\n**Time:** {{time}}\n\n## Transcript\n{{content}}\n\n## Key Points\n- \n\n## Follow-up Questions\n- \n\n---'
             },
             {
                 id: 'lecture',
                 name: 'Lecture Notes',
+                format: 'markdown',
                 content: '# Lecture Notes\n**Date:** {{date}}\n**Topic:** \n\n## Main Content\n{{content}}\n\n## Key Concepts\n1. \n2. \n3. \n\n## Questions\n- \n\n## References\n- \n\n---\n*Transcribed at {{datetime}}*'
             }
         ];
@@ -698,10 +703,12 @@ export type TextFormat =
     | 'callout';
 
 /**
- * 텍스트 템플릿
+ * Format options export for external use
  */
-interface TextTemplate {
-    id: string;
-    name: string;
-    content: string;
-}
+export const FormatOptions = {
+    FormatOptionsModal,
+    TextFormat
+};
+
+export { FormatOptionsModal as default };
+
