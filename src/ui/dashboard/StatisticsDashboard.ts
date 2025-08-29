@@ -189,7 +189,7 @@ export class StatisticsStore {
         this.saveToStorage();
         
         // 이벤트 발생
-        EventManager.getInstance().emit('stats:cleared');
+        EventManager.getInstance().emit('stats:cleared', {});
     }
 }
 

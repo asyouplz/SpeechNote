@@ -53,6 +53,9 @@ export interface AppEventMap extends EventMap {
     // Status 이벤트
     'status:clear': {};
     
+    // Stats 이벤트
+    'stats:cleared': {};
+    
     // Cache 이벤트
     'cache:hit': { key: string };
     'cache:miss': { key: string };
@@ -308,7 +311,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         const eventNames = this.eventNames();
         return {
             totalEvents: eventNames.length,
-            totalListeners: eventNames.reduce((sum, event) => 
+            totalListeners: eventNames.reduce((sum: number, event) => 
                 sum + this.listenerCount(event as keyof AppEventMap), 0
             ),
             totalEmitted: Array.from(this.eventStats.values()).reduce((sum, count) => 

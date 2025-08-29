@@ -255,8 +255,9 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
             }
 
             // 검증
+            let validation: any = null;
             if (options.validate) {
-                const validation = this.validate(importedSettings);
+                validation = this.validate(importedSettings);
                 if (!validation.valid) {
                     return {
                         success: false,
@@ -313,11 +314,10 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
     }
 
     /**
-     * 이벤트 리스너 등록
+     * 이벤트 리스너 등록 (Unsubscribe 함수 반환)
      */
-    on(event: string, listener: Function): Unsubscribe {
-        const originalOn = super.on;
-        originalOn.call(this, event, listener as any);
+    subscribe(event: string, listener: Function): Unsubscribe {
+        super.on(event, listener as any);
         return () => this.off(event, listener as any);
     }
 

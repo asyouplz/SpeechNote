@@ -23,10 +23,21 @@ export interface FilePickerResult {
     validation: ValidationResult;
 }
 
+export interface ValidationError {
+    code: string;
+    message: string;
+    field?: string;
+}
+
+export interface ValidationWarning {
+    code: string;
+    message: string;
+}
+
 export interface ValidationResult {
     valid: boolean;
-    errors?: string[];
-    warnings?: string[];
+    errors?: ValidationError[];
+    warnings?: ValidationWarning[];
     metadata?: FileMetadata;
 }
 
@@ -105,7 +116,7 @@ export class FilePickerModalRefactored extends Modal {
 
         // Register disposables
         Object.values(components).forEach(component => {
-            if (component && typeof component.dispose === 'function') {
+            if (component && 'dispose' in component && typeof component.dispose === 'function') {
                 this.disposables.add(component);
             }
         });
@@ -255,7 +266,7 @@ export class FilePickerModalRefactored extends Modal {
             }
         };
 
-        this.eventManager.add(this.modalEl, 'keydown', handler);
+        this.eventManager.add(this.modalEl, 'keydown', handler as EventListener);
     }
 
     /**
@@ -293,8 +304,8 @@ export class FilePickerModalRefactored extends Modal {
             this.refreshUI();
 
         } catch (error) {
-            this.logger?.error('File selection failed', error);
-            new Notice(`파일 선택 실패: ${error.message}`);
+            this.logger?.error('File selection failed', error as Error);
+            new Notice(`파일 선택 실패: ${(error as Error).message}`);
         }
     }, 300);
 
@@ -349,10 +360,10 @@ export class FilePickerModalRefactored extends Modal {
             const buffer = await this.app.vault.readBinary(file);
             return await this.components.validator.validate(file, buffer);
         } catch (error) {
-            this.logger?.error('File validation failed', error);
+            this.logger?.error('File validation failed', error as Error);
             return {
                 valid: false,
-                errors: [`검증 실패: ${error.message}`]
+                errors: [{ code: 'VALIDATION_ERROR', message: `검증 실패: ${(error as Error).message}` }]
             };
         }
     }
@@ -431,8 +442,8 @@ export class FilePickerModalRefactored extends Modal {
             }
 
         } catch (error) {
-            this.logger?.error('Submit failed', error);
-            new Notice(`처리 실패: ${error.message}`);
+            this.logger?.error('Submit failed', error as Error);
+            new Notice(`처리 실패: ${(error as Error).message}`);
         } finally {
             this.state.isProcessing = false;
             this.components.progressIndicator.hide();

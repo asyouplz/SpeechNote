@@ -180,7 +180,7 @@ class StepManager {
 /**
  * 진행률 추적기 구현
  */
-export class ProgressTracker extends EventEmitter implements IProgressTracker {
+export class ProgressTracker implements IProgressTracker {
     private taskId: string;
     private totalSteps: number;
     private currentProgress: number = 0;
@@ -194,9 +194,10 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
     private eventManager: EventManager;
     private isPaused: boolean = false;
     private isCancelled: boolean = false;
+    private emitter: EventEmitter;
 
     constructor(taskId: string, totalSteps: number = 100) {
-        super();
+        this.emitter = new EventEmitter();
         this.taskId = taskId;
         this.totalSteps = totalSteps;
         this.startTime = Date.now();
@@ -221,7 +222,7 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
 
         const data = this.getProgressData();
         
-        this.emit('progress', data);
+        this.emitter.emit('progress', data);
         this.eventManager.emit('progress:update', data);
 
         if (this.currentProgress >= 100) {
@@ -245,7 +246,7 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
         
         const data = this.getProgressData();
         
-        this.emit('progress', data);
+        this.emitter.emit('progress', data);
         this.eventManager.emit('step:update', { stepId, step, overall: this.currentProgress });
     }
 
@@ -266,14 +267,14 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
         if (status === 'paused' && prevStatus === 'running') {
             this.pausedTime = Date.now();
             this.isPaused = true;
-            this.emit('pause');
+            this.emitter.emit('pause');
         } else if (status === 'running' && prevStatus === 'paused') {
             if (this.pausedTime > 0) {
                 this.totalPausedDuration += Date.now() - this.pausedTime;
                 this.pausedTime = 0;
             }
             this.isPaused = false;
-            this.emit('resume');
+            this.emitter.emit('resume');
         } else if (status === 'completed') {
             this.complete();
         } else if (status === 'failed') {
@@ -287,7 +288,7 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
     setMessage(message: string): void {
         this.message = message;
         const data = this.getProgressData();
-        this.emit('progress', data);
+        this.emitter.emit('progress', data);
     }
 
     /**
@@ -312,7 +313,7 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
         this.currentProgress = this.stepManager.calculateOverallProgress();
         
         const data = this.getProgressData();
-        this.emit('progress', data);
+        this.emitter.emit('progress', data);
         
         if (this.currentProgress >= 100) {
             this.complete();
@@ -326,7 +327,7 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
         this.stepManager.failStep(stepId);
         
         if (error) {
-            this.emit('error', error);
+            this.emitter.emit('error', error);
             this.fail(error);
         }
     }
@@ -396,7 +397,7 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
     cancel(): void {
         this.isCancelled = true;
         this.status = 'failed';
-        this.emit('cancel');
+        this.emitter.emit('cancel');
         this.eventManager.emit('task:cancelled', { taskId: this.taskId });
     }
 
@@ -409,8 +410,8 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
         
         const data = this.getProgressData();
         
-        this.emit('complete', result);
-        this.emit('progress', data);
+        this.emitter.emit('complete', result);
+        this.emitter.emit('progress', data);
         this.eventManager.emit('task:completed', { taskId: this.taskId, result });
     }
 
@@ -421,7 +422,7 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
         this.status = 'failed';
         
         if (error) {
-            this.emit('error', error);
+            this.emitter.emit('error', error);
             this.eventManager.emit('task:failed', { taskId: this.taskId, error });
         }
     }
@@ -440,6 +441,19 @@ export class ProgressTracker extends EventEmitter implements IProgressTracker {
             speed: this.getSpeed(),
             steps: this.stepManager.getAllSteps()
         };
+    }
+
+    /**
+     * 이벤트 리스너 등록 (타입 안전한 구독)
+     */
+    on(event: 'progress', listener: (data: ProgressData) => void): Unsubscribe;
+    on(event: 'complete', listener: (result?: any) => void): Unsubscribe;
+    on(event: 'error', listener: (error: Error) => void): Unsubscribe;
+    on(event: 'pause', listener: () => void): Unsubscribe;
+    on(event: 'resume', listener: () => void): Unsubscribe;
+    on(event: string, listener: (...args: any[]) => void): Unsubscribe {
+        this.emitter.on(event, listener);
+        return () => this.emitter.off(event, listener);
     }
 }
 
