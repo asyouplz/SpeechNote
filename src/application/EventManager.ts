@@ -50,6 +50,9 @@ export interface AppEventMap extends EventMap {
     'ui:modal-closed': { modalType: string };
     'ui:notification': { message: string; type: 'info' | 'warning' | 'error' | 'success' };
     
+    // Status 이벤트
+    'status:clear': {};
+    
     // Cache 이벤트
     'cache:hit': { key: string };
     'cache:miss': { key: string };
@@ -67,6 +70,7 @@ export interface AppEventMap extends EventMap {
  */
 @SingletonDecorator
 export class EventManager extends EventEmitter<AppEventMap> {
+    private static instance?: EventManager;
     private logger?: ILogger;
     private eventStats = new Map<keyof AppEventMap, number>();
     private eventHistory: EventHistoryEntry[] = [];
@@ -76,6 +80,16 @@ export class EventManager extends EventEmitter<AppEventMap> {
     constructor(logger?: ILogger) {
         super();
         this.logger = logger;
+    }
+    
+    /**
+     * 싱글톤 인스턴스 획득
+     */
+    static getInstance(logger?: ILogger): EventManager {
+        if (!EventManager.instance) {
+            EventManager.instance = new EventManager(logger);
+        }
+        return EventManager.instance;
     }
     
     /**
@@ -291,10 +305,11 @@ export class EventManager extends EventEmitter<AppEventMap> {
      * 이벤트 매니저 상태 조회
      */
     getStatus(): EventManagerStatus {
+        const eventNames = this.eventNames();
         return {
-            totalEvents: this.eventNames().length,
-            totalListeners: this.eventNames().reduce((sum, event) => 
-                sum + this.listenerCount(event), 0
+            totalEvents: eventNames.length,
+            totalListeners: eventNames.reduce((sum, event) => 
+                sum + this.listenerCount(event as keyof AppEventMap), 0
             ),
             totalEmitted: Array.from(this.eventStats.values()).reduce((sum, count) => 
                 sum + count, 0

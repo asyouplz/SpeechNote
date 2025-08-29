@@ -164,7 +164,7 @@ export class SettingsManager implements ISettingsManager {
                 settings.encryptedApiKey = this.encryption.encrypt(settings.apiKey);
                 // 원본 API 키는 저장하지 않음
                 const saveData = { ...settings };
-                delete saveData.apiKey;
+                delete (saveData as any).apiKey;
                 await this.plugin.saveData(saveData);
             } else {
                 await this.plugin.saveData(settings);
@@ -177,12 +177,12 @@ export class SettingsManager implements ISettingsManager {
         }
     }
 
-    get<K extends keyof PluginSettings>(key: K): PluginSettings[K] {
-        return this.settings[key];
+    get<K extends string>(key: K): any {
+        return (this.settings as any)[key];
     }
 
-    async set<K extends keyof PluginSettings>(key: K, value: PluginSettings[K]): Promise<void> {
-        this.settings[key] = value;
+    async set<K extends string>(key: K, value: any): Promise<void> {
+        (this.settings as any)[key] = value;
         
         // API 키가 변경되면 특별 처리
         if (key === 'apiKey' && typeof value === 'string') {
@@ -220,7 +220,7 @@ export class SettingsManager implements ISettingsManager {
         
         // 저장 시 API 키는 제외
         const saveData = { ...this.settings };
-        delete saveData.apiKey;
+        delete (saveData as any).apiKey;
         
         await this.plugin.saveData(saveData);
         this.logger?.debug('API key encrypted and saved', { 
@@ -238,7 +238,7 @@ export class SettingsManager implements ISettingsManager {
     // 설정 내보내기 (민감한 정보 제외)
     exportSettings(): Partial<PluginSettings> {
         const exported = { ...this.settings };
-        delete exported.apiKey;
+        delete (exported as any).apiKey;
         delete exported.encryptedApiKey;
         return exported;
     }

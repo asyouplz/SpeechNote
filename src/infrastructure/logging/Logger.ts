@@ -1,5 +1,7 @@
 import type { ILogger } from '../../types';
 
+export { ILogger };
+
 export class Logger implements ILogger {
     constructor(private prefix: string) {}
 

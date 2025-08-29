@@ -171,7 +171,7 @@ export class TranscriberFactoryRefactored {
             model: providerSettings.model || defaults.model,
             maxConcurrency: providerSettings.maxConcurrency ?? defaults.maxConcurrency,
             timeout: providerSettings.timeout ?? defaults.timeout,
-            rateLimit: providerSettings.rateLimit ?? defaults.rateLimit
+            rateLimit: (providerSettings as any).rateLimit ?? (defaults as any).rateLimit
         };
     }
 

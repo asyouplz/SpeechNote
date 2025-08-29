@@ -510,7 +510,7 @@ export class StatusMessageDisplay {
         }
         
         // 이벤트 발생
-        this.eventManager.emit('status:clear');
+        this.eventManager.emit('status:clear', {});
     }
     
     /**

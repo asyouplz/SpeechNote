@@ -299,7 +299,6 @@ export class DeepgramService {
                 headers,
                 body: audio,
                 throw: false,
-                timeout: this.TIMEOUT
             };
             
             const response = await requestUrl(requestParams);

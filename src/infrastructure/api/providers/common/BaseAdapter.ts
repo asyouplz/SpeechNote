@@ -167,7 +167,11 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
      * Log warning
      */
     protected logWarning(message: string, error?: Error, data?: any): void {
-        this.logger.warn(`${this.providerName}: ${message}`, error, data);
+        if (error) {
+            this.logger.warn(`${this.providerName}: ${message}`, { error, data });
+        } else {
+            this.logger.warn(`${this.providerName}: ${message}`, data);
+        }
     }
 
     /**
