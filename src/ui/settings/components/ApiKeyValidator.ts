@@ -74,13 +74,13 @@ export class ApiKeyValidator {
             return false;
         } catch (error) {
             // 401: 인증 실패 (잘못된 키)
-            if (error.status === 401) {
+            if ((error as any).status === 401) {
                 new Notice('❌ 유효하지 않은 API 키입니다');
                 return false;
             }
             
             // 429: Rate limit (키는 유효하지만 한도 초과)
-            if (error.status === 429) {
+            if ((error as any).status === 429) {
                 new Notice('⚠ API 키는 유효하지만 사용 한도를 초과했습니다');
                 return true; // 키 자체는 유효함
             }

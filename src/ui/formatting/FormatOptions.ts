@@ -706,8 +706,7 @@ export type TextFormat =
  * Format options export for external use
  */
 export const FormatOptions = {
-    FormatOptionsModal,
-    TextFormat
+    FormatOptionsModal
 };
 
 export { FormatOptionsModal as default };

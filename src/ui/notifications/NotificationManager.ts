@@ -617,7 +617,7 @@ class ProgressNotification implements IProgressNotification {
         notificationId: string,
         channel: ToastChannel,
         message: string,
-        options: ProgressNotificationOptions = {}
+        options: Partial<ProgressNotificationOptions> = {}
     ) {
         this.notificationId = notificationId;
         this.channel = channel;
@@ -1075,12 +1075,12 @@ export class NotificationManager extends EventEmitter implements INotificationAP
     }
 
     /**
-     * 이벤트 리스너 등록
+     * 이벤트 리스너 등록 (타입 안전한 구독)
      */
-    on(event: 'show', listener: (notification: NotificationOptions) => void): Unsubscribe;
-    on(event: 'dismiss', listener: (id: string) => void): Unsubscribe;
-    on(event: 'action', listener: (id: string, action: string) => void): Unsubscribe;
-    on(event: string, listener: (...args: any[]) => void): Unsubscribe {
+    subscribe(event: 'show', listener: (notification: NotificationOptions) => void): Unsubscribe;
+    subscribe(event: 'dismiss', listener: (id: string) => void): Unsubscribe;
+    subscribe(event: 'action', listener: (id: string, action: string) => void): Unsubscribe;
+    subscribe(event: string, listener: (...args: any[]) => void): Unsubscribe {
         super.on(event, listener);
         return () => this.off(event, listener);
     }

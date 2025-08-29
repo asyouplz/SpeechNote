@@ -29,7 +29,7 @@ export class GeneralSettings {
                 .addOption('end', '노트 끝')
                 .addOption('beginning', '노트 시작')
                 .setValue(this.plugin.settings.insertPosition)
-                .onChange(async (value: 'cursor' | 'end' | 'beginning') => {
+                .onChange(async (value: string) => {
                     this.plugin.settings.insertPosition = value;
                     await this.plugin.saveSettings();
                 }));
@@ -73,7 +73,7 @@ export class GeneralSettings {
                     .addOption('inline', '인라인')
                     .addOption('sidebar', '사이드바')
                     .setValue(this.plugin.settings.timestampFormat)
-                    .onChange(async (value: 'none' | 'inline' | 'sidebar') => {
+                    .onChange(async (value: string) => {
                         this.plugin.settings.timestampFormat = value;
                         await this.plugin.saveSettings();
                     }));

@@ -40,7 +40,7 @@ export class AudioSettings {
             .addDropdown(dropdown => dropdown
                 .addOption('whisper-1', 'Whisper-1 (기본)')
                 .setValue(this.plugin.settings.model)
-                .onChange(async (value: 'whisper-1') => {
+                .onChange(async (value: string) => {
                     this.plugin.settings.model = value;
                     await this.plugin.saveSettings();
                 }))

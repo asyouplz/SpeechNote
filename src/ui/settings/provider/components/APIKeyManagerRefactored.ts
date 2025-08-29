@@ -1,4 +1,4 @@
-import { Setting, Notice, ButtonComponent, Modal } from 'obsidian';
+import { App, Setting, Notice, ButtonComponent, Modal } from 'obsidian';
 import type SpeechToTextPlugin from '../../../../main';
 import { TranscriptionProvider } from '../../../../infrastructure/api/providers/ITranscriber';
 import { Encryptor } from '../../../../infrastructure/security/Encryptor';
@@ -257,7 +257,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             if (value.includes('*')) return;
             
             // 디바운스된 검증
-            this.debounce(`validate-${provider}`, () => {
+            setTimeout(() => {
                 this.validateInputFormat(inputEl, value, config.pattern);
             }, 500);
         });
@@ -697,11 +697,12 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             });
             
             // 설정 저장
+            const encryptedString = JSON.stringify(encrypted);
             if (provider === 'whisper') {
-                this.plugin.settings.apiKey = encrypted;
-                this.plugin.settings.whisperApiKey = encrypted;
+                this.plugin.settings.apiKey = encryptedString;
+                this.plugin.settings.whisperApiKey = encryptedString;
             } else if (provider === 'deepgram') {
-                this.plugin.settings.deepgramApiKey = encrypted;
+                this.plugin.settings.deepgramApiKey = encryptedString;
             }
             
             await this.saveSettings();
@@ -894,7 +895,8 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         for (const { provider, key } of providers) {
             if (key) {
                 try {
-                    const decrypted = await this.encryptor.decrypt(key);
+                    const encryptedData = JSON.parse(key);
+                    const decrypted = await this.encryptor.decrypt(encryptedData);
                     this.apiKeys.set(provider, {
                         provider,
                         key: decrypted,

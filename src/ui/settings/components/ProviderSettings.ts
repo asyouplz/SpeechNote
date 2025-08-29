@@ -616,7 +616,7 @@ export class ProviderSettings {
      * 연결 확인
      */
     private checkConnection(provider: TranscriptionProvider): boolean {
-        return this.apiKeys.has(provider) && this.apiKeys.get(provider)?.length > 0;
+        return this.apiKeys.has(provider) && (this.apiKeys.get(provider)?.length ?? 0) > 0;
     }
 
     /**
@@ -679,7 +679,7 @@ export class ProviderSettings {
     // === Save Methods ===
 
     private async saveProviderSelection(provider: string): Promise<void> {
-        this.plugin.settings.provider = provider;
+        this.plugin.settings.provider = provider as 'auto' | 'whisper' | 'deepgram';
         await this.plugin.saveSettings();
     }
 

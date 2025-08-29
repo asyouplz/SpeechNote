@@ -204,7 +204,7 @@ export class WeakCache<K extends object, V> {
  * DOM 요소 참조 관리자
  */
 export class DOMReferenceManager {
-    private elements = new WeakMap<string, WeakRef<HTMLElement>>();
+    private elements = new Map<string, WeakRef<HTMLElement>>();
     private cleanupRegistry = new FinalizationRegistry((id: string) => {
         console.debug(`Element with id ${id} was garbage collected`);
     });
