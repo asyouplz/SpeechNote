@@ -17,14 +17,14 @@ export interface CircularProgressOptions {
 }
 
 export class CircularProgress {
-    private element: HTMLElement | null = null;
-    private svg: SVGElement | null = null;
-    private progressCircle: SVGCircleElement | null = null;
-    private backgroundCircle: SVGCircleElement | null = null;
-    private percentageText: SVGTextElement | null = null;
-    private options: Required<CircularProgressOptions>;
-    private currentProgress: number = 0;
-    private animationFrame: number | null = null;
+    protected element: HTMLElement | null = null;
+    protected svg: SVGElement | null = null;
+    protected progressCircle: SVGPathElement | null = null;
+    protected backgroundCircle: SVGPathElement | null = null;
+    protected percentageText: SVGTextElement | null = null;
+    protected options: Required<CircularProgressOptions>;
+    protected currentProgress: number = 0;
+    protected animationFrame: number | null = null;
 
     constructor(options: CircularProgressOptions = {}) {
         this.options = {
