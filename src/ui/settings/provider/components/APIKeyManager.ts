@@ -791,11 +791,12 @@ export class APIKeyManager {
         this.apiKeys.set(provider, key);
         
         // 플러그인 설정에 저장
+        const encryptedString = JSON.stringify(encrypted);
         if (provider === 'whisper') {
-            this.plugin.settings.apiKey = encrypted;
-            this.plugin.settings.whisperApiKey = encrypted;
+            this.plugin.settings.apiKey = encryptedString;
+            this.plugin.settings.whisperApiKey = encryptedString;
         } else if (provider === 'deepgram') {
-            this.plugin.settings.deepgramApiKey = encrypted;
+            this.plugin.settings.deepgramApiKey = encryptedString;
         }
         
         await this.plugin.saveSettings();
@@ -835,7 +836,8 @@ export class APIKeyManager {
         if (this.plugin.settings.apiKey || this.plugin.settings.whisperApiKey) {
             try {
                 const key = this.plugin.settings.whisperApiKey || this.plugin.settings.apiKey;
-                const decrypted = await this.encryptor.decrypt(key);
+                const encryptedData = JSON.parse(key!);
+                const decrypted = await this.encryptor.decrypt(encryptedData);
                 this.apiKeys.set('whisper', decrypted);
             } catch (error) {
                 // 암호화되지 않은 키일 수 있음 (마이그레이션)
@@ -848,7 +850,8 @@ export class APIKeyManager {
         
         if (this.plugin.settings.deepgramApiKey) {
             try {
-                const decrypted = await this.encryptor.decrypt(this.plugin.settings.deepgramApiKey);
+                const encryptedData = JSON.parse(this.plugin.settings.deepgramApiKey);
+                const decrypted = await this.encryptor.decrypt(encryptedData);
                 this.apiKeys.set('deepgram', decrypted);
             } catch (error) {
                 // 암호화되지 않은 키일 수 있음

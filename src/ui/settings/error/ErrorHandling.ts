@@ -270,7 +270,7 @@ export class ErrorBoundary {
      * 에러 세부사항 가져오기
      */
     private getErrorDetails(error: Error): string {
-        const details = {
+        const details: any = {
             name: error.name,
             message: this.getSafeErrorMessage(error),
             stack: error.stack?.split('\n').slice(0, 5).join('\n'),
@@ -278,8 +278,8 @@ export class ErrorBoundary {
         };
         
         if (error instanceof SettingsError) {
-            details['type'] = error.type;
-            details['recoverable'] = error.recoverable;
+            details.type = error.type;
+            details.recoverable = error.recoverable;
         }
         
         return JSON.stringify(details, null, 2);

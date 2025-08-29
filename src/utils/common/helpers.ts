@@ -166,7 +166,7 @@ export function deepMerge<T extends Record<string, any>>(
                 if (!target[key]) {
                     Object.assign(target, { [key]: {} });
                 }
-                deepMerge(target[key], source[key]);
+                deepMerge(target[key], source[key] as Partial<T[Extract<keyof T, string>]>);
             } else {
                 Object.assign(target, { [key]: source[key] });
             }
