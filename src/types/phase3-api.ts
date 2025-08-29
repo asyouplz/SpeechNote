@@ -367,11 +367,12 @@ export interface PromptOptions extends ConfirmOptions {
 /**
  * 진행률 알림 옵션
  */
-export interface ProgressNotificationOptions extends Omit<NotificationOptions, 'progress'> {
+export interface ProgressNotificationOptions extends NotificationOptions {
     showPercentage?: boolean;
     showETA?: boolean;
     showSpeed?: boolean;
     updateInterval?: number;
+    progress?: number;
 }
 
 /**

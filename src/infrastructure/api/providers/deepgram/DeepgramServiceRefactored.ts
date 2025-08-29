@@ -261,7 +261,6 @@ export class DeepgramServiceRefactored {
             headers: this.buildHeaders(),
             body: audio,
             throw: false,
-            timeout: this.timeout
         };
     }
 

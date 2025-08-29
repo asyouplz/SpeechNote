@@ -15,18 +15,18 @@ import { FormatOptionsModal } from './ui/formatting/FormatOptions';
 import { SettingsTab } from './ui/settings/SettingsTab';
 
 export default class SpeechToTextPlugin extends Plugin {
-    settings: SpeechToTextSettings;
+    settings!: SpeechToTextSettings;
     manifest: any = {
         version: '1.0.0'
     };
-    private transcriptionService: TranscriptionService;
-    private settingsManager: SettingsManager;
-    private stateManager: StateManager;
-    private eventManager: EventManager;
-    private editorService: EditorService;
-    private textInsertionHandler: TextInsertionHandler;
-    private logger: Logger;
-    private errorHandler: ErrorHandler;
+    private transcriptionService!: TranscriptionService;
+    private settingsManager!: SettingsManager;
+    private stateManager!: StateManager;
+    private eventManager!: EventManager;
+    private editorService!: EditorService;
+    private textInsertionHandler!: TextInsertionHandler;
+    private logger!: Logger;
+    private errorHandler!: ErrorHandler;
 
     async onload() {
         console.log('Loading Speech-to-Text plugin');

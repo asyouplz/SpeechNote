@@ -272,7 +272,7 @@ export class WhisperService implements IWhisperService {
 
         try {
             const formData = this.buildFormData(audio, options);
-            const requestParams = this.buildRequestParams(formData);
+            const requestParams = await this.buildRequestParams(formData);
             
             this.logger.debug('Starting transcription request', {
                 fileSize: audio.byteLength,
@@ -341,17 +341,19 @@ export class WhisperService implements IWhisperService {
         return formData;
     }
 
-    private buildRequestParams(formData: FormData): RequestUrlParam {
+    private async buildRequestParams(formData: FormData): Promise<RequestUrlParam> {
+        // Convert FormData to ArrayBuffer for Obsidian's requestUrl
+        const body = new Uint8Array(await new Response(formData).arrayBuffer());
+        
         return {
             url: this.API_ENDPOINT,
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${this.apiKey}`,
-                // FormData가 자동으로 Content-Type 설정
+                // FormData content-type will be set manually if needed
             },
-            body: formData,
-            throw: false,
-            timeout: this.TIMEOUT
+            body: body.buffer,
+            throw: false
         };
     }
 
