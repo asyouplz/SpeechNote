@@ -1,4 +1,4 @@
-import { App, Plugin, Notice, TFile, Modal, MarkdownView } from 'obsidian';
+import { App, Plugin, Notice, TFile, Modal, MarkdownView, Menu } from 'obsidian';
 import { SpeechToTextSettings, DEFAULT_SETTINGS } from './domain/models/Settings';
 import { TranscriptionService } from './core/transcription/TranscriptionService';
 import { WhisperService } from './infrastructure/api/WhisperService';
@@ -37,6 +37,9 @@ export default class SpeechToTextPlugin extends Plugin {
             
             // Register commands
             this.registerCommands();
+            
+            // Register context menu items
+            this.registerContextMenu();
             
             // Add settings tab
             this.addSettingTab(new SettingsTab(this.app, this));
@@ -118,10 +121,30 @@ export default class SpeechToTextPlugin extends Plugin {
         );
     }
 
+    private registerContextMenu() {
+        // Register context menu for audio files
+        this.registerEvent(
+            this.app.workspace.on('file-menu', (menu, file) => {
+                // Check if the file is an audio file
+                const audioExtensions = ['m4a', 'mp3', 'wav', 'mp4', 'webm', 'ogg'];
+                if (file instanceof TFile && audioExtensions.includes(file.extension)) {
+                    menu.addItem((item) => {
+                        item
+                            .setTitle('Transcribe audio file')
+                            .setIcon('microphone')
+                            .onClick(async () => {
+                                await this.transcribeFile(file);
+                            });
+                    });
+                }
+            })
+        );
+    }
+
     private registerCommands() {
         // Command: Transcribe audio file
         this.addCommand({
-            id: 'transcribe-audio',
+            id: 'speech-to-text:transcribe-audio-file',
             name: 'Transcribe audio file',
             callback: () => {
                 this.showAudioFilePicker();
@@ -130,7 +153,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Transcribe from clipboard
         this.addCommand({
-            id: 'transcribe-clipboard',
+            id: 'speech-to-text:transcribe-from-clipboard',
             name: 'Transcribe audio from clipboard',
             callback: async () => {
                 new Notice('Clipboard transcription not yet implemented');
@@ -139,7 +162,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Show formatting options
         this.addCommand({
-            id: 'show-format-options',
+            id: 'speech-to-text:show-format-options',
             name: 'Show text formatting options',
             callback: () => {
                 this.showFormatOptions();
@@ -148,7 +171,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Show transcription history
         this.addCommand({
-            id: 'show-history',
+            id: 'speech-to-text:show-transcription-history',
             name: 'Show transcription history',
             callback: () => {
                 new Notice('Transcription history not yet implemented');
@@ -157,7 +180,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Cancel current transcription
         this.addCommand({
-            id: 'cancel-transcription',
+            id: 'speech-to-text:cancel-transcription',
             name: 'Cancel current transcription',
             callback: () => {
                 this.transcriptionService.cancel();
@@ -167,7 +190,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Undo last insertion
         this.addCommand({
-            id: 'undo-insertion',
+            id: 'speech-to-text:undo-insertion',
             name: 'Undo last text insertion',
             callback: async () => {
                 const success = await this.editorService.undo();
@@ -181,7 +204,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Redo last insertion
         this.addCommand({
-            id: 'redo-insertion',
+            id: 'speech-to-text:redo-insertion',
             name: 'Redo last text insertion',
             callback: async () => {
                 const success = await this.editorService.redo();
@@ -248,16 +271,8 @@ export default class SpeechToTextPlugin extends Plugin {
                 return;
             }
 
-            // Create status bar item with a safe approach
-            let statusBarItem: HTMLElement | null = null;
-            
-            try {
-                // addStatusBarItem() returns an HTMLElement
-                statusBarItem = this.addStatusBarItem();
-            } catch (e) {
-                console.warn('Failed to create status bar item:', e);
-                return;
-            }
+            // Create status bar item - addStatusBarItem() doesn't take parameters
+            const statusBarItem = this.addStatusBarItem();
             
             // Ensure statusBarItem exists before using it
             if (!statusBarItem) {
@@ -265,10 +280,22 @@ export default class SpeechToTextPlugin extends Plugin {
                 return;
             }
             
-            // Set initial text
-            statusBarItem.setText = statusBarItem.setText || ((text: string) => {
-                statusBarItem!.textContent = text;
-            });
+            // Set initial text as empty
+            statusBarItem.textContent = '';
+            
+            // Helper function to safely update text
+            const updateStatusText = (text: string) => {
+                if (statusBarItem) {
+                    try {
+                        // Ensure text is a string
+                        const safeText = text ? String(text) : '';
+                        // Direct text update using textContent
+                        statusBarItem.textContent = safeText;
+                    } catch (e) {
+                        console.warn('Failed to update status bar text:', e);
+                    }
+                }
+            };
             
             // Update status bar based on state
             this.stateManager.subscribe((state) => {
@@ -276,34 +303,38 @@ export default class SpeechToTextPlugin extends Plugin {
                     return;
                 }
                 
-                const updateText = (text: string) => {
-                    if (statusBarItem) {
-                        // Safe text update
-                        if (typeof statusBarItem.setText === 'function') {
-                            statusBarItem.setText(text);
-                        } else {
-                            statusBarItem.textContent = text;
-                        }
-                    }
-                };
-                
                 switch (state.status) {
                     case 'idle':
-                        updateText('');
+                        updateStatusText('');
                         break;
                     case 'processing':
-                        updateText('🎙️ Transcribing...');
+                        updateStatusText('🎙️ Transcribing...');
                         break;
                     case 'completed':
-                        updateText('✅ Transcription complete');
-                        setTimeout(() => updateText(''), 3000);
+                        updateStatusText('✅ Transcription complete');
+                        // Clear after 3 seconds
+                        setTimeout(() => {
+                            if (this.stateManager.getState().status === 'completed') {
+                                updateStatusText('');
+                            }
+                        }, 3000);
                         break;
                     case 'error':
-                        updateText('❌ Transcription failed');
-                        setTimeout(() => updateText(''), 3000);
+                        updateStatusText('❌ Transcription failed');
+                        // Clear after 3 seconds
+                        setTimeout(() => {
+                            if (this.stateManager.getState().status === 'error') {
+                                updateStatusText('');
+                            }
+                        }, 3000);
+                        break;
+                    default:
+                        updateStatusText('');
                         break;
                 }
             });
+            
+            console.log('Status bar item created successfully');
         } catch (error) {
             console.error('Error creating status bar item:', error);
             // Continue without status bar - non-critical feature

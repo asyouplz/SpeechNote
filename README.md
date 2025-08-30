@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-3.0.2-blue.svg)](https://github.com/asyouplz/SpeechNote-1/releases)
+[![Version](https://img.shields.io/badge/version-3.0.3-blue.svg)](https://github.com/asyouplz/SpeechNote-1/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D0.15.0-purple.svg)](https://obsidian.md)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20API-orange.svg)](https://platform.openai.com/docs/guides/speech-to-text)
@@ -130,17 +130,30 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/speech
 
 ### 📋 기본 사용법 (Basic Usage)
 
-#### 음성 파일 변환
+#### 음성 파일 변환 - 3가지 방법
+
+##### 방법 1: 명령 팔레트 사용
 1. **명령 팔레트 열기**: `Cmd/Ctrl + P`
 2. **명령 검색**: "Transcribe audio file" 입력
 3. **파일 선택**: 목록에서 음성 파일 선택
 4. **변환 대기**: 진행 상태바 확인
 5. **완료**: 텍스트가 노트에 자동 삽입
 
+##### 방법 2: 컨텍스트 메뉴 사용 ✨ NEW
+1. **파일 탐색기**에서 음성 파일 찾기
+2. **우클릭**: 오디오 파일에서 마우스 우클릭
+3. **메뉴 선택**: "Transcribe audio file" 클릭
+4. **자동 변환**: 변환이 시작되고 결과가 활성 노트에 삽입
+
+##### 방법 3: 단축키 사용
+1. **설정**: 설정 → 단축키에서 "Transcribe audio file" 검색
+2. **단축키 지정**: 원하는 키 조합 설정 (예: `Ctrl+Shift+T`)
+3. **실행**: 지정한 단축키로 빠르게 실행
+
 #### 빠른 실행 (Quick Actions)
 - **단축키 설정**: 설정 → 단축키에서 커스텀 키 지정
 - **리본 아이콘**: 왼쪽 리본에서 마이크 아이콘 클릭 (준비 중)
-- **컨텍스트 메뉴**: 오디오 파일 우클릭 → "Transcribe" (준비 중)
+- **컨텍스트 메뉴**: 오디오 파일 우클릭 → "Transcribe audio file" ✅ 사용 가능
 
 ### 🎵 지원 오디오 형식 (Supported Formats)
 
@@ -390,7 +403,25 @@ SpeechNote/
 3. 캐시 기능 활성화
 4. 네트워크 속도 확인
 
-### ✅ 최근 해결된 문제 (Recently Fixed Issues) - v3.0.2
+### ✅ 최근 해결된 문제 (Recently Fixed Issues) - v3.0.3
+
+#### 🎯 컨텍스트 메뉴 통합 (Fixed)
+**이전 증상**: 음성 파일 우클릭 시 변환 메뉴가 나타나지 않음
+
+**해결 내용**:
+- 파일 메뉴에 "Transcribe audio file" 옵션 추가
+- 지원 오디오 형식 자동 감지 및 검증
+- 메뉴에서 직접 변환 실행 가능
+
+#### 🔤 명령 팔레트 표시 개선 (Fixed)
+**이전 증상**: 명령 팔레트에서 "undefined" 텍스트 표시
+
+**해결 내용**:
+- 모든 명령어 ID에 "speech-to-text:" 접두사 추가
+- Obsidian API 명명 규칙 준수
+- 명령어 식별 체계 표준화
+
+### ✅ v3.0.2에서 해결된 문제
 
 #### 🔧 StatusBar 오류 (Fixed)
 **이전 증상**: 플러그인 로드 시 `toLowerCase` 오류 발생
@@ -510,7 +541,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 변경 사항 (Changelog)
 
-### 📋 최신 버전: v3.0.1 (2025-08-30)
+### 📋 최신 버전: v3.0.3 (2025-08-30)
+
+#### ✨ v3.0.3 버그 수정
+- **🎯 컨텍스트 메뉴 통합**: 파일 우클릭으로 음성 변환 실행
+- **🔤 명령 팔레트 수정**: undefined 표시 문제 해결
+- **📊 StatusBar 안정화**: 초기화 오류 방지
+- **⚙️ 설정 탭 개선**: 디버깅 로그 추가
+
+### 📋 v3.0.2 (2025-08-30)
+
+#### ✨ v3.0.2 개선사항
+- **🔧 StatusBar 오류 해결**: 안전한 텍스트 업데이트
+- **⚙️ 설정 탭 수정**: 표시 문제 해결
+- **🏗️ 아키텍처 개선**: 생명주기 관리 시스템 구축
+
+### 📋 v3.0.1 (2025-08-30)
 
 #### ✨ v3.0.1 개선사항
 - **🔧 TypeScript 타입 에러 41개 수정**
