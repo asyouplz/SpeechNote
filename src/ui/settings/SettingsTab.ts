@@ -126,13 +126,25 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('deepgram', 'Deepgram')
                     .setValue(this.plugin.settings.provider || 'auto')
                     .onChange(async (value) => {
+                        console.log('Provider dropdown changed to:', value);
                         this.plugin.settings.provider = value as 'auto' | 'whisper' | 'deepgram';
                         await this.plugin.saveSettings();
                         
                         // Provider별 설정 UI 업데이트
                         const settingsContainer = containerEl.parentElement?.querySelector('.provider-settings') as HTMLElement;
+                        console.log('Settings container found:', !!settingsContainer);
+                        
                         if (settingsContainer) {
+                            console.log('Updating provider settings UI for:', value);
                             this.renderProviderSettings(settingsContainer, value as 'auto' | 'whisper' | 'deepgram');
+                        } else {
+                            console.error('Could not find .provider-settings container');
+                        }
+                        
+                        // Provider 정보 업데이트
+                        const infoEl = containerEl.querySelector('.provider-info') as HTMLElement;
+                        if (infoEl) {
+                            this.updateProviderInfo(infoEl, value as 'auto' | 'whisper' | 'deepgram');
                         }
                         
                         new Notice(`Provider changed to: ${value}`);
@@ -146,19 +158,47 @@ export class SettingsTab extends PluginSettingTab {
     }
     
     private renderProviderSettings(containerEl: HTMLElement, provider: 'auto' | 'whisper' | 'deepgram'): void {
+        console.log('=== renderProviderSettings called ===');
+        console.log('Provider:', provider);
+        console.log('Container element:', containerEl);
+        
+        // 컨테이너를 비우기 전에 상태 저장
+        const wasConnected = containerEl.isConnected;
         containerEl.empty();
         
-        switch (provider) {
-            case 'auto':
-                this.renderAutoProviderSettings(containerEl);
-                break;
-            case 'whisper':
-                this.renderWhisperSettings(containerEl);
-                break;
-            case 'deepgram':
-                this.renderDeepgramSettings(containerEl);
-                break;
+        console.log('Container cleared, still connected:', wasConnected);
+        
+        try {
+            switch (provider) {
+                case 'auto':
+                    console.log('Rendering auto provider settings');
+                    this.renderAutoProviderSettings(containerEl);
+                    break;
+                case 'whisper':
+                    console.log('Rendering whisper settings');
+                    this.renderWhisperSettings(containerEl);
+                    break;
+                case 'deepgram':
+                    console.log('Rendering deepgram settings');
+                    this.renderDeepgramSettings(containerEl);
+                    break;
+                default:
+                    console.warn('Unknown provider:', provider);
+                    containerEl.createEl('p', {
+                        text: `Unknown provider: ${provider}`,
+                        cls: 'mod-warning'
+                    });
+            }
+        } catch (error) {
+            console.error('Error rendering provider settings:', error);
+            containerEl.createEl('p', {
+                text: 'Error loading provider settings',
+                cls: 'mod-warning'
+            });
         }
+        
+        console.log('Final container children:', containerEl.children.length);
+        console.log('=== renderProviderSettings completed ===');
     }
     
     private renderAutoProviderSettings(containerEl: HTMLElement): void {
@@ -231,9 +271,39 @@ export class SettingsTab extends PluginSettingTab {
     }
     
     private renderDeepgramSettings(containerEl: HTMLElement): void {
-        // Deepgram 설정 컴포넌트 사용
-        const deepgramSettings = new DeepgramSettings(this.plugin, containerEl);
-        deepgramSettings.render();
+        console.log('=== renderDeepgramSettings called ===');
+        console.log('Container element:', containerEl);
+        console.log('Container is connected:', containerEl.isConnected);
+        console.log('Container children before:', containerEl.children.length);
+        
+        // 먼저 컨테이너를 비웁니다
+        containerEl.empty();
+        
+        // Deepgram 전용 컨테이너 생성
+        const deepgramContainer = containerEl.createEl('div', {
+            cls: 'deepgram-settings-container'
+        });
+        
+        console.log('Deepgram container created:', deepgramContainer);
+        
+        try {
+            // Deepgram 설정 컴포넌트 사용
+            const deepgramSettings = new DeepgramSettings(this.plugin, deepgramContainer);
+            console.log('DeepgramSettings instance created');
+            
+            deepgramSettings.render();
+            console.log('DeepgramSettings.render() completed');
+            
+        } catch (error) {
+            console.error('Error rendering Deepgram settings:', error);
+            deepgramContainer.createEl('p', {
+                text: 'Error loading Deepgram settings',
+                cls: 'mod-warning'
+            });
+        }
+        
+        console.log('Container children after:', containerEl.children.length);
+        console.log('=== renderDeepgramSettings completed ===');
     }
     
     private renderWhisperApiKey(containerEl: HTMLElement): void {
