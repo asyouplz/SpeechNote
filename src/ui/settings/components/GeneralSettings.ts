@@ -1,5 +1,6 @@
 import { Setting } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
+import { InsertPosition, TimestampFormat } from '../../../domain/models/Settings';
 
 /**
  * 일반 설정 컴포넌트
@@ -30,7 +31,7 @@ export class GeneralSettings {
                 .addOption('beginning', '노트 시작')
                 .setValue(this.plugin.settings.insertPosition)
                 .onChange(async (value: string) => {
-                    this.plugin.settings.insertPosition = value;
+                    this.plugin.settings.insertPosition = value as InsertPosition;
                     await this.plugin.saveSettings();
                 }));
 
@@ -74,7 +75,7 @@ export class GeneralSettings {
                     .addOption('sidebar', '사이드바')
                     .setValue(this.plugin.settings.timestampFormat)
                     .onChange(async (value: string) => {
-                        this.plugin.settings.timestampFormat = value;
+                        this.plugin.settings.timestampFormat = value as TimestampFormat;
                         await this.plugin.saveSettings();
                     }));
         }

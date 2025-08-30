@@ -8,6 +8,9 @@ import { EventEmitter } from 'events';
 import { IProgressTracker, ProgressData, StepProgress, IProgressReporter } from '../../types/phase3-api';
 import { EventManager } from '../../application/EventManager';
 
+// Unsubscribe 타입 정의 (phase3-api에 정의되어 있으면 import로 변경)
+type Unsubscribe = () => void;
+
 /**
  * ETA 예측 알고리즘
  */
@@ -451,9 +454,21 @@ export class ProgressTracker implements IProgressTracker {
     on(event: 'error', listener: (error: Error) => void): Unsubscribe;
     on(event: 'pause', listener: () => void): Unsubscribe;
     on(event: 'resume', listener: () => void): Unsubscribe;
+    on(event: 'cancel', listener: () => void): Unsubscribe;
     on(event: string, listener: (...args: any[]) => void): Unsubscribe {
         this.emitter.on(event, listener);
         return () => this.emitter.off(event, listener);
+    }
+
+    /**
+     * 모든 이벤트 리스너 제거
+     */
+    removeAllListeners(event?: string): void {
+        if (event) {
+            this.emitter.removeAllListeners(event);
+        } else {
+            this.emitter.removeAllListeners();
+        }
     }
 }
 
