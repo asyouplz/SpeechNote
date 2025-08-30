@@ -2,7 +2,8 @@ import { SelectionStrategy } from '../../infrastructure/api/providers/ITranscrib
 
 export interface SpeechToTextSettings {
     apiKey: string;
-    model: WhisperModel;
+    apiEndpoint?: string;  // Added for custom API endpoint support
+    model: WhisperModel | string;  // Allow string for compatibility
     language: LanguageCode;
     autoInsert: boolean;
     insertPosition: InsertPosition;
