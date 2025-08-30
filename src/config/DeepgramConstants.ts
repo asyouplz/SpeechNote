@@ -98,6 +98,10 @@ export const API_CONSTANTS = {
         VISIBLE_START: 8,
         VISIBLE_END: 4,
         CHAR: '*'
+    },
+    TIMEOUT: {
+        MIN: 5000,  // 5 seconds
+        MAX: 120000  // 120 seconds
     }
 } as const;
 

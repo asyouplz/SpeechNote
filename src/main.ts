@@ -2,6 +2,9 @@ import { App, Plugin, Notice, TFile, Modal, MarkdownView, Menu } from 'obsidian'
 import { SpeechToTextSettings, DEFAULT_SETTINGS } from './domain/models/Settings';
 import { TranscriptionService } from './core/transcription/TranscriptionService';
 import { WhisperService } from './infrastructure/api/WhisperService';
+import { DeepgramService } from './infrastructure/api/providers/deepgram/DeepgramService';
+import { TranscriberFactory } from './infrastructure/api/TranscriberFactory';
+import { TranscriberToWhisperAdapter } from './infrastructure/api/adapters/TranscriberToWhisperAdapter';
 import { AudioProcessor } from './core/transcription/AudioProcessor';
 import { TextFormatter } from './core/transcription/TextFormatter';
 import { SettingsManager } from './infrastructure/storage/SettingsManager';
@@ -13,10 +16,12 @@ import { EditorService } from './application/EditorService';
 import { TextInsertionHandler } from './application/TextInsertionHandler';
 import { FormatOptionsModal } from './ui/formatting/FormatOptions';
 import { SettingsTab } from './ui/settings/SettingsTab';
+// import { SimpleSettingsTab } from './ui/settings/SimpleSettingsTab';
 
 export default class SpeechToTextPlugin extends Plugin {
     settings!: SpeechToTextSettings;
     private transcriptionService!: TranscriptionService;
+    private transcriberFactory!: TranscriberFactory;
     private settingsManager!: SettingsManager;
     private stateManager!: StateManager;
     private eventManager!: EventManager;
@@ -40,6 +45,7 @@ export default class SpeechToTextPlugin extends Plugin {
             
             // Add settings tab
             this.addSettingTab(new SettingsTab(this.app, this));
+            console.log('SettingsTab added');
             
             // Register event handlers
             this.registerEventHandlers();
@@ -96,26 +102,133 @@ export default class SpeechToTextPlugin extends Plugin {
             this.logger
         );
         
-        // Initialize transcription services
-        const whisperService = new WhisperService(
-            this.settings.apiKey,
+        // Initialize TranscriberFactory with proper settings
+        this.initializeTranscriberFactory();
+        
+        // Initialize transcription service with appropriate provider
+        this.initializeTranscriptionService();
+    }
+    
+    private initializeTranscriberFactory() {
+        // Create settings manager wrapper for TranscriberFactory
+        const factorySettingsManager = {
+            load: async () => {
+                await this.loadSettings();
+                return this.settings;
+            },
+            save: async (settings: any) => {
+                this.settings = settings;
+                await this.saveSettings();
+            },
+            get: (key: string) => {
+                if (key === 'transcription') {
+                    return {
+                        defaultProvider: this.settings.provider || 'whisper',
+                        autoSelect: this.settings.provider === 'auto',
+                        selectionStrategy: this.settings.selectionStrategy,
+                        fallbackEnabled: this.settings.fallbackStrategy !== 'none',
+                        
+                        whisper: {
+                            enabled: !!this.settings.apiKey || !!this.settings.whisperApiKey,
+                            apiKey: this.settings.whisperApiKey || this.settings.apiKey
+                        },
+                        
+                        deepgram: {
+                            enabled: !!this.settings.deepgramApiKey,
+                            apiKey: this.settings.deepgramApiKey,
+                            model: this.settings.deepgramModel || 'nova-2'
+                        },
+                        
+                        abTest: {
+                            enabled: this.settings.abTestEnabled,
+                            trafficSplit: this.settings.abTestSplit
+                        },
+                        
+                        monitoring: {
+                            enabled: this.settings.metricsEnabled
+                        }
+                    };
+                }
+                if (key === 'apiKey') {
+                    return this.settings.apiKey;
+                }
+                return (this.settings as any)[key];
+            },
+            set: async (key: string, value: any) => {
+                if (key === 'transcription') {
+                    // Map back to settings
+                    if (value.defaultProvider) {
+                        this.settings.provider = value.defaultProvider;
+                    }
+                    if (value.whisper?.apiKey) {
+                        this.settings.whisperApiKey = value.whisper.apiKey;
+                    }
+                    if (value.deepgram?.apiKey) {
+                        this.settings.deepgramApiKey = value.deepgram.apiKey;
+                    }
+                } else {
+                    (this.settings as any)[key] = value;
+                }
+                await this.saveSettings();
+            }
+        };
+        
+        this.transcriberFactory = new TranscriberFactory(
+            factorySettingsManager,
             this.logger
         );
+    }
+    
+    private initializeTranscriptionService() {
+        // Get the appropriate transcriber based on settings
+        const provider = this.settings.provider || 'whisper';
         
-        const audioProcessor = new AudioProcessor(
-            this.app.vault,
-            this.logger
-        );
+        let whisperCompatibleService: any;
         
-        const textFormatter = new TextFormatter(this.settings);
+        try {
+            // Always try to use TranscriberFactory first for better provider support
+            const transcriber = this.transcriberFactory.getProvider(
+                provider === 'auto' ? 'auto' : provider as any
+            );
+            
+            // Wrap the ITranscriber in an adapter to make it IWhisperService compatible
+            whisperCompatibleService = new TranscriberToWhisperAdapter(transcriber, this.logger);
+            
+            this.logger.info(`Initialized transcription service with provider: ${transcriber.getProviderName()}`);
+        } catch (error) {
+            this.logger.warn('Failed to initialize transcriber from factory, using fallback', error as Error);
+            
+            // Fallback to direct WhisperService if factory fails
+            const apiKey = this.settings.whisperApiKey || this.settings.apiKey;
+            if (apiKey) {
+                whisperCompatibleService = new WhisperService(apiKey, this.logger);
+                this.logger.info('Initialized fallback WhisperService');
+            } else {
+                // No API key available - will be handled in transcribeFile method
+                whisperCompatibleService = null;
+                this.logger.warn('No transcription service initialized - API key missing');
+            }
+        }
         
-        this.transcriptionService = new TranscriptionService(
-            whisperService,
-            audioProcessor,
-            textFormatter,
-            this.eventManager,
-            this.logger
-        );
+        if (whisperCompatibleService) {
+            const audioProcessor = new AudioProcessor(
+                this.app.vault,
+                this.logger
+            );
+            
+            const textFormatter = new TextFormatter(this.settings);
+            
+            this.transcriptionService = new TranscriptionService(
+                whisperCompatibleService,
+                audioProcessor,
+                textFormatter,
+                this.eventManager,
+                this.logger,
+                this.settings // 🔥 설정 전달
+            );
+            
+            this.logger.debug('TranscriptionService initialized successfully');
+        }
     }
 
     private registerContextMenu() {
@@ -226,12 +339,36 @@ export default class SpeechToTextPlugin extends Plugin {
         });
 
         this.eventManager.on('transcription:complete', async (data) => {
+            this.logger.debug('=== Transcription complete event received ===', {
+                hasData: !!data,
+                hasResult: !!data?.result,
+                hasText: !!data?.text,
+                hasResultText: !!data?.result?.text,
+                textLength: data?.text?.length || data?.result?.text?.length || 0,
+                autoInsert: this.settings.autoInsert
+            });
+            
             this.stateManager.setState({ status: 'completed' });
             new Notice('Transcription completed successfully');
             
+            // Extract text from either data.text or data.result.text
+            const textToInsert = data.text || data.result?.text;
+            
+            if (!textToInsert) {
+                this.logger.error('No text found in transcription complete event', undefined, { data });
+                new Notice('Transcription completed but no text was returned');
+                return;
+            }
+            
             // Auto-insert if enabled
-            if (this.settings.autoInsert && data.text) {
-                await this.insertTranscriptionWithOptions(data.text);
+            if (this.settings.autoInsert) {
+                this.logger.debug('Auto-inserting transcribed text', {
+                    textLength: textToInsert.length,
+                    textPreview: textToInsert.substring(0, 100)
+                });
+                await this.insertTranscriptionWithOptions(textToInsert);
+            } else {
+                this.logger.debug('Auto-insert disabled, text not inserted');
             }
         });
 
@@ -364,19 +501,62 @@ export default class SpeechToTextPlugin extends Plugin {
 
     private async transcribeFile(file: TFile) {
         try {
-            // Check if API key is configured
-            if (!this.settings.apiKey) {
-                new Notice('Please configure your OpenAI API key in settings');
+            // Check if appropriate API key is configured based on provider
+            const provider = this.settings.provider || 'whisper';
+            let hasValidApiKey = false;
+            let errorMessage = '';
+            
+            if (provider === 'whisper') {
+                hasValidApiKey = !!(this.settings.apiKey || this.settings.whisperApiKey);
+                errorMessage = 'Please configure your OpenAI API key in settings';
+            } else if (provider === 'deepgram') {
+                hasValidApiKey = !!this.settings.deepgramApiKey;
+                errorMessage = 'Please configure your Deepgram API key in settings';
+            } else if (provider === 'auto') {
+                // For auto mode, check if at least one API key exists
+                hasValidApiKey = !!(this.settings.apiKey || this.settings.whisperApiKey || this.settings.deepgramApiKey);
+                errorMessage = 'Please configure at least one API key (OpenAI or Deepgram) in settings';
+            }
+            
+            if (!hasValidApiKey) {
+                new Notice(errorMessage);
                 return;
+            }
+            
+            // Ensure transcription service is initialized
+            if (!this.transcriptionService) {
+                // Try to initialize it now
+                this.initializeTranscriptionService();
+                
+                if (!this.transcriptionService) {
+                    new Notice('Failed to initialize transcription service. Please check your API keys.');
+                    return;
+                }
             }
 
             // Start transcription
+            this.logger.debug('Starting transcription for file:', { fileName: file.name });
             const result = await this.transcriptionService.transcribe(file);
+            
+            this.logger.debug('Transcription result received:', {
+                hasResult: !!result,
+                hasText: !!result?.text,
+                textLength: result?.text?.length || 0,
+                textPreview: result?.text?.substring(0, 100)
+            });
+            
+            if (!result || !result.text) {
+                this.logger.error('Transcription returned no text', undefined, { result });
+                new Notice('Transcription completed but no text was returned');
+                return;
+            }
             
             // Show format options or insert directly
             if (this.settings.showFormatOptions) {
+                this.logger.debug('Showing format options with text');
                 this.showFormatOptionsWithText(result.text);
             } else {
+                this.logger.debug('Inserting text directly without format options');
                 await this.insertTranscriptionWithOptions(result.text);
             }
             
@@ -386,6 +566,13 @@ export default class SpeechToTextPlugin extends Plugin {
     }
 
     private async insertTranscriptionWithOptions(text: string) {
+        this.logger.debug('=== insertTranscriptionWithOptions START ===', {
+            textLength: text?.length || 0,
+            textPreview: text?.substring(0, 100),
+            insertPosition: this.settings.insertPosition,
+            autoInsert: this.settings.autoInsert
+        });
+        
         // Use TextInsertionHandler with current settings
         const options = {
             mode: this.settings.insertPosition === 'cursor' ? 'cursor' as const :
@@ -397,10 +584,16 @@ export default class SpeechToTextPlugin extends Plugin {
             language: this.settings.language,
             createNewNote: !this.editorService.hasActiveEditor()
         };
+        
+        this.logger.debug('Inserting text with options:', options);
 
         const success = await this.textInsertionHandler.insertText(text, options);
         
-        if (!success) {
+        if (success) {
+            this.logger.info('Text successfully inserted');
+            new Notice('Transcription inserted successfully');
+        } else {
+            this.logger.warn('TextInsertionHandler failed, using legacy method');
             // Fallback to old method
             await this.insertTranscriptionLegacy(text);
         }
@@ -474,6 +667,16 @@ export default class SpeechToTextPlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
+    }
+    
+    async saveSettingsAndReinitialize() {
+        await this.saveData(this.settings);
+        
+        // Reinitialize services when settings change
+        if (this.transcriberFactory) {
+            this.initializeTranscriberFactory();
+            this.initializeTranscriptionService();
+        }
     }
 }
 

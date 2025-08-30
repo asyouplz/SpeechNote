@@ -25,6 +25,8 @@ export interface AudioMetadata {
     sampleRate?: number;
     channels?: number;
     codec?: string;
+    format?: string; // 파일 형식 (mp3, wav, m4a 등)
+    fileSize?: number; // 파일 크기 (bytes)
 }
 
 export interface TranscriptionResult {
