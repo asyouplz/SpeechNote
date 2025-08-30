@@ -17,7 +17,7 @@
 이 문서는 Obsidian Speech-to-Text 플러그인의 주요 API를 설명합니다. 모든 public 클래스, 메서드, 인터페이스에 대한 상세 정보를 제공합니다.
 
 ### API 버전
-- **현재 버전**: 3.0.0
+- **현재 버전**: 3.0.3
 - **최소 Obsidian 버전**: 0.15.0
 - **TypeScript 버전**: 5.0.4
 - **지원 Provider**: OpenAI Whisper, Deepgram Nova 2
@@ -366,11 +366,21 @@ interface PluginSettings {
   whisperPrompt?: string;         // Whisper 프롬프트
   whisperTemperature?: number;    // Whisper 온도
   
-  // Deepgram 설정
-  deepgramTier: 'nova-2' | 'nova' | 'enhanced' | 'base';  // Deepgram 티어
-  deepgramPunctuate: boolean;     // 자동 문장부호
-  deepgramDiarize: boolean;       // 화자 분리
-  deepgramSmartFormat: boolean;   // 스마트 포매팅
+  // Deepgram 설정 (v3.0.3 업데이트)
+  deepgramSettings: {
+    model: 'nova-2' | 'nova' | 'enhanced' | 'base';  // Deepgram 모델
+    language?: string;           // 언어 코드
+    features: {
+      punctuation?: boolean;     // 자동 문장부호
+      diarization?: boolean;     // 화자 분리
+      smartFormat?: boolean;     // 스마트 포매팅
+      numerals?: boolean;        // 숫자 변환
+      profanityFilter?: boolean; // 욕설 필터
+      redaction?: string[];      // 민감정보 제거
+      utterances?: boolean;      // 발화 단위 분할
+      summarization?: boolean;   // 요약 생성
+    };
+  };
   
   // 공통 설정
   language: string;              // 기본 언어 (auto, ko, en 등)
@@ -1419,6 +1429,13 @@ if (!this.app.vault.adapter) {
 
 ### Breaking Changes
 
+#### v3.0.3 (2025-08-30)
+- **개선사항**:
+  - Deepgram 설정 구조 개선 (`deepgramSettings` 객체로 통합)
+  - 추가 Deepgram 기능 지원 (요약, 민감정보 제거 등)
+  - Provider 설정 UI 개선
+  - 비용 추정 기능 추가
+
 #### v3.0.0 (2025-08-28)
 - **주요 변경사항**:
   - Deepgram Nova 2 API 통합
@@ -1498,5 +1515,5 @@ export async function waitForEvent(
 
 ---
 
-*최종 업데이트: 2025-08-28*
-*API 버전: 3.0.0*
+*최종 업데이트: 2025-08-30*
+*API 버전: 3.0.3*
