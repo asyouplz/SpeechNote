@@ -216,6 +216,23 @@ export default class SpeechToTextPlugin extends Plugin {
                 this.logger
             );
             
+            // Get current provider capabilities and set them on AudioProcessor
+            try {
+                const currentProvider = this.transcriberFactory.getProvider(
+                    this.settings.provider === 'auto' ? 'auto' : this.settings.provider as any
+                );
+                const capabilities = currentProvider.getCapabilities();
+                audioProcessor.setProviderCapabilities(capabilities);
+                
+                this.logger.debug('AudioProcessor configured with provider capabilities', {
+                    provider: currentProvider.getProviderName(),
+                    maxFileSize: capabilities.maxFileSize,
+                    supportedFormats: capabilities.audioFormats
+                });
+            } catch (error) {
+                this.logger.warn('Failed to get provider capabilities, using defaults', error as Error);
+            }
+            
             const textFormatter = new TextFormatter(this.settings);
             
             this.transcriptionService = new TranscriptionService(

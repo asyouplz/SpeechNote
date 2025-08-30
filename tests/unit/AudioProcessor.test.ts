@@ -5,6 +5,7 @@
 import { AudioProcessor } from '../../src/core/transcription/AudioProcessor';
 import { Vault } from 'obsidian';
 import type { ILogger } from '../../src/types';
+import type { ProviderCapabilities } from '../../src/infrastructure/api/providers/ITranscriber';
 import {
     createMockAudioFile,
     createMockArrayBuffer,
@@ -188,6 +189,113 @@ describe('AudioProcessor', () => {
 
             expect(metadata).toBeDefined();
             expect(metadata.duration).toBeUndefined();
+        });
+    });
+
+    describe('provider capabilities', () => {
+        it('should use default 25MB limit when no provider capabilities set', async () => {
+            const file = createMockAudioFile({
+                size: 26 * 1024 * 1024 // 26MB
+            });
+
+            const result = await audioProcessor.validate(file);
+
+            expect(result.valid).toBe(false);
+            expect(result.errors![0]).toContain('exceeds maximum allowed size (25MB)');
+        });
+
+        it('should use provider-specific file size limits (Deepgram 2GB)', async () => {
+            const deepgramCapabilities: ProviderCapabilities = {
+                streaming: true,
+                realtime: true,
+                languages: ['en', 'ko'],
+                maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
+                audioFormats: ['mp3', 'wav', 'flac'],
+                features: [],
+                models: ['nova-2']
+            };
+
+            audioProcessor.setProviderCapabilities(deepgramCapabilities);
+
+            // 26MB file should now be valid for Deepgram
+            const file = createMockAudioFile({
+                size: 26 * 1024 * 1024 // 26MB
+            });
+
+            const result = await audioProcessor.validate(file);
+
+            expect(result.valid).toBe(true);
+            expect(result.errors).toBeUndefined();
+        });
+
+        it('should reject files exceeding provider-specific limits', async () => {
+            const deepgramCapabilities: ProviderCapabilities = {
+                streaming: true,
+                realtime: true,
+                languages: ['en'],
+                maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
+                audioFormats: ['mp3'],
+                features: [],
+                models: ['nova-2']
+            };
+
+            audioProcessor.setProviderCapabilities(deepgramCapabilities);
+
+            // 3GB file should be rejected even for Deepgram
+            const file = createMockAudioFile({
+                size: 3 * 1024 * 1024 * 1024 // 3GB
+            });
+
+            const result = await audioProcessor.validate(file);
+
+            expect(result.valid).toBe(false);
+            expect(result.errors![0]).toContain('exceeds maximum allowed size (2048MB)');
+        });
+
+        it('should use Whisper 25MB limit correctly', async () => {
+            const whisperCapabilities: ProviderCapabilities = {
+                streaming: false,
+                realtime: false,
+                languages: ['en', 'ko'],
+                maxFileSize: 25 * 1024 * 1024, // 25MB
+                audioFormats: ['mp3', 'wav', 'mp4', 'm4a'],
+                features: [],
+                models: ['whisper-1']
+            };
+
+            audioProcessor.setProviderCapabilities(whisperCapabilities);
+
+            // 26MB file should be rejected for Whisper
+            const file = createMockAudioFile({
+                size: 26 * 1024 * 1024 // 26MB
+            });
+
+            const result = await audioProcessor.validate(file);
+
+            expect(result.valid).toBe(false);
+            expect(result.errors![0]).toContain('exceeds maximum allowed size (25MB)');
+        });
+
+        it('should log provider capabilities when set', () => {
+            const capabilities: ProviderCapabilities = {
+                streaming: true,
+                realtime: true,
+                languages: ['en'],
+                maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
+                audioFormats: ['mp3'],
+                features: [],
+                models: ['nova-2']
+            };
+
+            audioProcessor.setProviderCapabilities(capabilities);
+
+            expect(mockLogger.debug).toHaveBeenCalledWith(
+                'Provider capabilities updated',
+                expect.objectContaining({
+                    maxFileSize: '2GB',
+                    supportedFormats: ['mp3']
+                })
+            );
         });
     });
 

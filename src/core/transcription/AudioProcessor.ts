@@ -6,12 +6,49 @@ import type {
     AudioMetadata,
     ILogger,
 } from '../../types';
+import type { ProviderCapabilities } from '../../infrastructure/api/providers/ITranscriber';
 
 export class AudioProcessor implements IAudioProcessor {
-    private readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+    private readonly DEFAULT_MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB (default/fallback)
     private readonly SUPPORTED_FORMATS = ['.m4a', '.mp3', '.wav', '.mp4'];
+    private providerCapabilities: ProviderCapabilities | null = null;
 
     constructor(private vault: Vault, private logger: ILogger) {}
+
+    /**
+     * Set provider-specific capabilities including file size limits
+     */
+    setProviderCapabilities(capabilities: ProviderCapabilities): void {
+        this.providerCapabilities = capabilities;
+        this.logger.debug('Provider capabilities updated', {
+            provider: capabilities.maxFileSize,
+            maxFileSize: this.formatSize(capabilities.maxFileSize),
+            supportedFormats: capabilities.audioFormats
+        });
+    }
+
+    /**
+     * Get the maximum file size based on provider capabilities
+     */
+    private getMaxFileSize(): number {
+        return this.providerCapabilities?.maxFileSize || this.DEFAULT_MAX_FILE_SIZE;
+    }
+
+    /**
+     * Format file size in human-readable format
+     */
+    private formatSize(bytes: number): string {
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let size = bytes;
+        let unitIndex = 0;
+        
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        
+        return `${Math.round(size * 10) / 10}${units[unitIndex]}`;
+    }
 
     async validate(file: TFile): Promise<ValidationResult> {
         const errors: string[] = [];
@@ -28,11 +65,12 @@ export class AudioProcessor implements IAudioProcessor {
         }
 
         // Check file size
-        if (file.stat.size > this.MAX_FILE_SIZE) {
+        const maxFileSize = this.getMaxFileSize();
+        if (file.stat.size > maxFileSize) {
+            const fileSizeMB = Math.round(file.stat.size / 1024 / 1024);
+            const maxSizeMB = Math.round(maxFileSize / 1024 / 1024);
             errors.push(
-                `File size (${Math.round(
-                    file.stat.size / 1024 / 1024
-                )}MB) exceeds maximum allowed size (25MB)`
+                `File size (${fileSizeMB}MB) exceeds maximum allowed size (${maxSizeMB}MB)`
             );
         }
 
