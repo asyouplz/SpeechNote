@@ -41,7 +41,7 @@ export class AudioSettings {
                 .addOption('whisper-1', 'Whisper-1 (기본)')
                 .setValue(this.plugin.settings.model)
                 .onChange(async (value: string) => {
-                    this.plugin.settings.model = value;
+                    this.plugin.settings.model = value as 'whisper-1';
                     await this.plugin.saveSettings();
                 }))
             .setDisabled(true); // 현재는 whisper-1만 지원

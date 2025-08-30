@@ -395,7 +395,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
                 currentProvider: value as TranscriptionProvider | 'auto' 
             }));
             
-            this.plugin.settings.provider = value;
+            this.plugin.settings.provider = value as 'auto' | 'whisper' | 'deepgram';
             await this.saveSettings();
             
             // 캐시 무효화
@@ -717,8 +717,8 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         this.memoCache.clear();
         
         // 하위 컴포넌트 정리
-        this.apiKeyManager.destroy?.();
-        this.advancedPanel.destroy?.();
+        (this.apiKeyManager as any).destroy?.();
+        (this.advancedPanel as any).destroy?.();
     }
 }
 

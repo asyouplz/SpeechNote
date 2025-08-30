@@ -8,7 +8,7 @@ import { SettingsAPI } from '../../infrastructure/api/SettingsAPI';
 import { SecureApiKeyManager } from '../../infrastructure/security/Encryptor';
 import { SettingsValidator } from '../../infrastructure/api/SettingsValidator';
 import type { SettingsSchema, ValidationResult } from '../../types/phase3-api';
-import { AutoDisposable } from '../../utils/memory/MemoryManager';
+import { AutoDisposable, ResourceManager } from '../../utils/memory/MemoryManager';
 
 /**
  * 개선된 설정 탭
@@ -18,7 +18,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private settingsAPI: SettingsAPI;
     private apiKeyManager: SecureApiKeyManager;
     private validator: SettingsValidator;
-    private memoryManager: AutoDisposable;
+    private memoryManager: ResourceManager;
     private isDirty: boolean = false;
     private autoSaveTimeout: NodeJS.Timeout | null = null;
 

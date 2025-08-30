@@ -748,7 +748,8 @@ class ChannelSelectionStrategy {
 /**
  * 통합 알림 시스템
  */
-export class NotificationManager extends EventEmitter implements INotificationAPI {
+export class NotificationManager implements INotificationAPI {
+    private emitter = new EventEmitter();
     private channels: Map<string, NotificationChannel> = new Map();
     private queue: PriorityQueue<NotificationOptions> = new PriorityQueue();
     private rateLimiter: RateLimiter;
@@ -759,7 +760,6 @@ export class NotificationManager extends EventEmitter implements INotificationAP
     private recentMessages: Map<string, number> = new Map(); // 최근 메시지 추적
 
     constructor(config: NotificationConfig = {}) {
-        super();
         this.config = {
             defaultPosition: 'top-right',
             defaultDuration: 5000,
@@ -829,7 +829,7 @@ export class NotificationManager extends EventEmitter implements INotificationAP
         );
         
         // 이벤트 발생
-        this.emit('show', notification);
+        this.emitter.emit('show', notification);
         this.eventManager.emit('notification:show', { id, notification });
         
         return id;
@@ -886,7 +886,7 @@ export class NotificationManager extends EventEmitter implements INotificationAP
         this.channels.forEach(channel => channel.dismiss(notificationId));
         this.activeNotifications.delete(notificationId);
         
-        this.emit('dismiss', notificationId);
+        this.emitter.emit('dismiss', notificationId);
         this.eventManager.emit('notification:dismiss', { id: notificationId });
         
         // 큐에서 다음 알림 처리
@@ -1081,8 +1081,8 @@ export class NotificationManager extends EventEmitter implements INotificationAP
     subscribe(event: 'dismiss', listener: (id: string) => void): Unsubscribe;
     subscribe(event: 'action', listener: (id: string, action: string) => void): Unsubscribe;
     subscribe(event: string, listener: (...args: any[]) => void): Unsubscribe {
-        super.on(event, listener);
-        return () => this.off(event, listener);
+        this.emitter.on(event, listener);
+        return () => this.emitter.off(event, listener);
     }
 
     /**
@@ -1135,10 +1135,21 @@ export class NotificationManager extends EventEmitter implements INotificationAP
     }
 
     /**
+     * 이벤트 리스너 등록 - INotificationAPI 인터페이스 구현
+     */
+    on(event: 'show', listener: (notification: NotificationOptions) => void): () => void;
+    on(event: 'dismiss', listener: (id: string) => void): () => void;
+    on(event: 'action', listener: (id: string, action: string) => void): () => void;
+    on(event: string, listener: (...args: any[]) => void): () => void {
+        this.emitter.on(event, listener);
+        return () => this.emitter.off(event, listener);
+    }
+
+    /**
      * 정리
      */
     dispose(): void {
         this.dismissAll();
-        this.removeAllListeners();
+        this.emitter.removeAllListeners();
     }
 }
