@@ -1,106 +1,107 @@
 # Changelog
 
-이 프로젝트의 모든 주요 변경사항은 이 파일에 문서화됩니다.
+All notable changes to the Speech to Text plugin will be documented in this file.
 
-형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.0.0/)를 기반으로 하며,
-이 프로젝트는 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2025-08-30
 
-## [3.0.1] - 2025-08-30
+### 🎉 Initial Release
 
-### 개선사항 (Improved)
+#### Added
+- **Multi-Provider Transcription Support**
+  - OpenAI Whisper API integration
+  - Deepgram Nova 2 API integration
+  - Automatic provider selection based on file size and format
+  - Fallback mechanism for provider failures
 
-#### TypeScript 타입 시스템 강화
-- **타입 에러 41개 수정 완료**
-  - `tsconfig.json`의 `strict` 모드에서 발생한 모든 타입 에러 해결
-  - 타입 안전성 대폭 향상으로 런타임 에러 가능성 감소
-  
-#### 코드 품질 개선
-- **타입 정의 명확화**
-  - 모든 함수 매개변수와 반환 타입 명시
-  - `any` 타입 사용 최소화
-  - 인터페이스와 타입 별칭 적절히 활용
-  
-- **Null 안전성 강화**
-  - Optional chaining (`?.`) 활용
-  - Nullish coalescing (`??`) 연산자 적용
-  - 명시적 null/undefined 체크 추가
+- **Multi-language Support**
+  - 40+ language support with auto-detection
+  - Manual language selection option
+  - Provider-optimized language processing
 
-#### 빌드 시스템 개선
-- **TypeScript 컴파일 성공**
-  - 모든 TypeScript 컴파일 에러 해결
-  - 빌드 파이프라인 안정성 향상
-  - CI/CD 파이프라인 통과
+- **Smart Text Insertion**
+  - Insert at cursor position
+  - Insert at beginning/end of note
+  - Auto note creation when no active editor
+  - Automatic text insertion after transcription
 
-### 기술적 세부사항 (Technical Details)
+- **Audio Format Support**
+  - M4A, MP3, WAV, MP4 (both providers)
+  - WebM, OGG, FLAC (Deepgram only)
+  - File size limits: 25MB (Whisper), 2GB (Deepgram)
+  - Audio format auto-detection and validation
 
-#### 수정된 주요 타입 에러 카테고리
-1. **암시적 any 타입** (15개)
-   - 함수 매개변수 타입 명시
-   - 콜백 함수 타입 정의
-   
-2. **Null/Undefined 처리** (12개)
-   - Optional property 접근 수정
-   - Null 체크 로직 추가
-   
-3. **타입 불일치** (8개)
-   - 인터페이스 구현 정합성 확보
-   - 제네릭 타입 파라미터 수정
-   
-4. **모듈 타입 정의** (6개)
-   - 외부 라이브러리 타입 정의 추가
-   - 커스텀 타입 선언 파일 생성
+- **User Interface Features**
+  - Command palette integration
+  - Context menu for audio files (right-click transcription)
+  - Real-time progress indication in status bar
+  - Comprehensive settings panel with tabbed interface
 
-## [3.0.0] - 2025-08-29
+- **Advanced Features**
+  - Deepgram-specific settings (punctuation, smart format, etc.)
+  - Caching system for improved performance
+  - Network retry and timeout handling
+  - Debug logging and error reporting
 
-### 추가됨 (Added)
-- Multi-Provider 지원 (OpenAI Whisper, Deepgram)
-- 향상된 설정 UI (탭 네비게이션)
-- 실시간 음성 변환 지원
-- 고급 캐싱 시스템
-- Provider별 상세 설정
+- **Performance Optimizations**
+  - Asynchronous processing
+  - Non-blocking UI operations
+  - Cancellation support for ongoing transcriptions
+  - Intelligent provider routing
 
-### 변경됨 (Changed)
-- 설정 UI 전면 개편
-- 성능 최적화
-- 에러 처리 개선
+#### Technical Implementation
+- **Architecture**
+  - Clean Architecture with separated layers
+  - Dependency injection pattern
+  - Event-driven system for status updates
+  - Adapter pattern for provider abstraction
 
-### 수정됨 (Fixed)
-- Windows 11 호환성 문제
-- 메모리 누수 이슈
-- API 응답 처리 버그
+- **Quality Assurance**
+  - TypeScript strict mode compliance
+  - Comprehensive error handling
+  - Input validation and sanitization
+  - Robust API key management
 
-## [2.0.0] - 2025-08-28
+- **Development Experience**
+  - ESBuild-based build system
+  - Development mode with hot reload
+  - Comprehensive logging system
+  - Structured project organization
 
-### 추가됨 (Added)
-- Deepgram API 통합
-- 다국어 지원 확대
-- 자동 언어 감지
+### Known Limitations
+- Community plugin store submission pending
+- Local Whisper model not yet supported
+- Real-time streaming transcription not available
 
-### 변경됨 (Changed)
-- 아키텍처 리팩토링
-- 모듈화 개선
-
-## [1.0.0] - 2025-08-27
-
-### 추가됨 (Added)
-- 초기 릴리스
-- OpenAI Whisper API 지원
-- 기본 음성 변환 기능
-- 한국어/영어 지원
+### Compatibility
+- **Obsidian**: 0.15.0 or higher
+- **Node.js**: 16.0.0 or higher (for development)
+- **Platforms**: Windows, macOS, Linux
 
 ---
 
-## 버전 정보
+## Future Releases
 
-- **현재 안정 버전**: 3.0.1
-- **최소 Obsidian 버전**: 0.15.0
-- **Node.js 버전**: 18.x 이상
-- **TypeScript 버전**: 5.x
+### Planned for v1.1.0
+- [ ] Community plugin store availability
+- [ ] Real-time streaming transcription (Deepgram)
+- [ ] Batch processing for multiple files
+- [ ] Enhanced audio preprocessing
 
-## 링크
+### Planned for v1.2.0
+- [ ] Google Speech-to-Text integration
+- [ ] Azure Speech Services integration
+- [ ] Local Whisper model support
+- [ ] Advanced audio editing features
 
-- [GitHub Repository](https://github.com/asyouplz/SpeechNote-1)
-- [Issue Tracker](https://github.com/asyouplz/SpeechNote-1/issues)
-- [Release Notes](https://github.com/asyouplz/SpeechNote-1/releases)
+### Long-term Roadmap (v2.0.0+)
+- [ ] AI-powered transcription summaries
+- [ ] Speaker diarization
+- [ ] Custom model training support
+- [ ] Enterprise features
+
+---
+
+For detailed technical documentation and development guides, see the project's documentation.

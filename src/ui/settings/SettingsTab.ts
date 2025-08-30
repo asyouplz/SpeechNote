@@ -1,420 +1,584 @@
-import { App, PluginSettingTab, Setting, Notice, Modal, ButtonComponent, TextComponent } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
-import { PluginSettings } from '../../infrastructure/storage/SettingsManager';
-import { ApiKeyValidator } from './components/ApiKeyValidator';
-import { ShortcutSettings } from './components/ShortcutSettings';
-import { AdvancedSettings } from './components/AdvancedSettings';
-import { GeneralSettings } from './components/GeneralSettings';
-import { AudioSettings } from './components/AudioSettings';
-import { ProviderSettings } from './components/ProviderSettings';
+import { DeepgramSettings } from './components/DeepgramSettings';
 
 /**
- * 설정 탭 UI 컴포넌트
- * 플러그인의 모든 설정을 관리하는 메인 설정 페이지
+ * 간소화된 설정 탭 UI
+ * 핵심 기능만 포함하여 안정성을 높인 버전
  */
 export class SettingsTab extends PluginSettingTab {
     plugin: SpeechToTextPlugin;
-    private apiKeyValidator: ApiKeyValidator;
-    private shortcutSettings: ShortcutSettings;
-    private advancedSettings: AdvancedSettings;
-    private generalSettings: GeneralSettings;
-    private audioSettings: AudioSettings;
-    private providerSettings: ProviderSettings;
 
     constructor(app: App, plugin: SpeechToTextPlugin) {
         super(app, plugin);
         this.plugin = plugin;
-        
-        // 컴포넌트 초기화
-        this.apiKeyValidator = new ApiKeyValidator(plugin);
-        this.shortcutSettings = new ShortcutSettings(app, plugin);
-        this.advancedSettings = new AdvancedSettings(plugin);
-        this.generalSettings = new GeneralSettings(plugin);
-        this.audioSettings = new AudioSettings(plugin);
-        this.providerSettings = new ProviderSettings(plugin);
     }
 
     display(): void {
         const { containerEl } = this;
+        
+        // Enhanced debugging
+        console.log('=== SettingsTab display() called ===');
+        console.log('Container element:', containerEl);
+        console.log('Container element exists:', !!containerEl);
+        console.log('Container element type:', containerEl?.constructor?.name);
+        console.log('Plugin instance:', this.plugin);
+        console.log('Plugin instance exists:', !!this.plugin);
+        console.log('Plugin settings object:', this.plugin?.settings);
+        console.log('Plugin settings keys:', this.plugin?.settings ? Object.keys(this.plugin.settings) : 'N/A');
+        
+        // Check if container is visible
+        if (containerEl) {
+            console.log('Container parent element:', containerEl.parentElement);
+            console.log('Container is connected to DOM:', containerEl.isConnected);
+            console.log('Container display style:', window.getComputedStyle(containerEl).display);
+        }
+        
+        // Clear existing content
         containerEl.empty();
-        containerEl.addClass('speech-to-text-settings');
-
-        // 헤더
-        this.createHeader(containerEl);
-
-        // 섹션별 설정
-        this.createGeneralSection(containerEl);
-        this.createProviderSection(containerEl); // 새로운 Provider 섹션
-        this.createAudioSection(containerEl);
-        this.createAdvancedSection(containerEl);
-        this.createShortcutSection(containerEl);
         
-        // 푸터
-        this.createFooter(containerEl);
-    }
-
-    /**
-     * 헤더 생성
-     */
-    private createHeader(containerEl: HTMLElement): void {
-        const headerEl = containerEl.createDiv({ cls: 'settings-header' });
+        // Add main title
+        const titleEl = containerEl.createEl('h2', { text: 'Speech to Text Settings' });
+        console.log('Title element created:', titleEl);
         
-        headerEl.createEl('h2', { 
-            text: 'Speech to Text 설정',
-            cls: 'settings-title' 
+        // Add debug info section at the top
+        const debugSection = containerEl.createEl('details', { cls: 'speech-to-text-debug' });
+        const debugSummary = debugSection.createEl('summary', { text: 'Debug Information' });
+        const debugContent = debugSection.createEl('pre', { 
+            text: JSON.stringify({
+                pluginExists: !!this.plugin,
+                settingsExists: !!this.plugin?.settings,
+                apiKey: this.plugin?.settings?.apiKey ? 'Set (hidden)' : 'Not set',
+                language: this.plugin?.settings?.language || 'Not set',
+                autoInsert: this.plugin?.settings?.autoInsert,
+                insertPosition: this.plugin?.settings?.insertPosition,
+                model: this.plugin?.settings?.model,
+                timestamp: new Date().toISOString()
+            }, null, 2)
         });
+        console.log('Debug section added');
         
-        headerEl.createEl('p', { 
-            text: '음성을 텍스트로 변환하는 플러그인 설정을 구성합니다.',
-            cls: 'settings-description' 
-        });
-
-        // 상태 표시
-        const statusEl = headerEl.createDiv({ cls: 'settings-status' });
-        this.updateStatus(statusEl);
-    }
-
-    /**
-     * 일반 설정 섹션
-     */
-    private createGeneralSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'General', '기본 동작 설정');
-        this.generalSettings.render(sectionEl);
-    }
-
-    /**
-     * Provider 설정 섹션
-     */
-    private createProviderSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Provider', 'Transcription Provider 설정');
-        this.providerSettings.render(sectionEl);
-    }
-
-    /**
-     * 오디오 설정 섹션
-     */
-    private createAudioSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Audio', '음성 변환 설정');
-        this.audioSettings.render(sectionEl);
-    }
-
-    /**
-     * 고급 설정 섹션
-     */
-    private createAdvancedSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Advanced', '고급 설정');
-        this.advancedSettings.render(sectionEl);
-    }
-
-    /**
-     * 단축키 설정 섹션
-     */
-    private createShortcutSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Shortcuts', '단축키 설정');
-        this.shortcutSettings.render(sectionEl);
-    }
-
-    /**
-     * 푸터 생성
-     */
-    private createFooter(containerEl: HTMLElement): void {
-        const footerEl = containerEl.createDiv({ cls: 'settings-footer' });
-        
-        // 설정 내보내기/가져오기
-        const exportImportEl = footerEl.createDiv({ cls: 'settings-export-import' });
-        
-        new ButtonComponent(exportImportEl)
-            .setButtonText('설정 내보내기')
-            .onClick(async () => {
-                await this.exportSettings();
+        try {
+            // API Settings Section
+            console.log('Creating API section...');
+            this.createApiSection(containerEl);
+            console.log('API section created');
+            
+            // General Settings Section
+            console.log('Creating General section...');
+            this.createGeneralSection(containerEl);
+            console.log('General section created');
+            
+            // Audio Settings Section
+            console.log('Creating Audio section...');
+            this.createAudioSection(containerEl);
+            console.log('Audio section created');
+            
+            // Advanced Settings Section
+            console.log('Creating Advanced section...');
+            this.createAdvancedSection(containerEl);
+            console.log('Advanced section created');
+            
+            console.log('=== Settings tab rendered successfully ===');
+            console.log('Total child elements:', containerEl.children.length);
+            
+        } catch (error) {
+            console.error('=== Error displaying settings ===');
+            console.error('Error details:', error);
+            console.error('Error stack:', error instanceof Error ? error.stack : 'N/A');
+            
+            containerEl.empty();
+            containerEl.createEl('h2', { text: 'Settings Error' });
+            containerEl.createEl('p', { 
+                text: 'Error loading settings. Please reload the plugin.',
+                cls: 'mod-warning'
             });
-
-        new ButtonComponent(exportImportEl)
-            .setButtonText('설정 가져오기')
-            .onClick(async () => {
-                await this.importSettings();
+            containerEl.createEl('pre', { 
+                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+                cls: 'error-details'
             });
-
-        // 초기화 버튼
-        new ButtonComponent(footerEl)
-            .setButtonText('기본값으로 초기화')
-            .setWarning()
-            .onClick(async () => {
-                const confirmed = await this.confirmReset();
-                if (confirmed) {
-                    await this.resetSettings();
-                }
-            });
-
-        // 버전 정보
-        const versionEl = footerEl.createDiv({ cls: 'settings-version' });
-        versionEl.createEl('small', { 
-            text: `Version ${this.plugin.manifest.version} | `,
-            cls: 'version-text'
-        });
-        
-        const linkEl = versionEl.createEl('a', { 
-            text: '도움말',
-            href: 'https://github.com/yourusername/obsidian-speech-to-text',
-            cls: 'help-link'
-        });
-        linkEl.setAttribute('target', '_blank');
+        }
     }
 
-    /**
-     * 섹션 생성 헬퍼
-     */
-    private createSection(containerEl: HTMLElement, title: string, desc: string): HTMLElement {
-        const sectionEl = containerEl.createDiv({ cls: `settings-section settings-section-${title.toLowerCase()}` });
+    private createApiSection(containerEl: HTMLElement): void {
+        containerEl.createEl('h3', { text: 'API Configuration' });
         
-        const headerEl = sectionEl.createDiv({ cls: 'section-header' });
-        headerEl.createEl('h3', { text: title });
-        headerEl.createEl('p', { text: desc, cls: 'section-description' });
+        // Provider 선택 섹션
+        const providerContainer = containerEl.createEl('div', { cls: 'provider-selection' });
+        this.createProviderSelection(providerContainer);
         
-        const contentEl = sectionEl.createDiv({ cls: 'section-content' });
+        // Provider별 설정 컨테이너
+        const settingsContainer = containerEl.createEl('div', { cls: 'provider-settings' });
         
-        return contentEl;
+        // 선택된 Provider에 따라 동적으로 설정 표시
+        const currentProvider = this.plugin.settings.provider || 'auto';
+        this.renderProviderSettings(settingsContainer, currentProvider);
     }
-
-    /**
-     * API 사용량 표시
-     */
-    private createApiUsageDisplay(containerEl: HTMLElement): void {
-        const usageEl = containerEl.createDiv({ cls: 'api-usage-display' });
+    
+    private createProviderSelection(containerEl: HTMLElement): void {
+        console.log('=== createProviderSelection called ===');
+        console.log('Creating Setting instance...');
         
-        usageEl.createEl('h4', { text: 'API 사용량' });
+        try {
+            const setting = new Setting(containerEl);
+            console.log('Setting instance created:', setting);
+            console.log('Setting element:', setting.settingEl);
+            console.log('Setting element in DOM:', setting.settingEl?.isConnected);
+            
+            setting
+                .setName('Transcription Provider')
+                .setDesc('Select the speech-to-text provider')
+                .addDropdown(dropdown => {
+                    console.log('Dropdown callback called');
+                    console.log('Dropdown component:', dropdown);
+                    
+                    dropdown
+                    .addOption('auto', 'Auto (Intelligent Selection)')
+                    .addOption('whisper', 'OpenAI Whisper')
+                    .addOption('deepgram', 'Deepgram')
+                    .setValue(this.plugin.settings.provider || 'auto')
+                    .onChange(async (value) => {
+                        console.log('Provider dropdown changed to:', value);
+                        this.plugin.settings.provider = value as 'auto' | 'whisper' | 'deepgram';
+                        await this.plugin.saveSettings();
+                        
+                        // Provider별 설정 UI 업데이트
+                        const settingsContainer = containerEl.parentElement?.querySelector('.provider-settings') as HTMLElement;
+                        console.log('Settings container found:', !!settingsContainer);
+                        
+                        if (settingsContainer) {
+                            console.log('Updating provider settings UI for:', value);
+                            this.renderProviderSettings(settingsContainer, value as 'auto' | 'whisper' | 'deepgram');
+                        } else {
+                            console.error('Could not find .provider-settings container');
+                        }
+                        
+                        // Provider 정보 업데이트
+                        const infoEl = containerEl.querySelector('.provider-info') as HTMLElement;
+                        if (infoEl) {
+                            this.updateProviderInfo(infoEl, value as 'auto' | 'whisper' | 'deepgram');
+                        }
+                        
+                        new Notice(`Provider changed to: ${value}`);
+                    });
+                    
+                    console.log('Dropdown setup complete');
+                    console.log('Dropdown element:', dropdown.selectEl);
+                    console.log('Dropdown options:', dropdown.selectEl?.options.length);
+                });
+            
+            console.log('Provider selection setting created successfully');
+            console.log('=== createProviderSelection completed ===');
+        } catch (error) {
+            console.error('Error creating provider selection:', error);
+            console.error('Error stack:', error instanceof Error ? error.stack : 'N/A');
+        }
         
-        const statsEl = usageEl.createDiv({ cls: 'usage-stats' });
-        
-        // 사용량 통계 (예시)
-        statsEl.createEl('div', { 
-            text: '이번 달 사용량: 0 / 무제한',
-            cls: 'usage-item' 
-        });
-        
-        statsEl.createEl('div', { 
-            text: '예상 비용: $0.00',
-            cls: 'usage-item' 
-        });
-        
-        // 새로고침 버튼
-        new ButtonComponent(usageEl)
-            .setButtonText('사용량 새로고침')
-            .onClick(async () => {
-                // API 사용량 조회 로직
-                new Notice('사용량 정보를 업데이트했습니다');
-            });
+        // Provider 설명
+        const infoEl = containerEl.createEl('div', { cls: 'provider-info' });
+        infoEl.style.cssText = 'margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 4px;';
+        this.updateProviderInfo(infoEl, this.plugin.settings.provider || 'auto');
     }
-
-    /**
-     * 상태 업데이트
-     */
-    private updateStatus(statusEl: HTMLElement): void {
-        statusEl.empty();
+    
+    private renderProviderSettings(containerEl: HTMLElement, provider: 'auto' | 'whisper' | 'deepgram'): void {
+        console.log('=== renderProviderSettings called ===');
+        console.log('Provider:', provider);
+        console.log('Container element:', containerEl);
         
-        const settings = this.plugin.settings;
-        const statusItems: Array<{ label: string; value: string; status: 'success' | 'warning' | 'error' }> = [];
+        // 컨테이너를 비우기 전에 상태 저장
+        const wasConnected = containerEl.isConnected;
+        containerEl.empty();
         
-        // API 키 상태
-        if (settings.apiKey) {
-            statusItems.push({
-                label: 'API 키',
-                value: '구성됨',
-                status: 'success'
-            });
-        } else {
-            statusItems.push({
-                label: 'API 키',
-                value: '미구성',
-                status: 'error'
+        console.log('Container cleared, still connected:', wasConnected);
+        
+        try {
+            switch (provider) {
+                case 'auto':
+                    console.log('Rendering auto provider settings');
+                    this.renderAutoProviderSettings(containerEl);
+                    break;
+                case 'whisper':
+                    console.log('Rendering whisper settings');
+                    this.renderWhisperSettings(containerEl);
+                    break;
+                case 'deepgram':
+                    console.log('Rendering deepgram settings');
+                    this.renderDeepgramSettings(containerEl);
+                    break;
+                default:
+                    console.warn('Unknown provider:', provider);
+                    containerEl.createEl('p', {
+                        text: `Unknown provider: ${provider}`,
+                        cls: 'mod-warning'
+                    });
+            }
+        } catch (error) {
+            console.error('Error rendering provider settings:', error);
+            containerEl.createEl('p', {
+                text: 'Error loading provider settings',
+                cls: 'mod-warning'
             });
         }
         
-        // 캐시 상태
-        statusItems.push({
-            label: '캐시',
-            value: settings.enableCache ? '활성화' : '비활성화',
-            status: settings.enableCache ? 'success' : 'warning'
+        console.log('Final container children:', containerEl.children.length);
+        console.log('=== renderProviderSettings completed ===');
+    }
+    
+    private renderAutoProviderSettings(containerEl: HTMLElement): void {
+        containerEl.createEl('h4', { text: 'Automatic Provider Selection' });
+        
+        // Selection Strategy
+        new Setting(containerEl)
+            .setName('Selection Strategy')
+            .setDesc('How to choose between available providers')
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('cost_optimized', 'Cost Optimized')
+                    .addOption('performance_optimized', 'Performance Optimized')
+                    .addOption('quality_optimized', 'Quality Optimized')
+                    .addOption('balanced', 'Balanced')
+                    .setValue(this.plugin.settings.selectionStrategy || 'performance_optimized')
+                    .onChange(async (value) => {
+                        this.plugin.settings.selectionStrategy = value as any;
+                        await this.plugin.saveSettings();
+                    });
+            });
+        
+        // Fallback 전략
+        new Setting(containerEl)
+            .setName('Fallback Strategy')
+            .setDesc('What to do when primary provider fails')
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('auto', 'Automatic Fallback')
+                    .addOption('manual', 'Ask User')
+                    .addOption('none', 'No Fallback')
+                    .setValue(this.plugin.settings.fallbackStrategy || 'auto')
+                    .onChange(async (value) => {
+                        this.plugin.settings.fallbackStrategy = value as 'auto' | 'manual' | 'none';
+                        await this.plugin.saveSettings();
+                    });
+            });
+        
+        // API Keys for both providers
+        containerEl.createEl('h5', { text: 'Provider API Keys' });
+        containerEl.createEl('p', { 
+            text: 'Configure API keys for each provider to enable automatic selection',
+            cls: 'setting-item-description'
         });
         
-        // 언어 설정
-        statusItems.push({
-            label: '언어',
-            value: this.getLanguageLabel(settings.language),
-            status: 'success'
+        // Whisper API Key
+        this.renderWhisperApiKey(containerEl);
+        
+        // Deepgram API Key  
+        this.renderDeepgramApiKey(containerEl);
+    }
+    
+    private renderWhisperSettings(containerEl: HTMLElement): void {
+        containerEl.createEl('h4', { text: 'OpenAI Whisper Configuration' });
+        
+        // Whisper API Key
+        this.renderWhisperApiKey(containerEl);
+        
+        // API Endpoint
+        new Setting(containerEl)
+            .setName('API Endpoint')
+            .setDesc('OpenAI API endpoint (leave default unless using custom endpoint)')
+            .addText(text => text
+                .setPlaceholder('https://api.openai.com/v1')
+                .setValue(this.plugin.settings.apiEndpoint || 'https://api.openai.com/v1')
+                .onChange(async (value) => {
+                    this.plugin.settings.apiEndpoint = value || 'https://api.openai.com/v1';
+                    await this.plugin.saveSettings();
+                }));
+    }
+    
+    private renderDeepgramSettings(containerEl: HTMLElement): void {
+        console.log('=== renderDeepgramSettings called ===');
+        console.log('Container element:', containerEl);
+        console.log('Container is connected:', containerEl.isConnected);
+        console.log('Container children before:', containerEl.children.length);
+        
+        // 먼저 컨테이너를 비웁니다
+        containerEl.empty();
+        
+        // Deepgram 전용 컨테이너 생성
+        const deepgramContainer = containerEl.createEl('div', {
+            cls: 'deepgram-settings-container'
         });
         
-        // 상태 아이템 렌더링
-        statusItems.forEach(item => {
-            const itemEl = statusEl.createDiv({ cls: `status-item status-${item.status}` });
-            itemEl.createEl('span', { text: `${item.label}: `, cls: 'status-label' });
-            itemEl.createEl('span', { text: item.value, cls: 'status-value' });
-        });
+        console.log('Deepgram container created:', deepgramContainer);
+        
+        try {
+            // Deepgram 설정 컴포넌트 사용
+            const deepgramSettings = new DeepgramSettings(this.plugin, deepgramContainer);
+            console.log('DeepgramSettings instance created');
+            
+            deepgramSettings.render();
+            console.log('DeepgramSettings.render() completed');
+            
+        } catch (error) {
+            console.error('Error rendering Deepgram settings:', error);
+            deepgramContainer.createEl('p', {
+                text: 'Error loading Deepgram settings',
+                cls: 'mod-warning'
+            });
+        }
+        
+        console.log('Container children after:', containerEl.children.length);
+        console.log('=== renderDeepgramSettings completed ===');
+    }
+    
+    private renderWhisperApiKey(containerEl: HTMLElement): void {
+        new Setting(containerEl)
+            .setName('OpenAI API Key')
+            .setDesc('Enter your OpenAI API key for Whisper transcription')
+            .addText(text => {
+                text
+                    .setPlaceholder('sk-...')
+                    .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
+                    .onChange(async (value) => {
+                        if (value && !value.includes('*')) {
+                            this.plugin.settings.apiKey = value;
+                            this.plugin.settings.whisperApiKey = value; // 호환성을 위해 양쪽에 저장
+                            await this.plugin.saveSettings();
+                            
+                            text.setValue(this.maskApiKey(value));
+                            new Notice('OpenAI API key saved');
+                        }
+                    });
+                
+                text.inputEl.type = 'password';
+                
+                text.inputEl.addEventListener('focus', () => {
+                    if (this.plugin.settings.apiKey) {
+                        text.setValue(this.plugin.settings.apiKey);
+                    }
+                });
+                
+                text.inputEl.addEventListener('blur', () => {
+                    if (this.plugin.settings.apiKey) {
+                        text.setValue(this.maskApiKey(this.plugin.settings.apiKey));
+                    }
+                });
+            });
+    }
+    
+    private renderDeepgramApiKey(containerEl: HTMLElement): void {
+        new Setting(containerEl)
+            .setName('Deepgram API Key')
+            .setDesc('Enter your Deepgram API key for transcription')
+            .addText(text => {
+                text
+                    .setPlaceholder('Enter Deepgram API key...')
+                    .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))
+                    .onChange(async (value) => {
+                        if (value && !value.includes('*')) {
+                            this.plugin.settings.deepgramApiKey = value;
+                            await this.plugin.saveSettings();
+                            
+                            text.setValue(this.maskApiKey(value));
+                            new Notice('Deepgram API key saved');
+                        }
+                    });
+                
+                text.inputEl.type = 'password';
+                
+                text.inputEl.addEventListener('focus', () => {
+                    if (this.plugin.settings.deepgramApiKey) {
+                        text.setValue(this.plugin.settings.deepgramApiKey);
+                    }
+                });
+                
+                text.inputEl.addEventListener('blur', () => {
+                    if (this.plugin.settings.deepgramApiKey) {
+                        text.setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey));
+                    }
+                });
+            });
+    }
+    
+    private updateProviderInfo(infoEl: HTMLElement, provider: 'auto' | 'whisper' | 'deepgram'): void {
+        infoEl.empty();
+        
+        const descriptions = {
+            auto: '🤖 Intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
+            whisper: '🎯 OpenAI Whisper - High-quality transcription with support for multiple languages. Best for general-purpose transcription.',
+            deepgram: '⚡ Deepgram - Fast, accurate transcription with advanced AI features. Best for real-time processing and speaker diarization.'
+        };
+        
+        infoEl.createEl('p', { text: descriptions[provider] });
     }
 
-    /**
-     * API 키 마스킹
-     */
+    private createGeneralSection(containerEl: HTMLElement): void {
+        containerEl.createEl('h3', { text: 'General Settings' });
+        
+        // Language setting
+        new Setting(containerEl)
+            .setName('Language')
+            .setDesc('Primary language for transcription')
+            .addDropdown(dropdown => dropdown
+                .addOption('auto', 'Auto-detect')
+                .addOption('en', 'English')
+                .addOption('ko', '한국어')
+                .addOption('ja', '日本語')
+                .addOption('zh', '中文')
+                .addOption('es', 'Español')
+                .addOption('fr', 'Français')
+                .addOption('de', 'Deutsch')
+                .setValue(this.plugin.settings.language || 'auto')
+                .onChange(async (value) => {
+                    this.plugin.settings.language = value;
+                    await this.plugin.saveSettings();
+                }));
+        
+        // Auto-insert setting
+        new Setting(containerEl)
+            .setName('Auto-insert transcription')
+            .setDesc('Automatically insert transcribed text into the active note')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.autoInsert || false)
+                .onChange(async (value) => {
+                    this.plugin.settings.autoInsert = value;
+                    await this.plugin.saveSettings();
+                }));
+        
+        // Insert position
+        new Setting(containerEl)
+            .setName('Insert position')
+            .setDesc('Where to insert transcribed text')
+            .addDropdown(dropdown => dropdown
+                .addOption('cursor', 'At cursor position')
+                .addOption('end', 'At end of note')
+                .addOption('beginning', 'At beginning of note')
+                .setValue(this.plugin.settings.insertPosition || 'cursor')
+                .onChange(async (value) => {
+                    this.plugin.settings.insertPosition = value as 'cursor' | 'end' | 'beginning';
+                    await this.plugin.saveSettings();
+                }));
+        
+        // Show format options
+        new Setting(containerEl)
+            .setName('Show format options')
+            .setDesc('Show formatting options before inserting text')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.showFormatOptions || false)
+                .onChange(async (value) => {
+                    this.plugin.settings.showFormatOptions = value;
+                    await this.plugin.saveSettings();
+                }));
+    }
+
+    private createAudioSection(containerEl: HTMLElement): void {
+        containerEl.createEl('h3', { text: 'Audio Settings' });
+        
+        // Model selection - Provider에 따라 다르게 표시
+        const provider = this.plugin.settings.provider || 'auto';
+        if (provider === 'whisper' || provider === 'auto') {
+            new Setting(containerEl)
+                .setName('Whisper Model')
+                .setDesc('Select the Whisper model to use')
+                .addDropdown(dropdown => dropdown
+                    .addOption('whisper-1', 'Whisper v1 (Default)')
+                    .setValue(this.plugin.settings.model || 'whisper-1')
+                    .onChange(async (value) => {
+                        this.plugin.settings.model = value;
+                        await this.plugin.saveSettings();
+                    }));
+        }
+        
+        // Temperature setting
+        new Setting(containerEl)
+            .setName('Temperature')
+            .setDesc('Sampling temperature (0-1). Lower values make output more focused and deterministic')
+            .addText(text => text
+                .setPlaceholder('0.0')
+                .setValue(String(this.plugin.settings.temperature || 0))
+                .onChange(async (value) => {
+                    const temp = parseFloat(value);
+                    if (!isNaN(temp) && temp >= 0 && temp <= 1) {
+                        this.plugin.settings.temperature = temp;
+                        await this.plugin.saveSettings();
+                    }
+                }));
+        
+        // Add timestamp
+        new Setting(containerEl)
+            .setName('Add timestamp')
+            .setDesc('Add timestamp to transcribed text')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.addTimestamp || false)
+                .onChange(async (value) => {
+                    this.plugin.settings.addTimestamp = value;
+                    await this.plugin.saveSettings();
+                }));
+    }
+
+    private createAdvancedSection(containerEl: HTMLElement): void {
+        containerEl.createEl('h3', { text: 'Advanced Settings' });
+        
+        // Enable cache
+        new Setting(containerEl)
+            .setName('Enable cache')
+            .setDesc('Cache transcription results to avoid re-processing')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableCache !== false)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableCache = value;
+                    await this.plugin.saveSettings();
+                }));
+        
+        // Debug mode
+        new Setting(containerEl)
+            .setName('Debug mode')
+            .setDesc('Enable debug logging in console')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.debugMode || false)
+                .onChange(async (value) => {
+                    this.plugin.settings.debugMode = value;
+                    await this.plugin.saveSettings();
+                    
+                    if (value) {
+                        new Notice('Debug mode enabled. Check console for logs.');
+                    }
+                }));
+        
+        // Reset settings button
+        new Setting(containerEl)
+            .setName('Reset to defaults')
+            .setDesc('Reset all settings to their default values')
+            .addButton(button => button
+                .setButtonText('Reset')
+                .setWarning()
+                .onClick(async () => {
+                    const confirmed = confirm('Are you sure you want to reset all settings to defaults?');
+                    if (confirmed) {
+                        // Import default settings
+                        const { DEFAULT_SETTINGS } = await import('../../domain/models/Settings');
+                        this.plugin.settings = { ...DEFAULT_SETTINGS };
+                        await this.plugin.saveSettings();
+                        
+                        // Refresh the display
+                        this.display();
+                        new Notice('Settings reset to defaults');
+                    }
+                }));
+    }
+
     private maskApiKey(key: string): string {
-        if (!key || key.length < 10) return '***';
+        if (!key || key.length < 10) {
+            return '';
+        }
+        
+        // Show first 7 and last 4 characters
         const visibleStart = 7;
         const visibleEnd = 4;
-        const masked = '*'.repeat(Math.max(0, key.length - visibleStart - visibleEnd));
-        return key.substring(0, visibleStart) + masked + key.substring(key.length - visibleEnd);
-    }
-
-    /**
-     * 언어 레이블 가져오기
-     */
-    private getLanguageLabel(code: string): string {
-        const languages: Record<string, string> = {
-            'auto': '자동 감지',
-            'en': 'English',
-            'ko': '한국어',
-            'ja': '日本語',
-            'zh': '中文',
-            'es': 'Español',
-            'fr': 'Français',
-            'de': 'Deutsch'
-        };
-        return languages[code] || code;
-    }
-
-    /**
-     * 설정 내보내기
-     */
-    private async exportSettings(): Promise<void> {
-        try {
-            const settings = { ...this.plugin.settings };
-            // API 키 제외
-            delete (settings as any).apiKey;
-            delete (settings as any).encryptedApiKey;
-            
-            const json = JSON.stringify(settings, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `speech-to-text-settings-${Date.now()}.json`;
-            a.click();
-            
-            URL.revokeObjectURL(url);
-            new Notice('설정을 내보냈습니다');
-        } catch (error) {
-            new Notice('설정 내보내기 실패');
-            console.error(error);
+        
+        if (key.length <= visibleStart + visibleEnd) {
+            return key;
         }
-    }
-
-    /**
-     * 설정 가져오기
-     */
-    private async importSettings(): Promise<void> {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
         
-        input.onchange = async (e) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
-            if (!file) return;
-            
-            try {
-                const text = await file.text();
-                const settings = JSON.parse(text);
-                
-                // 기존 API 키 보존
-                const currentApiKey = this.plugin.settings.apiKey;
-                
-                // 설정 병합
-                Object.assign(this.plugin.settings, settings);
-                
-                // API 키 복원
-                if (currentApiKey) {
-                    this.plugin.settings.apiKey = currentApiKey;
-                }
-                
-                await this.plugin.saveSettings();
-                
-                new Notice('설정을 가져왔습니다');
-                this.display(); // UI 새로고침
-            } catch (error) {
-                new Notice('설정 가져오기 실패');
-                console.error(error);
-            }
-        };
-        
-        input.click();
-    }
-
-    /**
-     * 설정 초기화 확인
-     */
-    private async confirmReset(): Promise<boolean> {
-        return new Promise((resolve) => {
-            const modal = new ConfirmModal(
-                this.app,
-                '설정 초기화',
-                '모든 설정을 기본값으로 초기화하시겠습니까? API 키도 삭제됩니다.',
-                resolve
-            );
-            modal.open();
-        });
-    }
-
-    /**
-     * 설정 초기화
-     */
-    private async resetSettings(): Promise<void> {
-        // 기본 설정으로 초기화
-        const { DEFAULT_SETTINGS } = await import('../../domain/models/Settings');
-        this.plugin.settings = { ...DEFAULT_SETTINGS };
-        await this.plugin.saveSettings();
-        
-        new Notice('설정이 초기화되었습니다');
-        this.display(); // UI 새로고침
-    }
-}
-
-/**
- * 확인 모달
- */
-class ConfirmModal extends Modal {
-    constructor(
-        app: App,
-        private title: string,
-        private message: string,
-        private onConfirm: (confirmed: boolean) => void
-    ) {
-        super(app);
-    }
-
-    onOpen() {
-        const { contentEl } = this;
-        
-        contentEl.createEl('h2', { text: this.title });
-        contentEl.createEl('p', { text: this.message });
-        
-        const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
-        
-        new ButtonComponent(buttonContainer)
-            .setButtonText('취소')
-            .onClick(() => {
-                this.onConfirm(false);
-                this.close();
-            });
-            
-        new ButtonComponent(buttonContainer)
-            .setButtonText('확인')
-            .setWarning()
-            .onClick(() => {
-                this.onConfirm(true);
-                this.close();
-            });
-    }
-
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
+        const masked = '*'.repeat(key.length - visibleStart - visibleEnd);
+        return key.substring(0, visibleStart) + masked + key.substring(key.length - visibleEnd);
     }
 }

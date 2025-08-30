@@ -49,8 +49,19 @@ export class AudioProcessor implements IAudioProcessor {
     }
 
     async process(file: TFile): Promise<ProcessedAudio> {
+        this.logger.debug('Processing audio file', {
+            fileName: file.name,
+            extension: file.extension,
+            sizeBytes: file.stat.size
+        });
+
         const arrayBuffer = await this.vault.readBinary(file);
-        const metadata = await this.extractMetadata(arrayBuffer);
+        const metadata = await this.extractMetadata(arrayBuffer, file); // 파일 정보 전달
+
+        this.logger.debug('Audio processing completed', {
+            bufferSize: arrayBuffer.byteLength,
+            detectedFormat: metadata.format
+        });
 
         return {
             buffer: arrayBuffer,
@@ -60,14 +71,35 @@ export class AudioProcessor implements IAudioProcessor {
         };
     }
 
-    async extractMetadata(buffer: ArrayBuffer): Promise<AudioMetadata> {
-        // Basic metadata extraction (can be enhanced with audio analysis libraries)
+    async extractMetadata(buffer: ArrayBuffer, file?: TFile): Promise<AudioMetadata> {
+        // Extract format from file extension
+        let format: string | undefined;
+        if (file) {
+            const extension = file.extension.toLowerCase();
+            format = extension;
+            this.logger.debug('Audio format detected from file extension', {
+                fileName: file.name,
+                extension,
+                format
+            });
+        }
+
+        // Basic file size analysis
+        const fileSizeKB = Math.round(buffer.byteLength / 1024);
+        this.logger.debug('Audio file analysis', {
+            sizeKB: fileSizeKB,
+            sizeBytes: buffer.byteLength,
+            format
+        });
+
         return {
             duration: undefined, // Would need audio parsing library
             bitrate: undefined,
             sampleRate: undefined,
             channels: undefined,
             codec: undefined,
+            format, // 🔥 핵심: 파일 형식 정보 추가
+            fileSize: buffer.byteLength
         };
     }
 }

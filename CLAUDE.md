@@ -10,4 +10,5 @@
 2. @agent-systems-architect seeks advice from @agent-backend-api-infrastructure and @agent-code-refactorer.
 3. Then, @agent-documentation-expert modifies the related documentation.
 4. @agent-backend-api-infrastructure and @agent-code-refactorer restructure the code.
-5. Always find and update related documentation after code modifications are complete.
+5. @qa-testing-expert code restructuring end, Always restructure the code only when QA passes. If pass fails, restructure the code again.
+6. Always find and update related documentation after code modifications are complete.
