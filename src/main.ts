@@ -16,9 +16,6 @@ import { SettingsTab } from './ui/settings/SettingsTab';
 
 export default class SpeechToTextPlugin extends Plugin {
     settings!: SpeechToTextSettings;
-    manifest: any = {
-        version: '1.0.0'
-    };
     private transcriptionService!: TranscriptionService;
     private settingsManager!: SettingsManager;
     private stateManager!: StateManager;
@@ -125,9 +122,13 @@ export default class SpeechToTextPlugin extends Plugin {
         // Register context menu for audio files
         this.registerEvent(
             this.app.workspace.on('file-menu', (menu, file) => {
-                // Check if the file is an audio file
+                // Check if the file exists and is an audio file
+                if (!file || !(file instanceof TFile)) {
+                    return;
+                }
+                
                 const audioExtensions = ['m4a', 'mp3', 'wav', 'mp4', 'webm', 'ogg'];
-                if (file instanceof TFile && audioExtensions.includes(file.extension)) {
+                if (audioExtensions.includes(file.extension.toLowerCase())) {
                     menu.addItem((item) => {
                         item
                             .setTitle('Transcribe audio file')
@@ -144,7 +145,7 @@ export default class SpeechToTextPlugin extends Plugin {
     private registerCommands() {
         // Command: Transcribe audio file
         this.addCommand({
-            id: 'speech-to-text:transcribe-audio-file',
+            id: 'transcribe-audio-file',
             name: 'Transcribe audio file',
             callback: () => {
                 this.showAudioFilePicker();
@@ -153,7 +154,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Transcribe from clipboard
         this.addCommand({
-            id: 'speech-to-text:transcribe-from-clipboard',
+            id: 'transcribe-from-clipboard',
             name: 'Transcribe audio from clipboard',
             callback: async () => {
                 new Notice('Clipboard transcription not yet implemented');
@@ -162,7 +163,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Show formatting options
         this.addCommand({
-            id: 'speech-to-text:show-format-options',
+            id: 'show-format-options',
             name: 'Show text formatting options',
             callback: () => {
                 this.showFormatOptions();
@@ -171,7 +172,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Show transcription history
         this.addCommand({
-            id: 'speech-to-text:show-transcription-history',
+            id: 'show-transcription-history',
             name: 'Show transcription history',
             callback: () => {
                 new Notice('Transcription history not yet implemented');
@@ -180,7 +181,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Cancel current transcription
         this.addCommand({
-            id: 'speech-to-text:cancel-transcription',
+            id: 'cancel-transcription',
             name: 'Cancel current transcription',
             callback: () => {
                 this.transcriptionService.cancel();
@@ -190,7 +191,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Undo last insertion
         this.addCommand({
-            id: 'speech-to-text:undo-insertion',
+            id: 'undo-insertion',
             name: 'Undo last text insertion',
             callback: async () => {
                 const success = await this.editorService.undo();
@@ -204,7 +205,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Command: Redo last insertion
         this.addCommand({
-            id: 'speech-to-text:redo-insertion',
+            id: 'redo-insertion',
             name: 'Redo last text insertion',
             callback: async () => {
                 const success = await this.editorService.redo();

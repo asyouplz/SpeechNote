@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
+import { DeepgramSettings } from './components/DeepgramSettings';
 
 /**
  * 간소화된 설정 탭 UI
@@ -102,45 +103,121 @@ export class SettingsTab extends PluginSettingTab {
     private createApiSection(containerEl: HTMLElement): void {
         containerEl.createEl('h3', { text: 'API Configuration' });
         
-        // API Key setting
+        // Provider 선택 섹션
+        const providerContainer = containerEl.createEl('div', { cls: 'provider-selection' });
+        this.createProviderSelection(providerContainer);
+        
+        // Provider별 설정 컨테이너
+        const settingsContainer = containerEl.createEl('div', { cls: 'provider-settings' });
+        
+        // 선택된 Provider에 따라 동적으로 설정 표시
+        const currentProvider = this.plugin.settings.provider || 'auto';
+        this.renderProviderSettings(settingsContainer, currentProvider);
+    }
+    
+    private createProviderSelection(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('OpenAI API Key')
-            .setDesc('Enter your OpenAI API key for Whisper transcription')
-            .addText(text => {
-                text
-                    .setPlaceholder('sk-...')
-                    .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
+            .setName('Transcription Provider')
+            .setDesc('Select the speech-to-text provider')
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('auto', 'Auto (Intelligent Selection)')
+                    .addOption('whisper', 'OpenAI Whisper')
+                    .addOption('deepgram', 'Deepgram')
+                    .setValue(this.plugin.settings.provider || 'auto')
                     .onChange(async (value) => {
-                        // Only update if it's a new key (not masked)
-                        if (value && !value.includes('*')) {
-                            this.plugin.settings.apiKey = value;
-                            await this.plugin.saveSettings();
-                            
-                            // Re-display to show masked version
-                            text.setValue(this.maskApiKey(value));
-                            new Notice('API key saved');
+                        this.plugin.settings.provider = value as 'auto' | 'whisper' | 'deepgram';
+                        await this.plugin.saveSettings();
+                        
+                        // Provider별 설정 UI 업데이트
+                        const settingsContainer = containerEl.parentElement?.querySelector('.provider-settings') as HTMLElement;
+                        if (settingsContainer) {
+                            this.renderProviderSettings(settingsContainer, value as 'auto' | 'whisper' | 'deepgram');
                         }
+                        
+                        new Notice(`Provider changed to: ${value}`);
                     });
-                
-                // Add input type password for security
-                text.inputEl.type = 'password';
-                
-                // Show actual value on focus
-                text.inputEl.addEventListener('focus', () => {
-                    if (this.plugin.settings.apiKey) {
-                        text.setValue(this.plugin.settings.apiKey);
-                    }
-                });
-                
-                // Mask on blur
-                text.inputEl.addEventListener('blur', () => {
-                    if (this.plugin.settings.apiKey) {
-                        text.setValue(this.maskApiKey(this.plugin.settings.apiKey));
-                    }
-                });
             });
-            
-        // API Endpoint (if custom endpoint is supported)
+        
+        // Provider 설명
+        const infoEl = containerEl.createEl('div', { cls: 'provider-info' });
+        infoEl.style.cssText = 'margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 4px;';
+        this.updateProviderInfo(infoEl, this.plugin.settings.provider || 'auto');
+    }
+    
+    private renderProviderSettings(containerEl: HTMLElement, provider: 'auto' | 'whisper' | 'deepgram'): void {
+        containerEl.empty();
+        
+        switch (provider) {
+            case 'auto':
+                this.renderAutoProviderSettings(containerEl);
+                break;
+            case 'whisper':
+                this.renderWhisperSettings(containerEl);
+                break;
+            case 'deepgram':
+                this.renderDeepgramSettings(containerEl);
+                break;
+        }
+    }
+    
+    private renderAutoProviderSettings(containerEl: HTMLElement): void {
+        containerEl.createEl('h4', { text: 'Automatic Provider Selection' });
+        
+        // Selection Strategy
+        new Setting(containerEl)
+            .setName('Selection Strategy')
+            .setDesc('How to choose between available providers')
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('cost_optimized', 'Cost Optimized')
+                    .addOption('performance_optimized', 'Performance Optimized')
+                    .addOption('quality_optimized', 'Quality Optimized')
+                    .addOption('balanced', 'Balanced')
+                    .setValue(this.plugin.settings.selectionStrategy || 'performance_optimized')
+                    .onChange(async (value) => {
+                        this.plugin.settings.selectionStrategy = value as any;
+                        await this.plugin.saveSettings();
+                    });
+            });
+        
+        // Fallback 전략
+        new Setting(containerEl)
+            .setName('Fallback Strategy')
+            .setDesc('What to do when primary provider fails')
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('auto', 'Automatic Fallback')
+                    .addOption('manual', 'Ask User')
+                    .addOption('none', 'No Fallback')
+                    .setValue(this.plugin.settings.fallbackStrategy || 'auto')
+                    .onChange(async (value) => {
+                        this.plugin.settings.fallbackStrategy = value as 'auto' | 'manual' | 'none';
+                        await this.plugin.saveSettings();
+                    });
+            });
+        
+        // API Keys for both providers
+        containerEl.createEl('h5', { text: 'Provider API Keys' });
+        containerEl.createEl('p', { 
+            text: 'Configure API keys for each provider to enable automatic selection',
+            cls: 'setting-item-description'
+        });
+        
+        // Whisper API Key
+        this.renderWhisperApiKey(containerEl);
+        
+        // Deepgram API Key  
+        this.renderDeepgramApiKey(containerEl);
+    }
+    
+    private renderWhisperSettings(containerEl: HTMLElement): void {
+        containerEl.createEl('h4', { text: 'OpenAI Whisper Configuration' });
+        
+        // Whisper API Key
+        this.renderWhisperApiKey(containerEl);
+        
+        // API Endpoint
         new Setting(containerEl)
             .setName('API Endpoint')
             .setDesc('OpenAI API endpoint (leave default unless using custom endpoint)')
@@ -151,6 +228,93 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.settings.apiEndpoint = value || 'https://api.openai.com/v1';
                     await this.plugin.saveSettings();
                 }));
+    }
+    
+    private renderDeepgramSettings(containerEl: HTMLElement): void {
+        // Deepgram 설정 컴포넌트 사용
+        const deepgramSettings = new DeepgramSettings(this.plugin, containerEl);
+        deepgramSettings.render();
+    }
+    
+    private renderWhisperApiKey(containerEl: HTMLElement): void {
+        new Setting(containerEl)
+            .setName('OpenAI API Key')
+            .setDesc('Enter your OpenAI API key for Whisper transcription')
+            .addText(text => {
+                text
+                    .setPlaceholder('sk-...')
+                    .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
+                    .onChange(async (value) => {
+                        if (value && !value.includes('*')) {
+                            this.plugin.settings.apiKey = value;
+                            this.plugin.settings.whisperApiKey = value; // 호환성을 위해 양쪽에 저장
+                            await this.plugin.saveSettings();
+                            
+                            text.setValue(this.maskApiKey(value));
+                            new Notice('OpenAI API key saved');
+                        }
+                    });
+                
+                text.inputEl.type = 'password';
+                
+                text.inputEl.addEventListener('focus', () => {
+                    if (this.plugin.settings.apiKey) {
+                        text.setValue(this.plugin.settings.apiKey);
+                    }
+                });
+                
+                text.inputEl.addEventListener('blur', () => {
+                    if (this.plugin.settings.apiKey) {
+                        text.setValue(this.maskApiKey(this.plugin.settings.apiKey));
+                    }
+                });
+            });
+    }
+    
+    private renderDeepgramApiKey(containerEl: HTMLElement): void {
+        new Setting(containerEl)
+            .setName('Deepgram API Key')
+            .setDesc('Enter your Deepgram API key for transcription')
+            .addText(text => {
+                text
+                    .setPlaceholder('Enter Deepgram API key...')
+                    .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))
+                    .onChange(async (value) => {
+                        if (value && !value.includes('*')) {
+                            this.plugin.settings.deepgramApiKey = value;
+                            await this.plugin.saveSettings();
+                            
+                            text.setValue(this.maskApiKey(value));
+                            new Notice('Deepgram API key saved');
+                        }
+                    });
+                
+                text.inputEl.type = 'password';
+                
+                text.inputEl.addEventListener('focus', () => {
+                    if (this.plugin.settings.deepgramApiKey) {
+                        text.setValue(this.plugin.settings.deepgramApiKey);
+                    }
+                });
+                
+                text.inputEl.addEventListener('blur', () => {
+                    if (this.plugin.settings.deepgramApiKey) {
+                        text.setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey));
+                    }
+                });
+            });
+    }
+    
+    private updateProviderInfo(infoEl: HTMLElement, provider: 'auto' | 'whisper' | 'deepgram'): void {
+        infoEl.empty();
+        
+        const descriptions = {
+            auto: '🤖 Intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
+            whisper: '🎯 OpenAI Whisper - High-quality transcription with support for multiple languages. Best for general-purpose transcription.',
+            deepgram: '⚡ Deepgram - Fast, accurate transcription with advanced AI features. Best for real-time processing and speaker diarization.'
+        };
+        
+        infoEl.createEl('p', { text: descriptions[provider] });
     }
 
     private createGeneralSection(containerEl: HTMLElement): void {
@@ -215,17 +379,20 @@ export class SettingsTab extends PluginSettingTab {
     private createAudioSection(containerEl: HTMLElement): void {
         containerEl.createEl('h3', { text: 'Audio Settings' });
         
-        // Model selection
-        new Setting(containerEl)
-            .setName('Whisper Model')
-            .setDesc('Select the Whisper model to use (larger models are more accurate but slower)')
-            .addDropdown(dropdown => dropdown
-                .addOption('whisper-1', 'Whisper v1 (Default)')
-                .setValue(this.plugin.settings.model || 'whisper-1')
-                .onChange(async (value) => {
-                    this.plugin.settings.model = value;
-                    await this.plugin.saveSettings();
-                }));
+        // Model selection - Provider에 따라 다르게 표시
+        const provider = this.plugin.settings.provider || 'auto';
+        if (provider === 'whisper' || provider === 'auto') {
+            new Setting(containerEl)
+                .setName('Whisper Model')
+                .setDesc('Select the Whisper model to use')
+                .addDropdown(dropdown => dropdown
+                    .addOption('whisper-1', 'Whisper v1 (Default)')
+                    .setValue(this.plugin.settings.model || 'whisper-1')
+                    .onChange(async (value) => {
+                        this.plugin.settings.model = value;
+                        await this.plugin.saveSettings();
+                    }));
+        }
         
         // Temperature setting
         new Setting(containerEl)

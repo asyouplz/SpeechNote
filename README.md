@@ -194,11 +194,27 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/speech
 - **실시간 검증**: API 키 유효성 즉시 확인
 - **시각적 피드백**: 상태 인디케이터와 진행률 표시
 
+#### 🚀 Deepgram 설정 (NEW)
+- **모델 선택**: Nova-2, Nova, Enhanced, Base 중 선택
+- **고급 기능**: 
+  - Punctuation: 구두점 자동 추가
+  - Smart Format: 숫자, 날짜 등 지능형 포맷팅
+  - Speaker Diarization: 화자 구분 (Premium)
+  - Numerals: 숫자 단어를 숫자로 변환
+  - Profanity Filter: 욕설 필터링
+  - Redaction: 민감 정보 자동 제거 (Premium)
+  - Utterances: 자연스러운 발화 단위 분할
+  - Summarization: 요약 생성 (Premium)
+- **비용 추정**: 선택한 모델별 예상 비용 실시간 계산
+- **언어 지원**: 40+ 언어 지원 (모델별 상이)
+
 | 설정 | 설명 | 기본값 |
 |------|------|--------|
-| **Provider** | 변환 Provider 선택 | Auto |
+| **Provider** | 변환 Provider 선택 (Auto/Whisper/Deepgram) | Auto |
 | **OpenAI API Key** | OpenAI Whisper API 키 | 없음 |
 | **Deepgram API Key** | Deepgram API 키 | 없음 |
+| **Deepgram Model** | Deepgram 모델 선택 | Nova-2 |
+| **Deepgram Features** | Deepgram 기능 토글 | 기본값 활성화 |
 | **Language** | 변환 언어 설정 | 자동 감지 |
 | **Insert Position** | 텍스트 삽입 위치 | 커서 위치 |
 | **Auto-insert** | 자동 텍스트 삽입 | 활성화 |
@@ -217,7 +233,10 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/speech
 - **A/B 테스팅**: Provider 비교, 성능 분석
 - **메트릭 모니터링**: 사용량 추적, 오류율, 응답 시간
 
-📖 상세 설정 가이드: [Multi-Provider 설정 UI 가이드](docs/ui-settings-guide.md)
+📖 상세 설정 가이드:
+- [Multi-Provider 설정 UI 가이드](docs/ui-settings-guide.md)
+- [Deepgram 통합 가이드](docs/migration/deepgram-integration.md)
+- [Provider 마이그레이션 가이드](docs/migration/deepgram-migration-guide.md)
 
 ### 🌍 언어 옵션 (Language Options)
 - `auto`: 자동 감지 (기본값)
