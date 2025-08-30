@@ -116,3 +116,11 @@ bundle-report.html
 test-data/
 mocks/**/*.snapshot
 __mocks__/**/*.snapshot
+
+# Development documentation
+docs/
+*.md
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!LICENSE.md

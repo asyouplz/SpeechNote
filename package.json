@@ -22,6 +22,8 @@
     "test:debug": "node --inspect-brk ./node_modules/.bin/jest --runInBand",
     "test:changed": "jest -o",
     "test:update-snapshots": "jest -u",
+    "test:deepgram": "npx ts-node test/deepgram-adapter-test.ts",
+    "test:deepgram-registry": "npx ts-node test/deepgram-integration-test.ts",
     "coverage:report": "open coverage/lcov-report/index.html",
     "coverage:clean": "rm -rf coverage .jest-cache",
     "pretest": "npm run lint && npm run typecheck",
