@@ -16,31 +16,85 @@ export class SettingsTab extends PluginSettingTab {
     display(): void {
         const { containerEl } = this;
         
+        // Enhanced debugging
+        console.log('=== SettingsTab display() called ===');
+        console.log('Container element:', containerEl);
+        console.log('Container element exists:', !!containerEl);
+        console.log('Container element type:', containerEl?.constructor?.name);
+        console.log('Plugin instance:', this.plugin);
+        console.log('Plugin instance exists:', !!this.plugin);
+        console.log('Plugin settings object:', this.plugin?.settings);
+        console.log('Plugin settings keys:', this.plugin?.settings ? Object.keys(this.plugin.settings) : 'N/A');
+        
+        // Check if container is visible
+        if (containerEl) {
+            console.log('Container parent element:', containerEl.parentElement);
+            console.log('Container is connected to DOM:', containerEl.isConnected);
+            console.log('Container display style:', window.getComputedStyle(containerEl).display);
+        }
+        
         // Clear existing content
         containerEl.empty();
         
         // Add main title
-        containerEl.createEl('h2', { text: 'Speech to Text Settings' });
+        const titleEl = containerEl.createEl('h2', { text: 'Speech to Text Settings' });
+        console.log('Title element created:', titleEl);
+        
+        // Add debug info section at the top
+        const debugSection = containerEl.createEl('details', { cls: 'speech-to-text-debug' });
+        const debugSummary = debugSection.createEl('summary', { text: 'Debug Information' });
+        const debugContent = debugSection.createEl('pre', { 
+            text: JSON.stringify({
+                pluginExists: !!this.plugin,
+                settingsExists: !!this.plugin?.settings,
+                apiKey: this.plugin?.settings?.apiKey ? 'Set (hidden)' : 'Not set',
+                language: this.plugin?.settings?.language || 'Not set',
+                autoInsert: this.plugin?.settings?.autoInsert,
+                insertPosition: this.plugin?.settings?.insertPosition,
+                model: this.plugin?.settings?.model,
+                timestamp: new Date().toISOString()
+            }, null, 2)
+        });
+        console.log('Debug section added');
         
         try {
             // API Settings Section
+            console.log('Creating API section...');
             this.createApiSection(containerEl);
+            console.log('API section created');
             
             // General Settings Section
+            console.log('Creating General section...');
             this.createGeneralSection(containerEl);
+            console.log('General section created');
             
             // Audio Settings Section
+            console.log('Creating Audio section...');
             this.createAudioSection(containerEl);
+            console.log('Audio section created');
             
             // Advanced Settings Section
+            console.log('Creating Advanced section...');
             this.createAdvancedSection(containerEl);
+            console.log('Advanced section created');
+            
+            console.log('=== Settings tab rendered successfully ===');
+            console.log('Total child elements:', containerEl.children.length);
             
         } catch (error) {
-            console.error('Error displaying settings:', error);
+            console.error('=== Error displaying settings ===');
+            console.error('Error details:', error);
+            console.error('Error stack:', error instanceof Error ? error.stack : 'N/A');
+            
             containerEl.empty();
+            containerEl.createEl('h2', { text: 'Settings Error' });
             containerEl.createEl('p', { 
                 text: 'Error loading settings. Please reload the plugin.',
                 cls: 'mod-warning'
+            });
+            containerEl.createEl('pre', { 
+                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+                cls: 'error-details'
             });
         }
     }

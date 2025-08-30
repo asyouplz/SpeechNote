@@ -7,6 +7,76 @@
 
 ## [Unreleased]
 
+## [3.0.3] - 2025-08-30
+
+### 수정됨 (Fixed)
+
+#### 컨텍스트 메뉴 통합
+- **문제**: 음성 파일 우클릭 시 "Transcribe audio file" 메뉴가 표시되지 않음
+  - 컨텍스트 메뉴 이벤트 핸들러 누락
+  - 파일 확장자 검증 로직 미구현
+  
+- **해결**: 파일 메뉴에 음성 변환 옵션 추가
+  - `file-menu` 이벤트 리스너 구현
+  - 지원 가능한 오디오 파일 형식 검증 (.m4a, .mp3, .wav, .mp4, .webm, .ogg, .flac)
+  - 메뉴 아이템 클릭 시 변환 서비스 직접 호출
+
+#### 명령 팔레트 ID 수정
+- **문제**: 명령어 실행 시 "undefined" 텍스트가 표시됨
+  - 명령어 ID에 네임스페이스 접두사 누락
+  - Obsidian API 명명 규칙 미준수
+  
+- **해결**: 모든 명령어 ID에 "speech-to-text:" 접두사 추가
+  - `transcribe-audio` → `speech-to-text:transcribe-audio`
+  - `cancel-transcription` → `speech-to-text:cancel-transcription`
+  - 일관된 명령어 식별 체계 구축
+
+#### StatusBar 안전성 강화
+- **문제**: StatusBar 초기화 시 타입 오류 발생 가능성
+  - `addStatusBarItem()` 호출 시 불필요한 매개변수 전달
+  - 텍스트 업데이트 시 null 체크 미흡
+  
+- **해결**: StatusBar 관리 로직 개선
+  - `addStatusBarItem()` 매개변수 제거 (Obsidian API 스펙 준수)
+  - 안전한 텍스트 업데이트 패턴 적용
+  - StatusBar 요소 존재 여부 확인 로직 추가
+
+#### SettingsTab 디버깅 개선
+- **문제**: 설정 탭 렌더링 문제 디버깅 어려움
+  - DOM 렌더링 상태 확인 불가
+  - 컨테이너 요소 생성 시점 불명확
+  
+- **해결**: 상세 디버깅 로그 추가
+  - `display()` 메서드 실행 추적
+  - DOM 요소 상태 로깅
+  - 컨테이너 엘리먼트 생성 확인
+
+### 개선사항 (Improved)
+
+#### QA 및 테스트
+- **완료된 테스트 항목**
+  - 컨텍스트 메뉴 기능 테스트 (다양한 파일 형식)
+  - 명령 팔레트 실행 테스트
+  - StatusBar 표시 및 업데이트 테스트
+  - 설정 탭 로딩 및 표시 테스트
+  
+- **테스트 환경**
+  - Obsidian v1.5.x
+  - macOS, Windows 11, Ubuntu 22.04
+  - 다양한 vault 크기 및 구성
+
+### 기술적 세부사항 (Technical Details)
+
+#### 수정된 파일
+- `src/main.ts`: 컨텍스트 메뉴 이벤트 핸들러 추가, 명령어 ID 수정, StatusBar 초기화 개선
+- `src/ui/settings/SettingsTab.ts`: 디버깅 로그 추가 및 DOM 검증 로직 구현
+
+#### 영향받는 기능
+- 파일 우클릭 메뉴
+- 명령 팔레트 (Cmd/Ctrl + P)
+- 하단 상태바 표시
+- 플러그인 설정 화면
+
 ## [3.0.2] - 2025-08-30
 
 ### 수정됨 (Fixed)
@@ -151,7 +221,7 @@
 
 ## 버전 정보
 
-- **현재 안정 버전**: 3.0.2
+- **현재 안정 버전**: 3.0.3
 - **최소 Obsidian 버전**: 0.15.0
 - **Node.js 버전**: 18.x 이상
 - **TypeScript 버전**: 5.x
