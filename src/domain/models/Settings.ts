@@ -1,3 +1,5 @@
+import { SelectionStrategy } from '../../infrastructure/api/providers/ITranscriber';
+
 export interface SpeechToTextSettings {
     apiKey: string;
     model: WhisperModel;
@@ -110,15 +112,6 @@ export interface SpeechToTextSettings {
             metricsEndpoint?: string;
         };
     };
-}
-
-// Selection Strategy Enum
-export enum SelectionStrategy {
-    PERFORMANCE_OPTIMIZED = 'performance_optimized',
-    COST_OPTIMIZED = 'cost_optimized',
-    QUALITY_OPTIMIZED = 'quality_optimized',
-    ROUND_ROBIN = 'round_robin',
-    AB_TEST = 'ab_test'
 }
 
 export type WhisperModel = 'whisper-1';

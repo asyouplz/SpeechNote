@@ -370,7 +370,7 @@ export class SettingsValidator<T extends Record<string, unknown>> {
         let isValid = true;
         
         for (const [key, value] of Object.entries(settings)) {
-            const result = this.validateField(key as keyof T, value);
+            const result = this.validateField(key as keyof T, value as T[keyof T]);
             errors.push(...result.errors);
             warnings.push(...result.warnings);
             
@@ -405,7 +405,7 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Part
     for (const key in source) {
         if (source[key] !== undefined) {
             if (typeof source[key] === 'object' && !Array.isArray(source[key]) && source[key] !== null) {
-                result[key] = deepMerge(target[key] || {}, source[key] as any);
+                result[key] = deepMerge(target[key] || {} as T[Extract<keyof T, string>], source[key] as any);
             } else {
                 result[key] = source[key] as T[typeof key];
             }
