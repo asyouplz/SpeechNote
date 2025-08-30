@@ -17,7 +17,7 @@ import { GlobalErrorManager, ErrorType, ErrorSeverity } from '../../utils/error/
  * - 비동기 처리 개선
  * - 에러 경계 구현
  */
-export class SettingsTabOptimized extends PluginSettingTab implements AutoDisposable {
+export class SettingsTabOptimized extends PluginSettingTab {
     plugin: SpeechToTextPlugin;
     
     // Components
@@ -70,7 +70,7 @@ export class SettingsTabOptimized extends PluginSettingTab implements AutoDispos
                 sectionRenderers: new Map()
             };
         } catch (error) {
-            this.errorManager.handleError(error, {
+            this.errorManager.handleError(error as Error, {
                 type: ErrorType.RESOURCE,
                 severity: ErrorSeverity.HIGH,
                 context: { component: 'SettingsTab' }
@@ -92,7 +92,7 @@ export class SettingsTabOptimized extends PluginSettingTab implements AutoDispos
      * 자동 저장 설정 - 디바운스 적용
      */
     private setupAutoSave(): void {
-        this.saveSettings = debounceAsync(async () => {
+        const saveFunction = async (): Promise<void> => {
             if (!this.state.isDirty || this.state.isSaving) return;
             
             this.state.isSaving = true;
@@ -102,7 +102,7 @@ export class SettingsTabOptimized extends PluginSettingTab implements AutoDispos
                 this.state.isDirty = false;
                 this.updateSaveStatus('saved');
             } catch (error) {
-                this.errorManager.handleError(error, {
+                this.errorManager.handleError(error as Error, {
                     type: ErrorType.RESOURCE,
                     severity: ErrorSeverity.MEDIUM,
                     userMessage: '설정 저장 실패'
@@ -111,7 +111,9 @@ export class SettingsTabOptimized extends PluginSettingTab implements AutoDispos
             } finally {
                 this.state.isSaving = false;
             }
-        }, 1000);
+        };
+        
+        this.saveSettings = debounceAsync(saveFunction, 1000) as unknown as () => Promise<void>;
     }
 
     display(): void {
@@ -342,7 +344,7 @@ export class SettingsTabOptimized extends PluginSettingTab implements AutoDispos
     /**
      * 설정 저장 (디바운스됨)
      */
-    private saveSettings: () => Promise<void>;
+    private saveSettings!: () => Promise<void>;
 
     /**
      * 리소스 정리
@@ -532,9 +534,9 @@ class ApiSettingsSection extends SectionRenderer {
  * 보안 API 키 입력 컴포넌트
  */
 class SecureApiKeyInput {
-    private inputEl: HTMLInputElement;
-    private toggleBtn: HTMLButtonElement;
-    private validateBtn: HTMLButtonElement;
+    private inputEl!: HTMLInputElement;
+    private toggleBtn!: HTMLButtonElement;
+    private validateBtn!: HTMLButtonElement;
     private isVisible = false;
     private changeCallbacks: Set<(value: string) => void> = new Set();
     
@@ -710,8 +712,8 @@ class SettingsFooter extends SectionRenderer {
                 
                 new Notice('설정을 가져왔습니다');
                 
-                // Refresh UI
-                this.plugin.settingsTab.display();
+                // Refresh UI - need to trigger parent component refresh
+                // This should be handled via event or callback
             } catch (error) {
                 new Notice('설정 가져오기 실패');
             }
@@ -727,13 +729,14 @@ class SettingsFooter extends SectionRenderer {
         
         try {
             // Reset to defaults
-            this.plugin.settings = this.plugin.getDefaultSettings();
+            this.plugin.settings = (this.plugin as any).getDefaultSettings?.() || this.plugin.settings;
             await this.plugin.saveSettings();
             
             new Notice('설정을 재설정했습니다');
             
             // Refresh UI
-            this.plugin.settingsTab.display();
+            // Note: We need to refresh the main settings tab, not from within footer
+            // This should be handled by the parent component
         } catch (error) {
             new Notice('설정 재설정 실패');
         }

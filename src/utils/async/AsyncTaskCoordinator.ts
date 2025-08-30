@@ -275,7 +275,7 @@ class AsyncTask<T> {
             );
 
             // Apply timeout if specified
-            let promise: Promise<T> = this.cancellablePromise as Promise<T>;
+            let promise: Promise<T> = this.cancellablePromise as unknown as Promise<T>;
             
             if (this.options.timeout) {
                 promise = withTimeout(

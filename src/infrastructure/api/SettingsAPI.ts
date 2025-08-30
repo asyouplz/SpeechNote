@@ -11,10 +11,10 @@ import type {
     ImportOptions,
     ImportResult,
     ResetScope,
-    Unsubscribe,
     ValidationError,
     ValidationWarning
 } from '../../types/phase3-api';
+import type { Unsubscribe } from '../../types/events';
 import { SecureApiKeyManager, SettingsEncryptor } from '../security/Encryptor';
 import { SettingsMigrator } from './SettingsMigrator';
 import { SettingsValidator } from './SettingsValidator';
@@ -22,7 +22,8 @@ import { SettingsValidator } from './SettingsValidator';
 /**
  * 설정 API 구현
  */
-export class SettingsAPI extends EventEmitter implements ISettingsAPI {
+export class SettingsAPI implements ISettingsAPI {
+    private emitter = new EventEmitter();
     private settings: SettingsSchema;
     private apiKeyManager: SecureApiKeyManager;
     private encryptor: SettingsEncryptor;
@@ -32,7 +33,6 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
     private defaultSettings: SettingsSchema;
 
     constructor() {
-        super();
         this.apiKeyManager = new SecureApiKeyManager();
         this.encryptor = new SettingsEncryptor();
         this.migrator = new SettingsMigrator();
@@ -128,7 +128,7 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
         await this.save();
 
         // 이벤트 발생
-        this.emit('change', key, value, oldValue);
+        this.emitter.emit('change', key, value, oldValue);
     }
 
     /**
@@ -155,7 +155,7 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
         await this.save();
 
         // 이벤트 발생
-        this.emit('save');
+        this.emitter.emit('save');
     }
 
     /**
@@ -197,7 +197,7 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
             toVersion
         );
         await this.save();
-        this.emit('migrate', fromVersion, toVersion);
+        this.emitter.emit('migrate', fromVersion, toVersion);
     }
 
     /**
@@ -262,7 +262,7 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
                     return {
                         success: false,
                         imported: {},
-                        errors: validation.errors?.map(e => e.message)
+                        errors: validation.errors?.map((e: any) => e.message)
                     };
                 }
             }
@@ -310,15 +310,19 @@ export class SettingsAPI extends EventEmitter implements ISettingsAPI {
         }
 
         await this.save();
-        this.emit('reset', scope);
+        this.emitter.emit('reset', scope);
     }
 
     /**
-     * 이벤트 리스너 등록 (Unsubscribe 함수 반환)
+     * 이벤트 리스너 등록 - ISettingsAPI 인터페이스 구현
      */
-    subscribe(event: string, listener: Function): Unsubscribe {
-        super.on(event, listener as any);
-        return () => this.off(event, listener as any);
+    on(event: 'change', listener: (key: string, newValue: any, oldValue: any) => void): Unsubscribe;
+    on(event: 'save', listener: () => void): Unsubscribe;
+    on(event: 'reset', listener: (scope: ResetScope) => void): Unsubscribe;
+    on(event: 'migrate', listener: (from: string, to: string) => void): Unsubscribe;
+    on(event: string, listener: (...args: any[]) => void): Unsubscribe {
+        this.emitter.on(event, listener);
+        return () => this.emitter.off(event, listener);
     }
 
     /**
