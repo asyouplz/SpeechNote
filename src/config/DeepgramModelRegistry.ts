@@ -1,4 +1,178 @@
-import deepgramModelsConfig from '../../config/deepgram-models.json';
+// Default fallback configuration
+const DEFAULT_CONFIG = {
+    models: {
+        'nova-2': {
+            id: 'nova-2',
+            name: 'Nova 2',
+            description: 'Most accurate and powerful model with advanced features',
+            tier: 'premium' as const,
+            features: {
+                punctuation: true,
+                smartFormat: true,
+                diarization: true,
+                numerals: true,
+                profanityFilter: true,
+                redaction: true,
+                utterances: true,
+                summarization: true
+            },
+            languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it', 'pl', 'ru', 'zh', 'ja', 'ko', 'ar', 'hi'],
+            performance: {
+                accuracy: 95,
+                speed: 'fast' as const,
+                latency: 'low' as const
+            },
+            pricing: {
+                perMinute: 0.0043,
+                currency: 'USD'
+            }
+        },
+        'nova': {
+            id: 'nova',
+            name: 'Nova',
+            description: 'Balanced model with good accuracy and speed',
+            tier: 'standard' as const,
+            features: {
+                punctuation: true,
+                smartFormat: true,
+                diarization: true,
+                numerals: true,
+                profanityFilter: true,
+                redaction: false,
+                utterances: true,
+                summarization: false
+            },
+            languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it'],
+            performance: {
+                accuracy: 90,
+                speed: 'fast' as const,
+                latency: 'low' as const
+            },
+            pricing: {
+                perMinute: 0.0025,
+                currency: 'USD'
+            }
+        },
+        'enhanced': {
+            id: 'enhanced',
+            name: 'Enhanced',
+            description: 'Enhanced accuracy for challenging audio',
+            tier: 'standard' as const,
+            features: {
+                punctuation: true,
+                smartFormat: true,
+                diarization: false,
+                numerals: true,
+                profanityFilter: false,
+                redaction: false,
+                utterances: false,
+                summarization: false
+            },
+            languages: ['en'],
+            performance: {
+                accuracy: 85,
+                speed: 'moderate' as const,
+                latency: 'medium' as const
+            },
+            pricing: {
+                perMinute: 0.0145,
+                currency: 'USD'
+            }
+        },
+        'base': {
+            id: 'base',
+            name: 'Base',
+            description: 'Cost-effective option for simple transcription',
+            tier: 'economy' as const,
+            features: {
+                punctuation: true,
+                smartFormat: false,
+                diarization: false,
+                numerals: false,
+                profanityFilter: false,
+                redaction: false,
+                utterances: false,
+                summarization: false
+            },
+            languages: ['en'],
+            performance: {
+                accuracy: 80,
+                speed: 'moderate' as const,
+                latency: 'medium' as const
+            },
+            pricing: {
+                perMinute: 0.0125,
+                currency: 'USD'
+            }
+        }
+    },
+    features: {
+        'punctuation': {
+            name: 'Punctuation',
+            description: 'Add punctuation marks to transcript',
+            default: true,
+            requiresPremium: false
+        },
+        'smartFormat': {
+            name: 'Smart Format',
+            description: 'Format numbers, dates, and other entities',
+            default: true,
+            requiresPremium: false
+        },
+        'diarization': {
+            name: 'Speaker Diarization',
+            description: 'Identify different speakers',
+            default: false,
+            requiresPremium: false
+        },
+        'numerals': {
+            name: 'Numerals',
+            description: 'Convert numbers to digits',
+            default: false,
+            requiresPremium: false
+        },
+        'profanityFilter': {
+            name: 'Profanity Filter',
+            description: 'Filter out profanity from transcript',
+            default: false,
+            requiresPremium: false
+        },
+        'redaction': {
+            name: 'Redaction',
+            description: 'Redact sensitive information',
+            default: false,
+            requiresPremium: true
+        },
+        'utterances': {
+            name: 'Utterances',
+            description: 'Split transcript into utterances',
+            default: false,
+            requiresPremium: false
+        },
+        'summarization': {
+            name: 'Summarization',
+            description: 'Generate summary of transcript',
+            default: false,
+            requiresPremium: true
+        }
+    }
+};
+
+import { DeepgramLogger } from '../ui/settings/helpers/DeepgramLogger';
+
+// Safe import with error handling
+let deepgramModelsConfig: typeof DEFAULT_CONFIG;
+const logger = DeepgramLogger.getInstance();
+
+try {
+    // Try to import the JSON file
+    const importedConfig = require('../../config/deepgram-models.json');
+    deepgramModelsConfig = importedConfig;
+    logger.info('Successfully loaded config from JSON file');
+} catch (error) {
+    logger.warn('Could not load deepgram-models.json, using fallback');
+    deepgramModelsConfig = DEFAULT_CONFIG;
+}
 
 /**
  * Deepgram 모델 정보 인터페이스
@@ -50,43 +224,166 @@ export class DeepgramModelRegistry {
     private static instance: DeepgramModelRegistry;
     private models: Map<string, DeepgramModel>;
     private features: Map<string, DeepgramFeature>;
+    private logger: DeepgramLogger;
 
     private constructor() {
         this.models = new Map();
         this.features = new Map();
-        this.loadConfiguration();
+        this.logger = DeepgramLogger.getInstance();
+        
+        try {
+            this.loadConfiguration();
+            this.logger.info('Constructor completed successfully');
+        } catch (error) {
+            this.logger.error('Error during initialization', error);
+            // Continue with empty maps - better than crashing
+        }
     }
 
     /**
      * 싱글톤 인스턴스 반환
      */
     public static getInstance(): DeepgramModelRegistry {
-        if (!DeepgramModelRegistry.instance) {
-            DeepgramModelRegistry.instance = new DeepgramModelRegistry();
+        try {
+            if (!DeepgramModelRegistry.instance) {
+                DeepgramModelRegistry.instance = new DeepgramModelRegistry();
+            }
+            return DeepgramModelRegistry.instance;
+        } catch (error) {
+            // Return a minimal instance rather than throw
+            if (!DeepgramModelRegistry.instance) {
+                const fallbackInstance = Object.create(DeepgramModelRegistry.prototype);
+                fallbackInstance.models = new Map();
+                fallbackInstance.features = new Map();
+                fallbackInstance.logger = DeepgramLogger.getInstance();
+                fallbackInstance.logger.error('Failed to create instance, using fallback', error);
+                DeepgramModelRegistry.instance = fallbackInstance;
+            }
+            return DeepgramModelRegistry.instance;
         }
-        return DeepgramModelRegistry.instance;
     }
 
     /**
      * 설정 파일에서 모델 및 기능 정보 로드
      */
     private loadConfiguration(): void {
-        // 모델 로드
-        Object.entries(deepgramModelsConfig.models).forEach(([key, model]) => {
-            this.models.set(key, model as DeepgramModel);
-        });
+        try {
+            const config = deepgramModelsConfig || DEFAULT_CONFIG;
+            
+            this.loadModels(config);
+            this.loadFeatures(config);
+            
+            if (this.models.size === 0 && this.features.size === 0) {
+                this.logger.warn('No data loaded, loading fallback configuration');
+                this.loadFallbackConfiguration();
+            }
+        } catch (error) {
+            this.logger.error('Error loading configuration', error);
+            this.loadFallbackConfiguration();
+        }
+    }
 
-        // 기능 로드
-        Object.entries(deepgramModelsConfig.features).forEach(([key, feature]) => {
-            this.features.set(key, feature as DeepgramFeature);
+    /**
+     * 모델 로드
+     */
+    private loadModels(config: typeof DEFAULT_CONFIG): void {
+        if (!config.models || typeof config.models !== 'object') {
+            this.logger.warn('No models in configuration');
+            return;
+        }
+        
+        Object.entries(config.models).forEach(([key, model]) => {
+            try {
+                if (this.isValidModel(model)) {
+                    this.models.set(key, model as DeepgramModel);
+                } else {
+                    this.logger.warn(`Invalid model structure for ${key}`);
+                }
+            } catch (err) {
+                this.logger.error(`Failed to load model ${key}`, err);
+            }
         });
+        
+        this.logger.info(`Loaded ${this.models.size} models`);
+    }
+
+    /**
+     * 기능 로드
+     */
+    private loadFeatures(config: typeof DEFAULT_CONFIG): void {
+        if (!config.features || typeof config.features !== 'object') {
+            this.logger.warn('No features in configuration');
+            return;
+        }
+        
+        Object.entries(config.features).forEach(([key, feature]) => {
+            try {
+                if (this.isValidFeature(feature)) {
+                    this.features.set(key, feature as DeepgramFeature);
+                } else {
+                    this.logger.warn(`Invalid feature structure for ${key}`);
+                }
+            } catch (err) {
+                this.logger.error(`Failed to load feature ${key}`, err);
+            }
+        });
+        
+        this.logger.info(`Loaded ${this.features.size} features`);
+    }
+
+    /**
+     * 폴백 설정 로드
+     */
+    private loadFallbackConfiguration(): void {
+        try {
+            Object.entries(DEFAULT_CONFIG.models).forEach(([key, model]) => {
+                this.models.set(key, model as DeepgramModel);
+            });
+            Object.entries(DEFAULT_CONFIG.features).forEach(([key, feature]) => {
+                this.features.set(key, feature as DeepgramFeature);
+            });
+            this.logger.info('Fallback configuration loaded');
+        } catch (error) {
+            this.logger.error('Failed to load fallback configuration', error);
+        }
+    }
+
+    /**
+     * Validate model structure
+     */
+    private isValidModel(model: any): boolean {
+        return model && 
+               typeof model === 'object' &&
+               typeof model.id === 'string' &&
+               typeof model.name === 'string' &&
+               model.features &&
+               model.languages &&
+               Array.isArray(model.languages) &&
+               model.performance &&
+               model.pricing;
+    }
+
+    /**
+     * Validate feature structure
+     */
+    private isValidFeature(feature: any): boolean {
+        return feature && 
+               typeof feature === 'object' &&
+               typeof feature.name === 'string' &&
+               typeof feature.description === 'string' &&
+               typeof feature.default === 'boolean';
     }
 
     /**
      * 모든 모델 반환
      */
     public getAllModels(): DeepgramModel[] {
-        return Array.from(this.models.values());
+        try {
+            return Array.from(this.models.values());
+        } catch (error) {
+            this.logger.error('Error getting all models', error);
+            return [];
+        }
     }
 
     /**
@@ -100,7 +397,12 @@ export class DeepgramModelRegistry {
      * 모든 기능 반환
      */
     public getAllFeatures(): Map<string, DeepgramFeature> {
-        return this.features;
+        try {
+            return this.features;
+        } catch (error) {
+            this.logger.error('Error getting all features', error);
+            return new Map();
+        }
     }
 
     /**

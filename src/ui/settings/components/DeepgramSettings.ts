@@ -1,6 +1,18 @@
 import { Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
 import { DeepgramModelRegistry, DeepgramModel, DeepgramFeature } from '../../../config/DeepgramModelRegistry';
+import { UI_CONSTANTS, CONFIG_CONSTANTS, LANGUAGE_OPTIONS, DEFAULT_MODELS, DEFAULT_FEATURES } from '../../../config/DeepgramConstants';
+import { DeepgramLogger } from '../helpers/DeepgramLogger';
+import { DeepgramUIBuilder } from './DeepgramUIBuilder';
+import { DeepgramValidator } from '../services/DeepgramValidator';
+import { DeepgramCostCalculator } from '../services/DeepgramCostCalculator';
+import type { 
+    TextComponent, 
+    DropdownComponent, 
+    ToggleComponent, 
+    ButtonComponent,
+    DeepgramFeatures 
+} from '../../../types/DeepgramTypes';
 
 /**
  * Deepgram 설정 UI 컴포넌트
@@ -11,47 +23,123 @@ import { DeepgramModelRegistry, DeepgramModel, DeepgramFeature } from '../../../
  */
 export class DeepgramSettings {
     private plugin: SpeechToTextPlugin;
-    private registry: DeepgramModelRegistry;
+    private registry: DeepgramModelRegistry | null = null;
     private containerEl: HTMLElement;
     private selectedModel: DeepgramModel | null = null;
     private estimatedCostEl: HTMLElement | null = null;
+    
+    // 헬퍼 클래스들
+    private logger: DeepgramLogger;
+    private uiBuilder: DeepgramUIBuilder;
+    private validator: DeepgramValidator;
+    private costCalculator: DeepgramCostCalculator;
 
     constructor(plugin: SpeechToTextPlugin, containerEl: HTMLElement) {
         this.plugin = plugin;
         this.containerEl = containerEl;
-        this.registry = DeepgramModelRegistry.getInstance();
+        
+        // 헬퍼 클래스 초기화
+        this.logger = DeepgramLogger.getInstance();
+        this.uiBuilder = new DeepgramUIBuilder(containerEl);
+        this.validator = new DeepgramValidator();
+        this.costCalculator = new DeepgramCostCalculator();
+        
+        // DeepgramModelRegistry 안전한 초기화
+        this.initializeRegistry();
+    }
+
+    /**
+     * Registry 초기화
+     */
+    private initializeRegistry(): void {
+        try {
+            this.logger.info('Attempting to initialize DeepgramModelRegistry...');
+            this.registry = DeepgramModelRegistry.getInstance();
+            
+            const models = this.registry.getAllModels();
+            this.logger.info(`Registry initialized successfully with ${models.length} models`);
+            
+            if (models.length === 0) {
+                this.logger.warn('Registry has no models, will use fallback');
+                this.registry = null;
+            }
+        } catch (error) {
+            this.logger.error('Failed to initialize registry', error);
+            this.registry = null;
+            this.logger.info('Will continue with fallback UI');
+        }
     }
 
     /**
      * Deepgram 설정 UI 렌더링
      */
     public render(): void {
-        // 섹션 헤더
-        this.containerEl.createEl('h4', { text: 'Deepgram Configuration' });
+        this.logger.group('render()');
+        this.logRenderState();
         
-        // 설명
-        const descEl = this.containerEl.createEl('p', { 
-            text: 'Configure Deepgram for advanced speech recognition with multiple language support and AI features.',
-            cls: 'setting-item-description'
-        });
-        descEl.style.marginBottom = '20px';
+        try {
+            this.uiBuilder.clearContainer();
+            this.renderHeader();
+            this.renderSections();
+            
+            this.logger.info(`Total elements created: ${this.containerEl.children.length}`);
+            this.logger.groupEnd();
+        } catch (error) {
+            this.logger.error('Critical error in render()', error);
+            this.renderFallbackUI(error);
+        }
+    }
 
-        // API 키 설정
+    /**
+     * 렌더링 상태 로깅
+     */
+    private logRenderState(): void {
+        this.logger.debug('Container element:', this.containerEl);
+        this.logger.debug('Container is connected:', this.containerEl.isConnected);
+        this.logger.debug('Registry available:', !!this.registry);
+        this.logger.debug('API key exists:', !!this.plugin.settings.deepgramApiKey);
+        
+        if (!this.containerEl.isConnected) {
+            this.logger.warn('Container is not connected to DOM, attempting to render anyway');
+        }
+        
+        if (!this.registry) {
+            this.logger.warn('Registry not available, using fallback UI');
+        }
+    }
+
+    /**
+     * 헤더 섹션 렌더링
+     */
+    private renderHeader(): void {
+        this.uiBuilder.createHeader(UI_CONSTANTS.MESSAGES.HEADER);
+        this.uiBuilder.createDescription(UI_CONSTANTS.MESSAGES.DESCRIPTION);
+        
+        if (!this.registry) {
+            this.uiBuilder.createWarning(UI_CONSTANTS.MESSAGES.REGISTRY_WARNING);
+        }
+    }
+
+    /**
+     * 모든 섹션 렌더링
+     */
+    private renderSections(): void {
+        this.logger.info('Rendering API key section...');
         this.renderApiKeySection();
         
-        // 모델 선택
+        this.logger.info('Rendering model selection...');
         this.renderModelSelection();
         
-        // 기능 토글
+        this.logger.info('Rendering feature toggles...');
         this.renderFeatureToggles();
         
-        // 고급 설정
+        this.logger.info('Rendering advanced settings...');
         this.renderAdvancedSettings();
         
-        // 비용 추정
+        this.logger.info('Rendering cost estimation...');
         this.renderCostEstimation();
         
-        // API 키 검증 버튼
+        this.logger.info('Rendering validation button...');
         this.renderValidationButton();
     }
 
@@ -60,44 +148,64 @@ export class DeepgramSettings {
      */
     private renderApiKeySection(): void {
         new Setting(this.containerEl)
-            .setName('Deepgram API Key')
-            .setDesc('Enter your Deepgram API key for transcription')
+            .setName(UI_CONSTANTS.MESSAGES.API_KEY_LABEL)
+            .setDesc(UI_CONSTANTS.MESSAGES.API_KEY_DESC)
             .addText(text => {
-                text
-                    .setPlaceholder('Enter API key...')
-                    .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))
-                    .onChange(async (value) => {
-                        if (value && !value.includes('*')) {
-                            this.plugin.settings.deepgramApiKey = value;
-                            await this.plugin.saveSettings();
-                            
-                            // Re-display masked version
-                            text.setValue(this.maskApiKey(value));
-                            new Notice('Deepgram API key saved');
-                            
-                            // Enable model selection if API key is provided
-                            this.updateUIState();
-                        }
-                    });
-                
-                // Security: password input type
-                text.inputEl.type = 'password';
-                text.inputEl.addClass('deepgram-api-key-input');
-                
-                // Show actual value on focus
-                text.inputEl.addEventListener('focus', () => {
-                    if (this.plugin.settings.deepgramApiKey) {
-                        text.setValue(this.plugin.settings.deepgramApiKey);
-                    }
-                });
-                
-                // Mask on blur
-                text.inputEl.addEventListener('blur', () => {
-                    if (this.plugin.settings.deepgramApiKey) {
-                        text.setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey));
-                    }
-                });
+                this.setupApiKeyInput(text);
             });
+    }
+
+    /**
+     * API 키 입력 필드 설정
+     */
+    private setupApiKeyInput(text: TextComponent): void {
+        const currentKey = this.plugin.settings.deepgramApiKey || '';
+        
+        text
+            .setPlaceholder(UI_CONSTANTS.MESSAGES.API_KEY_PLACEHOLDER)
+            .setValue(this.validator.maskApiKey(currentKey))
+            .onChange(async (value: string) => {
+                await this.handleApiKeyChange(value, text);
+            });
+        
+        // Security settings
+        text.inputEl.type = 'password';
+        text.inputEl.addClass(UI_CONSTANTS.CLASSES.API_KEY_INPUT);
+        
+        // Event listeners
+        this.attachApiKeyEventListeners(text);
+    }
+
+    /**
+     * API 키 변경 처리
+     */
+    private async handleApiKeyChange(value: string, text: TextComponent): Promise<void> {
+        if (value && !value.includes('*')) {
+            this.plugin.settings.deepgramApiKey = value;
+            await this.plugin.saveSettings();
+            
+            text.setValue(this.validator.maskApiKey(value));
+            new Notice(UI_CONSTANTS.MESSAGES.API_KEY_SAVED);
+            
+            this.updateUIState();
+        }
+    }
+
+    /**
+     * API 키 이벤트 리스너 연결
+     */
+    private attachApiKeyEventListeners(text: TextComponent): void {
+        text.inputEl.addEventListener('focus', () => {
+            if (this.plugin.settings.deepgramApiKey) {
+                text.setValue(this.plugin.settings.deepgramApiKey);
+            }
+        });
+        
+        text.inputEl.addEventListener('blur', () => {
+            if (this.plugin.settings.deepgramApiKey) {
+                text.setValue(this.validator.maskApiKey(this.plugin.settings.deepgramApiKey));
+            }
+        });
     }
 
     /**
@@ -105,67 +213,130 @@ export class DeepgramSettings {
      */
     private renderModelSelection(): void {
         const setting = new Setting(this.containerEl)
-            .setName('Deepgram Model')
-            .setDesc('Select the Deepgram model for transcription');
+            .setName(UI_CONSTANTS.MESSAGES.MODEL_LABEL)
+            .setDesc(UI_CONSTANTS.MESSAGES.MODEL_DESC);
 
         const dropdown = setting.addDropdown(dropdown => {
-            // 기본 옵션
-            dropdown.addOption('', 'Select a model...');
-            
-            // 모델 옵션 추가
-            const models = this.registry.getAllModels();
-            models.forEach(model => {
-                const optionText = `${model.name} (${model.tier}) - $${model.pricing.perMinute}/min`;
-                dropdown.addOption(model.id, optionText);
-            });
-            
-            // 현재 설정값 반영
-            const currentModel = this.plugin.settings.transcription?.deepgram?.model || '';
-            dropdown.setValue(currentModel);
-            
-            // 변경 핸들러
-            dropdown.onChange(async (value) => {
-                if (!value) {
-                    this.selectedModel = null;
-                    return;
-                }
-                
-                this.selectedModel = this.registry.getModel(value) || null;
-                
-                // 설정 저장
-                if (!this.plugin.settings.transcription) {
-                    this.plugin.settings.transcription = {};
-                }
-                if (!this.plugin.settings.transcription.deepgram) {
-                    this.plugin.settings.transcription.deepgram = {
-                        enabled: true,
-                        model: value
-                    };
-                } else {
-                    this.plugin.settings.transcription.deepgram.model = value;
-                }
-                
-                await this.plugin.saveSettings();
-                
-                // UI 업데이트
-                this.updateModelInfo();
-                this.updateFeatureAvailability();
-                this.updateCostEstimation();
-                
-                new Notice(`Selected model: ${this.selectedModel?.name}`);
-            });
-            
+            this.populateModelDropdown(dropdown);
+            this.setupModelDropdownHandlers(dropdown);
             return dropdown;
         });
 
-        // API 키가 없으면 비활성화
+        this.disableIfNoApiKey(setting);
+    }
+
+    /**
+     * 모델 드롭다운 채우기
+     */
+    private populateModelDropdown(dropdown: DropdownComponent): void {
+        dropdown.addOption('', UI_CONSTANTS.MESSAGES.MODEL_PLACEHOLDER);
+        
+        if (!this.registry) {
+            this.logger.warn('Registry not available, using default models');
+            this.addDefaultModelOptions(dropdown);
+            return;
+        }
+        
+        try {
+            const models = this.registry.getAllModels();
+            if (models.length === 0) {
+                this.logger.warn('No models in registry, using defaults');
+                this.addDefaultModelOptions(dropdown);
+            } else {
+                this.addModelOptions(dropdown, models);
+                this.logger.info(`Added ${models.length} models to dropdown`);
+            }
+        } catch (error) {
+            this.logger.error('Error loading models', error);
+            this.addDefaultModelOptions(dropdown);
+        }
+    }
+
+    /**
+     * 모델 옵션 추가
+     */
+    private addModelOptions(dropdown: DropdownComponent, models: DeepgramModel[]): void {
+        models.forEach((model: DeepgramModel) => {
+            const optionText = this.formatModelOption(model);
+            dropdown.addOption(model.id, optionText);
+        });
+    }
+
+    /**
+     * 모델 옵션 포맷팅
+     */
+    private formatModelOption(model: DeepgramModel): string {
+        return `${model.name} (${model.tier}) - $${model.pricing.perMinute}/min`;
+    }
+
+    /**
+     * 모델 드롭다운 핸들러 설정
+     */
+    private setupModelDropdownHandlers(dropdown: DropdownComponent): void {
+        const currentModel = this.plugin.settings.transcription?.deepgram?.model || '';
+        dropdown.setValue(currentModel);
+        
+        dropdown.onChange(async (value: string) => {
+            await this.handleModelChange(value);
+        });
+    }
+
+    /**
+     * 모델 변경 처리
+     */
+    private async handleModelChange(modelId: string): Promise<void> {
+        if (!modelId) {
+            this.selectedModel = null;
+            return;
+        }
+        
+        this.selectedModel = this.registry?.getModel(modelId) || null;
+        await this.saveModelSelection(modelId);
+        this.updateUIAfterModelChange();
+        
+        if (this.selectedModel) {
+            new Notice(`Selected model: ${this.selectedModel.name}`);
+        }
+    }
+
+    /**
+     * 모델 선택 저장
+     */
+    private async saveModelSelection(modelId: string): Promise<void> {
+        if (!this.plugin.settings.transcription) {
+            this.plugin.settings.transcription = {};
+        }
+        if (!this.plugin.settings.transcription.deepgram) {
+            this.plugin.settings.transcription.deepgram = {
+                enabled: true,
+                model: modelId
+            };
+        } else {
+            this.plugin.settings.transcription.deepgram.model = modelId;
+        }
+        
+        await this.plugin.saveSettings();
+    }
+
+    /**
+     * 모델 변경 후 UI 업데이트
+     */
+    private updateUIAfterModelChange(): void {
+        this.updateModelInfo();
+        this.updateFeatureAvailability();
+        this.updateCostEstimation();
+    }
+
+    /**
+     * API 키 없을 시 비활성화
+     */
+    private disableIfNoApiKey(setting: Setting): void {
         if (!this.plugin.settings.deepgramApiKey) {
-            // dropdown element를 직접 찾아서 비활성화
-            const selectElement = setting.settingEl.querySelector('select');
+            const selectElement = setting.settingEl.querySelector('select') as HTMLSelectElement;
             if (selectElement) {
                 selectElement.disabled = true;
             }
-            setting.setDesc('Please enter your Deepgram API key first');
+            setting.setDesc(UI_CONSTANTS.MESSAGES.API_KEY_REQUIRED);
         }
     }
 
@@ -173,175 +344,195 @@ export class DeepgramSettings {
      * 모델 정보 표시
      */
     private updateModelInfo(): void {
-        // 기존 정보 제거
-        const existingInfo = this.containerEl.querySelector('.deepgram-model-info');
-        if (existingInfo) {
-            existingInfo.remove();
-        }
-
         if (!this.selectedModel) return;
-
-        // 모델 정보 컨테이너
-        const infoContainer = this.containerEl.createEl('div', { cls: 'deepgram-model-info' });
-        infoContainer.style.cssText = `
-            background: var(--background-secondary);
-            padding: 12px;
-            border-radius: 6px;
-            margin: 10px 0;
-            font-size: 0.9em;
-        `;
-
-        // 모델 설명
-        infoContainer.createEl('p', { 
-            text: this.selectedModel.description,
-            cls: 'model-description'
-        });
-
-        // 성능 지표
-        const metricsEl = infoContainer.createEl('div', { cls: 'model-metrics' });
-        metricsEl.style.cssText = 'display: flex; gap: 20px; margin-top: 8px;';
-        
-        metricsEl.createEl('span', { 
-            text: `Accuracy: ${this.selectedModel.performance.accuracy}%`
-        });
-        metricsEl.createEl('span', { 
-            text: `Speed: ${this.selectedModel.performance.speed}`
-        });
-        metricsEl.createEl('span', { 
-            text: `Latency: ${this.selectedModel.performance.latency}`
-        });
-
-        // 지원 언어
-        const langEl = infoContainer.createEl('div', { cls: 'supported-languages' });
-        langEl.style.cssText = 'margin-top: 8px;';
-        langEl.createEl('span', { 
-            text: `Supported languages: ${this.selectedModel.languages.join(', ')}`
-        });
+        this.uiBuilder.createModelInfoCard(this.selectedModel);
     }
 
     /**
      * 기능 토글 섹션
      */
     private renderFeatureToggles(): void {
-        const featuresContainer = this.containerEl.createEl('div', { cls: 'deepgram-features' });
-        featuresContainer.createEl('h5', { text: 'Features' });
+        const container = this.uiBuilder.createSection(
+            UI_CONSTANTS.CLASSES.FEATURES_CONTAINER,
+            UI_CONSTANTS.MESSAGES.FEATURES_HEADER
+        );
 
-        const features = this.registry.getAllFeatures();
+        if (!this.registry) {
+            this.renderDefaultFeatures(container);
+            return;
+        }
         
+        const features = this.registry.getAllFeatures();
         features.forEach((feature, key) => {
-            const setting = new Setting(featuresContainer)
-                .setName(feature.name)
-                .setDesc(feature.description);
-
-            // Premium 기능 표시
-            if (feature.requiresPremium) {
-                setting.setDesc(`${feature.description} (Premium feature)`);
-            }
-
-            setting.addToggle(toggle => {
-                // 현재 설정값 반영
-                const currentValue = this.plugin.settings.transcription?.deepgram?.features?.[key as keyof typeof this.plugin.settings.transcription.deepgram.features] || feature.default;
-                
-                toggle
-                    .setValue(currentValue)
-                    .onChange(async (value) => {
-                        // 설정 구조 초기화
-                        if (!this.plugin.settings.transcription) {
-                            this.plugin.settings.transcription = {};
-                        }
-                        if (!this.plugin.settings.transcription.deepgram) {
-                            this.plugin.settings.transcription.deepgram = { enabled: true };
-                        }
-                        if (!this.plugin.settings.transcription.deepgram.features) {
-                            this.plugin.settings.transcription.deepgram.features = {};
-                        }
-                        
-                        // 기능 설정 저장
-                        (this.plugin.settings.transcription.deepgram.features as any)[key] = value;
-                        await this.plugin.saveSettings();
-                        
-                        // 비용 업데이트 (일부 기능은 추가 비용 발생 가능)
-                        this.updateCostEstimation();
-                    });
-                
-                // 모델이 해당 기능을 지원하지 않으면 비활성화
-                if (this.selectedModel && !this.registry.isFeatureSupported(this.selectedModel.id, key)) {
-                    toggle.setDisabled(true);
-                    setting.setDesc(`${feature.description} (Not supported by selected model)`);
-                }
-                
-                return toggle;
-            });
+            this.renderFeatureToggle(container, feature, key);
         });
+    }
+
+    /**
+     * 개별 기능 토글 렌더링
+     */
+    private renderFeatureToggle(
+        container: HTMLElement, 
+        feature: DeepgramFeature, 
+        key: string
+    ): void {
+        const setting = new Setting(container)
+            .setName(feature.name)
+            .setDesc(this.getFeatureDescription(feature));
+
+        setting.addToggle(toggle => {
+            const currentValue = this.getFeatureValue(key, feature.default);
+            
+            toggle
+                .setValue(currentValue)
+                .onChange(async (value: boolean) => {
+                    await this.saveFeatureSetting(key, value);
+                    this.updateCostEstimation();
+                });
+            
+            this.updateFeatureAvailabilityForToggle(toggle, setting, feature, key);
+            
+            return toggle;
+        });
+    }
+
+    /**
+     * 기능 설명 가져오기
+     */
+    private getFeatureDescription(feature: DeepgramFeature): string {
+        return feature.requiresPremium 
+            ? `${feature.description} (Premium feature)` 
+            : feature.description;
+    }
+
+    /**
+     * 기능 값 가져오기
+     */
+    private getFeatureValue(key: string, defaultValue: boolean): boolean {
+        const features = this.plugin.settings.transcription?.deepgram?.features as DeepgramFeatures | undefined;
+        return features?.[key] ?? defaultValue;
+    }
+
+    /**
+     * 기능 설정 저장
+     */
+    private async saveFeatureSetting(key: string, value: boolean): Promise<void> {
+        this.ensureTranscriptionSettings();
+        
+        if (!this.plugin.settings.transcription!.deepgram!.features) {
+            this.plugin.settings.transcription!.deepgram!.features = {};
+        }
+        
+        const features = this.plugin.settings.transcription!.deepgram!.features as DeepgramFeatures;
+        features[key] = value;
+        await this.plugin.saveSettings();
+    }
+
+    /**
+     * 트랜스크립션 설정 초기화
+     */
+    private ensureTranscriptionSettings(): void {
+        if (!this.plugin.settings.transcription) {
+            this.plugin.settings.transcription = {};
+        }
+        if (!this.plugin.settings.transcription.deepgram) {
+            this.plugin.settings.transcription.deepgram = { enabled: true };
+        }
+    }
+
+    /**
+     * 기능 토글 가용성 업데이트
+     */
+    private updateFeatureAvailabilityForToggle(
+        toggle: ToggleComponent, 
+        setting: Setting, 
+        feature: DeepgramFeature, 
+        key: string
+    ): void {
+        if (this.selectedModel && this.registry && 
+            !this.registry.isFeatureSupported(this.selectedModel.id, key)) {
+            toggle.setDisabled(true);
+            setting.setDesc(`${feature.description} (Not supported by selected model)`);
+        }
     }
 
     /**
      * 고급 설정 섹션
      */
     private renderAdvancedSettings(): void {
-        const advancedContainer = this.containerEl.createEl('div', { cls: 'deepgram-advanced' });
-        advancedContainer.createEl('h5', { text: 'Advanced Settings' });
+        const container = this.uiBuilder.createSection(
+            UI_CONSTANTS.CLASSES.ADVANCED_CONTAINER,
+            UI_CONSTANTS.MESSAGES.ADVANCED_HEADER
+        );
 
-        // 언어 우선 설정
-        new Setting(advancedContainer)
+        this.renderLanguagePreference(container);
+        this.renderTimeoutSetting(container);
+        this.renderRetrySetting(container);
+    }
+
+    /**
+     * 언어 설정
+     */
+    private renderLanguagePreference(container: HTMLElement): void {
+        new Setting(container)
             .setName('Preferred Language')
             .setDesc('Set preferred language for better accuracy')
             .addDropdown(dropdown => {
-                dropdown
-                    .addOption('auto', 'Auto-detect')
-                    .addOption('en', 'English')
-                    .addOption('es', 'Spanish')
-                    .addOption('fr', 'French')
-                    .addOption('de', 'German')
-                    .addOption('pt', 'Portuguese')
-                    .addOption('nl', 'Dutch')
-                    .addOption('it', 'Italian')
-                    .addOption('pl', 'Polish')
-                    .addOption('ru', 'Russian')
-                    .addOption('zh', 'Chinese')
-                    .addOption('ja', 'Japanese')
-                    .addOption('ko', 'Korean')
-                    .addOption('ar', 'Arabic')
-                    .addOption('hi', 'Hindi')
-                    .setValue(this.plugin.settings.language || 'auto')
-                    .onChange(async (value) => {
-                        this.plugin.settings.language = value;
-                        await this.plugin.saveSettings();
-                    });
+                LANGUAGE_OPTIONS.forEach(option => {
+                    dropdown.addOption(option.value, option.label);
+                });
+                
+                dropdown.setValue(this.plugin.settings.language || 'auto');
+                dropdown.onChange(async (value: string) => {
+                    this.plugin.settings.language = value;
+                    await this.plugin.saveSettings();
+                });
             });
+    }
 
-        // 타임아웃 설정
-        new Setting(advancedContainer)
+    /**
+     * 타임아웃 설정
+     */
+    private renderTimeoutSetting(container: HTMLElement): void {
+        new Setting(container)
             .setName('Request Timeout')
             .setDesc('Maximum time to wait for transcription (in seconds)')
             .addText(text => {
+                const currentTimeout = this.plugin.settings.requestTimeout || CONFIG_CONSTANTS.TIMEOUT.DEFAULT;
+                
                 text
                     .setPlaceholder('30')
-                    .setValue(String((this.plugin.settings.requestTimeout || 30000) / 1000))
-                    .onChange(async (value) => {
-                        const timeout = parseInt(value) * 1000;
-                        if (!isNaN(timeout) && timeout >= 5000 && timeout <= 120000) {
+                    .setValue(String(currentTimeout / 1000))
+                    .onChange(async (value: string) => {
+                        const timeout = this.validator.validateTimeout(value);
+                        if (timeout !== null) {
                             this.plugin.settings.requestTimeout = timeout;
                             await this.plugin.saveSettings();
                         }
                     });
             });
+    }
 
-        // 재시도 설정
-        new Setting(advancedContainer)
+    /**
+     * 재시도 설정
+     */
+    private renderRetrySetting(container: HTMLElement): void {
+        new Setting(container)
             .setName('Max Retries')
             .setDesc('Number of retry attempts on failure')
             .addDropdown(dropdown => {
-                dropdown
-                    .addOption('0', 'No retries')
-                    .addOption('1', '1 retry')
-                    .addOption('2', '2 retries')
-                    .addOption('3', '3 retries')
-                    .setValue(String(this.plugin.settings.maxRetries || 3))
-                    .onChange(async (value) => {
-                        this.plugin.settings.maxRetries = parseInt(value);
-                        await this.plugin.saveSettings();
-                    });
+                for (let i = 0; i <= CONFIG_CONSTANTS.RETRIES.MAX; i++) {
+                    const label = i === 0 ? 'No retries' : `${i} ${i === 1 ? 'retry' : 'retries'}`;
+                    dropdown.addOption(String(i), label);
+                }
+                
+                const currentRetries = this.plugin.settings.maxRetries || CONFIG_CONSTANTS.RETRIES.DEFAULT;
+                dropdown.setValue(String(currentRetries));
+                
+                dropdown.onChange(async (value: string) => {
+                    this.plugin.settings.maxRetries = parseInt(value);
+                    await this.plugin.saveSettings();
+                });
             });
     }
 
@@ -349,17 +540,8 @@ export class DeepgramSettings {
      * 비용 추정 섹션
      */
     private renderCostEstimation(): void {
-        const costContainer = this.containerEl.createEl('div', { cls: 'deepgram-cost-estimation' });
-        costContainer.style.cssText = `
-            background: var(--background-modifier-border);
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 20px;
-        `;
-        
-        costContainer.createEl('h5', { text: 'Cost Estimation' });
-        
-        this.estimatedCostEl = costContainer.createEl('div', { cls: 'cost-details' });
+        const costContainer = this.uiBuilder.createCostEstimationContainer();
+        this.estimatedCostEl = costContainer.createEl('div', { cls: UI_CONSTANTS.CLASSES.COST_DETAILS });
         this.updateCostEstimation();
     }
 
@@ -369,38 +551,28 @@ export class DeepgramSettings {
     private updateCostEstimation(): void {
         if (!this.estimatedCostEl) return;
         
-        this.estimatedCostEl.empty();
+        const estimation = this.costCalculator.calculateEstimation(
+            this.selectedModel, 
+            this.plugin.settings.monthlyBudget
+        );
         
-        if (!this.selectedModel) {
-            this.estimatedCostEl.createEl('p', { 
-                text: 'Select a model to see cost estimation',
-                cls: 'mod-warning'
-            });
+        if (!estimation) {
+            this.uiBuilder.updateCostDetails(this.estimatedCostEl.parentElement!, null);
             return;
         }
-
-        const costInfo = this.estimatedCostEl.createEl('div');
         
-        // 분당 비용
-        costInfo.createEl('p', { 
-            text: `Cost per minute: $${this.selectedModel.pricing.perMinute}`
-        });
+        this.uiBuilder.updateCostDetails(
+            this.estimatedCostEl.parentElement!, 
+            this.selectedModel, 
+            estimation.monthly
+        );
         
-        // 예상 월 비용 (하루 10분 사용 가정)
-        const dailyMinutes = 10;
-        const monthlyMinutes = dailyMinutes * 30;
-        const monthlyCost = this.registry.calculateCost(this.selectedModel.id, monthlyMinutes);
-        
-        costInfo.createEl('p', { 
-            text: `Estimated monthly cost (${dailyMinutes} min/day): $${monthlyCost.toFixed(2)}`
-        });
-        
-        // 예산 경고
-        if (this.plugin.settings.monthlyBudget && monthlyCost > this.plugin.settings.monthlyBudget) {
-            costInfo.createEl('p', { 
-                text: `⚠️ Exceeds monthly budget of $${this.plugin.settings.monthlyBudget}`,
-                cls: 'mod-warning'
-            });
+        if (estimation.exceeedsBudget && this.plugin.settings.monthlyBudget) {
+            this.uiBuilder.addBudgetWarning(
+                this.estimatedCostEl.parentElement!, 
+                estimation.monthly, 
+                this.plugin.settings.monthlyBudget
+            );
         }
     }
 
@@ -409,87 +581,73 @@ export class DeepgramSettings {
      */
     private renderValidationButton(): void {
         new Setting(this.containerEl)
-            .setName('Validate Configuration')
-            .setDesc('Test your Deepgram API key and settings')
+            .setName(UI_CONSTANTS.MESSAGES.VALIDATION_LABEL)
+            .setDesc(UI_CONSTANTS.MESSAGES.VALIDATION_DESC)
             .addButton(button => {
-                button
-                    .setButtonText('Validate')
-                    .setCta()
-                    .onClick(async () => {
-                        button.setDisabled(true);
-                        button.setButtonText('Validating...');
-                        
-                        try {
-                            const isValid = await this.validateApiKey();
-                            
-                            if (isValid) {
-                                new Notice('✅ Deepgram configuration is valid');
-                                button.setButtonText('Valid ✓');
-                                button.removeCta();
-                                
-                                // 3초 후 원래 상태로 복구
-                                setTimeout(() => {
-                                    button.setButtonText('Validate');
-                                    button.setCta();
-                                    button.setDisabled(false);
-                                }, 3000);
-                            } else {
-                                throw new Error('Invalid API key');
-                            }
-                        } catch (error) {
-                            console.error('Validation error:', error);
-                            new Notice('❌ Invalid Deepgram API key or configuration');
-                            button.setButtonText('Validate');
-                            button.setWarning();
-                            button.setDisabled(false);
-                        }
-                    });
+                this.setupValidationButton(button);
             });
     }
 
     /**
-     * API 키 검증
+     * 검증 버튼 설정
      */
-    private async validateApiKey(): Promise<boolean> {
-        if (!this.plugin.settings.deepgramApiKey) {
-            return false;
-        }
+    private setupValidationButton(button: ButtonComponent): void {
+        button
+            .setButtonText(UI_CONSTANTS.MESSAGES.VALIDATION_BUTTON)
+            .setCta()
+            .onClick(async () => {
+                await this.handleValidation(button);
+            });
+    }
 
+    /**
+     * 검증 처리
+     */
+    private async handleValidation(button: ButtonComponent): Promise<void> {
+        button.setDisabled(true);
+        button.setButtonText(UI_CONSTANTS.MESSAGES.VALIDATING);
+        
         try {
-            // Deepgram API 검증 엔드포인트 호출
-            const response = await fetch('https://api.deepgram.com/v1/projects', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Token ${this.plugin.settings.deepgramApiKey}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            return response.ok;
+            const isValid = await this.validator.validateApiKey(
+                this.plugin.settings.deepgramApiKey || ''
+            );
+            
+            if (isValid) {
+                this.handleValidationSuccess(button);
+            } else {
+                throw new Error('Invalid API key');
+            }
         } catch (error) {
-            console.error('API validation error:', error);
-            return false;
+            this.handleValidationError(button, error);
         }
     }
 
     /**
-     * API 키 마스킹
+     * 검증 성공 처리
      */
-    private maskApiKey(key: string): string {
-        if (!key || key.length < 10) {
-            return '';
-        }
+    private handleValidationSuccess(button: ButtonComponent): void {
+        new Notice(UI_CONSTANTS.MESSAGES.VALIDATION_SUCCESS);
+        button.setButtonText('Valid ✓');
+        button.removeCta();
         
-        const visibleStart = 8;
-        const visibleEnd = 4;
-        
-        if (key.length <= visibleStart + visibleEnd) {
-            return key;
-        }
-        
-        const masked = '*'.repeat(key.length - visibleStart - visibleEnd);
-        return key.substring(0, visibleStart) + masked + key.substring(key.length - visibleEnd);
+        setTimeout(() => {
+            button.setButtonText(UI_CONSTANTS.MESSAGES.VALIDATION_BUTTON);
+            button.setCta();
+            button.setDisabled(false);
+        }, CONFIG_CONSTANTS.VALIDATION_RESET_DELAY);
     }
+
+    /**
+     * 검증 실패 처리
+     */
+    private handleValidationError(button: ButtonComponent, error: unknown): void {
+        this.logger.error('Validation error', error);
+        new Notice(UI_CONSTANTS.MESSAGES.VALIDATION_ERROR);
+        button.setButtonText(UI_CONSTANTS.MESSAGES.VALIDATION_BUTTON);
+        button.setWarning();
+        button.setDisabled(false);
+    }
+
 
     /**
      * UI 상태 업데이트
@@ -511,24 +669,135 @@ export class DeepgramSettings {
     }
 
     /**
+     * 기본 기능 렌더링 (Registry 없을 때 폴백)
+     */
+    private renderDefaultFeatures(container: HTMLElement): void {
+        DEFAULT_FEATURES.forEach(feature => {
+            new Setting(container)
+                .setName(feature.name)
+                .setDesc(feature.description)
+                .addToggle(toggle => {
+                    const currentValue = this.getFeatureValue(feature.key, feature.default);
+                    
+                    toggle
+                        .setValue(currentValue)
+                        .onChange(async (value: boolean) => {
+                            await this.saveFeatureSetting(feature.key, value);
+                        });
+                });
+        });
+    }
+
+    /**
      * 기능 가용성 업데이트
      */
     private updateFeatureAvailability(): void {
-        if (!this.selectedModel) return;
+        if (!this.selectedModel || !this.registry) return;
         
         const features = this.registry.getAllFeatures();
         features.forEach((feature, key) => {
-            const toggle = this.containerEl.querySelector(`[data-feature="${key}"]`) as HTMLInputElement;
-            if (toggle) {
-                const isSupported = this.registry.isFeatureSupported(this.selectedModel!.id, key);
-                toggle.disabled = !isSupported;
+            this.updateFeatureToggleState(key);
+        });
+    }
+
+    /**
+     * 개별 기능 토글 상태 업데이트
+     */
+    private updateFeatureToggleState(featureKey: string): void {
+        const toggle = this.containerEl.querySelector(
+            `[data-feature="${featureKey}"]`
+        ) as HTMLInputElement;
+        
+        if (!toggle || !this.selectedModel || !this.registry) return;
+        
+        const isSupported = this.registry.isFeatureSupported(
+            this.selectedModel.id, 
+            featureKey
+        );
+        
+        toggle.disabled = !isSupported;
+        
+        if (!isSupported && toggle.checked) {
+            toggle.checked = false;
+            toggle.dispatchEvent(new Event('change'));
+        }
+    }
+
+    /**
+     * 기본 모델 옵션 추가 (Registry 실패 시 폴백)
+     */
+    private addDefaultModelOptions(dropdown: DropdownComponent): void {
+        DEFAULT_MODELS.forEach(model => {
+            const optionText = `${model.name} (${model.tier}) - $${model.price}/min`;
+            dropdown.addOption(model.id, optionText);
+        });
+        
+        this.logger.info('Added default model options');
+    }
+
+    /**
+     * 폴백 UI 렌더링 (심각한 오류 발생 시)
+     */
+    private renderFallbackUI(error: unknown): void {
+        this.logger.info('Rendering fallback UI due to error');
+        
+        try {
+            this.uiBuilder.clearContainer();
+            this.uiBuilder.createErrorContainer(error);
+            this.renderMinimalSettings();
+            
+            this.logger.info('Fallback UI rendered successfully');
+        } catch (fallbackError) {
+            this.logger.error('Failed to render fallback UI', fallbackError);
+            this.renderCriticalError();
+        }
+    }
+
+    /**
+     * 최소한의 설정 UI
+     */
+    private renderMinimalSettings(): void {
+        // API 키 설정
+        new Setting(this.containerEl)
+            .setName(UI_CONSTANTS.MESSAGES.API_KEY_LABEL)
+            .setDesc(UI_CONSTANTS.MESSAGES.API_KEY_DESC)
+            .addText(text => {
+                text
+                    .setPlaceholder(UI_CONSTANTS.MESSAGES.API_KEY_PLACEHOLDER)
+                    .setValue(this.plugin.settings.deepgramApiKey || '')
+                    .onChange(async (value: string) => {
+                        this.plugin.settings.deepgramApiKey = value;
+                        await this.plugin.saveSettings();
+                        new Notice(UI_CONSTANTS.MESSAGES.API_KEY_SAVED);
+                    });
+                text.inputEl.type = 'password';
+            });
+        
+        // 모델 선택
+        new Setting(this.containerEl)
+            .setName(UI_CONSTANTS.MESSAGES.MODEL_LABEL)
+            .setDesc(UI_CONSTANTS.MESSAGES.MODEL_DESC)
+            .addDropdown(dropdown => {
+                dropdown.addOption('', UI_CONSTANTS.MESSAGES.MODEL_PLACEHOLDER);
+                this.addDefaultModelOptions(dropdown);
                 
-                // 지원하지 않는 기능은 끄기
-                if (!isSupported && toggle.checked) {
-                    toggle.checked = false;
-                    toggle.dispatchEvent(new Event('change'));
-                }
-            }
+                const currentModel = this.plugin.settings.transcription?.deepgram?.model || '';
+                dropdown.setValue(currentModel);
+                
+                dropdown.onChange(async (value: string) => {
+                    await this.saveModelSelection(value);
+                });
+            });
+    }
+
+    /**
+     * 치명적 오류 표시
+     */
+    private renderCriticalError(): void {
+        this.uiBuilder.clearContainer();
+        this.containerEl.createEl('p', {
+            text: UI_CONSTANTS.MESSAGES.CRITICAL_ERROR,
+            cls: UI_CONSTANTS.CLASSES.WARNING
         });
     }
 }
