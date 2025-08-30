@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yourusername/obsidian-speech-to-text/releases)
+[![Version](https://img.shields.io/badge/version-3.0.2-blue.svg)](https://github.com/asyouplz/SpeechNote-1/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D0.15.0-purple.svg)](https://obsidian.md)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20API-orange.svg)](https://platform.openai.com/docs/guides/speech-to-text)
@@ -389,6 +389,37 @@ SpeechNote/
 2. 음질 설정 조정
 3. 캐시 기능 활성화
 4. 네트워크 속도 확인
+
+### ✅ 최근 해결된 문제 (Recently Fixed Issues) - v3.0.2
+
+#### 🔧 StatusBar 오류 (Fixed)
+**이전 증상**: 플러그인 로드 시 `toLowerCase` 오류 발생
+
+**해결 내용**:
+- StatusBar 텍스트 설정 시 안전한 처리 메커니즘 구현
+- Null/undefined 체크 로직 추가
+- 초기화 순서 최적화
+
+#### ⚙️ 설정 탭 표시 문제 (Fixed)
+**이전 증상**: 설정 탭이 Obsidian 설정 창에 나타나지 않음
+
+**해결 내용**:
+- SettingsTab 구조를 단일 파일로 단순화
+- 의존성 순환 참조 문제 해결
+- 초기화 프로세스 개선
+
+#### 🏗️ 아키텍처 개선사항
+**추가된 기능**:
+- **생명주기 관리자**: 플러그인 리소스 자동 정리
+- **의존성 주입**: 모듈 간 느슨한 결합 구현
+- **UI 매니저**: 중앙화된 UI 컴포넌트 관리
+- **에러 경계**: 전역 에러 처리 및 자동 복구
+
+📖 상세 기술 문서: [Obsidian Plugin 오류 수정 가이드](docs/OBSIDIAN_PLUGIN_FIXES.md)
+
+### 🔍 알려진 문제 (Known Issues)
+
+현재 알려진 주요 문제가 없습니다. 문제를 발견하시면 [Issue Tracker](https://github.com/asyouplz/SpeechNote-1/issues)에 보고해주세요.
 
 ## 기여하기 (Contributing)
 

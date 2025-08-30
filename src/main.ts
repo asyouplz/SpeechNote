@@ -44,8 +44,10 @@ export default class SpeechToTextPlugin extends Plugin {
             // Register event handlers
             this.registerEventHandlers();
             
-            // Add status bar item
-            this.createStatusBarItem();
+            // Add status bar item after a short delay to ensure workspace is ready
+            this.app.workspace.onLayoutReady(() => {
+                this.createStatusBarItem();
+            });
             
             new Notice('Speech-to-Text plugin loaded successfully');
         } catch (error) {
@@ -239,27 +241,73 @@ export default class SpeechToTextPlugin extends Plugin {
     }
 
     private createStatusBarItem() {
-        const statusBarItem = this.addStatusBarItem();
-        
-        // Update status bar based on state
-        this.stateManager.subscribe((state) => {
-            switch (state.status) {
-                case 'idle':
-                    statusBarItem.setText('');
-                    break;
-                case 'processing':
-                    statusBarItem.setText('🎙️ Transcribing...');
-                    break;
-                case 'completed':
-                    statusBarItem.setText('✅ Transcription complete');
-                    setTimeout(() => statusBarItem.setText(''), 3000);
-                    break;
-                case 'error':
-                    statusBarItem.setText('❌ Transcription failed');
-                    setTimeout(() => statusBarItem.setText(''), 3000);
-                    break;
+        try {
+            // Ensure the app workspace is ready
+            if (!this.app.workspace) {
+                console.warn('Workspace not ready, skipping status bar creation');
+                return;
             }
-        });
+
+            // Create status bar item with a safe approach
+            let statusBarItem: HTMLElement | null = null;
+            
+            try {
+                // addStatusBarItem() returns an HTMLElement
+                statusBarItem = this.addStatusBarItem();
+            } catch (e) {
+                console.warn('Failed to create status bar item:', e);
+                return;
+            }
+            
+            // Ensure statusBarItem exists before using it
+            if (!statusBarItem) {
+                console.warn('Failed to create status bar item');
+                return;
+            }
+            
+            // Set initial text
+            statusBarItem.setText = statusBarItem.setText || ((text: string) => {
+                statusBarItem!.textContent = text;
+            });
+            
+            // Update status bar based on state
+            this.stateManager.subscribe((state) => {
+                if (!statusBarItem) {
+                    return;
+                }
+                
+                const updateText = (text: string) => {
+                    if (statusBarItem) {
+                        // Safe text update
+                        if (typeof statusBarItem.setText === 'function') {
+                            statusBarItem.setText(text);
+                        } else {
+                            statusBarItem.textContent = text;
+                        }
+                    }
+                };
+                
+                switch (state.status) {
+                    case 'idle':
+                        updateText('');
+                        break;
+                    case 'processing':
+                        updateText('🎙️ Transcribing...');
+                        break;
+                    case 'completed':
+                        updateText('✅ Transcription complete');
+                        setTimeout(() => updateText(''), 3000);
+                        break;
+                    case 'error':
+                        updateText('❌ Transcription failed');
+                        setTimeout(() => updateText(''), 3000);
+                        break;
+                }
+            });
+        } catch (error) {
+            console.error('Error creating status bar item:', error);
+            // Continue without status bar - non-critical feature
+        }
     }
 
     private async showAudioFilePicker() {
