@@ -6,7 +6,8 @@ import {
     TranscriptionResponse,
     ProviderCapabilities,
     ProviderConfig,
-    DeepgramSpecificOptions
+    DeepgramSpecificOptions,
+    TranscriptionError
 } from '../ITranscriber';
 import { DeepgramService } from './DeepgramService';
 
@@ -44,11 +45,20 @@ export class DeepgramAdapter implements ITranscriber {
         options?: TranscriptionOptions
     ): Promise<TranscriptionResponse> {
         const startTime = Date.now();
+        this.logger.debug('=== DeepgramAdapter.transcribe START ===', {
+            audioSize: audio.byteLength,
+            options
+        });
         
         try {
             // 옵션 변환
             const deepgramOptions = this.convertOptions(options);
             const language = options?.language;
+            
+            this.logger.debug('Calling Deepgram API with options:', {
+                deepgramOptions,
+                language
+            });
             
             // Deepgram API 호출
             const response = await this.deepgramService.transcribe(
@@ -57,8 +67,20 @@ export class DeepgramAdapter implements ITranscriber {
                 language
             );
             
+            this.logger.debug('Deepgram API response received:', {
+                hasResponse: !!response,
+                responseType: typeof response,
+                hasResults: !!response?.results
+            });
+            
             // 응답 변환
             const result = this.deepgramService.parseResponse(response);
+            
+            this.logger.debug('Parsed response:', {
+                hasText: !!result?.text,
+                textLength: result?.text?.length || 0,
+                textPreview: result?.text?.substring(0, 100)
+            });
             
             // 처리 시간 업데이트
             result.metadata = {
@@ -66,9 +88,76 @@ export class DeepgramAdapter implements ITranscriber {
                 processingTime: Date.now() - startTime
             };
             
+            this.logger.info('=== DeepgramAdapter.transcribe COMPLETE ===', {
+                processingTime: result.metadata.processingTime,
+                textLength: result.text?.length || 0,
+                language: result.language
+            });
+            
             return result;
         } catch (error) {
-            this.logger.error('DeepgramAdapter: Transcription failed', error as Error);
+            const errorObj = error as Error;
+            
+            // 에러 타입별로 사용자 친화적 메시지 제공
+            if (errorObj instanceof TranscriptionError) {
+                // 빈 transcript 에러의 경우 추가 컨텍스트 제공
+                if (errorObj.code === 'EMPTY_TRANSCRIPT') {
+                    this.logger.error('DeepgramAdapter: Empty transcript - providing user guidance', {
+                        originalMessage: errorObj.message,
+                        audioSize: audio.byteLength,
+                        language: options?.language,
+                        model: options?.model
+                    });
+                    
+                    // 사용자에게 실용적인 해결책 제시
+                    const enhancedMessage = `음성을 텍스트로 변환할 수 없었습니다. ${errorObj.message}
+
+다음 사항을 확인해 주세요:
+• 오디오에 명확한 음성이 포함되어 있는지 확인
+• 마이크 볼륨이 충분한지 확인
+• 배경소음이 너무 크지 않은지 확인
+• 지원되는 오디오 형식인지 확인 (WAV, MP3, FLAC 등)
+• 언어 설정이 올바른지 확인`;
+
+                    throw new TranscriptionError(
+                        enhancedMessage,
+                        errorObj.code,
+                        errorObj.provider,
+                        errorObj.isRetryable,
+                        errorObj.statusCode
+                    );
+                }
+                
+                // 오디오 검증 에러의 경우
+                if (errorObj.code === 'INVALID_AUDIO') {
+                    this.logger.error('DeepgramAdapter: Invalid audio format', {
+                        originalMessage: errorObj.message,
+                        audioSize: audio.byteLength
+                    });
+                    
+                    const enhancedMessage = `오디오 파일에 문제가 있습니다: ${errorObj.message}
+
+해결 방법:
+• 올바른 오디오 파일을 선택했는지 확인
+• 파일이 손상되지 않았는지 확인
+• 지원되는 형식 (WAV, MP3, FLAC, OGG 등)인지 확인
+• 파일 크기가 2GB를 초과하지 않는지 확인`;
+
+                    throw new TranscriptionError(
+                        enhancedMessage,
+                        errorObj.code,
+                        errorObj.provider,
+                        errorObj.isRetryable,
+                        errorObj.statusCode
+                    );
+                }
+            }
+            
+            this.logger.error('DeepgramAdapter: Transcription failed', errorObj, {
+                audioSize: audio.byteLength,
+                options: options,
+                errorType: errorObj.constructor.name
+            });
             throw error;
         }
     }

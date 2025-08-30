@@ -116,11 +116,23 @@ export class SettingsTab extends PluginSettingTab {
     }
     
     private createProviderSelection(containerEl: HTMLElement): void {
-        new Setting(containerEl)
-            .setName('Transcription Provider')
-            .setDesc('Select the speech-to-text provider')
-            .addDropdown(dropdown => {
-                dropdown
+        console.log('=== createProviderSelection called ===');
+        console.log('Creating Setting instance...');
+        
+        try {
+            const setting = new Setting(containerEl);
+            console.log('Setting instance created:', setting);
+            console.log('Setting element:', setting.settingEl);
+            console.log('Setting element in DOM:', setting.settingEl?.isConnected);
+            
+            setting
+                .setName('Transcription Provider')
+                .setDesc('Select the speech-to-text provider')
+                .addDropdown(dropdown => {
+                    console.log('Dropdown callback called');
+                    console.log('Dropdown component:', dropdown);
+                    
+                    dropdown
                     .addOption('auto', 'Auto (Intelligent Selection)')
                     .addOption('whisper', 'OpenAI Whisper')
                     .addOption('deepgram', 'Deepgram')
@@ -149,7 +161,18 @@ export class SettingsTab extends PluginSettingTab {
                         
                         new Notice(`Provider changed to: ${value}`);
                     });
-            });
+                    
+                    console.log('Dropdown setup complete');
+                    console.log('Dropdown element:', dropdown.selectEl);
+                    console.log('Dropdown options:', dropdown.selectEl?.options.length);
+                });
+            
+            console.log('Provider selection setting created successfully');
+            console.log('=== createProviderSelection completed ===');
+        } catch (error) {
+            console.error('Error creating provider selection:', error);
+            console.error('Error stack:', error instanceof Error ? error.stack : 'N/A');
+        }
         
         // Provider 설명
         const infoEl = containerEl.createEl('div', { cls: 'provider-info' });

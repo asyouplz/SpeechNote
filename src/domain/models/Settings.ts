@@ -22,6 +22,7 @@ export interface SpeechToTextSettings {
     provider?: 'auto' | 'whisper' | 'deepgram';
     whisperApiKey?: string;
     deepgramApiKey?: string;
+    deepgramModel?: string;  // Deepgram model/tier selection
     encryptedApiKey?: string;
     
     // Selection Strategy
