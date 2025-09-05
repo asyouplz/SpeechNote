@@ -102,7 +102,7 @@ export class DeepgramAdapter implements ITranscriber {
             if (errorObj instanceof TranscriptionError) {
                 // 빈 transcript 에러의 경우 추가 컨텍스트 제공
                 if (errorObj.code === 'EMPTY_TRANSCRIPT') {
-                    this.logger.error('DeepgramAdapter: Empty transcript - providing user guidance', {
+                    this.logger.error('DeepgramAdapter: Empty transcript - providing user guidance', errorObj, {
                         originalMessage: errorObj.message,
                         audioSize: audio.byteLength,
                         language: options?.language,
@@ -130,7 +130,7 @@ export class DeepgramAdapter implements ITranscriber {
                 
                 // 오디오 검증 에러의 경우
                 if (errorObj.code === 'INVALID_AUDIO') {
-                    this.logger.error('DeepgramAdapter: Invalid audio format', {
+                    this.logger.error('DeepgramAdapter: Invalid audio format', errorObj, {
                         originalMessage: errorObj.message,
                         audioSize: audio.byteLength
                     });

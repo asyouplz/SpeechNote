@@ -52,7 +52,7 @@ export class StatusBarManager implements IDisposable {
 
             this.logger.info('StatusBar initialized successfully');
         } catch (error) {
-            this.logger.error('Failed to initialize StatusBar', error);
+            this.logger.error('Failed to initialize StatusBar', error instanceof Error ? error : undefined);
             // StatusBar 실패는 치명적이지 않으므로 에러를 던지지 않음
         }
     }
@@ -80,7 +80,7 @@ export class StatusBarManager implements IDisposable {
             this.statusBarItem = item;
             this.logger.debug('StatusBar item created successfully');
         } catch (error) {
-            this.logger.error('Error creating StatusBar item', error);
+            this.logger.error('Error creating StatusBar item', error instanceof Error ? error : undefined);
             this.statusBarItem = null;
         }
     }
@@ -178,7 +178,7 @@ export class StatusBarManager implements IDisposable {
             }
 
         } catch (error) {
-            this.logger.error('Failed to update StatusBar', error);
+            this.logger.error('Failed to update StatusBar', error instanceof Error ? error : undefined);
         }
     }
 
@@ -204,7 +204,7 @@ export class StatusBarManager implements IDisposable {
                 this.statusBarItem.textContent = '';
             }
         } catch (error) {
-            this.logger.error('Failed to clear StatusBar', error);
+            this.logger.error('Failed to clear StatusBar', error instanceof Error ? error : undefined);
         }
     }
 
@@ -264,7 +264,7 @@ export class StatusBarManager implements IDisposable {
                     this.statusBarItem.parentNode.removeChild(this.statusBarItem);
                 }
             } catch (error) {
-                this.logger.error('Error removing StatusBar item', error);
+                this.logger.error('Error removing StatusBar item', error instanceof Error ? error : undefined);
             }
             
             this.statusBarItem = null;

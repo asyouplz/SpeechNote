@@ -43,7 +43,6 @@ export default class SpeechToTextPlugin extends Plugin {
     
     // 설정
     public settings: any;
-    public manifest = { version: "1.0.0" };
 
     /**
      * 플러그인 로드
@@ -385,8 +384,12 @@ export default class SpeechToTextPlugin extends Plugin {
             return;
         }
 
-        new FilePickerModal(this.app, audioFiles, async (file) => {
-            await this.transcribeFile(file);
+        new FilePickerModal(this.app, {}, async (files) => {
+            for (const file of files) {
+                await this.transcribeFile(file.file);
+            }
+        }, () => {
+            // onCancel callback
         }).open();
     }
 

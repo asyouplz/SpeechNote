@@ -43,7 +43,7 @@ const DEFAULT_SETTINGS: SpeechToTextSettings = {
 
 // 메인 플러그인 클래스
 export default class SpeechToTextPlugin extends Plugin {
-    settings: SpeechToTextSettings;
+    settings: SpeechToTextSettings = DEFAULT_SETTINGS;
     statusBarItem: HTMLElement | null = null;
     stateManager: any;
     eventManager: any;
@@ -219,7 +219,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 (this.statusBarItem as any).setText(text);
             } else {
                 // Fallback: DOM API 직접 사용
-                this.statusBarItem.textContent = text;
+                (this.statusBarItem as HTMLElement).textContent = text;
             }
         }
     }
@@ -383,7 +383,7 @@ class SpeechToTextSettingTab extends PluginSettingTab {
                 .addOption('end', '문서 끝')
                 .addOption('beginning', '문서 시작')
                 .setValue(this.plugin.settings.insertPosition)
-                .onChange(async (value: 'cursor' | 'end' | 'beginning') => {
+                .onChange(async (value: string) => {
                     this.plugin.settings.insertPosition = value;
                     await this.plugin.saveSettings();
                 }));
