@@ -136,7 +136,8 @@ export default class SpeechToTextPlugin extends Plugin {
                         deepgram: {
                             enabled: !!this.settings.deepgramApiKey,
                             apiKey: this.settings.deepgramApiKey,
-                            model: this.settings.deepgramModel || 'nova-2'
+                            model: this.settings.deepgramModel || 'nova-2',
+                            features: this.settings.transcription?.deepgram?.features
                         },
                         
                         abTest: {

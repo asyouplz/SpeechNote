@@ -1,4 +1,4 @@
-import type { ILogger } from '../../../../types';
+import type { ILogger, ISettingsManager } from '../../../../types';
 import {
     ITranscriber,
     TranscriptionProvider,
@@ -21,6 +21,7 @@ export class DeepgramAdapter implements ITranscriber {
     constructor(
         private deepgramService: DeepgramService,
         private logger: ILogger,
+        private settingsManager?: ISettingsManager,
         config?: Partial<ProviderConfig>
     ) {
         this.config = {
@@ -186,11 +187,39 @@ export class DeepgramAdapter implements ITranscriber {
             }
         }
         
-        // Deepgram 전용 옵션 적용
+        // 설정에서 기능 옵션 가져오기
+        let deepgramFeatures: any = null;
+        
+        if (this.settingsManager) {
+            const transcriptionSettings = this.settingsManager.get('transcription');
+            deepgramFeatures = transcriptionSettings?.deepgram?.features;
+            this.logger.debug('Using feature settings from settingsManager', deepgramFeatures);
+        }
+        
+        if (deepgramFeatures) {
+            this.logger.debug('Applying feature settings from UI', deepgramFeatures);
+            
+            // 기능 설정 매핑
+            if (deepgramFeatures.punctuation !== undefined) {
+                deepgramOptions.punctuate = deepgramFeatures.punctuation;
+            }
+            if (deepgramFeatures.smartFormat !== undefined) {
+                deepgramOptions.smartFormat = deepgramFeatures.smartFormat;
+            }
+            if (deepgramFeatures.diarization !== undefined) {
+                deepgramOptions.diarize = deepgramFeatures.diarization;
+            }
+            if (deepgramFeatures.numerals !== undefined) {
+                deepgramOptions.numerals = deepgramFeatures.numerals;
+            }
+        }
+        
+        // Deepgram 전용 옵션 적용 (우선순위 높음)
         if (options?.deepgram) {
             Object.assign(deepgramOptions, options.deepgram);
         }
         
+        this.logger.debug('Final Deepgram options', deepgramOptions);
         return deepgramOptions;
     }
     
