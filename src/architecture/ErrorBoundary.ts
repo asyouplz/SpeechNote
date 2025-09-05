@@ -231,7 +231,7 @@ export class ErrorBoundary {
                     this.logger.info(`Recovered from error using strategy: ${strategy.name}`);
                     return true;
                 } catch (recoveryError) {
-                    this.logger.error(`Recovery strategy ${strategy.name} failed`, recoveryError);
+                    this.logger.error(`Recovery strategy ${strategy.name} failed`, recoveryError instanceof Error ? recoveryError : undefined);
                 }
             }
         }
@@ -254,7 +254,7 @@ export class ErrorBoundary {
         switch (severity) {
             case ErrorSeverity.CRITICAL:
             case ErrorSeverity.HIGH:
-                this.logger.error('Error occurred', errorInfo);
+                this.logger.error('Error occurred', error, errorInfo);
                 break;
             case ErrorSeverity.MEDIUM:
                 this.logger.warn('Warning', errorInfo);
@@ -325,8 +325,7 @@ export class ErrorBoundary {
      * 치명적 에러 처리
      */
     private handleCriticalError(error: Error, context: ErrorContext): void {
-        this.logger.error('CRITICAL ERROR - Too many errors detected', {
-            error,
+        this.logger.error('CRITICAL ERROR - Too many errors detected', error, {
             context
         });
 

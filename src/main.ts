@@ -356,18 +356,16 @@ export default class SpeechToTextPlugin extends Plugin {
         this.eventManager.on('transcription:complete', async (data) => {
             this.logger.debug('=== Transcription complete event received ===', {
                 hasData: !!data,
-                hasResult: !!data?.result,
                 hasText: !!data?.text,
-                hasResultText: !!data?.result?.text,
-                textLength: data?.text?.length || data?.result?.text?.length || 0,
+                textLength: data?.text?.length || 0,
                 autoInsert: this.settings.autoInsert
             });
             
             this.stateManager.setState({ status: 'completed' });
             new Notice('Transcription completed successfully');
             
-            // Extract text from either data.text or data.result.text
-            const textToInsert = data.text || data.result?.text;
+            // Extract text from data.text
+            const textToInsert = data.text;
             
             if (!textToInsert) {
                 this.logger.error('No text found in transcription complete event', undefined, { data });

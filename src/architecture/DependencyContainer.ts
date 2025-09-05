@@ -185,7 +185,7 @@ export class DependencyContainer {
                     registration.instance.dispose();
                     this.logger.debug(`Disposed service: ${String(token)}`);
                 } catch (error) {
-                    this.logger.error(`Failed to dispose service ${String(token)}`, error);
+                    this.logger.error(`Failed to dispose service ${String(token)}`, error instanceof Error ? error : undefined);
                 }
             }
         });

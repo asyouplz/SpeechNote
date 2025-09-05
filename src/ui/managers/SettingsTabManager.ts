@@ -41,7 +41,7 @@ export class SettingsTabManager implements IDisposable {
 
             this.logger.info('SettingsTab initialized successfully');
         } catch (error) {
-            this.logger.error('Failed to initialize SettingsTab', error);
+            this.logger.error('Failed to initialize SettingsTab', error instanceof Error ? error : undefined);
             // SettingsTab 실패는 치명적이지 않으므로 에러를 던지지 않음
             this.handleInitializationError(error);
         }
@@ -91,7 +91,7 @@ export class SettingsTabManager implements IDisposable {
             this.settingsTab = settingsTab;
             this.logger.debug('SettingsTab created and registered successfully');
         } catch (error) {
-            this.logger.error('Error creating SettingsTab', error);
+            this.logger.error('Error creating SettingsTab', error instanceof Error ? error : undefined);
             this.settingsTab = null;
         }
     }
@@ -118,7 +118,7 @@ export class SettingsTabManager implements IDisposable {
 
             return tab;
         } catch (error) {
-            this.logger.error('Failed to instantiate SettingsTab', error);
+            this.logger.error('Failed to instantiate SettingsTab', error instanceof Error ? error : undefined);
             return null;
         }
     }
@@ -131,7 +131,7 @@ export class SettingsTabManager implements IDisposable {
             this.plugin.addSettingTab(settingsTab);
             this.logger.debug('SettingsTab registered with plugin');
         } catch (error) {
-            this.logger.error('Failed to register SettingsTab', error);
+            this.logger.error('Failed to register SettingsTab', error instanceof Error ? error : undefined);
             throw error;
         }
     }
@@ -162,7 +162,7 @@ export class SettingsTabManager implements IDisposable {
             this.settingsTab = fallbackTab;
             this.logger.info('Fallback SettingsTab created');
         } catch (error) {
-            this.logger.error('Failed to create fallback SettingsTab', error);
+            this.logger.error('Failed to create fallback SettingsTab', error instanceof Error ? error : undefined);
         }
     }
 
@@ -180,7 +180,7 @@ export class SettingsTabManager implements IDisposable {
                 this.logger.debug('SettingsTab refreshed');
             }
         } catch (error) {
-            this.logger.error('Failed to refresh SettingsTab', error);
+            this.logger.error('Failed to refresh SettingsTab', error instanceof Error ? error : undefined);
         }
     }
 

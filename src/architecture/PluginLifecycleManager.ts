@@ -88,7 +88,7 @@ export class PluginLifecycleManager {
             }
 
         } catch (error) {
-            this.logger.error('Initialization failed', error);
+            this.logger.error('Initialization failed', error instanceof Error ? error : undefined);
             await this.rollback();
             throw error;
         }
@@ -103,7 +103,7 @@ export class PluginLifecycleManager {
             this.currentPhase = LifecyclePhase.READY;
             this.logger.info('Plugin initialization completed');
         } catch (error) {
-            this.logger.error('UI initialization failed', error);
+            this.logger.error('UI initialization failed', error instanceof Error ? error : undefined);
             // UI 실패는 전체 롤백하지 않고 graceful degradation
             this.handleUIInitializationError(error);
         }
@@ -141,7 +141,7 @@ export class PluginLifecycleManager {
             this.completedTasks.add(task.name);
             this.logger.debug(`Completed task: ${task.name}`);
         } catch (error) {
-            this.logger.error(`Task ${task.name} failed`, error);
+            this.logger.error(`Task ${task.name} failed`, error instanceof Error ? error : undefined);
             throw new TaskExecutionError(task.name, error);
         }
     }
@@ -172,7 +172,7 @@ export class PluginLifecycleManager {
                     await task.rollback();
                     this.logger.debug(`Rolled back task: ${task.name}`);
                 } catch (error) {
-                    this.logger.error(`Failed to rollback task ${task.name}`, error);
+                    this.logger.error(`Failed to rollback task ${task.name}`, error instanceof Error ? error : undefined);
                 }
             }
         }
@@ -193,7 +193,7 @@ export class PluginLifecycleManager {
             try {
                 await handler();
             } catch (error) {
-                this.logger.error('Cleanup handler failed', error);
+                this.logger.error('Cleanup handler failed', error instanceof Error ? error : undefined);
             }
         }
 
