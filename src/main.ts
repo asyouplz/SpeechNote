@@ -216,6 +216,21 @@ export default class SpeechToTextPlugin extends Plugin {
                 this.logger
             );
             
+            // Set provider-specific capabilities for file size limits
+            try {
+                const transcriber = this.transcriberFactory.getProvider(
+                    provider === 'auto' ? 'auto' : provider as any
+                );
+                const capabilities = transcriber.getCapabilities();
+                audioProcessor.setProviderCapabilities({ maxFileSize: capabilities.maxFileSize });
+                this.logger.info(`AudioProcessor configured with provider capabilities`, {
+                    provider: transcriber.getProviderName(),
+                    maxFileSize: capabilities.maxFileSize / 1024 / 1024 + 'MB'
+                });
+            } catch (error) {
+                this.logger.warn('Failed to get provider capabilities, using default limits', error as Error);
+            }
+            
             const textFormatter = new TextFormatter(this.settings);
             
             this.transcriptionService = new TranscriptionService(

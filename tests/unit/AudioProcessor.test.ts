@@ -124,6 +124,85 @@ describe('AudioProcessor', () => {
                 expect(result.valid).toBe(true);
             }
         });
+
+        describe('provider-specific file size limits', () => {
+            it('should use default 25MB limit by default', async () => {
+                const file = createMockAudioFile({
+                    size: 30 * 1024 * 1024 // 30MB
+                });
+
+                const result = await audioProcessor.validate(file);
+
+                expect(result.valid).toBe(false);
+                expect(result.errors![0]).toContain('30MB');
+                expect(result.errors![0]).toContain('25MB');
+            });
+
+            it('should accept larger files when Deepgram capabilities are set', async () => {
+                // Set Deepgram capabilities (2GB limit)
+                audioProcessor.setProviderCapabilities({
+                    maxFileSize: 2 * 1024 * 1024 * 1024 // 2GB
+                });
+
+                const file = createMockAudioFile({
+                    size: 100 * 1024 * 1024 // 100MB
+                });
+
+                const result = await audioProcessor.validate(file);
+
+                expect(result.valid).toBe(true);
+                expect(result.errors).toBeUndefined();
+            });
+
+            it('should reject files exceeding Deepgram 2GB limit', async () => {
+                // Set Deepgram capabilities (2GB limit)
+                audioProcessor.setProviderCapabilities({
+                    maxFileSize: 2 * 1024 * 1024 * 1024 // 2GB
+                });
+
+                const file = createMockAudioFile({
+                    size: 2.5 * 1024 * 1024 * 1024 // 2.5GB
+                });
+
+                const result = await audioProcessor.validate(file);
+
+                expect(result.valid).toBe(false);
+                expect(result.errors![0]).toContain('2560MB');
+                expect(result.errors![0]).toContain('2048MB');
+            });
+
+            it('should log capability updates', () => {
+                audioProcessor.setProviderCapabilities({
+                    maxFileSize: 2 * 1024 * 1024 * 1024 // 2GB
+                });
+
+                expect(mockLogger.debug).toHaveBeenCalledWith(
+                    'AudioProcessor capabilities updated',
+                    expect.objectContaining({
+                        previousLimit: 25,
+                        newLimit: 2048,
+                        provider: 'Deepgram'
+                    })
+                );
+            });
+
+            it('should maintain Whisper 25MB limit when set', async () => {
+                // Set Whisper capabilities (25MB limit)
+                audioProcessor.setProviderCapabilities({
+                    maxFileSize: 25 * 1024 * 1024 // 25MB
+                });
+
+                const file = createMockAudioFile({
+                    size: 30 * 1024 * 1024 // 30MB
+                });
+
+                const result = await audioProcessor.validate(file);
+
+                expect(result.valid).toBe(false);
+                expect(result.errors![0]).toContain('30MB');
+                expect(result.errors![0]).toContain('25MB');
+            });
+        });
     });
 
     describe('process', () => {
@@ -177,7 +256,9 @@ describe('AudioProcessor', () => {
                 bitrate: undefined,
                 sampleRate: undefined,
                 channels: undefined,
-                codec: undefined
+                codec: undefined,
+                format: undefined,
+                fileSize: 1024
             });
         });
 
