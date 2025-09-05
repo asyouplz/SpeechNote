@@ -8,10 +8,23 @@ import type {
 } from '../../types';
 
 export class AudioProcessor implements IAudioProcessor {
-    private readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+    private readonly DEFAULT_MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB default
     private readonly SUPPORTED_FORMATS = ['.m4a', '.mp3', '.wav', '.mp4'];
+    private maxFileSize: number = this.DEFAULT_MAX_FILE_SIZE;
 
     constructor(private vault: Vault, private logger: ILogger) {}
+
+    /**
+     * Set provider-specific capabilities
+     */
+    setProviderCapabilities(capabilities: { maxFileSize: number }): void {
+        this.maxFileSize = capabilities.maxFileSize;
+        this.logger.debug('AudioProcessor capabilities updated', {
+            previousLimit: this.DEFAULT_MAX_FILE_SIZE / 1024 / 1024,
+            newLimit: capabilities.maxFileSize / 1024 / 1024,
+            provider: capabilities.maxFileSize === 2 * 1024 * 1024 * 1024 ? 'Deepgram' : 'Whisper'
+        });
+    }
 
     async validate(file: TFile): Promise<ValidationResult> {
         const errors: string[] = [];
@@ -28,11 +41,11 @@ export class AudioProcessor implements IAudioProcessor {
         }
 
         // Check file size
-        if (file.stat.size > this.MAX_FILE_SIZE) {
+        if (file.stat.size > this.maxFileSize) {
+            const fileSizeMB = Math.round(file.stat.size / 1024 / 1024);
+            const maxSizeMB = Math.round(this.maxFileSize / 1024 / 1024);
             errors.push(
-                `File size (${Math.round(
-                    file.stat.size / 1024 / 1024
-                )}MB) exceeds maximum allowed size (25MB)`
+                `File size (${fileSizeMB}MB) exceeds maximum allowed size (${maxSizeMB}MB)`
             );
         }
 
