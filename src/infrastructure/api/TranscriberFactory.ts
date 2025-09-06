@@ -314,6 +314,7 @@ export class TranscriberFactory {
                 const deepgramAdapter = new DeepgramAdapter(
                     deepgramService,
                     this.logger,
+                    this.settingsManager,
                     this.config.deepgram
                 );
                 this.providers.set('deepgram', deepgramAdapter);
