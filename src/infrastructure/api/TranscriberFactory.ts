@@ -306,10 +306,15 @@ export class TranscriberFactory {
         // Deepgram Provider
         if (this.config.deepgram?.enabled && this.config.deepgram.apiKey) {
             try {
+                // Get timeout from settings, with fallback to default
+                const settingsTimeout = this.settingsManager?.get('requestTimeout') || 30000;
+                const configTimeout = this.config.deepgram.timeout || settingsTimeout;
+                
                 const deepgramService = new DeepgramService(
                     this.config.deepgram.apiKey,
                     this.logger,
-                    this.config.deepgram.rateLimit?.requests
+                    this.config.deepgram.rateLimit?.requests,
+                    configTimeout
                 );
                 const deepgramAdapter = new DeepgramAdapter(
                     deepgramService,
