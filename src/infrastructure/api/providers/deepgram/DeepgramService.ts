@@ -402,7 +402,7 @@ class ExponentialBackoffRetry {
 export class DeepgramService {
     private readonly API_ENDPOINT = 'https://api.deepgram.com/v1/listen';
     private readonly MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB (Deepgram 지원)
-    private readonly TIMEOUT = 30000; // 30 seconds
+    private timeout: number; // configurable timeout
     
     private abortController?: AbortController;
     private circuitBreaker: CircuitBreaker;
@@ -413,8 +413,10 @@ export class DeepgramService {
     constructor(
         private apiKey: string,
         private logger: ILogger,
-        requestsPerMinute: number = 100
+        requestsPerMinute: number = 100,
+        timeout: number = 30000
     ) {
+        this.timeout = timeout;
         this.circuitBreaker = new CircuitBreaker(logger);
         this.retryStrategy = new ExponentialBackoffRetry(logger);
         this.rateLimiter = new RateLimiter(requestsPerMinute, logger);
@@ -440,6 +442,44 @@ export class DeepgramService {
         );
     }
     
+    /**
+     * Calculate appropriate timeout based on file size
+     * Large files need significantly more processing time
+     */
+    private calculateDynamicTimeout(audioSize: number): number {
+        const sizeMB = audioSize / (1024 * 1024);
+        const baseTimeout = this.timeout;
+        
+        // For files under 5MB, use base timeout
+        if (sizeMB <= 5) {
+            return baseTimeout;
+        }
+        
+        // For larger files, calculate timeout based on size
+        // Rough estimate: 1MB = 30 seconds processing time minimum
+        // With additional buffer for network and processing delays
+        const estimatedProcessingTime = Math.max(
+            sizeMB * 30 * 1000, // 30 seconds per MB
+            baseTimeout
+        );
+        
+        // Add 50% buffer and cap at 20 minutes for very large files
+        const dynamicTimeout = Math.min(
+            estimatedProcessingTime * 1.5,
+            20 * 60 * 1000 // 20 minutes max
+        );
+        
+        this.logger.debug('Dynamic timeout calculation', {
+            audioSizeMB: sizeMB,
+            baseTimeout: baseTimeout,
+            estimatedProcessingTime: estimatedProcessingTime,
+            finalTimeout: dynamicTimeout,
+            timeoutMinutes: Math.round(dynamicTimeout / 60000)
+        });
+        
+        return dynamicTimeout;
+    }
+
     private async performTranscription(
         audio: ArrayBuffer,
         options?: DeepgramSpecificOptions,
@@ -447,6 +487,9 @@ export class DeepgramService {
     ): Promise<DeepgramAPIResponse> {
         this.abortController = new AbortController();
         const startTime = Date.now();
+        
+        // Calculate dynamic timeout based on file size
+        const dynamicTimeout = this.calculateDynamicTimeout(audio.byteLength);
         
         try {
             // 1. 오디오 검증
@@ -505,7 +548,20 @@ export class DeepgramService {
                 throw: false,
             };
             
-            const response = await requestUrl(requestParams);
+            // Implement timeout using AbortController with dynamic timeout
+            const timeoutId = setTimeout(() => {
+                if (this.abortController) {
+                    this.logger.warn(`Deepgram request timeout after ${dynamicTimeout}ms for ${audio.byteLength} byte file`);
+                    this.abortController.abort();
+                }
+            }, dynamicTimeout);
+            
+            let response;
+            try {
+                response = await requestUrl(requestParams);
+            } finally {
+                clearTimeout(timeoutId);
+            }
             const processingTime = Date.now() - startTime;
             
             this.logger.info(`Deepgram transcription completed in ${processingTime}ms`, {
@@ -691,6 +747,14 @@ export class DeepgramService {
             case 502:
             case 503:
                 throw new ProviderUnavailableError('deepgram');
+            case 504:
+                throw new TranscriptionError(
+                    `Server timeout processing large audio file. This often happens with very large files (>50MB). Try: 1) Breaking the file into smaller chunks, 2) Reducing audio quality/bitrate, or 3) Using a different model like 'enhanced' which may be faster.`,
+                    'SERVER_TIMEOUT',
+                    'deepgram',
+                    true, // retryable
+                    504
+                );
             default:
                 throw new TranscriptionError(
                     `API error: ${errorMessage}`,
