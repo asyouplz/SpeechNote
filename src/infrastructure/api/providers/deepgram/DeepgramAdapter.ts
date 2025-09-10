@@ -10,6 +10,7 @@ import {
     TranscriptionError
 } from '../ITranscriber';
 import { DeepgramService } from './DeepgramService';
+import { DiarizationConfig, DEFAULT_DIARIZATION_CONFIG } from './DiarizationFormatter';
 
 /**
  * DeepgramService를 ITranscriber 인터페이스에 맞게 변환하는 Adapter
@@ -27,7 +28,7 @@ export class DeepgramAdapter implements ITranscriber {
         this.config = {
             enabled: true,
             apiKey: '',
-            model: 'nova-2',
+            model: 'nova-3', // Nova-3를 기본 모델로 변경
             maxConcurrency: 5,
             timeout: 30000,
             rateLimit: {
@@ -74,8 +75,11 @@ export class DeepgramAdapter implements ITranscriber {
                 hasResults: !!response?.results
             });
             
-            // 응답 변환
-            const result = this.deepgramService.parseResponse(response);
+            // 화자 분리 설정 구성
+            const diarizationConfig = this.createDiarizationConfig(deepgramOptions);
+            
+            // 응답 변환 (화자 분리 설정 포함)
+            const result = this.deepgramService.parseResponse(response, diarizationConfig);
             
             this.logger.debug('Parsed response:', {
                 hasText: !!result?.text,
@@ -168,14 +172,17 @@ export class DeepgramAdapter implements ITranscriber {
      */
     private convertOptions(options?: TranscriptionOptions): DeepgramSpecificOptions {
         const deepgramOptions: DeepgramSpecificOptions = {
-            tier: 'nova-2',
+            tier: 'nova-3' as any, // Nova-3를 기본값으로 변경 (tier 타입 확장 필요)
             punctuate: true,
-            smartFormat: true
+            smartFormat: true,
+            diarize: true,
+            utterances: true
         };
         
-        // 모델을 tier로 매핑
+        // 모델을 tier로 매핑 (Nova-3 지원 추가)
         if (options?.model) {
             const modelToTier: Record<string, any> = {
+                'nova-3': 'nova-3',
                 'nova-2': 'nova-2',
                 'nova': 'nova-2',
                 'enhanced': 'enhanced',
@@ -209,6 +216,9 @@ export class DeepgramAdapter implements ITranscriber {
             if (deepgramFeatures.diarization !== undefined) {
                 deepgramOptions.diarize = deepgramFeatures.diarization;
             }
+            if (deepgramFeatures.utterances !== undefined) {
+                (deepgramOptions as any).utterances = deepgramFeatures.utterances;
+            }
             if (deepgramFeatures.numerals !== undefined) {
                 deepgramOptions.numerals = deepgramFeatures.numerals;
             }
@@ -221,6 +231,32 @@ export class DeepgramAdapter implements ITranscriber {
         
         this.logger.debug('Final Deepgram options', deepgramOptions);
         return deepgramOptions;
+    }
+
+    /**
+     * Deepgram 옵션에서 화자 분리 설정 생성
+     */
+    private createDiarizationConfig(deepgramOptions: DeepgramSpecificOptions): DiarizationConfig {
+        if (!deepgramOptions.diarize) {
+            return { ...DEFAULT_DIARIZATION_CONFIG, enabled: false };
+        }
+
+        // 설정에서 사용자 화자 분리 설정 가져오기
+        let userDiarizationConfig = null;
+        if (this.settingsManager) {
+            const transcriptionSettings = this.settingsManager.get('transcription');
+            userDiarizationConfig = transcriptionSettings?.deepgram?.diarizationConfig;
+        }
+
+        // 기본 설정을 베이스로 사용자 설정 덮어쓰기
+        const config: DiarizationConfig = {
+            ...DEFAULT_DIARIZATION_CONFIG,
+            enabled: true,
+            ...userDiarizationConfig
+        };
+
+        this.logger.debug('Diarization config created:', config);
+        return config;
     }
     
     /**
@@ -287,7 +323,7 @@ export class DeepgramAdapter implements ITranscriber {
                 'entity_detection',
                 'summarization'
             ],
-            models: ['nova-2', 'enhanced', 'base']
+            models: ['nova-3', 'nova-2', 'enhanced', 'base']
         };
     }
     
@@ -345,17 +381,19 @@ export class DeepgramAdapter implements ITranscriber {
      * Deepgram 요금: https://deepgram.com/pricing
      */
     estimateCost(duration: number, model?: string): number {
-        const tier = model || this.config.model || 'nova-2';
+        const tier = model || this.config.model || 'nova-3'; // Nova-3 기본값
         
-        // 분당 비용 (USD)
+        // 분당 비용 (USD) - 2024년 Deepgram 요금
         const costPerMinute: Record<string, number> = {
-            'nova-2': 0.0043,
-            'enhanced': 0.0145,
-            'base': 0.0125
+            'nova-3': 0.0043, // Nova-3 (최신 프리미엄 모델)
+            'nova-2': 0.0145, // Nova-2 (이전 프리미엄 모델) 
+            'nova': 0.0125,   // Nova (표준 모델)
+            'enhanced': 0.0085, // Enhanced (기본 모델)
+            'base': 0.0059    // Base (경제형 모델)
         };
         
         const minutes = duration / 60;
-        const rate = costPerMinute[tier] || costPerMinute['nova-2'];
+        const rate = costPerMinute[tier] || costPerMinute['nova-3']; // Nova-3 기본값
         
         return minutes * rate;
     }

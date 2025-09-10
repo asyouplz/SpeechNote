@@ -33,7 +33,8 @@
     "clean:all": "npm run clean && rm -rf node_modules",
     "typecheck": "npx tsc -noEmit",
     "validate": "npm run lint && npm run typecheck && npm run test",
-    "ci": "npm run validate && npm run build"
+    "ci": "npm run validate && npm run build",
+    "test:diarize": "npx ts-node scripts/run-diarization-test.ts"
   },
   "keywords": [
     "obsidian",
