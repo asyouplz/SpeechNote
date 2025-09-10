@@ -1,5 +1,40 @@
 {
   "models": {
+    "nova-3": {
+      "id": "nova-3",
+      "name": "Nova-3",
+      "description": "Next-generation model with state-of-the-art accuracy and enhanced diarization",
+      "tier": "premium",
+      "features": {
+        "punctuation": true,
+        "smartFormat": true,
+        "diarization": true,
+        "numerals": true,
+        "profanityFilter": true,
+        "redaction": true,
+        "utterances": true,
+        "summarization": true,
+        "advancedDiarization": true,
+        "emotionDetection": true,
+        "speakerIdentification": true
+      },
+      "languages": ["en", "es", "fr", "de", "pt", "nl", "it", "pl", "ru", "zh", "ja", "ko", "ar", "hi", "tr", "sv", "da", "no", "fi", "cs", "hu", "bg"],
+      "performance": {
+        "accuracy": 98,
+        "speed": "fast",
+        "latency": "low"
+      },
+      "pricing": {
+        "perMinute": 0.0043,
+        "currency": "USD"
+      },
+      "isDefault": true,
+      "migrationPath": {
+        "from": ["nova-2", "nova"],
+        "autoMigrate": true,
+        "backwardCompatible": true
+      }
+    },
     "nova-2": {
       "id": "nova-2",
       "name": "Nova-2",
@@ -119,7 +154,7 @@
     "diarization": {
       "name": "Speaker Diarization",
       "description": "Identify different speakers in audio",
-      "default": false,
+      "default": true,
       "requiresPremium": true
     },
     "numerals": {

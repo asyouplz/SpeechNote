@@ -41,10 +41,11 @@ export interface WhisperSpecificOptions {
 
 // Deepgram 전용 옵션
 export interface DeepgramSpecificOptions {
-    tier?: 'nova-2' | 'enhanced' | 'base';
+    tier?: 'nova-3' | 'nova-2' | 'enhanced' | 'base' | 'nova';
     punctuate?: boolean;
     smartFormat?: boolean;
     diarize?: boolean;
+    utterances?: boolean;
     numerals?: boolean;
     profanityFilter?: boolean;
     redact?: string[];

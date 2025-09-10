@@ -10,6 +10,21 @@ import {
     ProviderUnavailableError,
     TranscriptionError
 } from '../ITranscriber';
+import { 
+    DiarizationFormatter, 
+    DiarizedWord, 
+    DiarizationConfig,
+    DEFAULT_DIARIZATION_CONFIG 
+} from './DiarizationFormatter';
+import { 
+    DEEPGRAM_API, 
+    AUDIO_VALIDATION, 
+    RELIABILITY,
+    AUDIO_FORMATS,
+    ERROR_MESSAGES,
+    DIARIZATION_DEFAULTS,
+    LOGGING
+} from './constants';
 
 // 오디오 검증 유틸리티
 class AudioValidator {
@@ -34,30 +49,30 @@ class AudioValidator {
         const metadata = {
             size: audio.byteLength,
             isEmpty: audio.byteLength === 0,
-            hasMinimumSize: audio.byteLength >= 44, // WAV 헤더 최소 크기
+            hasMinimumSize: audio.byteLength >= AUDIO_VALIDATION.MIN_HEADER_SIZE,
             format: this.detectAudioFormat(audio)
         };
         
         // 기본 검증
         if (metadata.isEmpty) {
-            errors.push('Audio data is empty');
+            errors.push(ERROR_MESSAGES.AUDIO_VALIDATION.EMPTY);
         }
         
         if (!metadata.hasMinimumSize && !metadata.isEmpty) {
-            errors.push('Audio data too small to contain valid audio');
+            errors.push(ERROR_MESSAGES.AUDIO_VALIDATION.TOO_SMALL);
         }
         
-        if (metadata.size > 2 * 1024 * 1024 * 1024) { // 2GB limit
-            errors.push('Audio file exceeds maximum size limit (2GB)');
+        if (metadata.size > DEEPGRAM_API.MAX_FILE_SIZE) {
+            errors.push(ERROR_MESSAGES.AUDIO_VALIDATION.TOO_LARGE);
         }
         
         // 경고 사항
-        if (metadata.size < 1024) { // 1KB 미만
-            warnings.push('Audio file is very small, may not contain meaningful content');
+        if (metadata.size < AUDIO_VALIDATION.SIZE_WARNING_THRESHOLD) {
+            warnings.push(ERROR_MESSAGES.AUDIO_VALIDATION.VERY_SMALL_WARNING);
         }
         
-        if (metadata.size > 100 * 1024 * 1024) { // 100MB 이상
-            warnings.push('Large audio file may take longer to process');
+        if (metadata.size > AUDIO_VALIDATION.SIZE_WARNING_LARGE) {
+            warnings.push(ERROR_MESSAGES.AUDIO_VALIDATION.LARGE_WARNING);
         }
         
         const isValid = errors.length === 0;
@@ -409,6 +424,7 @@ export class DeepgramService {
     private retryStrategy: ExponentialBackoffRetry;
     private rateLimiter: RateLimiter;
     private audioValidator: AudioValidator;
+    private diarizationFormatter: DiarizationFormatter;
     
     constructor(
         private apiKey: string,
@@ -421,6 +437,7 @@ export class DeepgramService {
         this.retryStrategy = new ExponentialBackoffRetry(logger);
         this.rateLimiter = new RateLimiter(requestsPerMinute, logger);
         this.audioValidator = new AudioValidator(logger);
+        this.diarizationFormatter = new DiarizationFormatter(logger);
     }
     
     /**
@@ -449,34 +466,31 @@ export class DeepgramService {
     private calculateDynamicTimeout(audioSize: number): number {
         const sizeMB = audioSize / (1024 * 1024);
         const baseTimeout = this.timeout;
-        
-        // For files under 5MB, use base timeout
-        if (sizeMB <= 5) {
-            return baseTimeout;
+
+        // For very small files, use base timeout
+        if (sizeMB <= 5) return baseTimeout;
+
+        // Estimate: 30s/MB + 50% buffer
+        const estimatedProcessingTime = Math.max(sizeMB * 30 * 1000, baseTimeout);
+        let dynamicTimeout = estimatedProcessingTime * 1.5;
+
+        // Ensure a generous floor for large compressed files (e.g., 60–100MB M4A)
+        if (sizeMB >= 50) {
+            dynamicTimeout = Math.max(dynamicTimeout, 30 * 60 * 1000); // at least 30 minutes
         }
-        
-        // For larger files, calculate timeout based on size
-        // Rough estimate: 1MB = 30 seconds processing time minimum
-        // With additional buffer for network and processing delays
-        const estimatedProcessingTime = Math.max(
-            sizeMB * 30 * 1000, // 30 seconds per MB
-            baseTimeout
-        );
-        
-        // Add 50% buffer and cap at 20 minutes for very large files
-        const dynamicTimeout = Math.min(
-            estimatedProcessingTime * 1.5,
-            20 * 60 * 1000 // 20 minutes max
-        );
-        
+
+        // Cap per global maximum
+        const MAX_CAP = DEEPGRAM_API.MAX_TIMEOUT;
+        dynamicTimeout = Math.min(dynamicTimeout, MAX_CAP);
+
         this.logger.debug('Dynamic timeout calculation', {
             audioSizeMB: sizeMB,
-            baseTimeout: baseTimeout,
-            estimatedProcessingTime: estimatedProcessingTime,
+            baseTimeout,
+            estimatedProcessingTime,
             finalTimeout: dynamicTimeout,
             timeoutMinutes: Math.round(dynamicTimeout / 60000)
         });
-        
+
         return dynamicTimeout;
     }
 
@@ -536,6 +550,7 @@ export class DeepgramService {
             this.logger.debug('Starting Deepgram transcription request', {
                 fileSize: audio.byteLength,
                 detectedFormat: validation.metadata.format,
+                url,
                 options,
                 language
             });
@@ -637,10 +652,20 @@ export class DeepgramService {
     
     private buildUrl(options?: DeepgramSpecificOptions, language?: string): string {
         const params = new URLSearchParams();
-        
-        // 모델 설정 (tier)
-        const model = options?.tier || 'nova-2';
-        params.append('model', model);
+
+        // Model/Tier mapping for newer Deepgram API
+        const userTier = (options?.tier || '').toString().toLowerCase();
+        const isNovaFamily = userTier.includes('nova');
+
+        if (isNovaFamily || (language && language.startsWith('ko'))) {
+            // Per Deepgram guidance for Korean + Nova tier
+            params.append('model', '2-general');
+            params.append('tier', 'nova');
+        } else {
+            // Fallback to legacy behavior
+            const model = options?.tier || 'nova-2';
+            params.append('model', model);
+        }
         
         // 언어 설정
         if (language && language !== 'auto') {
@@ -664,6 +689,11 @@ export class DeepgramService {
         
         if (options?.numerals) {
             params.append('numerals', 'true');
+        }
+        
+        // Utterance segmentation improves speaker grouping with diarization
+        if ((options as any)?.utterances) {
+            params.append('utterances', 'true');
         }
         
         if (options?.profanityFilter) {
@@ -711,11 +741,14 @@ export class DeepgramService {
     
     private async handleAPIError(response: any): Promise<never> {
         const errorBody = response.json;
-        const errorMessage = errorBody?.message || errorBody?.error || 'Unknown error';
+        const rawText = response.text;
+        const messageFromBody = errorBody?.message || errorBody?.error;
+        const errorMessage = messageFromBody || (typeof rawText === 'string' && rawText.length > 0 ? rawText : 'Unknown error');
         
         this.logger.error(`Deepgram API Error: ${response.status} - ${errorMessage}`, undefined, {
             status: response.status,
-            errorBody
+            errorBody,
+            rawText
         });
         
         switch (response.status) {
@@ -809,9 +842,12 @@ export class DeepgramService {
     }
     
     /**
-     * 응답을 통합 형식으로 변환
+     * 응답을 통합 형식으로 변환 (화자 분리 지원 포함)
      */
-    parseResponse(response: DeepgramAPIResponse): TranscriptionResponse {
+    parseResponse(
+        response: DeepgramAPIResponse, 
+        diarizationConfig?: DiarizationConfig
+    ): TranscriptionResponse {
         this.logger.debug('=== DeepgramService.parseResponse START ===');
         this.logger.debug('Full response structure:', {
             hasMetadata: !!response?.metadata,
@@ -919,15 +955,103 @@ export class DeepgramService {
             );
         }
         
-        // 세그먼트 생성 (단어 기반)
+        // 화자 분리가 활성화된 경우 DiarizationFormatter 사용
+        let finalText = alternative.transcript || '';
         let segments: TranscriptionSegment[] = [];
-        if (alternative.words && alternative.words.length > 0) {
-            segments = this.createSegmentsFromWords(alternative.words);
-            this.logger.debug(`Created ${segments.length} segments from ${alternative.words.length} words`);
+        let speakerCount = 1;
+        let diarizationStats = null;
+
+        // 화자 정보가 있는지 확인 (words 배열에 speaker 속성이 있는지)
+        const hasSpeakerInfo = alternative.words && alternative.words.length > 0 && 
+                              alternative.words.some(word => word.speaker !== undefined && word.speaker >= 0);
+
+        this.logger.debug('Speaker information check:', {
+            hasWords: !!alternative.words,
+            wordCount: alternative.words?.length || 0,
+            hasSpeakerInfo,
+            diarizationEnabled: diarizationConfig?.enabled,
+            firstWordSpeaker: alternative.words?.[0]?.speaker,
+            sampleWords: alternative.words?.slice(0, 3).map(w => ({
+                word: w.word,
+                speaker: w.speaker,
+                hasSpeaker: w.speaker !== undefined
+            }))
+        });
+
+        if (diarizationConfig?.enabled && hasSpeakerInfo) {
+            this.logger.debug('Processing diarization with config:', diarizationConfig);
+            
+            try {
+                // DiarizedWord 형식으로 변환
+                const diarizedWords: DiarizedWord[] = (alternative.words || []).map(word => ({
+                    word: word.word,
+                    start: word.start,
+                    end: word.end,
+                    confidence: word.confidence,
+                    speaker: word.speaker !== undefined ? word.speaker : 0
+                }));
+
+                this.logger.debug('Converting to diarized words:', {
+                    originalWordCount: (alternative.words || []).length,
+                    diarizedWordCount: diarizedWords.length,
+                    speakersFound: [...new Set(diarizedWords.map(w => w.speaker))],
+                    firstFewWords: diarizedWords.slice(0, 5).map(w => ({
+                        word: w.word,
+                        speaker: w.speaker
+                    }))
+                });
+
+                // 화자 분리 포맷팅 적용
+                const diarizationResult = this.diarizationFormatter.formatTranscript(
+                    diarizedWords, 
+                    diarizationConfig
+                );
+                
+                this.logger.info('Diarization result:', {
+                    speakerCount: diarizationResult.speakerCount,
+                    segmentCount: diarizationResult.segments.length,
+                    formattedTextLength: diarizationResult.formattedText.length,
+                    originalWordCount: diarizationResult.originalWordCount,
+                    textPreview: diarizationResult.formattedText.substring(0, 200)
+                });
+
+                // 결과 적용
+                finalText = diarizationResult.formattedText;
+                speakerCount = diarizationResult.speakerCount;
+                diarizationStats = diarizationResult.statistics;
+
+                // 세그먼트 변환 (DiarizedSegment -> TranscriptionSegment)
+                segments = diarizationResult.segments.map(seg => ({
+                    id: seg.id,
+                    start: seg.start,
+                    end: seg.end,
+                    text: seg.text,
+                    confidence: seg.confidence,
+                    speaker: seg.speaker.toString() // 문자열로 변환
+                }));
+
+            } catch (error) {
+                this.logger.error('Diarization formatting failed, falling back to original transcript', error as Error);
+                // 실패 시 원본 텍스트와 기본 세그먼트 사용
+                finalText = alternative.transcript || '';
+                segments = this.createSegmentsFromWords(alternative.words || []);
+            }
+        } else {
+            // 화자 분리 비활성화 또는 화자 정보 없음
+            if (!diarizationConfig?.enabled) {
+                this.logger.debug('Diarization disabled, using original transcript');
+            } else {
+                this.logger.debug('Diarization enabled but no speaker information found');
+            }
+            
+            if (alternative.words && alternative.words.length > 0) {
+                segments = this.createSegmentsFromWords(alternative.words);
+                this.logger.debug(`Created ${segments.length} segments from ${alternative.words.length} words`);
+            }
         }
         
         const result: TranscriptionResponse = {
-            text: alternative.transcript || '',
+            text: finalText,
             language: channel.detected_language,
             confidence: alternative.confidence,
             duration: response.metadata.duration,
@@ -936,8 +1060,13 @@ export class DeepgramService {
             metadata: {
                 model: response.metadata.models?.[0] || 'unknown',
                 processingTime: response.metadata.duration,
-                wordCount: alternative.transcript ? alternative.transcript.split(/\s+/).length : 0
-            }
+                wordCount: alternative.transcript ? alternative.transcript.split(/\s+/).length : 0,
+                ...(diarizationConfig?.enabled && {
+                    speakerCount,
+                    diarizationEnabled: true,
+                    diarizationStats
+                })
+            } as any // 메타데이터 타입 확장 필요
         };
         
         this.logger.info('=== DeepgramService.parseResponse COMPLETE ===', {

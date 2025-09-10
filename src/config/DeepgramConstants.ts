@@ -145,7 +145,8 @@ export const LANGUAGE_OPTIONS = [
 
 // 기본 모델 정보 (폴백용)
 export const DEFAULT_MODELS = [
-    { id: 'nova-2', name: 'Nova 2', tier: 'Premium', price: 0.0043 },
+    { id: 'nova-3', name: 'Nova 3', tier: 'Premium', price: 0.0043 },
+    { id: 'nova-2', name: 'Nova 2', tier: 'Premium', price: 0.0059 },
     { id: 'nova', name: 'Nova', tier: 'Standard', price: 0.0025 },
     { id: 'enhanced', name: 'Enhanced', tier: 'Standard', price: 0.0145 },
     { id: 'base', name: 'Base', tier: 'Economy', price: 0.0125 }
@@ -169,7 +170,7 @@ export const DEFAULT_FEATURES = [
         key: 'diarization', 
         name: 'Speaker Diarization', 
         description: 'Identify different speakers', 
-        default: false 
+        default: true 
     },
     { 
         key: 'numerals', 

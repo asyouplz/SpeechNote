@@ -384,7 +384,7 @@ class SpeechToTextSettingTab extends PluginSettingTab {
                 .addOption('beginning', '문서 시작')
                 .setValue(this.plugin.settings.insertPosition)
                 .onChange(async (value: string) => {
-                    this.plugin.settings.insertPosition = value;
+                    this.plugin.settings.insertPosition = value as "cursor" | "end" | "beginning";
                     await this.plugin.saveSettings();
                 }));
 
