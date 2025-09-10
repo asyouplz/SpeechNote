@@ -3,6 +3,7 @@
  * API 키 및 설정 검증 로직 분리
  */
 
+import { requestUrl, RequestUrlParam } from 'obsidian';
 import { API_CONSTANTS, CONFIG_CONSTANTS } from '../../../config/DeepgramConstants';
 import { DeepgramLogger } from '../helpers/DeepgramLogger';
 
@@ -23,27 +24,30 @@ export class DeepgramValidator {
         }
 
         try {
-            this.logger.info('Validating API key...');
-            
-            const response = await fetch(API_CONSTANTS.ENDPOINTS.VALIDATION, {
-                method: API_CONSTANTS.METHODS.GET,
+            this.logger.info('Validating API key via Obsidian requestUrl...');
+
+            const req: RequestUrlParam = {
+                url: API_CONSTANTS.ENDPOINTS.VALIDATION,
+                method: API_CONSTANTS.METHODS.GET as any,
                 headers: {
                     'Authorization': `${API_CONSTANTS.HEADERS.AUTHORIZATION_PREFIX} ${apiKey}`,
                     'Content-Type': API_CONSTANTS.HEADERS.CONTENT_TYPE
-                }
-            });
+                },
+                throw: false
+            };
 
-            const isValid = response.ok;
-            
+            const res = await requestUrl(req);
+            const isValid = res.status === 200;
+
             if (isValid) {
                 this.logger.info('API key validation successful');
             } else {
-                this.logger.warn(`API key validation failed with status: ${response.status}`);
+                this.logger.warn(`API key validation failed with status: ${res.status}`);
             }
 
             return isValid;
         } catch (error) {
-            this.logger.error('API validation error', error);
+            this.logger.error('API validation error (requestUrl)', error);
             return false;
         }
     }

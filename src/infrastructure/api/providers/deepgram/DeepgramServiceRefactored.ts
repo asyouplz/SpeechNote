@@ -17,7 +17,7 @@ import { RetryHandler, RetryStrategy } from '../common/RetryStrategy';
 const DEEPGRAM_CONFIG = {
     API_ENDPOINT: 'https://api.deepgram.com/v1/listen',
     MAX_FILE_SIZE: 2 * 1024 * 1024 * 1024, // 2GB
-    DEFAULT_TIMEOUT: 30000,
+    DEFAULT_TIMEOUT: 120000, // 2 minutes base; overall cap handled by outer service
     DEFAULT_MODEL: 'nova-2',
     WORDS_PER_SEGMENT: 10
 } as const;
@@ -269,10 +269,17 @@ export class DeepgramServiceRefactored {
      */
     private buildUrl(options?: DeepgramSpecificOptions, language?: string): string {
         const params = new URLSearchParams();
-        const model = options?.tier ?? DEEPGRAM_CONFIG.DEFAULT_MODEL;
+        const userTier = (options?.tier || '').toString().toLowerCase();
+        const isNovaFamily = userTier.includes('nova');
 
         // Required parameters
-        params.append('model', model);
+        if (isNovaFamily || (language && language.startsWith('ko'))) {
+            params.append('model', '2-general');
+            params.append('tier', 'nova');
+        } else {
+            const model = options?.tier ?? DEEPGRAM_CONFIG.DEFAULT_MODEL;
+            params.append('model', model);
+        }
 
         // Language configuration
         if (language && language !== 'auto') {
@@ -295,6 +302,7 @@ export class DeepgramServiceRefactored {
             punctuate: options?.punctuate !== false,
             smart_format: options?.smartFormat,
             diarize: options?.diarize,
+            utterances: (options as any)?.utterances,
             numerals: options?.numerals,
             profanity_filter: options?.profanityFilter
         };

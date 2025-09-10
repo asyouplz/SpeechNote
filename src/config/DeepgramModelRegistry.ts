@@ -1,6 +1,32 @@
 // Default fallback configuration
 const DEFAULT_CONFIG = {
     models: {
+        'nova-3': {
+            id: 'nova-3',
+            name: 'Nova 3',
+            description: 'Latest premium model with higher accuracy and improved diarization',
+            tier: 'premium' as const,
+            features: {
+                punctuation: true,
+                smartFormat: true,
+                diarization: true,
+                numerals: true,
+                profanityFilter: true,
+                redaction: true,
+                utterances: true,
+                summarization: true
+            },
+            languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it', 'pl', 'ru', 'zh', 'ja', 'ko', 'ar', 'hi'],
+            performance: {
+                accuracy: 98,
+                speed: 'fast' as const,
+                latency: 'low' as const
+            },
+            pricing: {
+                perMinute: 0.0043,
+                currency: 'USD'
+            }
+        },
         'nova-2': {
             id: 'nova-2',
             name: 'Nova 2',
