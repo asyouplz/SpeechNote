@@ -46,12 +46,26 @@ export class TextFormatter implements ITextFormatter {
     }
 
     cleanUp(text: string): string {
-        // Clean up common transcription issues
-        return text
-            .trim()
-            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-            .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines with double newline
-            .replace(/([.!?])\s*\n/g, '$1\n\n'); // Add double newline after sentences
+        // Clean up common transcription issues + light Korean post-processing
+        let out = text.trim();
+
+        // Light Korean spacing around alphanumerics
+        const hasHangul = /[\uAC00-\uD7A3]/.test(out);
+        if (hasHangul) {
+            // Insert spaces between Hangul and ASCII letters/digits boundaries
+            out = out
+                .replace(/([\uAC00-\uD7A3])([A-Za-z0-9])/g, '$1 $2')
+                .replace(/([A-Za-z0-9])([\uAC00-\uD7A3])/g, '$1 $2')
+                // Ensure a space after sentence punctuation if followed by Hangul/ASCII
+                .replace(/([.!?])(\S)/g, '$1 $2');
+        }
+
+        out = out
+            .replace(/\s+/g, ' ')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/([.!?])\s*\n/g, '$1\n\n');
+
+        return out;
     }
 
     private formatTimestamp(seconds: number): string {

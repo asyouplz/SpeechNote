@@ -892,6 +892,73 @@ export class DeepgramService {
             hasWords: !!alternative?.words,
             wordsCount: alternative?.words?.length || 0
         });
+
+        // Prefer utterances when available to improve speaker grouping
+        const availableUtterances: any[] = (response as any)?.results?.utterances;
+        if (diarizationConfig?.enabled && Array.isArray(availableUtterances) && availableUtterances.length > 0) {
+            this.logger.info('Using Deepgram utterances for diarization');
+
+            const segments: TranscriptionSegment[] = [];
+            const lines: string[] = [];
+
+            const prefix = diarizationConfig.speakerLabels?.prefix || 'Speaker';
+            const numbering = diarizationConfig.speakerLabels?.numbering || 'numeric';
+
+            const normalizeSpeakerIndex = (sp: any): number => {
+                if (typeof sp === 'number') return sp;
+                if (typeof sp === 'string') {
+                    const m = sp.match(/(\d+)/);
+                    if (m) return parseInt(m[1], 10);
+                }
+                return 0;
+            };
+
+            for (let i = 0; i < availableUtterances.length; i++) {
+                const u = availableUtterances[i] || {};
+                const speakerIdx = normalizeSpeakerIndex(u.speaker);
+                const label = numbering === 'alphabetic'
+                    ? `${prefix} ${String.fromCharCode(65 + (speakerIdx % 26))}`
+                    : `${prefix} ${speakerIdx + 1}`;
+
+                const text = (u.transcript || u.text || '').toString().trim();
+                if (!text) continue;
+
+                lines.push(`${label}: ${text}`);
+                segments.push({
+                    id: i,
+                    start: typeof u.start === 'number' ? u.start : 0,
+                    end: typeof u.end === 'number' ? u.end : 0,
+                    text,
+                    confidence: typeof u.confidence === 'number' ? u.confidence : alternative.confidence,
+                    speaker: speakerIdx.toString()
+                });
+            }
+
+            const finalText = lines.join('\n');
+
+            const result: TranscriptionResponse = {
+                text: finalText,
+                language: channel.detected_language,
+                confidence: alternative.confidence,
+                duration: response.metadata.duration,
+                segments,
+                provider: 'deepgram',
+                metadata: {
+                    model: response.metadata.models?.[0] || 'unknown',
+                    processingTime: response.metadata.duration,
+                    wordCount: finalText ? finalText.split(/\s+/).length : 0,
+                    speakerCount: new Set(segments.map(s => s.speaker)).size,
+                    diarizationEnabled: true
+                } as any
+            };
+
+            this.logger.info('Utterance-based diarization parse complete', {
+                segmentsCount: result.segments?.length || 0,
+                textPreview: result.text.substring(0, 100)
+            });
+
+            return result;
+        }
         
         // 텍스트가 비어있는지 확인 및 상세 진단
         const isEmptyTranscript = !alternative.transcript || alternative.transcript.trim().length === 0;

@@ -1,4 +1,4 @@
-# Obsidian Speech-to-Text Plugin
+﻿# Obsidian Speech-to-Text Plugin
 
 <div align="center">
 
@@ -10,36 +10,42 @@
 
 Convert audio recordings to text directly in Obsidian using multiple AI providers.
 
-옵시디언에서 음성 파일을 텍스트로 변환하는 강력한 플러그인입니다.
+Recent improvements (3.0.x):
+- Cleaner speaker diarization output: one utterance per line with `Speaker N: ...` format
+- Better speaker grouping using Deepgram utterances when available
+- Fewer label repeats via merge threshold tuning and light speaker smoothing
+- Light Korean post-processing for spacing and punctuation readability
 
-[English](#english) | [한국어](#korean)
+?듭떆?붿뼵?먯꽌 ?뚯꽦 ?뚯씪???띿뒪?몃줈 蹂?섑븯??媛뺣젰???뚮윭洹몄씤?낅땲??
+
+[English](#english) | [?쒓뎅??(#korean)
 
 </div>
 
 ---
 
-## Features (주요 기능)
+## Features (二쇱슂 湲곕뒫)
 
-### 🎙️ Multi-Provider Audio Transcription
+### ?럺截?Multi-Provider Audio Transcription
 - **OpenAI Whisper**: High accuracy, stable performance
 - **Deepgram Nova 3**: Latest model with 98% accuracy, 70% cost reduction
 - **Speaker Diarization**: Automatic speaker separation with "Speaker 1:", "Speaker 2:" format
 - **Auto Selection**: Automatically chooses the best provider for each file
 - **Supported Formats**: M4A, MP3, WAV, MP4, WebM, OGG, FLAC
 
-### 🌐 Multi-language Support
+### ?뙋 Multi-language Support
 - **Auto Detection**: Automatic language recognition
 - **40+ Languages**: Korean, English, Japanese, Chinese, Spanish, French, German, etc.
 - **Provider Optimization**: Each provider optimized for different languages
 
-### 📝 Smart Text Insertion & Speaker Recognition
+### ?뱷 Smart Text Insertion & Speaker Recognition
 - **Cursor Position**: Insert at current cursor location
 - **Note Positions**: Beginning or end of note
 - **Auto Note Creation**: Creates new note if no active editor
 - **Speaker Diarization**: Automatic speaker identification and labeling
 - **Multi-Speaker Support**: Clear separation for meetings, interviews, conversations
 
-### ⚡ Performance Optimizations
+### ??Performance Optimizations
 - **Nova-3 Model**: 98% accuracy with $0.0043/min (70% cost reduction)
 - **Intelligent Provider Selection**: Best provider based on file size and format
 - **Real-time Progress**: Status bar progress indicator
@@ -47,9 +53,9 @@ Convert audio recordings to text directly in Obsidian using multiple AI provider
 - **Cancellation Support**: Cancel ongoing transcriptions
 - **Fallback Mechanism**: Automatic provider switching on failure
 
-## Installation (설치)
+## Installation (?ㅼ튂)
 
-### Manual Installation (수동 설치)
+### Manual Installation (?섎룞 ?ㅼ튂)
 
 #### From Releases
 1. Download the latest release from [Releases](https://github.com/asyouplz/SpeechNote-1/releases)
@@ -73,12 +79,12 @@ npm run build
 cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/obsidian-speech-to-text/
 ```
 
-## Setup (초기 설정)
+## Setup (珥덇린 ?ㅼ젙)
 
 ### API Key Configuration
 
 #### 1. Choose Provider
-1. Open Obsidian Settings → "Speech to Text"
+1. Open Obsidian Settings ??"Speech to Text"
 2. Select "Transcription Provider":
    - **OpenAI Whisper**: High quality, stable
    - **Deepgram**: Fast speed, large file support
@@ -88,7 +94,7 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/obsidi
 1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
 2. Sign in or create account
 3. Click "Create new secret key"
-4. Copy the key (⚠️ shown only once)
+4. Copy the key (?좑툘 shown only once)
 
 #### 3. Get Deepgram API Key (for Deepgram)
 1. Visit [Deepgram Console](https://console.deepgram.com/)
@@ -105,7 +111,7 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/obsidi
    - "Deepgram API Key" (for Deepgram)
 4. Save settings
 
-## Usage (사용법)
+## Usage (?ъ슜踰?
 
 ### Basic Usage
 
@@ -116,30 +122,30 @@ cp main.js manifest.json styles.css /path/to/your/vault/.obsidian/plugins/obsidi
 4. **Wait**: Monitor progress in status bar
 5. **Complete**: Text automatically inserted into note
 
-#### Method 2: Context Menu ✨
+#### Method 2: Context Menu ??
 1. **File Explorer**: Find audio file
 2. **Right Click**: Right-click on audio file
 3. **Select**: "Transcribe audio file"
 4. **Auto Process**: Transcription starts and inserts result
 
 #### Method 3: Hotkeys
-1. **Settings**: Settings → Hotkeys → search "Transcribe audio file"
+1. **Settings**: Settings ??Hotkeys ??search "Transcribe audio file"
 2. **Set Hotkey**: Assign preferred key combination
 3. **Execute**: Use hotkey for quick access
 
-### 🎭 Using Speaker Diarization
+### ?렚 Using Speaker Diarization
 
 #### Enable Speaker Diarization
-1. **Open Settings**: Settings → Speech to Text → Deepgram Settings
+1. **Open Settings**: Settings ??Speech to Text ??Deepgram Settings
 2. **Enable Diarization**: Toggle "Speaker Diarization" to ON
 3. **Select Nova-3**: Choose "Nova-3" model (default for new installations)
 4. **Save Settings**: Apply configuration
 
 #### Example Results
 ```
-🎙️ Multi-speaker meeting audio:
+?럺截?Multi-speaker meeting audio:
 
-📝 Transcription output:
+?뱷 Transcription output:
 Speaker 1: Good morning everyone, let's start the meeting.
 
 Speaker 2: Thank you. I'd like to discuss the project timeline.
@@ -155,16 +161,16 @@ Speaker 3: I think we should extend the deadline by one week.
 - **Minimum Duration**: Each speaker segment should be at least 2-3 seconds
 - **Audio Format**: Use M4A, MP3, or WAV for optimal results
 
-### 🎭 Speaker Diarization Feature
+### ?렚 Speaker Diarization Feature
 
 **Perfect for meetings, interviews, and conversations!**
 
 ```
-🎙️ Input Audio:
+?럺截?Input Audio:
 "Hello, I'm John." (Speaker 1)
 "Nice to meet you, I'm Sarah." (Speaker 2)
 
-📝 Output Text:
+?뱷 Output Text:
 Speaker 1: Hello, I'm John.
 
 Speaker 2: Nice to meet you, I'm Sarah.
@@ -174,15 +180,15 @@ Speaker 2: Nice to meet you, I'm Sarah.
 
 | Format | Extension | Whisper | Deepgram | Max Size | Diarization | Description |
 |--------|-----------|---------|----------|----------|-------------|--------------|
-| M4A | .m4a | ✅ | ✅ | 25MB/2GB | ✅ | Apple default recording format |
-| MP3 | .mp3 | ✅ | ✅ | 25MB/2GB | ✅ | Universal audio format |
-| WAV | .wav | ✅ | ✅ | 25MB/2GB | ✅ | Lossless, large file size |
-| MP4 | .mp4 | ✅ | ✅ | 25MB/2GB | ✅ | Audio from video files |
-| WebM | .webm | ❌ | ✅ | -/2GB | ✅ | Web streaming format |
-| OGG | .ogg | ❌ | ✅ | -/2GB | ✅ | Open source audio format |
-| FLAC | .flac | ❌ | ✅ | -/2GB | ✅ | Lossless compression |
+| M4A | .m4a | ??| ??| 25MB/2GB | ??| Apple default recording format |
+| MP3 | .mp3 | ??| ??| 25MB/2GB | ??| Universal audio format |
+| WAV | .wav | ??| ??| 25MB/2GB | ??| Lossless, large file size |
+| MP4 | .mp4 | ??| ??| 25MB/2GB | ??| Audio from video files |
+| WebM | .webm | ??| ??| -/2GB | ??| Web streaming format |
+| OGG | .ogg | ??| ??| -/2GB | ??| Open source audio format |
+| FLAC | .flac | ??| ??| -/2GB | ??| Lossless compression |
 
-## Settings (설정)
+## Settings (?ㅼ젙)
 
 ### Main Settings
 - **Provider**: Auto/Whisper/Deepgram selection
@@ -200,7 +206,7 @@ Speaker 2: Nice to meet you, I'm Sarah.
 - **Network Settings**: Timeout, retry policies
 - **Debug Mode**: Detailed logging
 
-## Troubleshooting (문제 해결)
+## Troubleshooting (臾몄젣 ?닿껐)
 
 ### Common Issues
 
@@ -238,14 +244,14 @@ Speaker 2: Nice to meet you, I'm Sarah.
 2. Verify VPN/proxy settings
 3. Check provider API status
 
-## Commands (명령어)
+## Commands (紐낅졊??
 
 | Command | Description | Status |
 |---------|-------------|---------|
-| **Transcribe audio file** | Select and transcribe audio file | ✅ Available |
-| **Cancel transcription** | Cancel ongoing transcription | ✅ Available |
+| **Transcribe audio file** | Select and transcribe audio file | ??Available |
+| **Cancel transcription** | Cancel ongoing transcription | ??Available |
 
-## Development (개발)
+## Development (媛쒕컻)
 
 ### Prerequisites
 - Node.js 16.0.0+
@@ -280,25 +286,25 @@ npm test
 ### Project Structure
 ```
 SpeechNote-1/
-├── src/
-│   ├── main.ts                    # Plugin entry point
-│   ├── core/                      # Core business logic
-│   │   └── transcription/         # Transcription services
-│   ├── infrastructure/            # External system integrations
-│   │   └── api/                   # API clients
-│   │       ├── providers/         # Provider implementations
-│   │       │   ├── deepgram/      # Deepgram integration
-│   │       │   └── whisper/       # Whisper integration
-│   │       └── adapters/          # Interface adapters
-│   ├── ui/                        # User interface
-│   └── types/                     # Type definitions
-├── tests/                         # Test files
-├── manifest.json                  # Plugin metadata
-├── package.json                   # Project configuration
-└── README.md                      # This file
+?쒋?? src/
+??  ?쒋?? main.ts                    # Plugin entry point
+??  ?쒋?? core/                      # Core business logic
+??  ??  ?붴?? transcription/         # Transcription services
+??  ?쒋?? infrastructure/            # External system integrations
+??  ??  ?붴?? api/                   # API clients
+??  ??      ?쒋?? providers/         # Provider implementations
+??  ??      ??  ?쒋?? deepgram/      # Deepgram integration
+??  ??      ??  ?붴?? whisper/       # Whisper integration
+??  ??      ?붴?? adapters/          # Interface adapters
+??  ?쒋?? ui/                        # User interface
+??  ?붴?? types/                     # Type definitions
+?쒋?? tests/                         # Test files
+?쒋?? manifest.json                  # Plugin metadata
+?쒋?? package.json                   # Project configuration
+?붴?? README.md                      # This file
 ```
 
-## Contributing (기여)
+## Contributing (湲곗뿬)
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -330,42 +336,42 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 ### Need Help?
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/asyouplz/SpeechNote-1/issues)
-- 💡 **Feature Requests**: [GitHub Issues](https://github.com/asyouplz/SpeechNote-1/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/asyouplz/SpeechNote-1/discussions)
+- ?맀 **Bug Reports**: [GitHub Issues](https://github.com/asyouplz/SpeechNote-1/issues)
+- ?뮕 **Feature Requests**: [GitHub Issues](https://github.com/asyouplz/SpeechNote-1/issues)
+- ?뮠 **Discussions**: [GitHub Discussions](https://github.com/asyouplz/SpeechNote-1/discussions)
 
 ### Show Your Support
 If this project helped you:
-- ⭐ Star on GitHub
-- 🐦 Share on social media
-- ☕ [Buy me a coffee](https://buymeacoffee.com/asyouplz)
+- 狩?Star on GitHub
+- ?맔 Share on social media
+- ??[Buy me a coffee](https://buymeacoffee.com/asyouplz)
 
 ## Recent Updates
 
-### 🚀 v3.2.0 (2025-01-10) - Nova-3 & Speaker Diarization Release
-- ✨ **Nova-3 Model**: Default model upgrade with 98% accuracy
-- 🎭 **Speaker Diarization**: Complete implementation with "Speaker 1:", "Speaker 2:" format
-- 💰 **Cost Optimization**: 70% cost reduction ($0.0043/min vs $0.0145/min)
-- 🔧 **Code Quality**: 72% class size reduction, 98% type coverage
-- 🛡️ **Backward Compatibility**: Existing Nova-2 users fully supported
-- ⚡ **Performance**: 20% faster response time, improved accuracy
+### ?? v3.2.0 (2025-01-10) - Nova-3 & Speaker Diarization Release
+- ??**Nova-3 Model**: Default model upgrade with 98% accuracy
+- ?렚 **Speaker Diarization**: Complete implementation with "Speaker 1:", "Speaker 2:" format
+- ?뮥 **Cost Optimization**: 70% cost reduction ($0.0043/min vs $0.0145/min)
+- ?뵩 **Code Quality**: 72% class size reduction, 98% type coverage
+- ?썳截?**Backward Compatibility**: Existing Nova-2 users fully supported
+- ??**Performance**: 20% faster response time, improved accuracy
 
 ### v1.0.0 (2025-08-30)
-- 🎉 **Initial Release**
-- 🎙️ **Multi-Provider Support**: OpenAI Whisper & Deepgram
-- 🌐 **Multi-language Support**: 40+ languages
-- 📝 **Smart Text Insertion**: Flexible insertion options
-- ⚡ **Performance Optimizations**: Auto provider selection
-- 🛡️ **Fallback Mechanisms**: Automatic error recovery
-- 🎯 **Context Menu Integration**: Right-click transcription
-- 📊 **Advanced Settings**: Comprehensive configuration options
+- ?럦 **Initial Release**
+- ?럺截?**Multi-Provider Support**: OpenAI Whisper & Deepgram
+- ?뙋 **Multi-language Support**: 40+ languages
+- ?뱷 **Smart Text Insertion**: Flexible insertion options
+- ??**Performance Optimizations**: Auto provider selection
+- ?썳截?**Fallback Mechanisms**: Automatic error recovery
+- ?렞 **Context Menu Integration**: Right-click transcription
+- ?뱤 **Advanced Settings**: Comprehensive configuration options
 
 ---
 
 <div align="center">
 
-**Made with ❤️ for the Obsidian community**
+**Made with ?ㅿ툘 for the Obsidian community**
 
-[⬆ Back to top](#obsidian-speech-to-text-plugin)
+[燧?Back to top](#obsidian-speech-to-text-plugin)
 
 </div>

@@ -78,14 +78,14 @@ export const DEFAULT_DIARIZATION_CONFIG: DiarizationConfig = {
         numbering: 'numeric'
     },
     merging: {
-        consecutiveThreshold: DIARIZATION_DEFAULTS.CONSECUTIVE_THRESHOLD,
-        minSegmentLength: DIARIZATION_DEFAULTS.MIN_SEGMENT_LENGTH
+        consecutiveThreshold: 1.0,
+        minSegmentLength: 3
     },
     output: {
         includeTimestamps: false,
         includeConfidence: false,
         paragraphBreaks: true,
-        lineBreaksBetweenSpeakers: true
+        lineBreaksBetweenSpeakers: false
     }
 };
 
@@ -94,6 +94,36 @@ export const DEFAULT_DIARIZATION_CONFIG: DiarizationConfig = {
  */
 export class DiarizationFormatter {
     constructor(private logger: ILogger) {}
+
+    /**
+     * Reduce single-word speaker flips by aligning isolated words to surrounding speaker.
+     */
+    private smoothSpeakers(words: DiarizedWord[]): DiarizedWord[] {
+        if (words.length < 3) return words.slice();
+
+        const out = words.map(w => ({ ...w }));
+        for (let i = 1; i < out.length - 1; i++) {
+            const prev = out[i - 1];
+            const curr = out[i];
+            const next = out[i + 1];
+
+            if (
+                prev.speaker !== undefined &&
+                curr.speaker !== undefined &&
+                next.speaker !== undefined &&
+                prev.speaker === next.speaker &&
+                curr.speaker !== prev.speaker
+            ) {
+                const currDur = curr.end - curr.start;
+                const neighborAvg = ((prev.end - prev.start) + (next.end - next.start)) / 2;
+                const isVeryShort = neighborAvg > 0 ? currDur < Math.max(0.25, neighborAvg * 0.5) : true;
+                if (isVeryShort) {
+                    out[i].speaker = prev.speaker;
+                }
+            }
+        }
+        return out;
+    }
 
     /**
      * 단어 배열을 화자별로 그룹화하여 포맷된 텍스트를 생성합니다.
@@ -113,7 +143,8 @@ export class DiarizationFormatter {
         }
 
         // 핵심 처리 파이프라인
-        const result = this.processTranscriptWithSpeakers(words, config);
+        const smoothedWords = this.smoothSpeakers(words);
+        const result = this.processTranscriptWithSpeakers(smoothedWords, config);
         
         this.logFormatComplete(result, Date.now() - startTime);
         return result;
