@@ -468,6 +468,7 @@ export class DeepgramSettings {
         this.renderLanguagePreference(container);
         this.renderTimeoutSetting(container);
         this.renderRetrySetting(container);
+        this.renderChunkingSettings(container);
     }
 
     /**
@@ -534,6 +535,68 @@ export class DeepgramSettings {
                     await this.plugin.saveSettings();
                 });
             });
+    }
+
+    /**
+     * Chunking settings for large files
+     */
+    private renderChunkingSettings(container: HTMLElement): void {
+        // Auto-chunking toggle
+        new Setting(container)
+            .setName('Automatic File Chunking')
+            .setDesc('Automatically split large audio files (>50MB) into smaller chunks for reliable processing')
+            .addToggle(toggle => {
+                toggle
+                    .setValue(this.plugin.settings.autoChunking ?? true)
+                    .onChange(async (value: boolean) => {
+                        this.plugin.settings.autoChunking = value;
+                        await this.plugin.saveSettings();
+                        
+                        // Show/hide chunk size setting based on toggle
+                        const chunkSizeSetting = container.querySelector('.chunk-size-setting') as HTMLElement;
+                        if (chunkSizeSetting) {
+                            chunkSizeSetting.style.display = value ? 'flex' : 'none';
+                        }
+                    });
+            });
+
+        // Maximum chunk size
+        const chunkSizeSetting = new Setting(container)
+            .setName('Maximum Chunk Size')
+            .setDesc('Maximum size per chunk in MB (recommended: 50MB)')
+            .addSlider(slider => {
+                slider
+                    .setLimits(10, 100, 10)
+                    .setValue(this.plugin.settings.maxChunkSizeMB ?? 50)
+                    .setDynamicTooltip()
+                    .onChange(async (value: number) => {
+                        this.plugin.settings.maxChunkSizeMB = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+        
+        // Add class for conditional display
+        chunkSizeSetting.settingEl.addClass('chunk-size-setting');
+        
+        // Initially hide if auto-chunking is disabled
+        if (!this.plugin.settings.autoChunking) {
+            chunkSizeSetting.settingEl.style.display = 'none';
+        }
+        
+        // Add informational note about chunking
+        const noteEl = container.createDiv();
+        noteEl.addClass('setting-item-description');
+        noteEl.style.marginTop = '10px';
+        noteEl.innerHTML = `
+            <strong>Note on Large Files:</strong><br>
+            • Files larger than 50MB may experience timeout errors<br>
+            • Auto-chunking splits files into manageable pieces<br>
+            • Each chunk is processed separately and results are merged<br>
+            • For best results with very large files (>100MB), consider:<br>
+            &nbsp;&nbsp;- Using the 'enhanced' model for faster processing<br>
+            &nbsp;&nbsp;- Reducing audio bitrate to 64-128 kbps<br>
+            &nbsp;&nbsp;- Converting to efficient formats (MP3, OGG)
+        `;
     }
 
     /**
