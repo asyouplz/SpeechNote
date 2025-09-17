@@ -8,8 +8,9 @@ export const DEEPGRAM_API = {
     ENDPOINT: 'https://api.deepgram.com/v1/listen',
     MAX_FILE_SIZE: 2 * 1024 * 1024 * 1024, // 2GB
     DEFAULT_TIMEOUT: 30000, // 30초
-    MAX_TIMEOUT: 60 * 60 * 1000, // 60분 (대용량 파일 대비)
-    REQUESTS_PER_MINUTE: 100
+    MAX_TIMEOUT: 90 * 60 * 1000, // 90분 (대용량 파일 대비)
+    REQUESTS_PER_MINUTE: 100,
+    RECOMMENDED_MAX_SIZE: 50 * 1024 * 1024 // 50MB recommended limit for reliable processing
 } as const;
 
 // === 오디오 검증 임계값 ===
