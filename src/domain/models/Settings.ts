@@ -48,6 +48,11 @@ export interface SpeechToTextSettings {
     
     // A/B Testing
     abTestEnabled?: boolean;
+    
+    // Large File Handling (for Deepgram)
+    autoChunking?: boolean;
+    maxChunkSizeMB?: number;
+    chunkOverlapSeconds?: number;
     abTestSplit?: number;
     abTestDuration?: number;
     abTestMetrics?: 'all' | 'latency' | 'accuracy' | 'cost';

@@ -418,6 +418,7 @@ export class DeepgramService {
     private readonly API_ENDPOINT = 'https://api.deepgram.com/v1/listen';
     private readonly MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB (Deepgram 지원)
     private timeout: number; // configurable timeout
+    private lastAudioSize: number = 0; // Track last audio size for error messages
     
     private abortController?: AbortController;
     private circuitBreaker: CircuitBreaker;
@@ -470,23 +471,40 @@ export class DeepgramService {
         // For very small files, use base timeout
         if (sizeMB <= 5) return baseTimeout;
 
-        // Estimate: 30s/MB + 50% buffer
-        const estimatedProcessingTime = Math.max(sizeMB * 30 * 1000, baseTimeout);
-        let dynamicTimeout = estimatedProcessingTime * 1.5;
-
-        // Ensure a generous floor for large compressed files (e.g., 60–100MB M4A)
-        if (sizeMB >= 50) {
-            dynamicTimeout = Math.max(dynamicTimeout, 30 * 60 * 1000); // at least 30 minutes
+        // More aggressive timeout calculation for large files
+        // Based on empirical data: ~20 minutes for large files
+        let dynamicTimeout;
+        
+        if (sizeMB <= 10) {
+            // Small files: 30s/MB
+            dynamicTimeout = sizeMB * 30 * 1000;
+        } else if (sizeMB <= 50) {
+            // Medium files: 40s/MB + buffer
+            dynamicTimeout = sizeMB * 40 * 1000 * 1.5;
+        } else if (sizeMB <= 100) {
+            // Large files: 45s/MB + larger buffer
+            dynamicTimeout = sizeMB * 45 * 1000 * 1.8;
+        } else {
+            // Very large files: 50s/MB + 2x buffer
+            dynamicTimeout = sizeMB * 50 * 1000 * 2;
         }
 
-        // Cap per global maximum
-        const MAX_CAP = DEEPGRAM_API.MAX_TIMEOUT;
+        // Ensure minimum timeout for large compressed files
+        if (sizeMB >= 50) {
+            dynamicTimeout = Math.max(dynamicTimeout, 40 * 60 * 1000); // at least 40 minutes
+        }
+        
+        if (sizeMB >= 100) {
+            dynamicTimeout = Math.max(dynamicTimeout, 60 * 60 * 1000); // at least 60 minutes
+        }
+
+        // For extremely large files, allow up to 90 minutes
+        const MAX_CAP = 90 * 60 * 1000; // 90 minutes
         dynamicTimeout = Math.min(dynamicTimeout, MAX_CAP);
 
         this.logger.debug('Dynamic timeout calculation', {
             audioSizeMB: sizeMB,
             baseTimeout,
-            estimatedProcessingTime,
             finalTimeout: dynamicTimeout,
             timeoutMinutes: Math.round(dynamicTimeout / 60000)
         });
@@ -501,6 +519,9 @@ export class DeepgramService {
     ): Promise<DeepgramAPIResponse> {
         this.abortController = new AbortController();
         const startTime = Date.now();
+        
+        // Store audio size for error reporting
+        this.lastAudioSize = audio.byteLength;
         
         // Calculate dynamic timeout based on file size
         const dynamicTimeout = this.calculateDynamicTimeout(audio.byteLength);
@@ -781,8 +802,10 @@ export class DeepgramService {
             case 503:
                 throw new ProviderUnavailableError('deepgram');
             case 504:
+                // Extract file size info if available
+                const sizeInfo = this.lastAudioSize ? ` (${Math.round(this.lastAudioSize / (1024 * 1024))}MB)` : '';
                 throw new TranscriptionError(
-                    `Server timeout processing large audio file. This often happens with very large files (>50MB). Try: 1) Breaking the file into smaller chunks, 2) Reducing audio quality/bitrate, or 3) Using a different model like 'enhanced' which may be faster.`,
+                    `Server timeout processing large audio file${sizeInfo}. This often happens with very large files (>50MB). Try: 1) Breaking the file into smaller chunks (recommended: <50MB per chunk), 2) Reducing audio quality/bitrate to 64-128 kbps, 3) Using the 'enhanced' model which may be faster, or 4) Converting to a more efficient format like MP3 or OGG.`,
                     'SERVER_TIMEOUT',
                     'deepgram',
                     true, // retryable
