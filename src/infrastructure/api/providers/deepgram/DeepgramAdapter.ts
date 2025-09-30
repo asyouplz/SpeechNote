@@ -240,7 +240,7 @@ export class DeepgramAdapter implements ITranscriber {
             this.logger.info('Chunked transcription completed', {
                 totalChunks: chunks.length,
                 successfulChunks: chunkResults.length,
-                processingTime: result.metadata.processingTime,
+                processingTime: result.metadata?.processingTime,
                 textLength: result.text.length
             });
             
@@ -262,17 +262,17 @@ export class DeepgramAdapter implements ITranscriber {
         const errorObj = error as TranscriptionError;
         
         if (errorObj instanceof TranscriptionError) {
-                // 빈 transcript 에러의 경우 추가 컨텍스트 제공
-                if (errorObj.code === 'EMPTY_TRANSCRIPT') {
-                    this.logger.error('DeepgramAdapter: Empty transcript - providing user guidance', errorObj, {
-                        originalMessage: errorObj.message,
-                        audioSize: audio.byteLength,
-                        language: options?.language,
-                        model: options?.model
-                    });
-                    
-                    // 사용자에게 실용적인 해결책 제시
-                    const enhancedMessage = `음성을 텍스트로 변환할 수 없었습니다. ${errorObj.message}
+            // 빈 transcript 에러의 경우 추가 컨텍스트 제공
+            if (errorObj.code === 'EMPTY_TRANSCRIPT') {
+                this.logger.error('DeepgramAdapter: Empty transcript - providing user guidance', errorObj, {
+                    originalMessage: errorObj.message,
+                    audioSize: audio.byteLength,
+                    language: options?.language,
+                    model: options?.model
+                });
+
+                // 사용자에게 실용적인 해결책 제시
+                const enhancedMessage = `음성을 텍스트로 변환할 수 없었습니다. ${errorObj.message}
 
 다음 사항을 확인해 주세요:
 • 오디오에 명확한 음성이 포함되어 있는지 확인
@@ -282,23 +282,23 @@ export class DeepgramAdapter implements ITranscriber {
 • 언어 설정이 올바른지 확인
 • 파일 크기가 너무 크면 청킹 옵션 활성화 고려`;
 
-                    throw new TranscriptionError(
-                        enhancedMessage,
-                        errorObj.code,
-                        errorObj.provider,
-                        errorObj.isRetryable,
-                        errorObj.statusCode
-                    );
-                }
-                
-                // 오디오 검증 에러의 경우
-                if (errorObj.code === 'INVALID_AUDIO') {
-                    this.logger.error('DeepgramAdapter: Invalid audio format', errorObj, {
-                        originalMessage: errorObj.message,
-                        audioSize: audio.byteLength
-                    });
-                    
-                    const enhancedMessage = `오디오 파일에 문제가 있습니다: ${errorObj.message}
+                throw new TranscriptionError(
+                    enhancedMessage,
+                    errorObj.code,
+                    errorObj.provider,
+                    errorObj.isRetryable,
+                    errorObj.statusCode
+                );
+            }
+
+            // 오디오 검증 에러의 경우
+            if (errorObj.code === 'INVALID_AUDIO') {
+                this.logger.error('DeepgramAdapter: Invalid audio format', errorObj, {
+                    originalMessage: errorObj.message,
+                    audioSize: audio.byteLength
+                });
+
+                const enhancedMessage = `오디오 파일에 문제가 있습니다: ${errorObj.message}
 
 해결 방법:
 • 올바른 오디오 파일을 선택했는지 확인
@@ -307,17 +307,16 @@ export class DeepgramAdapter implements ITranscriber {
 • 파일 크기가 2GB를 초과하지 않는지 확인
 • 50MB 이상 파일은 자동 청킹 사용 권장`;
 
-                    throw new TranscriptionError(
-                        enhancedMessage,
-                        errorObj.code,
-                        errorObj.provider,
-                        errorObj.isRetryable,
-                        errorObj.statusCode
-                    );
-                }
+                throw new TranscriptionError(
+                    enhancedMessage,
+                    errorObj.code,
+                    errorObj.provider,
+                    errorObj.isRetryable,
+                    errorObj.statusCode
+                );
             }
         }
-        
+
         this.logger.error('DeepgramAdapter: Transcription failed', error, {
             audioSize: audio.byteLength,
             audioSizeMB: Math.round(audio.byteLength / (1024 * 1024)),
