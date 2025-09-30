@@ -11,6 +11,8 @@ import {
 } from '../ITranscriber';
 import { DeepgramService } from './DeepgramService';
 import { DiarizationConfig, DEFAULT_DIARIZATION_CONFIG } from './DiarizationFormatter';
+import { AudioChunker } from './audioChunker';
+import { DEEPGRAM_API } from './constants';
 
 /**
  * DeepgramService를 ITranscriber 인터페이스에 맞게 변환하는 Adapter
@@ -18,6 +20,7 @@ import { DiarizationConfig, DEFAULT_DIARIZATION_CONFIG } from './DiarizationForm
  */
 export class DeepgramAdapter implements ITranscriber {
     private config: ProviderConfig;
+    private audioChunker: AudioChunker;
     
     constructor(
         private deepgramService: DeepgramService,
@@ -25,6 +28,7 @@ export class DeepgramAdapter implements ITranscriber {
         private settingsManager?: ISettingsManager,
         config?: Partial<ProviderConfig>
     ) {
+        this.audioChunker = new AudioChunker(logger);
         this.config = {
             enabled: true,
             apiKey: '',
@@ -47,10 +51,72 @@ export class DeepgramAdapter implements ITranscriber {
         options?: TranscriptionOptions
     ): Promise<TranscriptionResponse> {
         const startTime = Date.now();
+        const audioSizeMB = audio.byteLength / (1024 * 1024);
+        
         this.logger.debug('=== DeepgramAdapter.transcribe START ===', {
             audioSize: audio.byteLength,
+            audioSizeMB,
             options
         });
+        
+        try {
+            // Check settings for auto-chunking
+            const autoChunkingEnabled = this.settingsManager?.get('autoChunking') ?? true;
+            
+            // Check if chunking is needed and enabled
+            if (autoChunkingEnabled && this.audioChunker.needsChunking(audio.byteLength)) {
+                this.logger.info('Large file detected, using chunked processing', {
+                    sizeMB: audioSizeMB,
+                    recommendedSettings: this.audioChunker.getRecommendedSettings(audio.byteLength)
+                });
+                
+                // Notify user about chunking
+                if (audioSizeMB > 100) {
+                    this.logger.warn(`Very large audio file (${Math.round(audioSizeMB)}MB). Processing may take significant time. Consider reducing file size or bitrate for better performance.`);
+                }
+                
+                return await this.transcribeWithChunking(audio, options);
+            }
+            
+            // Standard processing for smaller files
+            return await this.transcribeStandard(audio, options);
+        } catch (error) {
+            const errorObj = error as Error;
+            
+            // Enhanced error handling for large files
+            if (errorObj instanceof TranscriptionError && errorObj.code === 'SERVER_TIMEOUT') {
+                const recommendations = this.audioChunker.getRecommendedSettings(audio.byteLength);
+                
+                this.logger.error('Timeout error - providing chunking recommendations', errorObj, {
+                    audioSizeMB,
+                    recommendations
+                });
+                
+                const enhancedMessage = `Transcription timeout for ${Math.round(audioSizeMB)}MB file.\n\nRecommended solutions:\n• Enable automatic chunking (files will be split into ${recommendations.estimatedChunks || 'multiple'} chunks)\n• Use '${recommendations.recommendedModel}' model for faster processing\n• Reduce audio bitrate to ${recommendations.recommendedBitrate || '128 kbps'}\n• Convert to MP3 or OGG format for smaller file size`;
+                
+                throw new TranscriptionError(
+                    enhancedMessage,
+                    errorObj.code,
+                    errorObj.provider,
+                    errorObj.isRetryable,
+                    errorObj.statusCode
+                );
+            }
+            
+            // Handle other error types...
+            this.handleTranscriptionError(errorObj, audio, options);
+            throw error;
+        }
+    }
+    
+    /**
+     * Standard transcription without chunking
+     */
+    private async transcribeStandard(
+        audio: ArrayBuffer,
+        options?: TranscriptionOptions
+    ): Promise<TranscriptionResponse> {
+        const startTime = Date.now();
         
         try {
             // 옵션 변환
@@ -100,11 +166,102 @@ export class DeepgramAdapter implements ITranscriber {
             });
             
             return result;
-        } catch (error) {
-            const errorObj = error as Error;
+        } finally {
+            // Cleanup if needed
+        }
+    }
+    
+    /**
+     * Transcription with automatic chunking for large files
+     */
+    private async transcribeWithChunking(
+        audio: ArrayBuffer,
+        options?: TranscriptionOptions
+    ): Promise<TranscriptionResponse> {
+        const startTime = Date.now();
+        
+        try {
+            // Split audio into chunks
+            const chunks = await this.audioChunker.splitAudio(audio);
+            this.logger.info(`Processing ${chunks.length} audio chunks`);
             
-            // 에러 타입별로 사용자 친화적 메시지 제공
-            if (errorObj instanceof TranscriptionError) {
+            // Process each chunk
+            const chunkResults: string[] = [];
+            let totalConfidence = 0;
+            let detectedLanguage: string | undefined;
+            
+            for (let i = 0; i < chunks.length; i++) {
+                this.logger.debug(`Processing chunk ${i + 1}/${chunks.length}`, {
+                    chunkSizeMB: Math.round(chunks[i].byteLength / (1024 * 1024))
+                });
+                
+                try {
+                    const chunkResponse = await this.transcribeStandard(chunks[i], options);
+                    
+                    if (chunkResponse.text && chunkResponse.text.trim()) {
+                        chunkResults.push(chunkResponse.text);
+                        totalConfidence += chunkResponse.confidence || 0;
+                        
+                        if (!detectedLanguage && chunkResponse.language) {
+                            detectedLanguage = chunkResponse.language;
+                        }
+                    }
+                } catch (chunkError) {
+                    this.logger.error(`Failed to process chunk ${i + 1}`, chunkError as Error);
+                    // Continue with other chunks even if one fails
+                }
+            }
+            
+            // Merge results
+            const mergedText = this.audioChunker.mergeTranscriptionResults(chunkResults);
+            const averageConfidence = chunkResults.length > 0 ? totalConfidence / chunkResults.length : 0;
+            
+            if (!mergedText || mergedText.trim().length === 0) {
+                throw new TranscriptionError(
+                    'All chunks failed to produce transcription',
+                    'CHUNKING_FAILED',
+                    'deepgram',
+                    false
+                );
+            }
+            
+            const result: TranscriptionResponse = {
+                text: mergedText,
+                language: detectedLanguage,
+                confidence: averageConfidence,
+                provider: 'deepgram',
+                metadata: {
+                    processingTime: Date.now() - startTime,
+                    chunksProcessed: chunks.length,
+                    chunksSuccessful: chunkResults.length
+                }
+            };
+            
+            this.logger.info('Chunked transcription completed', {
+                totalChunks: chunks.length,
+                successfulChunks: chunkResults.length,
+                processingTime: result.metadata.processingTime,
+                textLength: result.text.length
+            });
+            
+            return result;
+        } catch (error) {
+            this.logger.error('Chunked transcription failed', error as Error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Handle transcription errors with enhanced messages
+     */
+    private handleTranscriptionError(
+        error: Error,
+        audio: ArrayBuffer,
+        options?: TranscriptionOptions
+    ): void {
+        const errorObj = error as TranscriptionError;
+        
+        if (errorObj instanceof TranscriptionError) {
                 // 빈 transcript 에러의 경우 추가 컨텍스트 제공
                 if (errorObj.code === 'EMPTY_TRANSCRIPT') {
                     this.logger.error('DeepgramAdapter: Empty transcript - providing user guidance', errorObj, {
@@ -122,7 +279,8 @@ export class DeepgramAdapter implements ITranscriber {
 • 마이크 볼륨이 충분한지 확인
 • 배경소음이 너무 크지 않은지 확인
 • 지원되는 오디오 형식인지 확인 (WAV, MP3, FLAC 등)
-• 언어 설정이 올바른지 확인`;
+• 언어 설정이 올바른지 확인
+• 파일 크기가 너무 크면 청킹 옵션 활성화 고려`;
 
                     throw new TranscriptionError(
                         enhancedMessage,
@@ -146,7 +304,8 @@ export class DeepgramAdapter implements ITranscriber {
 • 올바른 오디오 파일을 선택했는지 확인
 • 파일이 손상되지 않았는지 확인
 • 지원되는 형식 (WAV, MP3, FLAC, OGG 등)인지 확인
-• 파일 크기가 2GB를 초과하지 않는지 확인`;
+• 파일 크기가 2GB를 초과하지 않는지 확인
+• 50MB 이상 파일은 자동 청킹 사용 권장`;
 
                     throw new TranscriptionError(
                         enhancedMessage,
@@ -157,14 +316,15 @@ export class DeepgramAdapter implements ITranscriber {
                     );
                 }
             }
-            
-            this.logger.error('DeepgramAdapter: Transcription failed', errorObj, {
-                audioSize: audio.byteLength,
-                options: options,
-                errorType: errorObj.constructor.name
-            });
-            throw error;
         }
+        
+        this.logger.error('DeepgramAdapter: Transcription failed', error, {
+            audioSize: audio.byteLength,
+            audioSizeMB: Math.round(audio.byteLength / (1024 * 1024)),
+            options: options,
+            errorType: error.constructor.name,
+            needsChunking: this.audioChunker.needsChunking(audio.byteLength)
+        });
     }
     
     /**
