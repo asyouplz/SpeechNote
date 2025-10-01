@@ -30,6 +30,16 @@ tests/**/*.output.*
 tests/**/__snapshots__/
 .jest-cache/
 
+# Audio files (test data, recordings)
+*.m4a
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.aac
+*.wma
+*.webm
+
 # IDE
 .vscode/
 !.vscode/extensions.json
