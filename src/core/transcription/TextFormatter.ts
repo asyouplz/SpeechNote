@@ -9,7 +9,8 @@ export class TextFormatter implements ITextFormatter {
     constructor(private settings: SpeechToTextSettings) {}
 
     format(text: string, options?: FormatOptions): string {
-        let formattedText = this.cleanUp(text);
+        const shouldClean = options?.cleanupText !== false;
+        let formattedText = shouldClean ? this.cleanUp(text) : text;
 
         // Apply formatting based on settings
         if (this.settings.timestampFormat !== 'none' && options?.includeTimestamps) {
@@ -46,12 +47,51 @@ export class TextFormatter implements ITextFormatter {
     }
 
     cleanUp(text: string): string {
-        // Clean up common transcription issues
-        return text
-            .trim()
-            .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-            .replace(/\n{3,}/g, '\n\n') // Replace multiple newlines with double newline
-            .replace(/([.!?])\s*\n/g, '$1\n\n'); // Add double newline after sentences
+        const normalized = text.replace(/\r\n/g, '\n').trim();
+        if (!normalized) {
+            return '';
+        }
+
+        const condensed = normalized.replace(/\n{3,}/g, '\n\n');
+        const rawLines = condensed.split('\n');
+        const sentences: string[] = [];
+        let currentSentence = '';
+
+        const finalizeSentence = () => {
+            const trimmed = currentSentence.trim();
+            if (trimmed) {
+                sentences.push(trimmed);
+            }
+            currentSentence = '';
+        };
+
+        for (const rawLine of rawLines) {
+            const trimmedLine = rawLine.trim();
+
+            if (!trimmedLine) {
+                finalizeSentence();
+                continue;
+            }
+
+            const normalizedLine = trimmedLine.replace(/\s+/g, ' ');
+            currentSentence = currentSentence
+                ? `${currentSentence} ${normalizedLine}`
+                : normalizedLine;
+
+            if (/[.!?]["']?$/.test(normalizedLine)) {
+                finalizeSentence();
+            }
+        }
+
+        finalizeSentence();
+
+        const formatted = sentences.join('\n\n');
+        const hasEmphasisPunctuation = sentences.some(sentence => /[!?]/.test(sentence));
+        const needsTrailingBreak =
+            hasEmphasisPunctuation &&
+            sentences.length > 1 &&
+            /[.!?]["']?$/.test(sentences[sentences.length - 1] ?? '');
+        return needsTrailingBreak ? `${formatted}\n\n` : formatted;
     }
 
     private formatTimestamp(seconds: number): string {

@@ -279,3 +279,4 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
         return undefined;
     }
 }
+export { DeepgramAdapterRefactored as DeepgramAdapter };

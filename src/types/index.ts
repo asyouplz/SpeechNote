@@ -165,6 +165,7 @@ export interface FormatOptions {
     includeTimestamps?: boolean;
     timestampFormat?: 'inline' | 'sidebar' | 'none';
     language?: string;
+    cleanupText?: boolean;
 }
 
 export interface IEventManager {

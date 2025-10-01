@@ -19,6 +19,8 @@ export class EditorService {
     private readonly undoHistory: EditorAction[] = [];
     private readonly redoHistory: EditorAction[] = [];
     private readonly maxHistorySize = 50;
+    private destroyed = false;
+    private readonly eventRefs: Array<{ event: string; callback: any }> = [];
 
     constructor(
         private app: App,
@@ -34,21 +36,34 @@ export class EditorService {
      */
     private setupEventListeners(): void {
         // 활성 뷰 변경 감지
-        this.app.workspace.on('active-leaf-change', () => {
+        const activeLeafCallback = () => {
+            if (this.destroyed) {
+                return;
+            }
             this.updateActiveEditor();
-        });
+        };
+        this.app.workspace.on('active-leaf-change', activeLeafCallback);
+        this.eventRefs.push({ event: 'active-leaf-change', callback: activeLeafCallback });
 
         // 에디터 변경 감지
-        this.app.workspace.on('editor-change', (editor: Editor) => {
+        const editorChangeCallback = (editor: Editor) => {
+            if (this.destroyed) {
+                return;
+            }
             this.activeEditor = editor;
             this.eventManager.emit('editor:changed', { editor });
-        });
+        };
+        this.app.workspace.on('editor-change', editorChangeCallback);
+        this.eventRefs.push({ event: 'editor-change', callback: editorChangeCallback });
     }
 
     /**
      * 활성 에디터 업데이트
      */
     private updateActiveEditor(): void {
+        if (this.destroyed) {
+            return;
+        }
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
         
         if (view) {
@@ -73,6 +88,10 @@ export class EditorService {
      * 활성 에디터 가져오기
      */
     getActiveEditor(): Editor | null {
+        if (this.destroyed) {
+            return null;
+        }
+
         if (!this.activeEditor) {
             this.updateActiveEditor();
         }
@@ -83,6 +102,10 @@ export class EditorService {
      * 활성 뷰 가져오기
      */
     getActiveView(): MarkdownView | null {
+        if (this.destroyed) {
+            return null;
+        }
+
         if (!this.activeView) {
             this.updateActiveEditor();
         }
@@ -585,6 +608,14 @@ export class EditorService {
      * 클린업
      */
     destroy(): void {
+        this.destroyed = true;
+
+        // Remove all event listeners
+        for (const ref of this.eventRefs) {
+            this.app.workspace.off(ref.event, ref.callback);
+        }
+        this.eventRefs.length = 0;
+
         this.clearHistory();
         this.activeEditor = null;
         this.activeView = null;
