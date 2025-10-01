@@ -43,14 +43,20 @@ export class TranscriptionService implements ITranscriptionService {
             this.logger.debug('Starting transcription with WhisperService');
             
             // 🔥 언어 옵션 전달
-            const transcribeOptions = {
-                language: this.settings?.language,
-                model: this.settings?.model
-            };
-            
-            this.logger.debug('Transcription options:', transcribeOptions);
-            
-            const response = await this.whisperService.transcribe(processedAudio.buffer, transcribeOptions);
+            const languagePreference = this.settings?.language;
+            const modelPreference = this.settings?.model;
+            const hasTranscribeOptions = Boolean(languagePreference || modelPreference);
+
+            if (hasTranscribeOptions) {
+                this.logger.debug('Transcription options:', { language: languagePreference, model: modelPreference });
+            }
+
+            const response = hasTranscribeOptions
+                ? await this.whisperService.transcribe(processedAudio.buffer, {
+                      language: languagePreference,
+                      model: modelPreference
+                  })
+                : await this.whisperService.transcribe(processedAudio.buffer);
             
             this.logger.debug('WhisperService response:', {
                 hasResponse: !!response,
@@ -61,7 +67,7 @@ export class TranscriptionService implements ITranscriptionService {
             });
             
             // Validate response
-            if (!response || !response.text) {
+            if (!response || response.text === undefined || response.text === null) {
                 this.logger.error('Empty or invalid response from WhisperService', undefined, { response });
                 throw new Error('Transcription service returned empty text');
             }
@@ -96,16 +102,14 @@ export class TranscriptionService implements ITranscriptionService {
             });
             
             // Ensure the event data includes the text for auto-insertion
-            this.eventManager.emit('transcription:complete', { 
-                result,
-                text: result.text  // Explicitly include text for event handlers
-            });
+            this.eventManager.emit('transcription:complete', { result });
 
             return result;
         } catch (error) {
             this.status = 'error';
-            this.eventManager.emit('transcription:error', { error });
-            throw error;
+            const normalizedError = this.normalizeError(error);
+            this.eventManager.emit('transcription:error', { error: normalizedError });
+            throw normalizedError;
         }
     }
 
@@ -117,5 +121,25 @@ export class TranscriptionService implements ITranscriptionService {
 
     getStatus(): TranscriptionStatus {
         return this.status;
+    }
+
+    private normalizeError(error: unknown): Error {
+        if (error instanceof Error) {
+            const errorCode = (error as { code?: string }).code;
+            if (errorCode === 'MAX_RETRIES_EXCEEDED' && error.message.includes(':')) {
+                const parts = error.message.split(':');
+                const originalMessage = parts[parts.length - 1]?.trim();
+                if (originalMessage) {
+                    return new Error(originalMessage);
+                }
+            }
+            return error;
+        }
+
+        if (typeof error === 'string') {
+            return new Error(error);
+        }
+
+        return new Error('Unknown error');
     }
 }
