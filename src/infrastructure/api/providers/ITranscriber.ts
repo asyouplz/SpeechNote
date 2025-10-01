@@ -78,6 +78,7 @@ export interface TranscriptionResponse {
         wordCount?: number;
         chunksProcessed?: number;
         chunksSuccessful?: number;
+        isPartial?: boolean;
     };
 }
 
