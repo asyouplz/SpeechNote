@@ -1,4 +1,9 @@
 import type { ILogger, ISettingsManager } from '../../../../types';
+import type {
+    DeepgramFeatures,
+    DeepgramSettings,
+    TranscriptionSettings as SettingsStoreTranscriptionSettings
+} from '../../../../types/DeepgramTypes';
 import {
     ITranscriber,
     TranscriptionProvider,
@@ -21,7 +26,8 @@ import { DEEPGRAM_API } from './constants';
 export class DeepgramAdapter implements ITranscriber {
     private config: ProviderConfig;
     private audioChunker: AudioChunker;
-    
+    private static readonly DEFAULT_TIER: NonNullable<DeepgramSpecificOptions['tier']> = 'nova-3';
+
     constructor(
         private deepgramService: DeepgramService,
         private logger: ILogger,
@@ -53,11 +59,14 @@ export class DeepgramAdapter implements ITranscriber {
         const startTime = Date.now();
         const audioSizeMB = audio.byteLength / (1024 * 1024);
         
-        this.logger.debug('=== DeepgramAdapter.transcribe START ===', {
-            audioSize: audio.byteLength,
-            audioSizeMB,
-            options
-        });
+        this.logger.debug(
+            '=== DeepgramAdapter.transcribe START ===',
+            this.sanitizeForLogging({
+                audioSize: audio.byteLength,
+                audioSizeMB,
+                options
+            })
+        );
         
         try {
             // Check settings for auto-chunking
@@ -92,7 +101,7 @@ export class DeepgramAdapter implements ITranscriber {
                     recommendations
                 });
                 
-                const enhancedMessage = `Transcription timeout for ${Math.round(audioSizeMB)}MB file.\n\nRecommended solutions:\n• Enable automatic chunking (files will be split into ${recommendations.estimatedChunks || 'multiple'} chunks)\n• Use '${recommendations.recommendedModel}' model for faster processing\n• Reduce audio bitrate to ${recommendations.recommendedBitrate || '128 kbps'}\n• Convert to MP3 or OGG format for smaller file size`;
+                const enhancedMessage = `Transcription timeout for ${Math.round(audioSizeMB)}MB file.\n\nRecommended solutions:\n- Enable automatic chunking (files will be split into ${recommendations.estimatedChunks || 'multiple'} chunks)\n- Use '${recommendations.recommendedModel}' model for faster processing\n- Reduce audio bitrate to ${recommendations.recommendedBitrate || '128 kbps'}\n- Convert to MP3 or OGG format for smaller file size`;
                 
                 throw new TranscriptionError(
                     enhancedMessage,
@@ -103,9 +112,9 @@ export class DeepgramAdapter implements ITranscriber {
                 );
             }
             
-            // Handle other error types...
-            this.handleTranscriptionError(errorObj, audio, options);
-            throw error;
+            // Handle other error types with enhanced messaging.
+            const enhancedError = this.enhanceTranscriptionError(errorObj, audio, options);
+            throw enhancedError;
         }
     }
     
@@ -123,10 +132,13 @@ export class DeepgramAdapter implements ITranscriber {
             const deepgramOptions = this.convertOptions(options);
             const language = options?.language;
             
-            this.logger.debug('Calling Deepgram API with options:', {
-                deepgramOptions,
-                language
-            });
+            this.logger.debug(
+                'Calling Deepgram API with options:',
+                this.sanitizeForLogging({
+                    deepgramOptions,
+                    language
+                })
+            );
             
             // Deepgram API 호출
             const response = await this.deepgramService.transcribe(
@@ -212,6 +224,13 @@ export class DeepgramAdapter implements ITranscriber {
                 }
             }
             
+            if (chunkResults.length < chunks.length) {
+                this.logger.warn('Chunked transcription completed with partial results', {
+                    totalChunks: chunks.length,
+                    successfulChunks: chunkResults.length
+                });
+            }
+
             // Merge results
             const mergedText = this.audioChunker.mergeTranscriptionResults(chunkResults);
             const averageConfidence = chunkResults.length > 0 ? totalConfidence / chunkResults.length : 0;
@@ -233,15 +252,17 @@ export class DeepgramAdapter implements ITranscriber {
                 metadata: {
                     processingTime: Date.now() - startTime,
                     chunksProcessed: chunks.length,
-                    chunksSuccessful: chunkResults.length
+                    chunksSuccessful: chunkResults.length,
+                    isPartial: chunkResults.length < chunks.length
                 }
             };
             
             this.logger.info('Chunked transcription completed', {
                 totalChunks: chunks.length,
                 successfulChunks: chunkResults.length,
-                processingTime: result.metadata.processingTime,
-                textLength: result.text.length
+                processingTime: result.metadata?.processingTime,
+                textLength: result.text.length,
+                isPartial: result.metadata?.isPartial
             });
             
             return result;
@@ -254,77 +275,82 @@ export class DeepgramAdapter implements ITranscriber {
     /**
      * Handle transcription errors with enhanced messages
      */
-    private handleTranscriptionError(
+    private enhanceTranscriptionError(
         error: Error,
         audio: ArrayBuffer,
         options?: TranscriptionOptions
-    ): void {
+    ): Error {
         const errorObj = error as TranscriptionError;
-        
+
         if (errorObj instanceof TranscriptionError) {
-                // 빈 transcript 에러의 경우 추가 컨텍스트 제공
-                if (errorObj.code === 'EMPTY_TRANSCRIPT') {
-                    this.logger.error('DeepgramAdapter: Empty transcript - providing user guidance', errorObj, {
-                        originalMessage: errorObj.message,
-                        audioSize: audio.byteLength,
-                        language: options?.language,
-                        model: options?.model
-                    });
-                    
-                    // 사용자에게 실용적인 해결책 제시
-                    const enhancedMessage = `음성을 텍스트로 변환할 수 없었습니다. ${errorObj.message}
+            if (errorObj.code === 'EMPTY_TRANSCRIPT') {
+                this.logger.error('DeepgramAdapter: Empty transcript detected', errorObj, {
+                    originalMessage: errorObj.message,
+                    audioSize: audio.byteLength,
+                    language: options?.language,
+                    model: options?.model
+                });
 
-다음 사항을 확인해 주세요:
-• 오디오에 명확한 음성이 포함되어 있는지 확인
-• 마이크 볼륨이 충분한지 확인
-• 배경소음이 너무 크지 않은지 확인
-• 지원되는 오디오 형식인지 확인 (WAV, MP3, FLAC 등)
-• 언어 설정이 올바른지 확인
-• 파일 크기가 너무 크면 청킹 옵션 활성화 고려`;
+                const enhancedMessage = [
+                    `No transcript was returned. ${errorObj.message}`,
+                    '',
+                    'Try the following:',
+                    '- Ensure the audio contains clear speech',
+                    '- Increase microphone input volume if the recording is quiet',
+                    '- Reduce background noise or apply noise reduction',
+                    '- Confirm the file format is supported (WAV, MP3, FLAC, etc.)',
+                    '- Verify the language setting matches the spoken language',
+                    '- Enable chunking for files that exceed the recommended size'
+                ].join('\n');
 
-                    throw new TranscriptionError(
-                        enhancedMessage,
-                        errorObj.code,
-                        errorObj.provider,
-                        errorObj.isRetryable,
-                        errorObj.statusCode
-                    );
-                }
-                
-                // 오디오 검증 에러의 경우
-                if (errorObj.code === 'INVALID_AUDIO') {
-                    this.logger.error('DeepgramAdapter: Invalid audio format', errorObj, {
-                        originalMessage: errorObj.message,
-                        audioSize: audio.byteLength
-                    });
-                    
-                    const enhancedMessage = `오디오 파일에 문제가 있습니다: ${errorObj.message}
+                return new TranscriptionError(
+                    enhancedMessage,
+                    errorObj.code,
+                    errorObj.provider,
+                    errorObj.isRetryable,
+                    errorObj.statusCode
+                );
+            }
 
-해결 방법:
-• 올바른 오디오 파일을 선택했는지 확인
-• 파일이 손상되지 않았는지 확인
-• 지원되는 형식 (WAV, MP3, FLAC, OGG 등)인지 확인
-• 파일 크기가 2GB를 초과하지 않는지 확인
-• 50MB 이상 파일은 자동 청킹 사용 권장`;
+            if (errorObj.code === 'INVALID_AUDIO') {
+                this.logger.error('DeepgramAdapter: Invalid audio format', errorObj, {
+                    originalMessage: errorObj.message,
+                    audioSize: audio.byteLength
+                });
 
-                    throw new TranscriptionError(
-                        enhancedMessage,
-                        errorObj.code,
-                        errorObj.provider,
-                        errorObj.isRetryable,
-                        errorObj.statusCode
-                    );
-                }
+                const enhancedMessage = [
+                    `The audio file could not be processed: ${errorObj.message}`,
+                    '',
+                    'Resolution steps:',
+                    '- Confirm you selected the correct file and it is not corrupted',
+                    '- Use a supported audio format (WAV, MP3, FLAC, OGG, etc.)',
+                    '- Keep files under 2GB in size',
+                    '- Enable automatic chunking for files larger than 50MB'
+                ].join('\n');
+
+                return new TranscriptionError(
+                    enhancedMessage,
+                    errorObj.code,
+                    errorObj.provider,
+                    errorObj.isRetryable,
+                    errorObj.statusCode
+                );
             }
         }
-        
-        this.logger.error('DeepgramAdapter: Transcription failed', error, {
-            audioSize: audio.byteLength,
-            audioSizeMB: Math.round(audio.byteLength / (1024 * 1024)),
-            options: options,
-            errorType: error.constructor.name,
-            needsChunking: this.audioChunker.needsChunking(audio.byteLength)
-        });
+
+        this.logger.error(
+            'DeepgramAdapter: Transcription failed',
+            error,
+            {
+                audioSize: audio.byteLength,
+                audioSizeMB: Math.round(audio.byteLength / (1024 * 1024)),
+                options: this.sanitizeForLogging(options),
+                errorType: error.constructor.name,
+                needsChunking: this.audioChunker.needsChunking(audio.byteLength)
+            }
+        );
+
+        return error;
     }
     
     /**
@@ -332,64 +358,65 @@ export class DeepgramAdapter implements ITranscriber {
      */
     private convertOptions(options?: TranscriptionOptions): DeepgramSpecificOptions {
         const deepgramOptions: DeepgramSpecificOptions = {
-            tier: 'nova-3' as any, // Nova-3를 기본값으로 변경 (tier 타입 확장 필요)
+            tier: DeepgramAdapter.DEFAULT_TIER,
             punctuate: true,
             smartFormat: true,
             diarize: true,
             utterances: true
         };
-        
-        // 모델을 tier로 매핑 (Nova-3 지원 추가)
-        if (options?.model) {
-            const modelToTier: Record<string, any> = {
-                'nova-3': 'nova-3',
-                'nova-2': 'nova-2',
-                'nova': 'nova-2',
-                'enhanced': 'enhanced',
-                'base': 'base'
-            };
-            
-            if (modelToTier[options.model]) {
-                deepgramOptions.tier = modelToTier[options.model];
-            }
+
+        const modelToTier: Partial<
+            Record<string, NonNullable<DeepgramSpecificOptions['tier']>>
+        > = {
+            'nova-3': 'nova-3',
+            'nova-2': 'nova-2',
+            nova: 'nova-2',
+            enhanced: 'enhanced',
+            base: 'base'
+        };
+
+        const requestedTier = options?.model ? modelToTier[options.model] : undefined;
+        if (requestedTier) {
+            deepgramOptions.tier = requestedTier;
         }
-        
-        // 설정에서 기능 옵션 가져오기
-        let deepgramFeatures: any = null;
-        
-        if (this.settingsManager) {
-            const transcriptionSettings = this.settingsManager.get('transcription');
-            deepgramFeatures = transcriptionSettings?.deepgram?.features;
-            this.logger.debug('Using feature settings from settingsManager', deepgramFeatures);
-        }
-        
+
+        const transcriptionSettings = this.settingsManager?.get(
+            'transcription'
+        ) as SettingsStoreTranscriptionSettings | undefined;
+        const deepgramSettings = transcriptionSettings?.deepgram as DeepgramSettings | undefined;
+        const deepgramFeatures = deepgramSettings?.features as DeepgramFeatures | undefined;
+
         if (deepgramFeatures) {
-            this.logger.debug('Applying feature settings from UI', deepgramFeatures);
-            
-            // 기능 설정 매핑
-            if (deepgramFeatures.punctuation !== undefined) {
+            this.logger.debug(
+                'Applying Deepgram feature overrides',
+                this.sanitizeForLogging(deepgramFeatures)
+            );
+
+            if (typeof deepgramFeatures.punctuation === 'boolean') {
                 deepgramOptions.punctuate = deepgramFeatures.punctuation;
             }
-            if (deepgramFeatures.smartFormat !== undefined) {
+            if (typeof deepgramFeatures.smartFormat === 'boolean') {
                 deepgramOptions.smartFormat = deepgramFeatures.smartFormat;
             }
-            if (deepgramFeatures.diarization !== undefined) {
+            if (typeof deepgramFeatures.diarization === 'boolean') {
                 deepgramOptions.diarize = deepgramFeatures.diarization;
             }
-            if (deepgramFeatures.utterances !== undefined) {
-                (deepgramOptions as any).utterances = deepgramFeatures.utterances;
+            if (typeof deepgramFeatures.utterances === 'boolean') {
+                deepgramOptions.utterances = deepgramFeatures.utterances;
             }
-            if (deepgramFeatures.numerals !== undefined) {
+            if (typeof deepgramFeatures.numerals === 'boolean') {
                 deepgramOptions.numerals = deepgramFeatures.numerals;
             }
         }
-        
-        // Deepgram 전용 옵션 적용 (우선순위 높음)
+
         if (options?.deepgram) {
             Object.assign(deepgramOptions, options.deepgram);
         }
-        
-        this.logger.debug('Final Deepgram options', deepgramOptions);
+
+        this.logger.debug(
+            'Resolved Deepgram options',
+            this.sanitizeForLogging(deepgramOptions)
+        );
         return deepgramOptions;
     }
 
@@ -415,7 +442,10 @@ export class DeepgramAdapter implements ITranscriber {
             ...userDiarizationConfig
         };
 
-        this.logger.debug('Diarization config created:', config);
+        this.logger.debug(
+            'Diarization config created:',
+            this.sanitizeForLogging(config)
+        );
         return config;
     }
     
@@ -423,7 +453,28 @@ export class DeepgramAdapter implements ITranscriber {
      * API 키 검증
      */
     async validateApiKey(key: string): Promise<boolean> {
-        return this.deepgramService.validateApiKey(key);
+        try {
+            return await this.deepgramService.validateApiKey(key);
+        } catch (error) {
+            const err = error as TranscriptionError;
+
+            if (
+                err instanceof TranscriptionError &&
+                (err.code === 'AUTH_ERROR' || err.statusCode === 401 || err.statusCode === 403)
+            ) {
+                this.logger.warn('DeepgramAdapter: API key authentication failed', {
+                    statusCode: err.statusCode
+                });
+                return false;
+            }
+
+            this.logger.error('DeepgramAdapter: API key validation error (non-auth)', err, {
+                statusCode: err?.statusCode,
+                errorType: err?.constructor?.name
+            });
+
+            throw error;
+        }
     }
     
     /**
@@ -535,13 +586,49 @@ export class DeepgramAdapter implements ITranscriber {
             ...config
         };
     }
-    
+
+    private sanitizeForLogging<T>(data: T): T {
+        const redactKeys = ['apikey', 'api_key', 'token', 'authorization', 'secret'];
+
+        const scrub = (value: unknown): unknown => {
+            if (value === null || value === undefined) {
+                return value;
+            }
+
+            if (typeof value !== 'object') {
+                return value;
+            }
+
+            if (value instanceof ArrayBuffer) {
+                return '[ArrayBuffer]';
+            }
+
+            if (Array.isArray(value)) {
+                return value.map((item) => scrub(item));
+            }
+
+            const clone: Record<string, unknown> = {};
+            for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+                const lowered = key.toLowerCase();
+                if (redactKeys.some((needle) => lowered.includes(needle))) {
+                    clone[key] = '***';
+                } else {
+                    clone[key] = scrub(val);
+                }
+            }
+
+            return clone;
+        };
+
+        return scrub(data) as T;
+    }
+
     /**
      * 비용 계산 (추정치)
      * Deepgram 요금: https://deepgram.com/pricing
      */
     estimateCost(duration: number, model?: string): number {
-        const tier = model || this.config.model || 'nova-3'; // Nova-3 기본값
+        const tier = model || this.config.model || DeepgramAdapter.DEFAULT_TIER;
         
         // 분당 비용 (USD) - 2024년 Deepgram 요금
         const costPerMinute: Record<string, number> = {
@@ -553,7 +640,8 @@ export class DeepgramAdapter implements ITranscriber {
         };
         
         const minutes = duration / 60;
-        const rate = costPerMinute[tier] || costPerMinute['nova-3']; // Nova-3 기본값
+        const rate =
+            costPerMinute[tier] || costPerMinute[DeepgramAdapter.DEFAULT_TIER];
         
         return minutes * rate;
     }
