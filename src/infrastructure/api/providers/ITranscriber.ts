@@ -76,6 +76,9 @@ export interface TranscriptionResponse {
         processingTime?: number;
         cost?: number;
         wordCount?: number;
+        chunksProcessed?: number;
+        chunksSuccessful?: number;
+        isPartial?: boolean;
     };
 }
 

@@ -80,13 +80,13 @@ module.exports = {
             displayName: 'Unit Tests',
             testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
             testEnvironment: 'node',
-            setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.ts']
+            setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.js']
         },
         {
             displayName: 'Integration Tests', 
             testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
             testEnvironment: 'node',
-            setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.ts'],
+            setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.js'],
             testTimeout: 15000
         },
         {
