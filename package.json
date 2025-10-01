@@ -22,7 +22,7 @@
     "test:debug": "DEBUG=true node --inspect-brk ./node_modules/.bin/jest --runInBand",
     "test:changed": "jest -o",
     "test:update-snapshots": "jest -u",
-    "coverage:report": "open coverage/lcov-report/index.html",
+    "coverage:report": "node scripts/open-coverage.js",
     "coverage:clean": "rm -rf coverage .jest-cache",
     "pretest": "npm run lint && npm run typecheck",
     "posttest": "npm run coverage:report",
