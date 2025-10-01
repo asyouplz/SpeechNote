@@ -2,11 +2,11 @@
  * 테스트 환경 설정 및 공통 Mock 설정
  */
 
-import { TextEncoder, TextDecoder } from 'util';
+const { TextEncoder, TextDecoder } = require('util');
 
 // Node.js 환경에서 브라우저 API 모킹
-global.TextEncoder = TextEncoder as any;
-global.TextDecoder = TextDecoder as any;
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
 
 // AudioContext 모킹
 global.AudioContext = jest.fn().mockImplementation(() => ({
@@ -28,7 +28,7 @@ global.AudioContext = jest.fn().mockImplementation(() => ({
     }),
     destination: {},
     close: jest.fn()
-})) as any;
+}));
 
 // OfflineAudioContext 모킹
 global.OfflineAudioContext = jest.fn().mockImplementation((channels, length, sampleRate) => ({
@@ -51,7 +51,7 @@ global.OfflineAudioContext = jest.fn().mockImplementation((channels, length, sam
         length,
         getChannelData: jest.fn().mockReturnValue(new Float32Array(length))
     })
-})) as any;
+}));
 
 // FormData 모킹
 global.FormData = jest.fn().mockImplementation(() => ({
@@ -65,29 +65,35 @@ global.FormData = jest.fn().mockImplementation(() => ({
     keys: jest.fn(),
     values: jest.fn(),
     forEach: jest.fn()
-})) as any;
+}));
 
 // Blob 모킹
-global.Blob = jest.fn().mockImplementation((parts: any[], options?: any) => ({
-    size: parts.reduce((acc, part) => {
+global.Blob = jest.fn().mockImplementation(function (parts, options) {
+    const size = (parts || []).reduce((acc, part) => {
         if (part instanceof ArrayBuffer) return acc + part.byteLength;
         if (typeof part === 'string') return acc + part.length;
         return acc;
-    }, 0),
-    type: options?.type || '',
-    slice: jest.fn(),
-    stream: jest.fn(),
-    text: jest.fn(),
-    arrayBuffer: jest.fn()
-})) as any;
+    }, 0);
+
+    return {
+        size,
+        type: options?.type || '',
+        slice: jest.fn(),
+        stream: jest.fn(),
+        text: jest.fn(),
+        arrayBuffer: jest.fn()
+    };
+});
 
 // File 모킹
-global.File = jest.fn().mockImplementation((parts: any[], name: string, options?: any) => ({
-    ...new Blob(parts, options),
-    name,
-    lastModified: options?.lastModified || Date.now(),
-    webkitRelativePath: ''
-})) as any;
+global.File = jest.fn().mockImplementation(function (parts, name, options) {
+    return {
+        ...new Blob(parts, options),
+        name,
+        lastModified: options?.lastModified || Date.now(),
+        webkitRelativePath: ''
+    };
+});
 
 // AbortController 모킹
 global.AbortController = jest.fn().mockImplementation(() => ({
@@ -97,35 +103,15 @@ global.AbortController = jest.fn().mockImplementation(() => ({
         addEventListener: jest.fn(),
         removeEventListener: jest.fn()
     },
-    abort: jest.fn(function(this: any) {
+    abort: jest.fn(function () {
         this.signal.aborted = true;
         if (this.signal.onabort) this.signal.onabort();
     })
-})) as any;
-
-// requestUrl 모킹 (Obsidian API)
-jest.mock('obsidian', () => ({
-    requestUrl: jest.fn(),
-    Plugin: jest.fn(),
-    Modal: jest.fn(),
-    Setting: jest.fn(),
-    PluginSettingTab: jest.fn(),
-    TFile: jest.fn(),
-    TFolder: jest.fn(),
-    Vault: jest.fn(),
-    Workspace: jest.fn(),
-    App: jest.fn(),
-    Editor: jest.fn(),
-    MarkdownView: jest.fn(),
-    Notice: jest.fn(),
-    DropdownComponent: jest.fn(),
-    ToggleComponent: jest.fn(),
-    TextComponent: jest.fn()
 }));
 
 // 커스텀 매처 추가
 expect.extend({
-    toBeValidArrayBuffer(received: any) {
+    toBeValidArrayBuffer(received) {
         const pass = received instanceof ArrayBuffer && received.byteLength > 0;
         
         if (pass) {
@@ -141,7 +127,7 @@ expect.extend({
         }
     },
     
-    toContainTimestamp(received: string) {
+    toContainTimestamp(received) {
         const timestampRegex = /\[\d{2}:\d{2}(:\d{2})?\]/;
         const pass = timestampRegex.test(received);
         
@@ -159,17 +145,5 @@ expect.extend({
     }
 });
 
-// TypeScript 타입 확장
-declare global {
-    namespace jest {
-        interface Matchers<R> {
-            toBeValidArrayBuffer(): R;
-            toContainTimestamp(): R;
-        }
-    }
-}
-
 // 테스트 타임아웃 설정
 jest.setTimeout(10000);
-
-export {};
