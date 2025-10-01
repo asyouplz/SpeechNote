@@ -224,6 +224,13 @@ export class DeepgramAdapter implements ITranscriber {
                 }
             }
             
+            if (chunkResults.length < chunks.length) {
+                this.logger.warn('Chunked transcription completed with partial results', {
+                    totalChunks: chunks.length,
+                    successfulChunks: chunkResults.length
+                });
+            }
+
             // Merge results
             const mergedText = this.audioChunker.mergeTranscriptionResults(chunkResults);
             const averageConfidence = chunkResults.length > 0 ? totalConfidence / chunkResults.length : 0;
@@ -254,7 +261,8 @@ export class DeepgramAdapter implements ITranscriber {
                 totalChunks: chunks.length,
                 successfulChunks: chunkResults.length,
                 processingTime: result.metadata?.processingTime,
-                textLength: result.text.length
+                textLength: result.text.length,
+                isPartial: result.metadata?.isPartial
             });
             
             return result;
