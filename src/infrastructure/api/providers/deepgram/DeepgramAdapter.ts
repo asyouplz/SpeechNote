@@ -456,10 +456,24 @@ export class DeepgramAdapter implements ITranscriber {
         try {
             return await this.deepgramService.validateApiKey(key);
         } catch (error) {
-            this.logger.debug('DeepgramAdapter: API key validation failed', {
-                error: (error as Error).message
+            const err = error as TranscriptionError;
+
+            if (
+                err instanceof TranscriptionError &&
+                (err.code === 'AUTH_ERROR' || err.statusCode === 401 || err.statusCode === 403)
+            ) {
+                this.logger.warn('DeepgramAdapter: API key authentication failed', {
+                    statusCode: err.statusCode
+                });
+                return false;
+            }
+
+            this.logger.error('DeepgramAdapter: API key validation error (non-auth)', err, {
+                statusCode: err?.statusCode,
+                errorType: err?.constructor?.name
             });
-            return false;
+
+            throw error;
         }
     }
     
