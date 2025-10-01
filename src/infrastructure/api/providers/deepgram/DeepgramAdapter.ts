@@ -59,11 +59,14 @@ export class DeepgramAdapter implements ITranscriber {
         const startTime = Date.now();
         const audioSizeMB = audio.byteLength / (1024 * 1024);
         
-        this.logger.debug('=== DeepgramAdapter.transcribe START ===', {
-            audioSize: audio.byteLength,
-            audioSizeMB,
-            options
-        });
+        this.logger.debug(
+            '=== DeepgramAdapter.transcribe START ===',
+            this.sanitizeForLogging({
+                audioSize: audio.byteLength,
+                audioSizeMB,
+                options
+            })
+        );
         
         try {
             // Check settings for auto-chunking
@@ -129,10 +132,13 @@ export class DeepgramAdapter implements ITranscriber {
             const deepgramOptions = this.convertOptions(options);
             const language = options?.language;
             
-            this.logger.debug('Calling Deepgram API with options:', {
-                deepgramOptions,
-                language
-            });
+            this.logger.debug(
+                'Calling Deepgram API with options:',
+                this.sanitizeForLogging({
+                    deepgramOptions,
+                    language
+                })
+            );
             
             // Deepgram API 호출
             const response = await this.deepgramService.transcribe(
@@ -239,7 +245,8 @@ export class DeepgramAdapter implements ITranscriber {
                 metadata: {
                     processingTime: Date.now() - startTime,
                     chunksProcessed: chunks.length,
-                    chunksSuccessful: chunkResults.length
+                    chunksSuccessful: chunkResults.length,
+                    isPartial: chunkResults.length < chunks.length
                 }
             };
             
@@ -323,13 +330,17 @@ export class DeepgramAdapter implements ITranscriber {
             }
         }
 
-        this.logger.error('DeepgramAdapter: Transcription failed', error, {
-            audioSize: audio.byteLength,
-            audioSizeMB: Math.round(audio.byteLength / (1024 * 1024)),
-            options,
-            errorType: error.constructor.name,
-            needsChunking: this.audioChunker.needsChunking(audio.byteLength)
-        });
+        this.logger.error(
+            'DeepgramAdapter: Transcription failed',
+            error,
+            {
+                audioSize: audio.byteLength,
+                audioSizeMB: Math.round(audio.byteLength / (1024 * 1024)),
+                options: this.sanitizeForLogging(options),
+                errorType: error.constructor.name,
+                needsChunking: this.audioChunker.needsChunking(audio.byteLength)
+            }
+        );
 
         return error;
     }
@@ -368,7 +379,10 @@ export class DeepgramAdapter implements ITranscriber {
         const deepgramFeatures = deepgramSettings?.features as DeepgramFeatures | undefined;
 
         if (deepgramFeatures) {
-            this.logger.debug('Applying Deepgram feature overrides', deepgramFeatures);
+            this.logger.debug(
+                'Applying Deepgram feature overrides',
+                this.sanitizeForLogging(deepgramFeatures)
+            );
 
             if (typeof deepgramFeatures.punctuation === 'boolean') {
                 deepgramOptions.punctuate = deepgramFeatures.punctuation;
@@ -391,7 +405,10 @@ export class DeepgramAdapter implements ITranscriber {
             Object.assign(deepgramOptions, options.deepgram);
         }
 
-        this.logger.debug('Resolved Deepgram options', deepgramOptions);
+        this.logger.debug(
+            'Resolved Deepgram options',
+            this.sanitizeForLogging(deepgramOptions)
+        );
         return deepgramOptions;
     }
 
@@ -417,7 +434,10 @@ export class DeepgramAdapter implements ITranscriber {
             ...userDiarizationConfig
         };
 
-        this.logger.debug('Diarization config created:', config);
+        this.logger.debug(
+            'Diarization config created:',
+            this.sanitizeForLogging(config)
+        );
         return config;
     }
     
@@ -544,13 +564,49 @@ export class DeepgramAdapter implements ITranscriber {
             ...config
         };
     }
-    
+
+    private sanitizeForLogging<T>(data: T): T {
+        const redactKeys = ['apikey', 'api_key', 'token', 'authorization', 'secret'];
+
+        const scrub = (value: unknown): unknown => {
+            if (value === null || value === undefined) {
+                return value;
+            }
+
+            if (typeof value !== 'object') {
+                return value;
+            }
+
+            if (value instanceof ArrayBuffer) {
+                return '[ArrayBuffer]';
+            }
+
+            if (Array.isArray(value)) {
+                return value.map((item) => scrub(item));
+            }
+
+            const clone: Record<string, unknown> = {};
+            for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+                const lowered = key.toLowerCase();
+                if (redactKeys.some((needle) => lowered.includes(needle))) {
+                    clone[key] = '***';
+                } else {
+                    clone[key] = scrub(val);
+                }
+            }
+
+            return clone;
+        };
+
+        return scrub(data) as T;
+    }
+
     /**
      * 비용 계산 (추정치)
      * Deepgram 요금: https://deepgram.com/pricing
      */
     estimateCost(duration: number, model?: string): number {
-        const tier = model || this.config.model || 'nova-3'; // Nova-3 기본값
+        const tier = model || this.config.model || DeepgramAdapter.DEFAULT_TIER;
         
         // 분당 비용 (USD) - 2024년 Deepgram 요금
         const costPerMinute: Record<string, number> = {
@@ -562,7 +618,8 @@ export class DeepgramAdapter implements ITranscriber {
         };
         
         const minutes = duration / 60;
-        const rate = costPerMinute[tier] || costPerMinute['nova-3']; // Nova-3 기본값
+        const rate =
+            costPerMinute[tier] || costPerMinute[DeepgramAdapter.DEFAULT_TIER];
         
         return minutes * rate;
     }
