@@ -19,6 +19,7 @@ export class EditorService {
     private readonly undoHistory: EditorAction[] = [];
     private readonly redoHistory: EditorAction[] = [];
     private readonly maxHistorySize = 50;
+    private destroyed = false;
 
     constructor(
         private app: App,
@@ -35,11 +36,17 @@ export class EditorService {
     private setupEventListeners(): void {
         // 활성 뷰 변경 감지
         this.app.workspace.on('active-leaf-change', () => {
+            if (this.destroyed) {
+                return;
+            }
             this.updateActiveEditor();
         });
 
         // 에디터 변경 감지
         this.app.workspace.on('editor-change', (editor: Editor) => {
+            if (this.destroyed) {
+                return;
+            }
             this.activeEditor = editor;
             this.eventManager.emit('editor:changed', { editor });
         });
@@ -49,6 +56,9 @@ export class EditorService {
      * 활성 에디터 업데이트
      */
     private updateActiveEditor(): void {
+        if (this.destroyed) {
+            return;
+        }
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
         
         if (view) {
@@ -73,6 +83,10 @@ export class EditorService {
      * 활성 에디터 가져오기
      */
     getActiveEditor(): Editor | null {
+        if (this.destroyed) {
+            return null;
+        }
+
         if (!this.activeEditor) {
             this.updateActiveEditor();
         }
@@ -83,6 +97,10 @@ export class EditorService {
      * 활성 뷰 가져오기
      */
     getActiveView(): MarkdownView | null {
+        if (this.destroyed) {
+            return null;
+        }
+
         if (!this.activeView) {
             this.updateActiveEditor();
         }
@@ -585,6 +603,7 @@ export class EditorService {
      * 클린업
      */
     destroy(): void {
+        this.destroyed = true;
         this.clearHistory();
         this.activeEditor = null;
         this.activeView = null;

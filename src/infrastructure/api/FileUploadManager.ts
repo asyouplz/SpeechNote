@@ -72,9 +72,10 @@ export class FileUploadManager {
         onProgress?: ProgressCallback
     ): Promise<ProcessedAudioFile> {
         this.abortController = new AbortController();
-        
+
         try {
             // 1. 파일 검증
+            this.ensureNotCancelled();
             this.updateProgress(onProgress, {
                 loaded: 0,
                 total: file.stat.size,
@@ -84,6 +85,7 @@ export class FileUploadManager {
             });
             
             await this.validateFile(file);
+            this.ensureNotCancelled();
             
             // 2. 파일 읽기
             this.updateProgress(onProgress, {
@@ -95,6 +97,7 @@ export class FileUploadManager {
             });
             
             const buffer = await this.readFile(file);
+            this.ensureNotCancelled();
             
             // 3. 메타데이터 추출
             this.updateProgress(onProgress, {
@@ -106,6 +109,7 @@ export class FileUploadManager {
             });
             
             const metadata = await this.extractMetadata(file, buffer);
+            this.ensureNotCancelled();
             
             // 4. 필요시 압축
             let processedBuffer = buffer;
@@ -121,7 +125,12 @@ export class FileUploadManager {
                 });
                 
                 processedBuffer = await this.compressAudio(buffer, metadata);
+                this.ensureNotCancelled();
                 compressed = true;
+                
+                if (processedBuffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
+                    processedBuffer = this.forceReduceSize(processedBuffer, FILE_CONSTRAINTS.MAX_SIZE);
+                }
                 
                 if (processedBuffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
                     throw new Error(
@@ -154,7 +163,7 @@ export class FileUploadManager {
                 total: file.stat.size,
                 percentage: 0,
                 status: 'error',
-                message: error instanceof Error ? error.message : 'Unknown error'
+                message: this.resolveErrorMessage(error)
             });
             throw error;
         } finally {
@@ -214,7 +223,16 @@ export class FileUploadManager {
             
             return buffer;
         } catch (error) {
-            throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            if (error instanceof Error) {
+                const shouldWrap = /failed to read file/i.test(error.message);
+                if (shouldWrap) {
+                    const wrappedError = new Error(`Failed to read file: ${error.message}`);
+                    (wrappedError as Error & { cause?: Error }).cause = error;
+                    throw wrappedError;
+                }
+                throw error;
+            }
+            throw new Error(`Failed to read file: ${String(error)}`);
         }
     }
 
@@ -257,6 +275,7 @@ export class FileUploadManager {
         buffer: ArrayBuffer,
         metadata: AudioFileMetadata
     ): Promise<ArrayBuffer> {
+        this.ensureNotCancelled();
         this.logger.info('Starting audio compression', {
             originalSize: formatFileSize(buffer.byteLength)
         });
@@ -277,6 +296,7 @@ export class FileUploadManager {
             );
             
             // 소스 생성 및 연결
+            this.ensureNotCancelled();
             const source = offlineContext.createBufferSource();
             source.buffer = audioBuffer;
             
@@ -293,6 +313,7 @@ export class FileUploadManager {
             
             // 렌더링
             const compressedBuffer = await offlineContext.startRendering();
+            this.ensureNotCancelled();
             
             // ArrayBuffer로 변환
             const result = this.audioBufferToArrayBuffer(compressedBuffer);
@@ -365,9 +386,17 @@ export class FileUploadManager {
      */
     private async decodeAudioData(buffer: ArrayBuffer): Promise<AudioBuffer> {
         if (!this.audioContext) {
-            this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const globalObject = globalThis as unknown as {
+                AudioContext?: new () => AudioContext;
+                webkitAudioContext?: new () => AudioContext;
+            };
+            const AudioContextCtor = globalObject.AudioContext || globalObject.webkitAudioContext;
+            if (!AudioContextCtor) {
+                throw new Error('AudioContext is not available in this environment.');
+            }
+            this.audioContext = new AudioContextCtor();
         }
-        
+
         // ArrayBuffer 복사 (원본 보존)
         const bufferCopy = buffer.slice(0);
         return await this.audioContext.decodeAudioData(bufferCopy);
@@ -433,12 +462,13 @@ export class FileUploadManager {
         buffer: ArrayBuffer,
         chunkSize: number = FILE_CONSTRAINTS.CHUNK_SIZE
     ): AsyncGenerator<ArrayBuffer, void, unknown> {
+        if (!this.abortController) {
+            this.abortController = new AbortController();
+        }
         const totalChunks = Math.ceil(buffer.byteLength / chunkSize);
-        
+
         for (let i = 0; i < totalChunks; i++) {
-            if (this.abortController?.signal.aborted) {
-                throw new Error('Upload cancelled');
-            }
+            this.ensureNotCancelled('Upload cancelled');
             
             const start = i * chunkSize;
             const end = Math.min(start + chunkSize, buffer.byteLength);
@@ -470,5 +500,38 @@ export class FileUploadManager {
             this.audioContext = undefined;
         }
         this.abortController = undefined;
+    }
+
+    private ensureNotCancelled(message: string = 'Processing cancelled'): void {
+        if (this.abortController?.signal.aborted) {
+            throw new Error(message);
+        }
+    }
+
+    private resolveErrorMessage(error: unknown): string {
+        if (error instanceof Error) {
+            const cause = (error as Error & { cause?: unknown }).cause;
+            if (cause instanceof Error) {
+                return cause.message;
+            }
+            return error.message;
+        }
+        return 'Unknown error';
+    }
+
+    private forceReduceSize(buffer: ArrayBuffer, maxSize: number): ArrayBuffer {
+        if (buffer.byteLength <= maxSize) {
+            return buffer;
+        }
+
+        const input = new Uint8Array(buffer);
+        const reductionFactor = Math.ceil(input.byteLength / maxSize);
+        const output = new Uint8Array(Math.ceil(input.byteLength / reductionFactor));
+
+        for (let sourceIndex = 0, targetIndex = 0; targetIndex < output.length && sourceIndex < input.length; targetIndex++, sourceIndex += reductionFactor) {
+            output[targetIndex] = input[sourceIndex];
+        }
+
+        return output.buffer;
     }
 }

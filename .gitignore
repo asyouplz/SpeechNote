@@ -28,6 +28,7 @@ tests/**/*.actual.*
 tests/**/*.error.*
 tests/**/*.output.*
 tests/**/__snapshots__/
+.jest-cache/
 
 # IDE
 .vscode/

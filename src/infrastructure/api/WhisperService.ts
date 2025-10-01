@@ -50,13 +50,13 @@ interface RetryStrategy {
 // 지수 백오프 재시도 전략
 class ExponentialBackoffRetry implements RetryStrategy {
     private readonly maxRetries = 3;
-    private readonly baseDelay = 1000;
-    private readonly maxDelay = 10000;
+    private readonly baseDelay = 250;
+    private readonly maxDelay = 2000;
 
     constructor(private logger: ILogger) {}
 
     async execute<T>(operation: () => Promise<T>): Promise<T> {
-        let lastError: Error;
+        let lastError: Error | undefined;
         
         for (let attempt = 0; attempt < this.maxRetries; attempt++) {
             try {
@@ -76,8 +76,12 @@ class ExponentialBackoffRetry implements RetryStrategy {
             }
         }
         
+        if (lastError instanceof WhisperAPIError) {
+            throw lastError;
+        }
+
         throw new WhisperAPIError(
-            `Operation failed after ${this.maxRetries} attempts: ${lastError!.message}`,
+            `Operation failed after ${this.maxRetries} attempts: ${lastError?.message ?? 'Unknown error'}`,
             'MAX_RETRIES_EXCEEDED',
             undefined,
             false
@@ -88,8 +92,13 @@ class ExponentialBackoffRetry implements RetryStrategy {
         if (error instanceof WhisperAPIError) {
             return error.isRetryable;
         }
-        // 네트워크 에러는 재시도 가능
-        return error.message?.toLowerCase().includes('network');
+
+        const message = ((error as Error).message || '').toLowerCase();
+        return (
+            message.includes('network') ||
+            message.includes('temporary') ||
+            message.includes('timeout')
+        );
     }
     
     private calculateDelay(attempt: number): number {
@@ -98,7 +107,7 @@ class ExponentialBackoffRetry implements RetryStrategy {
             this.maxDelay
         );
         // Jitter 추가
-        return delay + Math.random() * 1000;
+        return delay + Math.random() * 250;
     }
     
     private sleep(ms: number): Promise<void> {
@@ -209,6 +218,8 @@ export class WhisperService implements IWhisperService {
     private retryStrategy: RetryStrategy;
     private circuitBreaker: CircuitBreaker;
     private requestQueue: Promise<any> = Promise.resolve();
+    private pendingRequests: Array<() => Promise<void>> = [];
+    private isProcessingQueue = false;
 
     constructor(private apiKey: string, private logger: ILogger) {
         this.retryStrategy = new ExponentialBackoffRetry(logger);
@@ -272,7 +283,7 @@ export class WhisperService implements IWhisperService {
 
         try {
             const formData = this.buildFormData(audio, options);
-            const requestParams = await this.buildRequestParams(formData);
+            const requestParams = this.buildRequestParams(formData);
             
             this.logger.debug('Starting transcription request', {
                 fileSize: audio.byteLength,
@@ -295,6 +306,7 @@ export class WhisperService implements IWhisperService {
             if ((error as Error).name === 'AbortError') {
                 throw new WhisperAPIError('Transcription cancelled', 'CANCELLED', undefined, false);
             }
+            this.logger.error('Transcription request failed', error as Error);
             throw error;
         } finally {
             this.abortController = undefined;
@@ -341,36 +353,43 @@ export class WhisperService implements IWhisperService {
         return formData;
     }
 
-    private async buildRequestParams(formData: FormData): Promise<RequestUrlParam> {
-        // Convert FormData to ArrayBuffer for Obsidian's requestUrl
-        const body = new Uint8Array(await new Response(formData).arrayBuffer());
-        
+    private buildRequestParams(formData: FormData): RequestUrlParam {
         return {
             url: this.API_ENDPOINT,
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${this.apiKey}`,
-                // FormData content-type will be set manually if needed
+                Authorization: `Bearer ${this.apiKey}`
             },
-            body: body.buffer,
+            body: formData,
+            timeout: this.TIMEOUT,
             throw: false
-        };
+        } as RequestUrlParam;
     }
 
     private parseResponse(json: any, processingTime: number): WhisperResponse {
-        // 텍스트 형식 응답
-        if (typeof json === 'string') {
+        if (json === undefined || json === null) {
+            const duration = Math.max(processingTime / 1000, 0.001);
             return {
-                text: json,
-                duration: processingTime / 1000
+                text: '',
+                duration
             };
         }
-        
+
+        // 텍스트 형식 응답
+        if (typeof json === 'string') {
+            const duration = Math.max(processingTime / 1000, 0.001);
+            return {
+                text: json,
+                duration
+            };
+        }
+
         // JSON 형식 응답
+        const fallbackDuration = Math.max(processingTime / 1000, 0.001);
         const response: WhisperResponse = {
             text: json.text || '',
             language: json.language,
-            duration: json.duration || processingTime / 1000
+            duration: json.duration || fallbackDuration
         };
         
         // verbose_json 형식인 경우 segments 포함
@@ -433,11 +452,37 @@ export class WhisperService implements IWhisperService {
         return truncateText(prompt, maxChars);
     }
 
-    private async queueRequest<T>(request: () => Promise<T>): Promise<T> {
-        // 순차적 처리를 위한 큐
-        const promise = this.requestQueue.then(request, request);
-        this.requestQueue = promise.catch(() => {}); // 에러가 발생해도 큐 계속 처리
-        return promise;
+    private queueRequest<T>(request: () => Promise<T>): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            const task = async () => {
+                try {
+                    const result = await request();
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+
+            this.pendingRequests.push(task);
+            void this.processQueue();
+        });
+    }
+
+    private async processQueue(): Promise<void> {
+        if (this.isProcessingQueue) {
+            return;
+        }
+
+        this.isProcessingQueue = true;
+
+        while (this.pendingRequests.length > 0) {
+            const next = this.pendingRequests.shift();
+            if (next) {
+                await next();
+            }
+        }
+
+        this.isProcessingQueue = false;
     }
 
     /**
@@ -491,7 +536,7 @@ export class WhisperService implements IWhisperService {
      * ```
      */
     cancel(): void {
-        if (this.abortController) {
+        if (this.abortController && !this.abortController.signal.aborted) {
             this.abortController.abort();
             this.logger.debug('Transcription cancelled by user');
         }
