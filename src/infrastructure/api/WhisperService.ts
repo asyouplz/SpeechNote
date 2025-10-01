@@ -285,10 +285,12 @@ export class WhisperService implements IWhisperService {
             const formData = this.buildFormData(audio, options);
             const requestParams = this.buildRequestParams(formData);
             
-            this.logger.debug('Starting transcription request', {
-                fileSize: audio.byteLength,
-                options
-            });
+            this.logger.debug('Starting transcription request',
+                this.sanitizeForLogging({
+                    fileSize: audio.byteLength,
+                    options
+                })
+            );
 
             const response = await requestUrl(requestParams);
             const processingTime = Date.now() - startTime;
@@ -404,10 +406,12 @@ export class WhisperService implements IWhisperService {
         const errorBody = response.json;
         const errorMessage = errorBody?.error?.message || 'Unknown error';
         
-        this.logger.error(`API Error: ${response.status} - ${errorMessage}`, undefined, {
-            status: response.status,
-            errorBody
-        });
+        this.logger.error(`API Error: ${response.status} - ${errorMessage}`, undefined,
+            this.sanitizeForLogging({
+                status: response.status,
+                errorBody
+            })
+        );
         
         switch (response.status) {
             case 400:
@@ -540,6 +544,45 @@ export class WhisperService implements IWhisperService {
             this.abortController.abort();
             this.logger.debug('Transcription cancelled by user');
         }
+    }
+
+    /**
+     * Sanitize data for logging by removing sensitive information
+     */
+    private sanitizeForLogging<T>(data: T): T {
+        const redactKeys = ['apikey', 'api_key', 'token', 'authorization', 'secret'];
+
+        const scrub = (value: unknown): unknown => {
+            if (value === null || value === undefined) {
+                return value;
+            }
+
+            if (typeof value !== 'object') {
+                return value;
+            }
+
+            if (value instanceof ArrayBuffer) {
+                return '[ArrayBuffer]';
+            }
+
+            if (Array.isArray(value)) {
+                return value.map((item) => scrub(item));
+            }
+
+            const clone: Record<string, unknown> = {};
+            for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+                const lowered = key.toLowerCase();
+                if (redactKeys.some((needle) => lowered.includes(needle))) {
+                    clone[key] = '***';
+                } else {
+                    clone[key] = scrub(val);
+                }
+            }
+
+            return clone;
+        };
+
+        return scrub(data) as T;
     }
 
     /**
