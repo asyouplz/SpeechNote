@@ -12,7 +12,7 @@ import { WhisperAdapter } from './providers/whisper/WhisperAdapter';
 import { DeepgramAdapterRefactored } from './providers/deepgram/DeepgramAdapterRefactored';
 import { MetricsTracker } from './providers/factory/MetricsTracker';
 import { ProviderSelector } from './providers/factory/ProviderSelector';
-import type { PluginSettings } from '../../domain/models/Settings';
+import type { SpeechToTextSettings } from '../../domain/models/Settings';
 
 /**
  * Refactored Transcriber Factory
@@ -421,7 +421,7 @@ export class TranscriberFactoryRefactored {
     }
 }
 
-type FactoryPluginSettings = PluginSettings & Record<string, any>;
+type FactoryPluginSettings = SpeechToTextSettings & Record<string, any>;
 
 class PluginSettingsManagerAdapter implements ISettingsManager {
     private transcriptionConfig: TranscriptionProviderConfig;
@@ -605,7 +605,13 @@ export class TranscriberFactory extends TranscriberFactoryRefactored {
         return super.getProviderForABTest(userId);
     }
 
-    override getMetrics(provider?: TranscriptionProvider): ProviderMetrics | ProviderMetrics[] {
+    override getMetrics(provider?: TranscriptionProvider): ProviderMetrics | {
+        totalRequests: number;
+        providerUsage: Record<string, number>;
+        errorRates: Record<string, number>;
+        averageResponseTime: Record<string, number>;
+        metrics: ProviderMetrics[];
+    } {
         this.refreshConfiguration();
         return super.getMetrics(provider);
     }
@@ -635,7 +641,7 @@ export class TranscriberFactory extends TranscriberFactoryRefactored {
     }
 
     private getForcedProvider(): TranscriptionProvider | undefined {
-        const forced = this.pluginSettings?.abTesting?.forceProvider ?? this.pluginSettings?.transcription?.abTest?.forceProvider;
+        const forced = (this.pluginSettings as any)?.abTesting?.forceProvider ?? (this.pluginSettings as any)?.transcription?.abTest?.forceProvider;
         if (forced === 'whisper' || forced === 'deepgram') {
             return forced;
         }
