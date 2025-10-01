@@ -88,20 +88,23 @@ module.exports = {
             displayName: 'Unit Tests',
             testEnvironment: 'node',
             testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
-            setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.js']
+            setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.js'],
+            testTimeout: 10000
         }),
         createProject({
             displayName: 'Integration Tests',
             testEnvironment: 'node',
             testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
-            setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.js']
+            setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.js'],
+            testTimeout: 15000
         }),
         createProject({
             displayName: 'E2E Tests',
             testEnvironment: 'jsdom',
             testMatch: ['<rootDir>/tests/e2e/**/*.e2e.test.ts'],
             setupFilesAfterEnv: ['<rootDir>/tests/helpers/e2e.setup.ts'],
-            maxWorkers: 1
+            maxWorkers: 1,
+            testTimeout: 30000
         })
     ]
 };
