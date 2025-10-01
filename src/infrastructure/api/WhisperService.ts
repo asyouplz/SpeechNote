@@ -360,7 +360,7 @@ export class WhisperService implements IWhisperService {
             headers: {
                 Authorization: `Bearer ${this.apiKey}`
             },
-            body: formData,
+            body: formData as unknown as string | ArrayBuffer,
             timeout: this.TIMEOUT,
             throw: false
         } as RequestUrlParam;
