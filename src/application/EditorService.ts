@@ -20,6 +20,7 @@ export class EditorService {
     private readonly redoHistory: EditorAction[] = [];
     private readonly maxHistorySize = 50;
     private destroyed = false;
+    private readonly eventRefs: Array<{ event: string; callback: any }> = [];
 
     constructor(
         private app: App,
@@ -35,21 +36,25 @@ export class EditorService {
      */
     private setupEventListeners(): void {
         // 활성 뷰 변경 감지
-        this.app.workspace.on('active-leaf-change', () => {
+        const activeLeafCallback = () => {
             if (this.destroyed) {
                 return;
             }
             this.updateActiveEditor();
-        });
+        };
+        this.app.workspace.on('active-leaf-change', activeLeafCallback);
+        this.eventRefs.push({ event: 'active-leaf-change', callback: activeLeafCallback });
 
         // 에디터 변경 감지
-        this.app.workspace.on('editor-change', (editor: Editor) => {
+        const editorChangeCallback = (editor: Editor) => {
             if (this.destroyed) {
                 return;
             }
             this.activeEditor = editor;
             this.eventManager.emit('editor:changed', { editor });
-        });
+        };
+        this.app.workspace.on('editor-change', editorChangeCallback);
+        this.eventRefs.push({ event: 'editor-change', callback: editorChangeCallback });
     }
 
     /**
@@ -604,6 +609,13 @@ export class EditorService {
      */
     destroy(): void {
         this.destroyed = true;
+
+        // Remove all event listeners
+        for (const ref of this.eventRefs) {
+            this.app.workspace.off(ref.event, ref.callback);
+        }
+        this.eventRefs.length = 0;
+
         this.clearHistory();
         this.activeEditor = null;
         this.activeView = null;

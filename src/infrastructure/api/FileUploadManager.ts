@@ -127,16 +127,13 @@ export class FileUploadManager {
                 processedBuffer = await this.compressAudio(buffer, metadata);
                 this.ensureNotCancelled();
                 compressed = true;
-                
-                if (processedBuffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
-                    processedBuffer = this.forceReduceSize(processedBuffer, FILE_CONSTRAINTS.MAX_SIZE);
-                }
-                
+
                 if (processedBuffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
                     throw new Error(
                         `File is still too large after compression. ` +
                         `Original: ${this.formatSize(buffer.byteLength)}, ` +
-                        `Compressed: ${this.formatSize(processedBuffer.byteLength)}`
+                        `Compressed: ${this.formatSize(processedBuffer.byteLength)}. ` +
+                        `Please reduce the file size by using a lower bitrate or shorter duration.`
                     );
                 }
             }
@@ -519,19 +516,4 @@ export class FileUploadManager {
         return 'Unknown error';
     }
 
-    private forceReduceSize(buffer: ArrayBuffer, maxSize: number): ArrayBuffer {
-        if (buffer.byteLength <= maxSize) {
-            return buffer;
-        }
-
-        const input = new Uint8Array(buffer);
-        const reductionFactor = Math.ceil(input.byteLength / maxSize);
-        const output = new Uint8Array(Math.ceil(input.byteLength / reductionFactor));
-
-        for (let sourceIndex = 0, targetIndex = 0; targetIndex < output.length && sourceIndex < input.length; targetIndex++, sourceIndex += reductionFactor) {
-            output[targetIndex] = input[sourceIndex];
-        }
-
-        return output.buffer;
-    }
 }
