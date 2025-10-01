@@ -10,7 +10,7 @@
 
 Convert audio recordings to text directly in Obsidian using multiple AI providers with advanced features like speaker diarization.
 
-[English](#english) | [한국어](#korean)
+[English](#english) | [한국어](#한국어)
 
 </div>
 
