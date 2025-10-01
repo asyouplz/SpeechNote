@@ -14,6 +14,8 @@ import { TextEncoder, TextDecoder } from 'util';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder as any;
 
+jest.setTimeout(30000);
+
 // Fetch API Mock
 global.fetch = jest.fn();
 

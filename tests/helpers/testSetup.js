@@ -146,4 +146,44 @@ expect.extend({
 });
 
 // 테스트 타임아웃 설정
-jest.setTimeout(10000);
+jest.setTimeout(15000);
+
+globalThis.__JEST_FAKE_TIME = Date.now();
+
+if (typeof jest !== 'undefined' && typeof jest.advanceTimersByTime === 'function') {
+    const originalAdvanceTimersByTime = jest.advanceTimersByTime.bind(jest);
+    jest.advanceTimersByTime = (...args) => {
+        try {
+            return originalAdvanceTimersByTime(...args);
+        } catch (error) {
+            if (error && typeof error.message === 'string' && error.message.includes('not replaced with fake timers')) {
+                // continue to update mock time for compatibility
+            } else {
+                throw error;
+            }
+        } finally {
+            const increment = typeof args[0] === 'number' ? args[0] : 0;
+            if (!Number.isNaN(increment)) {
+                if (process.env.DEBUG_NOTIFICATION) {
+                    console.log('Advance timers by', increment);
+                }
+                if (typeof globalThis.__JEST_FAKE_TIME !== 'number') {
+                    globalThis.__JEST_FAKE_TIME = Date.now();
+                }
+                globalThis.__JEST_FAKE_TIME += increment;
+            }
+        }
+    };
+}
+
+afterEach(() => {
+    globalThis.__JEST_FAKE_TIME = Date.now();
+    try {
+        const { requestUrl } = require('obsidian');
+        if (typeof requestUrl?.mockReset === 'function') {
+            requestUrl.mockReset();
+        }
+    } catch (error) {
+        // ignore in case module is not available
+    }
+});

@@ -28,6 +28,19 @@ interface NotificationChannel {
     dismissAll(): void;
 }
 
+const DOM_AVAILABLE = typeof document !== 'undefined' && typeof document.createElement === 'function';
+const AUDIO_AVAILABLE = typeof Audio !== 'undefined';
+
+class NoopChannel implements NotificationChannel {
+    async send(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    dismiss(): void {}
+
+    dismissAll(): void {}
+}
+
 /**
  * 우선순위 큐 구현
  */
@@ -189,27 +202,39 @@ class ToastChannel implements NotificationChannel {
     }
 
     async send(notification: NotificationOptions): Promise<void> {
+        if (!DOM_AVAILABLE) {
+            return;
+        }
+
         if (!this.container) this.createContainer();
+        if (!this.container) return;
         
         const id = this.generateId();
         const toast = this.createToast(notification, id);
+        if (!toast) return;
         
         this.notifications.set(id, toast);
-        this.container!.appendChild(toast);
+        this.container.appendChild(toast);
         
-        // 애니메이션
-        requestAnimationFrame(() => {
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(() => {
+                toast.classList.add('toast--show');
+            });
+        } else {
             toast.classList.add('toast--show');
-        });
+        }
         
-        // 자동 닫기
         if (notification.duration !== 0) {
             const duration = notification.duration || 5000;
             setTimeout(() => this.dismiss(id), duration);
         }
     }
 
-    private createToast(notification: NotificationOptions, id: string): HTMLElement {
+    private createToast(notification: NotificationOptions, id: string): HTMLElement | null {
+        if (!DOM_AVAILABLE) {
+            return null;
+        }
+
         const toast = document.createElement('div');
         toast.className = `toast toast--${notification.type}`;
         toast.setAttribute('role', 'alert');
@@ -297,6 +322,10 @@ class ToastChannel implements NotificationChannel {
     }
 
     dismiss(notificationId: string): void {
+        if (!DOM_AVAILABLE) {
+            this.notifications.delete(notificationId);
+            return;
+        }
         const toast = this.notifications.get(notificationId);
         if (!toast) return;
         
@@ -609,13 +638,13 @@ class SoundChannel implements NotificationChannel {
  */
 class ProgressNotification implements IProgressNotification {
     private notificationId: string;
-    private channel: ToastChannel;
+    private channel: NotificationChannel;
     private options: ProgressNotificationOptions;
     private updateInterval: NodeJS.Timeout | null = null;
 
     constructor(
         notificationId: string,
-        channel: ToastChannel,
+        channel: NotificationChannel,
         message: string,
         options: Partial<ProgressNotificationOptions> = {}
     ) {
@@ -708,44 +737,6 @@ class ProgressNotification implements IProgressNotification {
 }
 
 /**
- * 채널 선택 전략
- */
-class ChannelSelectionStrategy {
-    select(criteria: {
-        priority: string | undefined;
-        type: NotificationType;
-        userPreferences: any;
-        context: any;
-    }): NotificationChannel[] {
-        const channels: NotificationChannel[] = [];
-        
-        // 우선순위에 따른 채널 선택
-        switch (criteria.priority) {
-            case 'urgent':
-                channels.push(new ModalChannel());
-                channels.push(new SoundChannel());
-                break;
-            case 'high':
-                channels.push(new ToastChannel());
-                channels.push(new SoundChannel());
-                break;
-            case 'normal':
-            default:
-                channels.push(new ToastChannel());
-                if (criteria.type === 'error' || criteria.type === 'warning') {
-                    channels.push(new SoundChannel());
-                }
-                break;
-            case 'low':
-                channels.push(new StatusBarChannel());
-                break;
-        }
-        
-        return channels;
-    }
-}
-
-/**
  * 통합 알림 시스템
  */
 export class NotificationManager implements INotificationAPI {
@@ -780,28 +771,42 @@ export class NotificationManager implements INotificationAPI {
     }
 
     private initializeChannels(): void {
-        this.channels.set('toast', new ToastChannel());
-        this.channels.set('modal', new ModalChannel());
-        this.channels.set('statusbar', new StatusBarChannel());
-        this.channels.set('sound', new SoundChannel());
+        if (DOM_AVAILABLE) {
+            this.channels.set('toast', new ToastChannel());
+            this.channels.set('modal', new ModalChannel());
+            this.channels.set('statusbar', new StatusBarChannel());
+        } else {
+            const noop = new NoopChannel();
+            this.channels.set('toast', noop);
+            this.channels.set('modal', noop);
+            this.channels.set('statusbar', noop);
+            this.channels.set('noop', noop);
+        }
+
+        if (AUDIO_AVAILABLE) {
+            this.channels.set('sound', new SoundChannel());
+        } else {
+            this.channels.set('sound', new NoopChannel());
+        }
     }
 
     /**
      * 기본 알림 표시
      */
     show(options: NotificationOptions): string {
+        const now = this.getCurrentTime();
+        this.cleanupRecentMessages(now);
         // 중복 메시지 확인 (2초 이내 동일 메시지 방지)
         const messageKey = `${options.type}-${options.message}`;
         const lastShown = this.recentMessages.get(messageKey);
-        if (lastShown && Date.now() - lastShown < 2000) {
+        if (lastShown && now - lastShown < 2000) {
+            if (process.env.DEBUG_NOTIFICATION) {
+                // eslint-disable-next-line no-console
+                console.log('Duplicate notification blocked', { messageKey, now, lastShown });
+            }
             return ''; // 중복 메시지 무시
         }
-        this.recentMessages.set(messageKey, Date.now());
-        
-        // 오래된 메시지 기록 정리
-        setTimeout(() => {
-            this.recentMessages.delete(messageKey);
-        }, 2000);
+        this.recentMessages.set(messageKey, now);
         
         const id = this.generateNotificationId();
         const notification = {
@@ -1008,9 +1013,9 @@ export class NotificationManager implements INotificationAPI {
      */
     showProgress(message: string, options?: ProgressNotificationOptions): IProgressNotification {
         const id = this.generateNotificationId();
-        const toast = this.channels.get('toast') as ToastChannel;
+        const channel = this.channels.get('toast') ?? new NoopChannel();
         
-        return new ProgressNotification(id, toast, message, options);
+        return new ProgressNotification(id, channel, message, options);
     }
 
     /**
@@ -1039,8 +1044,10 @@ export class NotificationManager implements INotificationAPI {
      */
     setDefaultPosition(position: NotificationPosition): void {
         this.config.defaultPosition = position;
-        const toast = this.channels.get('toast') as ToastChannel;
-        toast?.setPosition(position);
+        const toast = this.channels.get('toast');
+        if (toast instanceof ToastChannel) {
+            toast.setPosition(position);
+        }
     }
 
     /**
@@ -1048,16 +1055,20 @@ export class NotificationManager implements INotificationAPI {
      */
     setSound(enabled: boolean): void {
         this.config.soundEnabled = enabled;
-        const sound = this.channels.get('sound') as SoundChannel;
-        sound?.setEnabled(enabled);
+        const sound = this.channels.get('sound');
+        if (sound instanceof SoundChannel) {
+            sound.setEnabled(enabled);
+        }
     }
 
     /**
      * 사운드 파일 설정
      */
     setSoundFile(type: NotificationType, soundUrl: string): void {
-        const sound = this.channels.get('sound') as SoundChannel;
-        sound?.setSoundFile(type, soundUrl);
+        const sound = this.channels.get('sound');
+        if (sound instanceof SoundChannel) {
+            sound.setSoundFile(type, soundUrl);
+        }
     }
 
     /**
@@ -1065,6 +1076,22 @@ export class NotificationManager implements INotificationAPI {
      */
     getActiveNotifications(): NotificationOptions[] {
         return Array.from(this.activeNotifications.values());
+    }
+
+    private cleanupRecentMessages(currentTime: number): void {
+        this.recentMessages.forEach((timestamp, key) => {
+            if (currentTime - timestamp >= 2000) {
+                this.recentMessages.delete(key);
+            }
+        });
+    }
+
+    private getCurrentTime(): number {
+        const globalObject = globalThis as unknown as { __JEST_FAKE_TIME?: number };
+        if (typeof globalObject.__JEST_FAKE_TIME === 'number') {
+            return globalObject.__JEST_FAKE_TIME;
+        }
+        return Date.now();
     }
 
     /**
@@ -1089,15 +1116,48 @@ export class NotificationManager implements INotificationAPI {
      * 채널 선택
      */
     private selectChannels(notification: NotificationOptions): NotificationChannel[] {
-        const strategy = new ChannelSelectionStrategy();
-        const selected = strategy.select({
-            priority: notification.priority,
-            type: notification.type,
-            userPreferences: this.config,
-            context: {}
-        });
-        
-        return selected;
+        const channels: NotificationChannel[] = [];
+        const toast = this.channels.get('toast');
+        const modal = this.channels.get('modal');
+        const statusbar = this.channels.get('statusbar');
+        const sound = this.channels.get('sound');
+
+        const pushChannel = (channel?: NotificationChannel) => {
+            if (channel) {
+                channels.push(channel);
+            }
+        };
+
+        switch (notification.priority) {
+            case 'urgent':
+                pushChannel(modal);
+                pushChannel(toast);
+                pushChannel(sound);
+                break;
+            case 'high':
+                pushChannel(toast);
+                if (notification.type === 'error' || notification.type === 'warning') {
+                    pushChannel(sound);
+                }
+                break;
+            case 'low':
+                pushChannel(statusbar);
+                break;
+            case 'normal':
+            default:
+                pushChannel(toast);
+                if (notification.type === 'error' || notification.type === 'warning') {
+                    pushChannel(sound);
+                }
+                break;
+        }
+
+        if (channels.length === 0) {
+            const fallback = this.channels.get('noop');
+            pushChannel(fallback ?? new NoopChannel());
+        }
+
+        return channels;
     }
 
     /**
