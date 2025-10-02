@@ -78,7 +78,12 @@ export class SettingsTab extends PluginSettingTab {
             console.log('Creating Advanced section...');
             this.createAdvancedSection(containerEl);
             console.log('Advanced section created');
-            
+
+            // Support Section
+            console.log('Creating Support section...');
+            this.createSupportSection(containerEl);
+            console.log('Support section created');
+
             console.log('=== Settings tab rendered successfully ===');
             console.log('Total child elements:', containerEl.children.length);
             
@@ -516,7 +521,7 @@ export class SettingsTab extends PluginSettingTab {
 
     private createAdvancedSection(containerEl: HTMLElement): void {
         containerEl.createEl('h3', { text: 'Advanced Settings' });
-        
+
         // Enable cache
         new Setting(containerEl)
             .setName('Enable cache')
@@ -527,7 +532,7 @@ export class SettingsTab extends PluginSettingTab {
                     this.plugin.settings.enableCache = value;
                     await this.plugin.saveSettings();
                 }));
-        
+
         // Debug mode
         new Setting(containerEl)
             .setName('Debug mode')
@@ -537,12 +542,12 @@ export class SettingsTab extends PluginSettingTab {
                 .onChange(async (value) => {
                     this.plugin.settings.debugMode = value;
                     await this.plugin.saveSettings();
-                    
+
                     if (value) {
                         new Notice('Debug mode enabled. Check console for logs.');
                     }
                 }));
-        
+
         // Reset settings button
         new Setting(containerEl)
             .setName('Reset to defaults')
@@ -557,11 +562,35 @@ export class SettingsTab extends PluginSettingTab {
                         const { DEFAULT_SETTINGS } = await import('../../domain/models/Settings');
                         this.plugin.settings = { ...DEFAULT_SETTINGS };
                         await this.plugin.saveSettings();
-                        
+
                         // Refresh the display
                         this.display();
                         new Notice('Settings reset to defaults');
                     }
+                }));
+    }
+
+    private createSupportSection(containerEl: HTMLElement): void {
+        // 구분선 추가
+        containerEl.createEl('hr', { cls: 'speech-to-text-separator' });
+
+        containerEl.createEl('h3', { text: 'Support' });
+
+        // 감사 메시지
+        containerEl.createEl('p', {
+            text: 'Thank you for using Speech to Text! Your support helps keep this plugin free and actively maintained.',
+            cls: 'setting-item-description'
+        });
+
+        // Buy me a coffee 버튼
+        new Setting(containerEl)
+            .setName('Support Development')
+            .setDesc('If you find this plugin helpful, consider buying me a coffee ☕')
+            .addButton(button => button
+                .setButtonText('☕ Buy me a coffee')
+                .setCta()
+                .onClick(() => {
+                    window.open('https://buymeacoffee.com/asyouplz', '_blank');
                 }));
     }
 

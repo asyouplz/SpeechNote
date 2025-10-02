@@ -3,6 +3,13 @@
 /* Import settings styles */
 @import url('./src/ui/settings/settings.css');
 
+/* Support Section */
+.speech-to-text-separator {
+    margin: 2em 0 1.5em 0;
+    border: none;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
 /* File Picker Modal */
 .speech-to-text-file-list {
     max-height: 400px;
