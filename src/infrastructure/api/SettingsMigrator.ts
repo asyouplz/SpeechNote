@@ -16,6 +16,21 @@ export class SettingsMigrator {
         this.registerMigrations();
     }
 
+    private readonly legacyLanguageMap: Record<string, string> = {
+        korean: 'ko',
+        english: 'en',
+        japanese: 'ja',
+        chinese: 'zh',
+        spanish: 'es',
+        german: 'de'
+    };
+
+    private normalizeLegacyLanguage(language?: string): string {
+        if (!language) return 'auto';
+        const mapped = this.legacyLanguageMap[language.toLowerCase()];
+        return mapped || language;
+    }
+
     /**
      * 마이그레이션 실행
      */
@@ -37,7 +52,9 @@ export class SettingsMigrator {
         for (const step of path) {
             const migration = this.migrations.get(step);
             if (migration) {
-                console.log(`Migrating settings: ${step}`);
+                if (process.env.NODE_ENV === 'development') {
+                    console.debug(`Migrating settings: ${step}`);
+                }
                 settings = await migration(settings);
             }
         }
@@ -97,8 +114,15 @@ export class SettingsMigrator {
     /**
      * 버전 파싱
      */
-    private parseVersion(version: string): { major: number; minor: number; patch: number } {
-        const [major = 0, minor = 0, patch = 0] = version.split('.').map(Number);
+    private parseVersion(version: string | undefined | null): { major: number; minor: number; patch: number } {
+        if (!version || typeof version !== 'string') {
+            return { major: 0, minor: 0, patch: 0 };
+        }
+
+        const [major = 0, minor = 0, patch = 0] = version.split('.').map((value) => {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : 0;
+        });
         return { major, minor, patch };
     }
 
@@ -224,7 +248,7 @@ export class SettingsMigrator {
                 version: '3.0.0',
                 general: {
                     ...settings.general,
-                    language: settings.general?.language || 'auto',
+                    language: this.normalizeLegacyLanguage(settings.general?.language || (settings as any).language),
                     theme: settings.general?.theme || 'auto',
                     autoSave: settings.general?.autoSave ?? true,
                     saveInterval: settings.general?.saveInterval ?? 30000,
@@ -247,7 +271,7 @@ export class SettingsMigrator {
                     quality: settings.audio?.quality || 'high',
                     sampleRate: settings.audio?.sampleRate ?? 16000,
                     channels: settings.audio?.channels ?? 1,
-                    language: settings.audio?.language || 'auto',
+                    language: this.normalizeLegacyLanguage(settings.audio?.language || (settings as any).language),
                     enhanceAudio: settings.audio?.enhanceAudio ?? true
                 },
                 advanced: {
@@ -283,7 +307,17 @@ export class SettingsMigrator {
                 (newSettings as any).__migratedApiKey = apiKey;
             }
 
-            return newSettings;
+            const migrated = newSettings as SettingsSchema & {
+                language?: string;
+                maxFileSize?: number;
+                enableNotifications?: boolean;
+            };
+
+            migrated.language = newSettings.general.language;
+            migrated.maxFileSize = (settings as any).fileSize ?? 25;
+            migrated.enableNotifications = newSettings.general.notifications?.enabled ?? true;
+
+            return migrated;
         });
     }
 

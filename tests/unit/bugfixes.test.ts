@@ -127,10 +127,15 @@ describe('Medium Priority Bug Fixes - UX 개선', () => {
         let notificationManager: NotificationManager;
 
         beforeEach(() => {
+            jest.useFakeTimers();
             notificationManager = new NotificationManager({
                 defaultDuration: 5000,
                 soundEnabled: false
             });
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
         });
 
         it('should prevent duplicate notifications within 2 seconds', () => {

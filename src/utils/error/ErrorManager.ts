@@ -200,7 +200,9 @@ export class GlobalErrorManager {
             if (strategy.canRecover(error)) {
                 try {
                     await strategy.recover(error);
-                    console.log('Error recovered successfully:', error.type);
+                    if (process.env.NODE_ENV === 'development') {
+                        console.debug('Error recovered successfully:', error.type);
+                    }
                     return;
                 } catch (e) {
                     console.error('Recovery strategy failed:', e);
@@ -261,14 +263,20 @@ export class GlobalErrorManager {
 export class ConsoleErrorReporter implements ErrorReporter {
     report(error: ErrorInfo): void {
         const style = this.getConsoleStyle(error.severity);
-        console.log(`%c[${error.severity}] ${error.type}`, style, error.message);
+        if (process.env.NODE_ENV === 'development') {
+            console.debug(`%c[${error.severity}] ${error.type}`, style, error.message);
+        }
         
         if (error.stack) {
-            console.log(error.stack);
+            if (process.env.NODE_ENV === 'development') {
+                console.debug(error.stack);
+            }
         }
         
         if (error.context) {
-            console.log('Context:', error.context);
+            if (process.env.NODE_ENV === 'development') {
+                console.debug('Context:', error.context);
+            }
         }
     }
 
@@ -401,7 +409,7 @@ export class ErrorBoundary {
         
         // 폴백 UI 표시
         if (this.fallback) {
-            this.element.innerHTML = '';
+            this.element.empty();
             this.element.appendChild(this.fallback);
         } else {
             this.showDefaultFallback(error);
@@ -422,13 +430,14 @@ export class ErrorBoundary {
      * 기본 폴백 UI
      */
     private showDefaultFallback(error: Error): void {
-        this.element.innerHTML = `
-            <div class="error-boundary-fallback">
-                <h3>문제가 발생했습니다</h3>
-                <p>${error.message}</p>
-                <button class="error-boundary-retry">다시 시도</button>
-            </div>
-        `;
+        this.element.empty();
+        const container = this.element.createDiv('error-boundary-fallback');
+        container.createEl('h3', { text: '문제가 발생했습니다' });
+        container.createEl('p', { text: error.message });
+        container.createEl('button', {
+            text: '다시 시도',
+            cls: 'error-boundary-retry'
+        });
     }
 
     /**
@@ -448,7 +457,7 @@ export class ErrorBoundary {
      */
     recover(): void {
         if (this.originalContent) {
-            this.element.innerHTML = '';
+            this.element.empty();
             const children = Array.from(this.originalContent.children);
             children.forEach(child => {
                 this.element.appendChild(child.cloneNode(true));

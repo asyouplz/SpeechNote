@@ -1,3 +1,5 @@
+import { requestUrl } from 'obsidian';
+
 /**
  * BatchRequestManager - Phase 4 Performance Optimization
  * 
@@ -210,17 +212,18 @@ export class BatchRequestManager {
             headers['Content-Encoding'] = 'gzip';
         }
 
-        const response = await fetch('/api/batch', {
+        const response = await requestUrl({
+            url: '/api/batch',
             method: 'POST',
             headers,
             body: JSON.stringify(batchPayload)
         });
 
-        if (!response.ok) {
-            throw new Error(`Batch request failed: ${response.statusText}`);
+        if (response.status < 200 || response.status >= 300) {
+            throw new Error(`Batch request failed with status ${response.status}`);
         }
 
-        const data = await response.json();
+        const data = response.json ?? (response.text ? JSON.parse(response.text) : {});
         return data.responses || [];
     }
 

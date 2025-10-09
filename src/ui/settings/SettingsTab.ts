@@ -16,22 +16,25 @@ export class SettingsTab extends PluginSettingTab {
 
     display(): void {
         const { containerEl } = this;
-        
-        // Enhanced debugging
-        console.log('=== SettingsTab display() called ===');
-        console.log('Container element:', containerEl);
-        console.log('Container element exists:', !!containerEl);
-        console.log('Container element type:', containerEl?.constructor?.name);
-        console.log('Plugin instance:', this.plugin);
-        console.log('Plugin instance exists:', !!this.plugin);
-        console.log('Plugin settings object:', this.plugin?.settings);
-        console.log('Plugin settings keys:', this.plugin?.settings ? Object.keys(this.plugin.settings) : 'N/A');
+        if (!containerEl) {
+            this.debug('SettingsTab display called without container element');
+            return;
+        }
+
+        this.debug('=== SettingsTab display() called ===');
+        this.debug('Container element:', containerEl);
+        this.debug('Container element exists:', !!containerEl);
+        this.debug('Container element type:', containerEl?.constructor?.name);
+        this.debug('Plugin instance:', this.plugin);
+        this.debug('Plugin instance exists:', !!this.plugin);
+        this.debug('Plugin settings object:', this.plugin?.settings);
+        this.debug('Plugin settings keys:', this.plugin?.settings ? Object.keys(this.plugin.settings) : 'N/A');
         
         // Check if container is visible
         if (containerEl) {
-            console.log('Container parent element:', containerEl.parentElement);
-            console.log('Container is connected to DOM:', containerEl.isConnected);
-            console.log('Container display style:', window.getComputedStyle(containerEl).display);
+            this.debug('Container parent element:', containerEl.parentElement);
+            this.debug('Container is connected to DOM:', containerEl.isConnected);
+            this.debug('Container display style:', window.getComputedStyle(containerEl).display);
         }
         
         // Clear existing content
@@ -39,7 +42,7 @@ export class SettingsTab extends PluginSettingTab {
         
         // Add main title
         const titleEl = containerEl.createEl('h2', { text: 'Speech to Text Settings' });
-        console.log('Title element created:', titleEl);
+        this.debug('Title element created:', titleEl);
         
         // Add debug info section at the top
         const debugSection = containerEl.createEl('details', { cls: 'speech-to-text-debug' });
@@ -56,31 +59,31 @@ export class SettingsTab extends PluginSettingTab {
                 timestamp: new Date().toISOString()
             }, null, 2)
         });
-        console.log('Debug section added');
+        this.debug('Debug section added');
         
         try {
             // API Settings Section
-            console.log('Creating API section...');
+            this.debug('Creating API section...');
             this.createApiSection(containerEl);
-            console.log('API section created');
+            this.debug('API section created');
             
             // General Settings Section
-            console.log('Creating General section...');
+            this.debug('Creating General section...');
             this.createGeneralSection(containerEl);
-            console.log('General section created');
+            this.debug('General section created');
             
             // Audio Settings Section
-            console.log('Creating Audio section...');
+            this.debug('Creating Audio section...');
             this.createAudioSection(containerEl);
-            console.log('Audio section created');
+            this.debug('Audio section created');
             
             // Advanced Settings Section
-            console.log('Creating Advanced section...');
+            this.debug('Creating Advanced section...');
             this.createAdvancedSection(containerEl);
-            console.log('Advanced section created');
-            
-            console.log('=== Settings tab rendered successfully ===');
-            console.log('Total child elements:', containerEl.children.length);
+            this.debug('Advanced section created');
+
+            this.debug('=== Settings tab rendered successfully ===');
+            this.debug('Total child elements:', containerEl.children.length);
             
         } catch (error) {
             console.error('=== Error displaying settings ===');
@@ -116,21 +119,21 @@ export class SettingsTab extends PluginSettingTab {
     }
     
     private createProviderSelection(containerEl: HTMLElement): void {
-        console.log('=== createProviderSelection called ===');
-        console.log('Creating Setting instance...');
+        this.debug('=== createProviderSelection called ===');
+        this.debug('Creating Setting instance...');
         
         try {
             const setting = new Setting(containerEl);
-            console.log('Setting instance created:', setting);
-            console.log('Setting element:', setting.settingEl);
-            console.log('Setting element in DOM:', setting.settingEl?.isConnected);
+            this.debug('Setting instance created:', setting);
+            this.debug('Setting element:', setting.settingEl);
+            this.debug('Setting element in DOM:', setting.settingEl?.isConnected);
             
             setting
                 .setName('Transcription Provider')
                 .setDesc('Select the speech-to-text provider')
                 .addDropdown(dropdown => {
-                    console.log('Dropdown callback called');
-                    console.log('Dropdown component:', dropdown);
+                    this.debug('Dropdown callback called');
+                    this.debug('Dropdown component:', dropdown);
                     
                     dropdown
                     .addOption('auto', 'Auto (Intelligent Selection)')
@@ -138,16 +141,16 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('deepgram', 'Deepgram')
                     .setValue(this.plugin.settings.provider || 'auto')
                     .onChange(async (value) => {
-                        console.log('Provider dropdown changed to:', value);
+                        this.debug('Provider dropdown changed to:', value);
                         this.plugin.settings.provider = value as 'auto' | 'whisper' | 'deepgram';
                         await this.plugin.saveSettings();
                         
                         // Provider별 설정 UI 업데이트
                         const settingsContainer = containerEl.parentElement?.querySelector('.provider-settings') as HTMLElement;
-                        console.log('Settings container found:', !!settingsContainer);
+                        this.debug('Settings container found:', !!settingsContainer);
                         
                         if (settingsContainer) {
-                            console.log('Updating provider settings UI for:', value);
+                            this.debug('Updating provider settings UI for:', value);
                             this.renderProviderSettings(settingsContainer, value as 'auto' | 'whisper' | 'deepgram');
                         } else {
                             console.error('Could not find .provider-settings container');
@@ -162,13 +165,13 @@ export class SettingsTab extends PluginSettingTab {
                         new Notice(`Provider changed to: ${value}`);
                     });
                     
-                    console.log('Dropdown setup complete');
-                    console.log('Dropdown element:', dropdown.selectEl);
-                    console.log('Dropdown options:', dropdown.selectEl?.options.length);
+                    this.debug('Dropdown setup complete');
+                    this.debug('Dropdown element:', dropdown.selectEl);
+                    this.debug('Dropdown options:', dropdown.selectEl?.options.length);
                 });
             
-            console.log('Provider selection setting created successfully');
-            console.log('=== createProviderSelection completed ===');
+            this.debug('Provider selection setting created successfully');
+            this.debug('=== createProviderSelection completed ===');
         } catch (error) {
             console.error('Error creating provider selection:', error);
             console.error('Error stack:', error instanceof Error ? error.stack : 'N/A');
@@ -176,33 +179,33 @@ export class SettingsTab extends PluginSettingTab {
         
         // Provider 설명
         const infoEl = containerEl.createEl('div', { cls: 'provider-info' });
-        infoEl.style.cssText = 'margin: 10px 0; padding: 10px; background: var(--background-secondary); border-radius: 4px;';
+        infoEl.addClass('sn-info-box');
         this.updateProviderInfo(infoEl, this.plugin.settings.provider || 'auto');
     }
     
     private renderProviderSettings(containerEl: HTMLElement, provider: 'auto' | 'whisper' | 'deepgram'): void {
-        console.log('=== renderProviderSettings called ===');
-        console.log('Provider:', provider);
-        console.log('Container element:', containerEl);
+        this.debug('=== renderProviderSettings called ===');
+        this.debug('Provider:', provider);
+        this.debug('Container element:', containerEl);
         
         // 컨테이너를 비우기 전에 상태 저장
         const wasConnected = containerEl.isConnected;
         containerEl.empty();
         
-        console.log('Container cleared, still connected:', wasConnected);
+        this.debug('Container cleared, still connected:', wasConnected);
         
         try {
             switch (provider) {
                 case 'auto':
-                    console.log('Rendering auto provider settings');
+                    this.debug('Rendering auto provider settings');
                     this.renderAutoProviderSettings(containerEl);
                     break;
                 case 'whisper':
-                    console.log('Rendering whisper settings');
+                    this.debug('Rendering whisper settings');
                     this.renderWhisperSettings(containerEl);
                     break;
                 case 'deepgram':
-                    console.log('Rendering deepgram settings');
+                    this.debug('Rendering deepgram settings');
                     this.renderDeepgramSettings(containerEl);
                     break;
                 default:
@@ -220,8 +223,8 @@ export class SettingsTab extends PluginSettingTab {
             });
         }
         
-        console.log('Final container children:', containerEl.children.length);
-        console.log('=== renderProviderSettings completed ===');
+        this.debug('Final container children:', containerEl.children.length);
+        this.debug('=== renderProviderSettings completed ===');
     }
     
     private renderAutoProviderSettings(containerEl: HTMLElement): void {
@@ -294,10 +297,10 @@ export class SettingsTab extends PluginSettingTab {
     }
     
     private renderDeepgramSettings(containerEl: HTMLElement): void {
-        console.log('=== renderDeepgramSettings called ===');
-        console.log('Container element:', containerEl);
-        console.log('Container is connected:', containerEl.isConnected);
-        console.log('Container children before:', containerEl.children.length);
+        this.debug('=== renderDeepgramSettings called ===');
+        this.debug('Container element:', containerEl);
+        this.debug('Container is connected:', containerEl.isConnected);
+        this.debug('Container children before:', containerEl.children.length);
         
         // 먼저 컨테이너를 비웁니다
         containerEl.empty();
@@ -307,15 +310,15 @@ export class SettingsTab extends PluginSettingTab {
             cls: 'deepgram-settings-container'
         });
         
-        console.log('Deepgram container created:', deepgramContainer);
+        this.debug('Deepgram container created:', deepgramContainer);
         
         try {
             // Deepgram 설정 컴포넌트 사용
             const deepgramSettings = new DeepgramSettings(this.plugin, deepgramContainer);
-            console.log('DeepgramSettings instance created');
+            this.debug('DeepgramSettings instance created');
             
             deepgramSettings.render();
-            console.log('DeepgramSettings.render() completed');
+            this.debug('DeepgramSettings.render() completed');
             
         } catch (error) {
             console.error('Error rendering Deepgram settings:', error);
@@ -325,8 +328,8 @@ export class SettingsTab extends PluginSettingTab {
             });
         }
         
-        console.log('Container children after:', containerEl.children.length);
-        console.log('=== renderDeepgramSettings completed ===');
+        this.debug('Container children after:', containerEl.children.length);
+        this.debug('=== renderDeepgramSettings completed ===');
     }
     
     private renderWhisperApiKey(containerEl: HTMLElement): void {
@@ -563,6 +566,12 @@ export class SettingsTab extends PluginSettingTab {
                         new Notice('Settings reset to defaults');
                     }
                 }));
+    }
+
+    private debug(...args: unknown[]): void {
+        if (this.plugin.settings?.debugMode) {
+            console.debug('[SettingsTab]', ...args);
+        }
     }
 
     private maskApiKey(key: string): string {

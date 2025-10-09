@@ -1,4 +1,4 @@
-import { App, Setting, Notice, ButtonComponent, Modal } from 'obsidian';
+import { App, Setting, Notice, ButtonComponent, Modal, requestUrl } from 'obsidian';
 import type SpeechToTextPlugin from '../../../../main';
 import { TranscriptionProvider } from '../../../../infrastructure/api/providers/ITranscriber';
 import { Encryptor } from '../../../../infrastructure/security/Encryptor';
@@ -325,7 +325,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         
         const updateIcon = () => {
             const isVisible = this.keyVisibility.get(provider) || false;
-            btn.innerHTML = isVisible ? '👁️' : '👁️‍🗨️';
+            btn.setText(isVisible ? '👁️' : '🙈');
             btn.setAttribute('aria-checked', String(isVisible));
         };
         
@@ -340,7 +340,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
                 inputEl.type = isVisible ? 'text' : 'password';
                 inputEl.value = isVisible ? keyData.key : this.maskApiKey(keyData.key);
             }
-            
+
             updateIcon();
         };
         
@@ -591,12 +591,13 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         }
         
         try {
-            const response = await fetch(config.validateEndpoint, {
+            const response = await requestUrl({
+                url: config.validateEndpoint,
                 method: 'GET',
                 headers: config.headers(key)
             });
             
-            const isValid = response.ok;
+            const isValid = response.status >= 200 && response.status < 300;
             
             // 캐시 저장
             this.validationCache.set(cacheKey, {

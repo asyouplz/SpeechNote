@@ -392,13 +392,21 @@ export class StatisticsDashboard {
         // 필터
         const filter = document.createElement('select');
         filter.className = 'history__filter';
-        filter.innerHTML = `
-            <option value="all">전체</option>
-            <option value="completed">성공</option>
-            <option value="failed">실패</option>
-            <option value="processing">처리 중</option>
-            <option value="cancelled">취소됨</option>
-        `;
+
+        const filterOptions = [
+            { value: 'all', label: '전체' },
+            { value: 'completed', label: '성공' },
+            { value: 'failed', label: '실패' },
+            { value: 'processing', label: '처리 중' },
+            { value: 'cancelled', label: '취소됨' }
+        ];
+
+        filterOptions.forEach(optionInfo => {
+            const optionEl = document.createElement('option');
+            optionEl.value = optionInfo.value;
+            optionEl.textContent = optionInfo.label;
+            filter.appendChild(optionEl);
+        });
         filter.addEventListener('change', () => this.filterHistory(filter.value));
         header.appendChild(filter);
         
@@ -409,17 +417,13 @@ export class StatisticsDashboard {
         table.className = 'history__table';
         
         const thead = document.createElement('thead');
-        thead.innerHTML = `
-            <tr>
-                <th>시간</th>
-                <th>파일명</th>
-                <th>크기</th>
-                <th>처리 시간</th>
-                <th>상태</th>
-                <th>단어 수</th>
-                <th>작업</th>
-            </tr>
-        `;
+        const headerRow = document.createElement('tr');
+        ['시간', '파일명', '크기', '처리 시간', '상태', '단어 수', '작업'].forEach(text => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
         table.appendChild(thead);
         
         const tbody = document.createElement('tbody');
@@ -494,20 +498,30 @@ export class StatisticsDashboard {
         
         const maxCount = Math.max(...hourCounts, 1);
         
-        // 간단한 막대 차트
-        let html = '<div class="bar-chart">';
+        chartEl.replaceChildren();
+        const chartContainer = document.createElement('div');
+        chartContainer.className = 'bar-chart';
+
         hourCounts.forEach((count, hour) => {
+            const bar = document.createElement('div');
+            bar.className = 'bar-chart__bar';
             const height = (count / maxCount) * 100;
-            html += `
-                <div class="bar-chart__bar" style="height: ${height}%">
-                    <span class="bar-chart__value">${count}</span>
-                    <span class="bar-chart__label">${hour}시</span>
-                </div>
-            `;
+            bar.style.height = `${height}%`;
+
+            const valueLabel = document.createElement('span');
+            valueLabel.className = 'bar-chart__value';
+            valueLabel.textContent = String(count);
+            bar.appendChild(valueLabel);
+
+            const barLabel = document.createElement('span');
+            barLabel.className = 'bar-chart__label';
+            barLabel.textContent = `${hour}시`;
+            bar.appendChild(barLabel);
+
+            chartContainer.appendChild(bar);
         });
-        html += '</div>';
-        
-        chartEl.innerHTML = html;
+
+        chartEl.appendChild(chartContainer);
     }
     
     /**
@@ -534,20 +548,31 @@ export class StatisticsDashboard {
         
         const dates = Object.keys(dailyStats).slice(-7);
         
-        let html = '<div class="line-chart">';
+        chartEl.replaceChildren();
+        const lineChart = document.createElement('div');
+        lineChart.className = 'line-chart';
+
         dates.forEach(date => {
             const stat = dailyStats[date];
             const rate = stat.total > 0 ? (stat.success / stat.total) * 100 : 0;
-            html += `
-                <div class="line-chart__point">
-                    <span class="line-chart__value">${rate.toFixed(0)}%</span>
-                    <span class="line-chart__label">${date.split('/').slice(0, 2).join('/')}</span>
-                </div>
-            `;
+
+            const point = document.createElement('div');
+            point.className = 'line-chart__point';
+
+            const valueLabel = document.createElement('span');
+            valueLabel.className = 'line-chart__value';
+            valueLabel.textContent = `${rate.toFixed(0)}%`;
+            point.appendChild(valueLabel);
+
+            const dateLabel = document.createElement('span');
+            dateLabel.className = 'line-chart__label';
+            dateLabel.textContent = date.split('/').slice(0, 2).join('/');
+            point.appendChild(dateLabel);
+
+            lineChart.appendChild(point);
         });
-        html += '</div>';
-        
-        chartEl.innerHTML = html;
+
+        chartEl.appendChild(lineChart);
     }
     
     /**
@@ -571,42 +596,54 @@ export class StatisticsDashboard {
         records = records.slice(0, 20);
         
         // 테이블 렌더링
-        tbody.innerHTML = records.map(record => {
-            const processingTime = record.endTime 
+        tbody.replaceChildren();
+
+        records.forEach(record => {
+            const row = document.createElement('tr');
+
+            const startTimeCell = document.createElement('td');
+            startTimeCell.textContent = new Date(record.startTime).toLocaleString();
+            row.appendChild(startTimeCell);
+
+            const nameCell = document.createElement('td');
+            nameCell.textContent = record.fileName;
+            row.appendChild(nameCell);
+
+            const sizeCell = document.createElement('td');
+            sizeCell.textContent = this.formatBytes(record.fileSize);
+            row.appendChild(sizeCell);
+
+            const processingTimeCell = document.createElement('td');
+            const processingTime = record.endTime
                 ? this.formatTime(record.endTime - record.startTime)
                 : '-';
-            
-            const statusClass = `status--${record.status}`;
-            const statusText = this.getStatusText(record.status);
-            
-            return `
-                <tr>
-                    <td>${new Date(record.startTime).toLocaleString()}</td>
-                    <td>${record.fileName}</td>
-                    <td>${this.formatBytes(record.fileSize)}</td>
-                    <td>${processingTime}</td>
-                    <td><span class="status ${statusClass}">${statusText}</span></td>
-                    <td>${record.wordCount || '-'}</td>
-                    <td>
-                        <button class="action-btn" data-record-id="${record.id}" data-action="view">
-                            보기
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-        
-        // 이벤트 리스너 추가
-        tbody.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const target = e.target as HTMLElement;
-                const recordId = target.getAttribute('data-record-id');
-                const action = target.getAttribute('data-action');
-                
-                if (recordId && action === 'view') {
-                    this.viewRecord(recordId);
-                }
+            processingTimeCell.textContent = processingTime;
+            row.appendChild(processingTimeCell);
+
+            const statusCell = document.createElement('td');
+            const statusBadge = document.createElement('span');
+            statusBadge.className = `status status--${record.status}`;
+            statusBadge.textContent = this.getStatusText(record.status);
+            statusCell.appendChild(statusBadge);
+            row.appendChild(statusCell);
+
+            const wordCountCell = document.createElement('td');
+            wordCountCell.textContent = record.wordCount ? String(record.wordCount) : '-';
+            row.appendChild(wordCountCell);
+
+            const actionCell = document.createElement('td');
+            const actionBtn = document.createElement('button');
+            actionBtn.className = 'action-btn';
+            actionBtn.textContent = '보기';
+            actionBtn.dataset.recordId = record.id;
+            actionBtn.dataset.action = 'view';
+            actionBtn.addEventListener('click', () => {
+                this.viewRecord(record.id);
             });
+            actionCell.appendChild(actionBtn);
+            row.appendChild(actionCell);
+
+            tbody.appendChild(row);
         });
     }
     

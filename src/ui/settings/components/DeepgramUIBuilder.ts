@@ -29,7 +29,7 @@ export class DeepgramUIBuilder {
             text,
             cls: UI_CONSTANTS.CLASSES.SETTING_DESCRIPTION
         });
-        descEl.style.cssText = UI_CONSTANTS.STYLES.DESCRIPTION_MARGIN;
+        descEl.addClass(UI_CONSTANTS.STYLES.DESCRIPTION_MARGIN);
         return descEl;
     }
 
@@ -41,7 +41,7 @@ export class DeepgramUIBuilder {
             cls: UI_CONSTANTS.CLASSES.WARNING,
             text
         });
-        warningEl.style.cssText = UI_CONSTANTS.STYLES.WARNING_BOX;
+        warningEl.addClass(UI_CONSTANTS.STYLES.WARNING_BOX);
         return warningEl;
     }
 
@@ -56,7 +56,7 @@ export class DeepgramUIBuilder {
         const infoContainer = this.containerEl.createEl('div', { 
             cls: UI_CONSTANTS.CLASSES.MODEL_INFO 
         });
-        infoContainer.style.cssText = UI_CONSTANTS.STYLES.INFO_CONTAINER;
+        infoContainer.addClass(UI_CONSTANTS.STYLES.INFO_CONTAINER);
 
         // 모델 설명
         infoContainer.createEl('p', { 
@@ -80,7 +80,7 @@ export class DeepgramUIBuilder {
         const metricsEl = container.createEl('div', { 
             cls: UI_CONSTANTS.CLASSES.MODEL_METRICS 
         });
-        metricsEl.style.cssText = UI_CONSTANTS.STYLES.METRICS_ROW;
+        metricsEl.addClass(UI_CONSTANTS.STYLES.METRICS_ROW);
         
         metricsEl.createEl('span', { 
             text: `Accuracy: ${model.performance.accuracy}%`
@@ -100,7 +100,7 @@ export class DeepgramUIBuilder {
         const langEl = container.createEl('div', { 
             cls: UI_CONSTANTS.CLASSES.SUPPORTED_LANGUAGES 
         });
-        langEl.style.cssText = UI_CONSTANTS.STYLES.LANGUAGES_ROW;
+        langEl.addClass(UI_CONSTANTS.STYLES.LANGUAGES_ROW);
         langEl.createEl('span', { 
             text: `Supported languages: ${model.languages.join(', ')}`
         });
@@ -113,7 +113,7 @@ export class DeepgramUIBuilder {
         const costContainer = this.containerEl.createEl('div', { 
             cls: UI_CONSTANTS.CLASSES.COST_ESTIMATION 
         });
-        costContainer.style.cssText = UI_CONSTANTS.STYLES.COST_CONTAINER;
+        costContainer.addClass(UI_CONSTANTS.STYLES.COST_CONTAINER);
         
         costContainer.createEl('h5', { text: UI_CONSTANTS.MESSAGES.COST_HEADER });
         
@@ -173,7 +173,7 @@ export class DeepgramUIBuilder {
         const errorContainer = this.containerEl.createEl('div', {
             cls: UI_CONSTANTS.CLASSES.WARNING
         });
-        errorContainer.style.cssText = UI_CONSTANTS.STYLES.ERROR_CONTAINER;
+        errorContainer.addClass(UI_CONSTANTS.STYLES.ERROR_CONTAINER);
         
         errorContainer.createEl('h5', { text: UI_CONSTANTS.MESSAGES.FALLBACK_ERROR_TITLE });
         errorContainer.createEl('p', { 
@@ -186,7 +186,7 @@ export class DeepgramUIBuilder {
             details.createEl('pre', { 
                 text: error.message,
                 cls: UI_CONSTANTS.CLASSES.ERROR_DETAILS
-            }).style.cssText = UI_CONSTANTS.STYLES.ERROR_DETAILS;
+            }).addClass(UI_CONSTANTS.STYLES.ERROR_DETAILS);
         }
 
         return errorContainer;

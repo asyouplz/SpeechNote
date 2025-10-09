@@ -37,26 +37,7 @@ export class SpinnerLoader {
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
         
-        // 스피너 SVG
-        const svg = `
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" 
-                        stroke-width="4" opacity="0.3"/>
-                <circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" 
-                        stroke-width="4" stroke-dasharray="90" stroke-dashoffset="60"
-                        stroke-linecap="round">
-                    <animateTransform
-                        attributeName="transform"
-                        type="rotate"
-                        from="0 25 25"
-                        to="360 25 25"
-                        dur="1s"
-                        repeatCount="indefinite"/>
-                </circle>
-            </svg>
-        `;
-        
-        this.element.innerHTML = svg;
+        this.element.appendChild(this.createSpinnerSvg());
         
         if (this.options.message) {
             const messageEl = document.createElement('span');
@@ -92,6 +73,45 @@ export class SpinnerLoader {
     destroy() {
         this.element?.remove();
         this.element = null;
+    }
+
+    private createSpinnerSvg(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 50 50');
+
+        const background = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        background.setAttribute('cx', '25');
+        background.setAttribute('cy', '25');
+        background.setAttribute('r', '20');
+        background.setAttribute('fill', 'none');
+        background.setAttribute('stroke', 'currentColor');
+        background.setAttribute('stroke-width', '4');
+        background.setAttribute('opacity', '0.3');
+        svg.appendChild(background);
+
+        const arc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        arc.setAttribute('cx', '25');
+        arc.setAttribute('cy', '25');
+        arc.setAttribute('r', '20');
+        arc.setAttribute('fill', 'none');
+        arc.setAttribute('stroke', 'currentColor');
+        arc.setAttribute('stroke-width', '4');
+        arc.setAttribute('stroke-dasharray', '90');
+        arc.setAttribute('stroke-dashoffset', '60');
+        arc.setAttribute('stroke-linecap', 'round');
+
+        const animate = document.createElementNS('http://www.w3.org/2000/svg', 'animateTransform');
+        animate.setAttribute('attributeName', 'transform');
+        animate.setAttribute('type', 'rotate');
+        animate.setAttribute('from', '0 25 25');
+        animate.setAttribute('to', '360 25 25');
+        animate.setAttribute('dur', '1s');
+        animate.setAttribute('repeatCount', 'indefinite');
+        arc.appendChild(animate);
+
+        svg.appendChild(arc);
+
+        return svg;
     }
 }
 
@@ -265,7 +285,7 @@ export class StatusIcon {
         const icon = this.getIcon();
         const iconEl = document.createElement('div');
         iconEl.className = 'status-icon__icon';
-        iconEl.innerHTML = icon;
+        iconEl.appendChild(icon);
         
         this.element.appendChild(iconEl);
         
@@ -283,42 +303,76 @@ export class StatusIcon {
         return this.element;
     }
 
-    private getIcon(): string {
-        const icons = {
-            success: `
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                    <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" 
-                          stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            `,
-            error: `
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                    <path d="M15 9L9 15M9 9L15 15" stroke="currentColor" stroke-width="2" 
-                          stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            `,
-            warning: `
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 3L2 21H22L12 3Z" stroke="currentColor" stroke-width="2" 
-                          stroke-linejoin="round"/>
-                    <path d="M12 9V13" stroke="currentColor" stroke-width="2" 
-                          stroke-linecap="round"/>
-                    <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
-                </svg>
-            `,
-            info: `
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                    <path d="M12 11V16" stroke="currentColor" stroke-width="2" 
-                          stroke-linecap="round"/>
-                    <circle cx="12" cy="8" r="0.5" fill="currentColor"/>
-                </svg>
-            `
-        };
-        
-        return icons[this.type];
+    private getIcon(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+
+        if (this.type === 'warning') {
+            const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            triangle.setAttribute('d', 'M12 3L2 21H22L12 3Z');
+            triangle.setAttribute('stroke', 'currentColor');
+            triangle.setAttribute('stroke-width', '2');
+            triangle.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(triangle);
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            line.setAttribute('d', 'M12 9V13');
+            line.setAttribute('stroke', 'currentColor');
+            line.setAttribute('stroke-width', '2');
+            line.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(line);
+
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('cx', '12');
+            dot.setAttribute('cy', '17');
+            dot.setAttribute('r', '0.5');
+            dot.setAttribute('fill', 'currentColor');
+            svg.appendChild(dot);
+            return svg;
+        }
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '12');
+        circle.setAttribute('cy', '12');
+        circle.setAttribute('r', '10');
+        circle.setAttribute('stroke', 'currentColor');
+        circle.setAttribute('stroke-width', '2');
+        svg.appendChild(circle);
+
+        if (this.type === 'success') {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', 'M8 12L11 15L16 9');
+            path.setAttribute('stroke', 'currentColor');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(path);
+        } else if (this.type === 'error') {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', 'M15 9L9 15M9 9L15 15');
+            path.setAttribute('stroke', 'currentColor');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(path);
+        } else if (this.type === 'info') {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            line.setAttribute('d', 'M12 11V16');
+            line.setAttribute('stroke', 'currentColor');
+            line.setAttribute('stroke-width', '2');
+            line.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(line);
+
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('cx', '12');
+            dot.setAttribute('cy', '8');
+            dot.setAttribute('r', '0.5');
+            dot.setAttribute('fill', 'currentColor');
+            svg.appendChild(dot);
+        }
+
+        return svg;
     }
 
     private getAriaLabel(): string {

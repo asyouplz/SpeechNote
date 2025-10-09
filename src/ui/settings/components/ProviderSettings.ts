@@ -315,10 +315,8 @@ export class ProviderSettings {
                 
                 // 분할 비율 표시
                 const displayEl = containerEl.createDiv({ cls: 'split-display' });
-                displayEl.innerHTML = `
-                    <span>Whisper: ${currentSplit}%</span>
-                    <span>Deepgram: ${100 - currentSplit}%</span>
-                `;
+                displayEl.createEl('span', { text: `Whisper: ${currentSplit}%` });
+                displayEl.createEl('span', { text: `Deepgram: ${100 - currentSplit}%` });
             });
     }
 
@@ -365,27 +363,38 @@ export class ProviderSettings {
         const stats = this.getProviderStats(provider);
         
         const statsEl = containerEl.createDiv({ cls: `provider-stats ${provider}` });
-        statsEl.innerHTML = `
-            <h5>${this.getProviderDisplayName(provider)}</h5>
-            <div class="stat-grid">
-                <div class="stat-item">
-                    <span class="stat-label">Success Rate:</span>
-                    <span class="stat-value ${this.getStatClass(stats.successRate)}">${(stats.successRate * 100).toFixed(1)}%</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Avg. Latency:</span>
-                    <span class="stat-value">${stats.avgLatency.toFixed(0)}ms</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Total Requests:</span>
-                    <span class="stat-value">${stats.totalRequests}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Est. Cost:</span>
-                    <span class="stat-value">$${stats.estimatedCost.toFixed(2)}</span>
-                </div>
-            </div>
-        `;
+        statsEl.createEl('h5', { text: this.getProviderDisplayName(provider) });
+
+        const statGrid = statsEl.createDiv({ cls: 'stat-grid' });
+
+        const statItems = [
+            {
+                label: 'Success Rate:',
+                value: `${(stats.successRate * 100).toFixed(1)}%`,
+                className: this.getStatClass(stats.successRate)
+            },
+            {
+                label: 'Avg. Latency:',
+                value: `${stats.avgLatency.toFixed(0)}ms`
+            },
+            {
+                label: 'Total Requests:',
+                value: String(stats.totalRequests)
+            },
+            {
+                label: 'Est. Cost:',
+                value: `$${stats.estimatedCost.toFixed(2)}`
+            }
+        ];
+
+        statItems.forEach(item => {
+            const itemEl = statGrid.createDiv({ cls: 'stat-item' });
+            itemEl.createEl('span', { cls: 'stat-label', text: item.label });
+            const valueSpan = itemEl.createEl('span', { cls: 'stat-value', text: item.value });
+            if (item.className) {
+                valueSpan.addClass(item.className);
+            }
+        });
     }
 
     /**
@@ -397,19 +406,18 @@ export class ProviderSettings {
         
         // 간단한 막대 차트 (실제로는 Chart.js 등 사용 권장)
         const chartContent = chartEl.createDiv({ cls: 'chart-content' });
-        chartContent.innerHTML = `
-            <div class="chart-bars">
-                <div class="chart-bar whisper" style="height: 80%;">
-                    <span class="bar-label">Whisper</span>
-                </div>
-                <div class="chart-bar deepgram" style="height: 95%;">
-                    <span class="bar-label">Deepgram</span>
-                </div>
-            </div>
-            <div class="chart-legend">
-                <span>Overall Performance Score</span>
-            </div>
-        `;
+        const bars = chartContent.createDiv({ cls: 'chart-bars' });
+
+        const whisperBar = bars.createDiv({ cls: 'chart-bar whisper' });
+        whisperBar.style.height = '80%';
+        whisperBar.createEl('span', { cls: 'bar-label', text: 'Whisper' });
+
+        const deepgramBar = bars.createDiv({ cls: 'chart-bar deepgram' });
+        deepgramBar.style.height = '95%';
+        deepgramBar.createEl('span', { cls: 'bar-label', text: 'Deepgram' });
+
+        const legend = chartContent.createDiv({ cls: 'chart-legend' });
+        legend.createEl('span', { text: 'Overall Performance Score' });
     }
 
     /**
@@ -423,10 +431,10 @@ export class ProviderSettings {
         
         if (whisperConnected || deepgramConnected) {
             statusEl.addClass('connected');
-            statusEl.innerHTML = '✅ Connected';
+            statusEl.setText('✅ Connected');
         } else {
             statusEl.addClass('disconnected');
-            statusEl.innerHTML = '⚠️ No providers configured';
+            statusEl.setText('⚠️ No providers configured');
         }
     }
 
@@ -557,9 +565,9 @@ export class ProviderSettings {
         provider: TranscriptionProvider
     ): void {
         if (this.currentProvider === 'auto' || this.currentProvider === provider) {
-            settingEl.settingEl.style.display = '';
+            settingEl.settingEl.classList.remove('sn-hidden');
         } else {
-            settingEl.settingEl.style.display = 'none';
+            settingEl.settingEl.classList.add('sn-hidden');
         }
     }
 

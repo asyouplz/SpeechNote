@@ -29,6 +29,7 @@ tests/**/*.error.*
 tests/**/*.output.*
 tests/**/__snapshots__/
 .jest-cache/
+test/*.md
 
 # Audio files (test data, recordings)
 *.m4a
@@ -141,3 +142,4 @@ docs/
 !AGENTS.md
 !AGENTS.ko.md
 !CODE_OF_CONDUCT.md
+

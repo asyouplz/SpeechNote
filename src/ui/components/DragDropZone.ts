@@ -45,7 +45,7 @@ export class DragDropZone {
         
         // 아이콘
         const iconContainer = this.dropZone.createDiv('drop-zone-icon');
-        iconContainer.innerHTML = this.getUploadIcon();
+        iconContainer.appendChild(this.createUploadIcon());
         
         // 메인 텍스트
         const mainText = this.dropZone.createDiv('drop-zone-text');
@@ -204,12 +204,10 @@ export class DragDropZone {
         let overlay = this.dropZone.querySelector('.drag-overlay') as HTMLElement;
         if (!overlay) {
             overlay = this.dropZone.createDiv('drag-overlay');
-            overlay.innerHTML = `
-                <div class="drag-overlay-content">
-                    <div class="drag-overlay-icon">${this.getDropIcon()}</div>
-                    <div class="drag-overlay-text">파일을 여기에 놓으세요</div>
-                </div>
-            `;
+            const content = overlay.createDiv('drag-overlay-content');
+            const icon = content.createDiv('drag-overlay-icon');
+            icon.appendChild(this.createDropIcon());
+            content.createDiv('drag-overlay-text').setText('파일을 여기에 놓으세요');
         }
         overlay.addClass('active');
     }
@@ -337,26 +335,58 @@ export class DragDropZone {
     /**
      * 업로드 아이콘 SVG
      */
-    private getUploadIcon(): string {
-        return `
-            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M42.667 42.667L32 32L21.333 42.667" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M32 32V56" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M54.373 46.373C56.871 43.875 58.667 40.617 58.667 37.333C58.667 30.707 53.293 25.333 46.667 25.333C45.827 25.333 45.013 25.44 44.24 25.64C41.795 18.747 35.488 13.333 28 13.333C18.427 13.333 10.667 21.093 10.667 30.667C10.667 31.947 10.827 33.187 11.12 34.373C6.88 35.92 4 39.947 4 44.667C4 50.56 8.773 55.333 14.667 55.333" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        `;
+    private createUploadIcon(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '64');
+        svg.setAttribute('height', '64');
+        svg.setAttribute('viewBox', '0 0 64 64');
+        svg.setAttribute('fill', 'none');
+
+        const paths = [
+            'M42.667 42.667L32 32L21.333 42.667',
+            'M32 32V56',
+            'M54.373 46.373C56.871 43.875 58.667 40.617 58.667 37.333C58.667 30.707 53.293 25.333 46.667 25.333C45.827 25.333 45.013 25.44 44.24 25.64C41.795 18.747 35.488 13.333 28 13.333C18.427 13.333 10.667 21.093 10.667 30.667C10.667 31.947 10.827 33.187 11.12 34.373C6.88 35.92 4 39.947 4 44.667C4 50.56 8.773 55.333 14.667 55.333'
+        ];
+
+        paths.forEach((d) => {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', 'currentColor');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(path);
+        });
+
+        return svg;
     }
 
     /**
      * 드롭 아이콘 SVG
      */
-    private getDropIcon(): string {
-        return `
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 30L24 14L40 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M24 14V38" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        `;
+    private createDropIcon(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '48');
+        svg.setAttribute('height', '48');
+        svg.setAttribute('viewBox', '0 0 48 48');
+        svg.setAttribute('fill', 'none');
+
+        const pathData = [
+            'M8 30L24 14L40 30',
+            'M24 14V38'
+        ];
+
+        pathData.forEach((d) => {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', 'currentColor');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            svg.appendChild(path);
+        });
+
+        return svg;
     }
 
     /**

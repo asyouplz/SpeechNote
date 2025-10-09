@@ -612,7 +612,9 @@ export class EditorService {
 
         // Remove all event listeners
         for (const ref of this.eventRefs) {
-            this.app.workspace.off(ref.event, ref.callback);
+            if (typeof (this.app.workspace as any).off === 'function') {
+                (this.app.workspace as any).off(ref.event, ref.callback);
+            }
         }
         this.eventRefs.length = 0;
 

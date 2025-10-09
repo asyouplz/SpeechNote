@@ -227,7 +227,7 @@ export class CircularProgress {
         this.options.showPercentage = show;
         
         if (this.percentageText) {
-            this.percentageText.style.display = show ? 'block' : 'none';
+            this.percentageText.classList.toggle('sn-hidden', !show);
         }
     }
 

@@ -38,7 +38,7 @@ export class DeepgramLogger {
      */
     public debug(message: string, ...args: any[]): void {
         if (this.shouldLog(LOG_LEVEL.DEBUG)) {
-            console.log(`${LOG_PREFIX} ${message}`, ...args);
+            console.debug(`${LOG_PREFIX} ${message}`, ...args);
         }
     }
 
@@ -47,7 +47,7 @@ export class DeepgramLogger {
      */
     public info(message: string, ...args: any[]): void {
         if (this.shouldLog(LOG_LEVEL.INFO)) {
-            console.log(`${LOG_PREFIX} ${message}`, ...args);
+            console.info(`${LOG_PREFIX} ${message}`, ...args);
         }
     }
 

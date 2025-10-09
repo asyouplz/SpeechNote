@@ -244,7 +244,10 @@ class ToastChannel implements NotificationChannel {
         if (notification.icon !== false) {
             const icon = document.createElement('div');
             icon.className = 'toast__icon';
-            icon.innerHTML = this.getIcon(notification.type);
+            const iconSvg = this.getIcon(notification.type);
+            if (iconSvg) {
+                icon.appendChild(iconSvg);
+            }
             toast.appendChild(icon);
         }
         
@@ -270,7 +273,7 @@ class ToastChannel implements NotificationChannel {
         if (notification.closable !== false) {
             const closeBtn = document.createElement('button');
             closeBtn.className = 'toast__close';
-            closeBtn.innerHTML = '×';
+            closeBtn.textContent = '×';
             closeBtn.setAttribute('aria-label', '닫기');
             closeBtn.onclick = () => this.dismiss(id);
             toast.appendChild(closeBtn);
@@ -311,14 +314,33 @@ class ToastChannel implements NotificationChannel {
         return toast;
     }
 
-    private getIcon(type: NotificationType): string {
-        const icons = {
-            success: '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
-            error: '<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
-            warning: '<svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
-            info: '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>'
+    private getIcon(type: NotificationType): SVGElement | null {
+        const iconConfig: Record<NotificationType, { viewBox: string; path: string }> = {
+            success: {
+                viewBox: '0 0 24 24',
+                path: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+            },
+            error: {
+                viewBox: '0 0 24 24',
+                path: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+            },
+            warning: {
+                viewBox: '0 0 24 24',
+                path: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'
+            },
+            info: {
+                viewBox: '0 0 24 24',
+                path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'
+            }
         };
-        return icons[type] || icons.info;
+
+        const config = iconConfig[type] || iconConfig.info;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', config.viewBox);
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', config.path);
+        svg.appendChild(path);
+        return svg;
     }
 
     dismiss(notificationId: string): void {
@@ -397,7 +419,7 @@ class ModalChannel implements NotificationChannel {
         if (notification.closable !== false) {
             const closeBtn = document.createElement('button');
             closeBtn.className = 'modal__close';
-            closeBtn.innerHTML = '×';
+            closeBtn.textContent = '×';
             closeBtn.setAttribute('aria-label', '닫기');
             closeBtn.onclick = () => this.dismiss(id);
             header.appendChild(closeBtn);
@@ -749,6 +771,7 @@ export class NotificationManager implements INotificationAPI {
     private eventManager: EventManager;
     private notificationCounter: number = 0;
     private recentMessages: Map<string, number> = new Map(); // 최근 메시지 추적
+    private recentMessageTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
     constructor(config: NotificationConfig = {}) {
         this.config = {
@@ -794,19 +817,24 @@ export class NotificationManager implements INotificationAPI {
      * 기본 알림 표시
      */
     show(options: NotificationOptions): string {
-        const now = this.getCurrentTime();
-        this.cleanupRecentMessages(now);
         // 중복 메시지 확인 (2초 이내 동일 메시지 방지)
         const messageKey = `${options.type}-${options.message}`;
-        const lastShown = this.recentMessages.get(messageKey);
-        if (lastShown && now - lastShown < 2000) {
+        if (this.recentMessageTimers.has(messageKey)) {
             if (process.env.DEBUG_NOTIFICATION) {
-                // eslint-disable-next-line no-console
-                console.log('Duplicate notification blocked', { messageKey, now, lastShown });
+                console.debug('Duplicate notification blocked', { messageKey });
             }
             return ''; // 중복 메시지 무시
         }
+        const now = Date.now();
         this.recentMessages.set(messageKey, now);
+        const timeout = setTimeout(() => {
+            this.recentMessages.delete(messageKey);
+            const timer = this.recentMessageTimers.get(messageKey);
+            if (timer) {
+                this.recentMessageTimers.delete(messageKey);
+            }
+        }, 2000);
+        this.recentMessageTimers.set(messageKey, timeout);
         
         const id = this.generateNotificationId();
         const notification = {
@@ -1076,22 +1104,6 @@ export class NotificationManager implements INotificationAPI {
      */
     getActiveNotifications(): NotificationOptions[] {
         return Array.from(this.activeNotifications.values());
-    }
-
-    private cleanupRecentMessages(currentTime: number): void {
-        this.recentMessages.forEach((timestamp, key) => {
-            if (currentTime - timestamp >= 2000) {
-                this.recentMessages.delete(key);
-            }
-        });
-    }
-
-    private getCurrentTime(): number {
-        const globalObject = globalThis as unknown as { __JEST_FAKE_TIME?: number };
-        if (typeof globalObject.__JEST_FAKE_TIME === 'number') {
-            return globalObject.__JEST_FAKE_TIME;
-        }
-        return Date.now();
     }
 
     /**

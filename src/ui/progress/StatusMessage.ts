@@ -422,7 +422,7 @@ export class StatusMessageDisplay {
         // 아이콘
         const icon = document.createElement('span');
         icon.className = 'status-message__icon';
-        icon.innerHTML = this.getMessageIcon(message.type);
+        icon.textContent = this.getMessageIcon(message.type);
         messageEl.appendChild(icon);
         
         // 메시지 텍스트
@@ -448,14 +448,14 @@ export class StatusMessageDisplay {
      * 메시지 아이콘 가져오기
      */
     private getMessageIcon(type: MessageType): string {
-        const icons = {
-            info: '&#9432;', // ⓘ
-            success: '&#10003;', // ✓
-            warning: '&#9888;', // ⚠
-            error: '&#10006;', // ✖
-            progress: '&#8634;' // ↺
+        const icons: Record<MessageType, string> = {
+            info: 'ⓘ',
+            success: '✓',
+            warning: '⚠',
+            error: '✖',
+            progress: '↺'
         };
-        
+
         return icons[type] || '';
     }
     
@@ -488,7 +488,7 @@ export class StatusMessageDisplay {
         if (!messageContainer) return;
         
         // 기존 메시지 제거
-        messageContainer.innerHTML = '';
+        messageContainer.replaceChildren();
         
         // 모든 메시지 다시 렌더링
         this.messageQueue.forEach(message => {
@@ -505,7 +505,7 @@ export class StatusMessageDisplay {
         if (this.element) {
             const messageContainer = this.element.querySelector('.status-message-display__messages');
             if (messageContainer) {
-                messageContainer.innerHTML = '';
+                messageContainer.replaceChildren();
             }
         }
         

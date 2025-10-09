@@ -74,10 +74,14 @@ export class AdvancedSettingsPanel {
         
         // Warning notice
         const warningEl = headerEl.createDiv({ cls: 'advanced-warning' });
-        warningEl.innerHTML = `
-            <span class="warning-icon">⚠️</span>
-            <span class="warning-text">These settings affect transcription behavior. Changes take effect immediately.</span>
-        `;
+        warningEl.createEl('span', {
+            cls: 'warning-icon',
+            text: '⚠️'
+        });
+        warningEl.createEl('span', {
+            cls: 'warning-text',
+            text: 'These settings affect transcription behavior. Changes take effect immediately.'
+        });
     }
     
     /**
@@ -631,8 +635,8 @@ export class AdvancedSettingsPanel {
                         this.plugin.settings.debugMode = value;
                         await this.plugin.saveSettings();
                         
-                        if (value) {
-                            console.log('🔧 Speech-to-Text: Debug mode enabled');
+                        if (value && this.plugin.settings) {
+                            console.info('Speech-to-Text debug mode enabled via AdvancedSettingsPanel');
                         }
                     });
             });
@@ -753,19 +757,29 @@ export class AdvancedSettingsPanel {
         const cost = this.plugin.settings.costWeight || 25;
         const total = latency + success + cost;
         
-        displayEl.innerHTML = `
-            <div class="weight-bar">
-                <div class="weight-segment latency" style="width: ${(latency/total)*100}%">
-                    <span>Latency ${latency}%</span>
-                </div>
-                <div class="weight-segment success" style="width: ${(success/total)*100}%">
-                    <span>Success ${success}%</span>
-                </div>
-                <div class="weight-segment cost" style="width: ${(cost/total)*100}%">
-                    <span>Cost ${cost}%</span>
-                </div>
-            </div>
-        `;
+        const weightBar = document.createElement('div');
+        weightBar.className = 'weight-bar';
+
+        const segments = [
+            { cls: 'latency', value: latency, label: `Latency ${latency}%` },
+            { cls: 'success', value: success, label: `Success ${success}%` },
+            { cls: 'cost', value: cost, label: `Cost ${cost}%` }
+        ];
+
+        segments.forEach(segmentInfo => {
+            const segment = document.createElement('div');
+            segment.className = `weight-segment ${segmentInfo.cls}`;
+            const percent = total === 0 ? 0 : (segmentInfo.value / total) * 100;
+            segment.style.width = `${percent}%`;
+
+            const label = document.createElement('span');
+            label.textContent = segmentInfo.label;
+            segment.appendChild(label);
+
+            weightBar.appendChild(segment);
+        });
+
+        displayEl.replaceChildren(weightBar);
     }
     
     /**
@@ -795,16 +809,28 @@ export class AdvancedSettingsPanel {
         const budget = this.plugin.settings.monthlyBudget || 50;
         const percentage = (currentSpending / budget) * 100;
         
-        spendingEl.innerHTML = `
-            <div class="spending-info">
-                <span class="spending-label">Current Month:</span>
-                <span class="spending-value">$${currentSpending.toFixed(2)} / $${budget.toFixed(2)}</span>
-            </div>
-            <div class="spending-bar">
-                <div class="spending-progress ${percentage > 80 ? 'warning' : ''}" 
-                     style="width: ${Math.min(100, percentage)}%"></div>
-            </div>
-        `;
+        const info = document.createElement('div');
+        info.className = 'spending-info';
+
+        const label = document.createElement('span');
+        label.className = 'spending-label';
+        label.textContent = 'Current Month:';
+        info.appendChild(label);
+
+        const value = document.createElement('span');
+        value.className = 'spending-value';
+        value.textContent = `$${currentSpending.toFixed(2)} / $${budget.toFixed(2)}`;
+        info.appendChild(value);
+
+        const bar = document.createElement('div');
+        bar.className = 'spending-bar';
+        const progress = document.createElement('div');
+        progress.className = `spending-progress ${percentage > 80 ? 'warning' : ''}`.trim();
+        progress.style.width = `${Math.min(100, percentage)}%`;
+        bar.appendChild(progress);
+
+        spendingEl.appendChild(info);
+        spendingEl.appendChild(bar);
     }
     
     /**
@@ -824,19 +850,33 @@ export class AdvancedSettingsPanel {
         if (!displayEl) {
             displayEl = containerEl.createDiv({ cls: 'split-display' });
         }
-        
-        displayEl.innerHTML = `
-            <div class="split-visualization">
-                <div class="split-bar">
-                    <div class="split-a" style="width: ${this.abTestSplit}%">
-                        <span>Provider A: ${this.abTestSplit}%</span>
-                    </div>
-                    <div class="split-b" style="width: ${100 - this.abTestSplit}%">
-                        <span>Provider B: ${100 - this.abTestSplit}%</span>
-                    </div>
-                </div>
-            </div>
-        `;
+
+        const visualization = document.createElement('div');
+        visualization.className = 'split-visualization';
+
+        const splitBar = document.createElement('div');
+        splitBar.className = 'split-bar';
+
+        const providerA = document.createElement('div');
+        providerA.className = 'split-a';
+        providerA.style.width = `${this.abTestSplit}%`;
+        const providerALabel = document.createElement('span');
+        providerALabel.textContent = `Provider A: ${this.abTestSplit}%`;
+        providerA.appendChild(providerALabel);
+
+        const providerBWidth = 100 - this.abTestSplit;
+        const providerB = document.createElement('div');
+        providerB.className = 'split-b';
+        providerB.style.width = `${providerBWidth}%`;
+        const providerBLabel = document.createElement('span');
+        providerBLabel.textContent = `Provider B: ${providerBWidth}%`;
+        providerB.appendChild(providerBLabel);
+
+        splitBar.appendChild(providerA);
+        splitBar.appendChild(providerB);
+        visualization.appendChild(splitBar);
+
+        displayEl.replaceChildren(visualization);
     }
     
     /**
@@ -877,20 +917,38 @@ export class AdvancedSettingsPanel {
     private async confirmReset(): Promise<boolean> {
         return new Promise((resolve) => {
             const notice = new Notice('', 0);
-            notice.noticeEl.innerHTML = `
-                <div>Reset all advanced settings to defaults?</div>
-                <div style="margin-top: 10px;">
-                    <button class="mod-cta">Reset</button>
-                    <button style="margin-left: 10px;">Cancel</button>
-                </div>
-            `;
-            
-            const buttons = notice.noticeEl.querySelectorAll('button');
-            buttons[0].addEventListener('click', () => {
+            const noticeEl = notice.noticeEl;
+
+            if (typeof (noticeEl as any).empty === 'function') {
+                (noticeEl as any).empty();
+            } else {
+                noticeEl.replaceChildren();
+            }
+
+            const message = document.createElement('div');
+            message.textContent = 'Reset all advanced settings to defaults?';
+            noticeEl.appendChild(message);
+
+            const buttonRow = document.createElement('div');
+            buttonRow.style.marginTop = '10px';
+
+            const resetBtn = document.createElement('button');
+            resetBtn.className = 'mod-cta';
+            resetBtn.textContent = 'Reset';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.style.marginLeft = '10px';
+            cancelBtn.textContent = 'Cancel';
+
+            buttonRow.appendChild(resetBtn);
+            buttonRow.appendChild(cancelBtn);
+            noticeEl.appendChild(buttonRow);
+
+            resetBtn.addEventListener('click', () => {
                 notice.hide();
                 resolve(true);
             });
-            buttons[1].addEventListener('click', () => {
+            cancelBtn.addEventListener('click', () => {
                 notice.hide();
                 resolve(false);
             });
