@@ -661,6 +661,57 @@
     position: relative;
 }
 
+/* Deepgram Setting Helpers */
+.deepgram-description {
+    margin-bottom: 20px;
+}
+
+.deepgram-warning-box {
+    padding: 8px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+}
+
+.deepgram-info-container {
+    background: var(--background-secondary);
+    padding: 12px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 0.9em;
+}
+
+.deepgram-metrics-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.deepgram-languages-row {
+    margin-top: 8px;
+}
+
+.deepgram-cost-container {
+    background: var(--background-modifier-border);
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 20px;
+}
+
+.deepgram-error-container {
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+}
+
+.deepgram-error-details {
+    font-size: 0.85em;
+    overflow: auto;
+}
+
+.deepgram-note {
+    margin-top: 10px;
+}
+
 /* High Contrast Mode */
 @media (prefers-contrast: high) {
     .provider-settings-container {

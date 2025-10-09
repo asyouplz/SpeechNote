@@ -6,7 +6,9 @@ export class Logger implements ILogger {
     constructor(private prefix: string) {}
 
     debug(message: string, context?: any): void {
-        console.log(`[${this.prefix}] DEBUG:`, message, context || '');
+        if (process.env.NODE_ENV === 'development') {
+            console.debug(`[${this.prefix}] DEBUG:`, message, context || '');
+        }
     }
 
     info(message: string, context?: any): void {

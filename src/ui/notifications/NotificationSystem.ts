@@ -137,7 +137,7 @@ export class ToastNotification {
             const closeBtn = document.createElement('button');
             closeBtn.className = 'toast__close';
             closeBtn.setAttribute('aria-label', '알림 닫기');
-            closeBtn.innerHTML = '&times;';
+            closeBtn.setText('×');
             closeBtn.addEventListener('click', () => this.dismiss(id));
             toast.appendChild(closeBtn);
         }
@@ -344,7 +344,7 @@ export class ModalNotification {
                 const closeBtn = document.createElement('button');
                 closeBtn.className = 'modal-notification__close';
                 closeBtn.setAttribute('aria-label', '닫기');
-                closeBtn.innerHTML = '&times;';
+                closeBtn.setText('×');
                 closeBtn.addEventListener('click', () => {
                     this.dismiss();
                     resolve(false);
@@ -506,7 +506,7 @@ export class StatusBarNotification {
             const closeBtn = document.createElement('button');
             closeBtn.className = 'statusbar-notification__close';
             closeBtn.setAttribute('aria-label', '닫기');
-            closeBtn.innerHTML = '&times;';
+            closeBtn.setText('×');
             closeBtn.addEventListener('click', () => this.hide());
             this.currentNotification.appendChild(closeBtn);
         }

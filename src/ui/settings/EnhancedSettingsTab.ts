@@ -386,7 +386,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             cls: 'api-key-toggle',
             attr: { 'aria-label': 'Toggle visibility' }
         });
-        toggleBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7zm0 10c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></svg>`;
+        toggleBtn.setText('👁️');
         
         let isVisible = false;
         toggleBtn.addEventListener('click', async () => {
@@ -397,12 +397,14 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                     const key = await this.apiKeyManager.getApiKey();
                     if (key) inputEl.value = key;
                 }
+                toggleBtn.setText('🙈');
             } else {
                 inputEl.type = 'password';
                 if (hasKey && !inputEl.value) {
                     inputEl.value = '';
                     inputEl.placeholder = '••••••••••••••••';
                 }
+                toggleBtn.setText('👁️');
             }
         });
 

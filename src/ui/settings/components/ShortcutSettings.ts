@@ -337,7 +337,7 @@ export class ShortcutSettings {
     private registerHotkey(commandId: string, key: string): void {
         // Obsidian API를 통한 단축키 등록
         // 실제 구현은 Obsidian API에 따라 다를 수 있음
-        console.log(`Registering hotkey: ${commandId} -> ${key}`);
+        this.debug(`Registering hotkey: ${commandId} -> ${key}`);
     }
 
     /**
@@ -345,7 +345,13 @@ export class ShortcutSettings {
      */
     private unregisterHotkey(commandId: string): void {
         // Obsidian API를 통한 단축키 제거
-        console.log(`Unregistering hotkey: ${commandId}`);
+        this.debug(`Unregistering hotkey: ${commandId}`);
+    }
+
+    private debug(...args: unknown[]): void {
+        if (this.plugin.settings?.debugMode) {
+            console.debug('[ShortcutSettings]', ...args);
+        }
     }
 }
 

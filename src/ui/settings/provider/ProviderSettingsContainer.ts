@@ -107,7 +107,7 @@ export class ProviderSettingsContainer {
                 'aria-expanded': String(this.isExpanded)
             }
         });
-        toggleBtn.innerHTML = this.isExpanded ? '▼' : '▶';
+        toggleBtn.setText(this.isExpanded ? '▼' : '▶');
         toggleBtn.onclick = () => this.toggleExpanded(containerEl);
         
         // 설명
@@ -129,12 +129,15 @@ export class ProviderSettingsContainer {
             cls: `overall-status status-${overallStatus.level}` 
         });
         
-        statusEl.innerHTML = `
-            <div class="status-indicator">
-                <span class="status-icon">${overallStatus.icon}</span>
-                <span class="status-text">${overallStatus.text}</span>
-            </div>
-        `;
+        const indicator = statusEl.createDiv({ cls: 'status-indicator' });
+        indicator.createEl('span', {
+            cls: 'status-icon',
+            text: overallStatus.icon
+        });
+        indicator.createEl('span', {
+            cls: 'status-text',
+            text: overallStatus.text
+        });
         
         // Provider별 상태
         const providersEl = dashboardEl.createDiv({ cls: 'providers-status-grid' });
@@ -144,23 +147,30 @@ export class ProviderSettingsContainer {
             const isConnected = this.connectionStatus.get(provider as TranscriptionProvider) || false;
             const hasKey = this.hasApiKey(provider as TranscriptionProvider);
             
-            providerEl.innerHTML = `
-                <div class="provider-name">${this.getProviderDisplayName(provider)}</div>
-                <div class="provider-indicators">
-                    <span class="indicator key-status ${hasKey ? 'has-key' : 'no-key'}" 
-                          title="${hasKey ? 'API key configured' : 'No API key'}">
-                        ${hasKey ? '🔑' : '🔒'}
-                    </span>
-                    <span class="indicator connection-status ${isConnected ? 'connected' : 'disconnected'}"
-                          title="${isConnected ? 'Connected' : 'Not connected'}">
-                        ${isConnected ? '✅' : '⭕'}
-                    </span>
-                    <span class="indicator performance-status" 
-                          title="Performance score">
-                        ${this.getPerformanceIndicator(provider as TranscriptionProvider)}
-                    </span>
-                </div>
-            `;
+            providerEl.createDiv({
+                cls: 'provider-name',
+                text: this.getProviderDisplayName(provider)
+            });
+
+            const indicatorsEl = providerEl.createDiv({ cls: 'provider-indicators' });
+
+            const keyStatus = indicatorsEl.createEl('span', {
+                cls: `indicator key-status ${hasKey ? 'has-key' : 'no-key'}`,
+                attr: { title: hasKey ? 'API key configured' : 'No API key' }
+            });
+            keyStatus.setText(hasKey ? '🔑' : '🔒');
+
+            const connectionStatus = indicatorsEl.createEl('span', {
+                cls: `indicator connection-status ${isConnected ? 'connected' : 'disconnected'}`,
+                attr: { title: isConnected ? 'Connected' : 'Not connected' }
+            });
+            connectionStatus.setText(isConnected ? '✅' : '⭕');
+
+            const performanceStatus = indicatorsEl.createEl('span', {
+                cls: 'indicator performance-status',
+                attr: { title: 'Performance score' }
+            });
+            performanceStatus.setText(this.getPerformanceIndicator(provider as TranscriptionProvider));
             
             // 클릭시 상세 정보
             providerEl.onclick = () => this.showProviderDetails(provider as TranscriptionProvider);
@@ -404,31 +414,49 @@ export class ProviderSettingsContainer {
         modal.titleEl.setText('Provider Selection Guide');
         
         const contentEl = modal.contentEl;
-        contentEl.innerHTML = `
-            <div class="provider-help">
-                <h4>🤖 Automatic Mode</h4>
-                <p>The system intelligently selects the best provider based on:</p>
-                <ul>
-                    <li>Current availability and response times</li>
-                    <li>Historical success rates</li>
-                    <li>Your configured selection strategy</li>
-                </ul>
-                
-                <h4>🎯 OpenAI Whisper</h4>
-                <ul>
-                    <li>Excellent accuracy for 50+ languages</li>
-                    <li>Best for long-form content</li>
-                    <li>Supports timestamps and speaker diarization</li>
-                </ul>
-                
-                <h4>🚀 Deepgram</h4>
-                <ul>
-                    <li>Ultra-fast real-time transcription</li>
-                    <li>Lower latency than Whisper</li>
-                    <li>Cost-effective for high volume</li>
-                </ul>
-            </div>
-        `;
+        const helpContainer = contentEl.createDiv('provider-help');
+
+        const sections = [
+            {
+                title: '🤖 Automatic Mode',
+                description: 'The system intelligently selects the best provider based on:',
+                bullets: [
+                    'Current availability and response times',
+                    'Historical success rates',
+                    'Your configured selection strategy'
+                ]
+            },
+            {
+                title: '🎯 OpenAI Whisper',
+                bullets: [
+                    'Excellent accuracy for 50+ languages',
+                    'Best for long-form content',
+                    'Supports timestamps and speaker diarization'
+                ]
+            },
+            {
+                title: '🚀 Deepgram',
+                bullets: [
+                    'Ultra-fast real-time transcription',
+                    'Lower latency than Whisper',
+                    'Cost-effective for high volume'
+                ]
+            }
+        ];
+
+        sections.forEach((section) => {
+            helpContainer.createEl('h4', { text: section.title });
+            if (section.description) {
+                helpContainer.createEl('p', { text: section.description });
+            }
+
+            if (section.bullets?.length) {
+                const list = helpContainer.createEl('ul');
+                section.bullets.forEach(item => {
+                    list.createEl('li', { text: item });
+                });
+            }
+        });
         
         modal.open();
     }
@@ -809,16 +837,11 @@ class ProviderMetricsDisplay {
         
         // TODO: 실제 메트릭 구현
         const metricsEl = containerEl.createDiv({ cls: 'metrics-display' });
-        metricsEl.innerHTML = `
-            <div class="metrics-placeholder">
-                <p>Metrics will be displayed here once transcription starts.</p>
-                <ul>
-                    <li>Request latency</li>
-                    <li>Success rate</li>
-                    <li>Cost tracking</li>
-                    <li>Quality scores</li>
-                </ul>
-            </div>
-        `;
+        const placeholder = metricsEl.createDiv('metrics-placeholder');
+        placeholder.createEl('p', { text: 'Metrics will be displayed here once transcription starts.' });
+        const list = placeholder.createEl('ul');
+        ['Request latency', 'Success rate', 'Cost tracking', 'Quality scores'].forEach(item => {
+            list.createEl('li', { text: item });
+        });
     }
 }

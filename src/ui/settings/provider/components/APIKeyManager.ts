@@ -1,4 +1,4 @@
-import { Setting, Notice, ButtonComponent, TextComponent, Modal, App } from 'obsidian';
+import { Setting, Notice, ButtonComponent, TextComponent, Modal, App, requestUrl } from 'obsidian';
 import type SpeechToTextPlugin from '../../../../main';
 import { TranscriptionProvider } from '../../../../infrastructure/api/providers/ITranscriber';
 import { Encryptor } from '../../../../infrastructure/security/Encryptor';
@@ -202,10 +202,9 @@ export class APIKeyManager {
         }
         
         statusEl.className = `key-status-indicator ${className}`;
-        statusEl.innerHTML = `
-            <span class="status-icon">${icon}</span>
-            <span class="status-text">${text}</span>
-        `;
+        statusEl.empty();
+        statusEl.createEl('span', { cls: 'status-icon', text: icon });
+        statusEl.createEl('span', { cls: 'status-text', text });
     }
     
     /**
@@ -226,9 +225,8 @@ export class APIKeyManager {
         
         const updateIcon = () => {
             const isVisible = this.keyVisibility.get(provider) || false;
-            btn.innerHTML = isVisible ? 
-                '<svg width="16" height="16"><path d="M8 3C4.5 3 1.5 8 1.5 8s3 5 6.5 5 6.5-5 6.5-5-3-5-6.5-5zm0 8c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"/></svg>' :
-                '<svg width="16" height="16"><path d="M8 3C4.5 3 1.5 8 1.5 8s3 5 6.5 5 6.5-5 6.5-5-3-5-6.5-5zm0 8c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z"/><path d="M2 2l12 12" stroke="currentColor" stroke-width="2"/></svg>';
+            const icon = this.createVisibilityIcon(isVisible);
+            btn.replaceChildren(icon);
         };
         
         updateIcon();
@@ -251,6 +249,32 @@ export class APIKeyManager {
         };
         
         return btn;
+    }
+
+    private createVisibilityIcon(isVisible: boolean): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '16');
+        svg.setAttribute('height', '16');
+        svg.setAttribute('viewBox', '0 0 16 16');
+
+        const eyePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        eyePath.setAttribute(
+            'd',
+            'M8 3C4.5 3 1.5 8 1.5 8s3 5 6.5 5 6.5-5 6.5-5-3-5-6.5-5zm0 8c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3z'
+        );
+        svg.appendChild(eyePath);
+
+        if (!isVisible) {
+            const slashPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            slashPath.setAttribute('d', 'M2 2l12 12');
+            slashPath.setAttribute('stroke', 'currentColor');
+            slashPath.setAttribute('stroke-width', '2');
+            slashPath.setAttribute('fill', 'none');
+            slashPath.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(slashPath);
+        }
+
+        return svg;
     }
     
     /**
@@ -306,7 +330,7 @@ export class APIKeyManager {
             }
         });
         
-        btn.innerHTML = '📋';
+        btn.setText('📋');
         
         btn.onclick = async () => {
             const key = this.apiKeys.get(provider);
@@ -320,9 +344,9 @@ export class APIKeyManager {
                 new Notice('API key copied to clipboard');
                 
                 // Visual feedback
-                btn.innerHTML = '✅';
+                btn.setText('✅');
                 setTimeout(() => {
-                    btn.innerHTML = '📋';
+                    btn.setText('📋');
                 }, 2000);
             } catch (error) {
                 new Notice('Failed to copy API key');
@@ -345,7 +369,7 @@ export class APIKeyManager {
             }
         });
         
-        btn.innerHTML = '🗑️';
+        btn.setText('🗑️');
         
         btn.onclick = async () => {
             if (await this.confirmDelete(provider)) {
@@ -441,21 +465,23 @@ export class APIKeyManager {
      */
     private renderSecurityInfo(containerEl: HTMLElement): void {
         const securityEl = containerEl.createDiv({ cls: 'api-key-security-info' });
-        
-        securityEl.innerHTML = `
-            <div class="security-notice">
-                <span class="security-icon">🔒</span>
-                <div class="security-text">
-                    <strong>Security Notice:</strong>
-                    <ul>
-                        <li>API keys are encrypted using AES-256-GCM</li>
-                        <li>Keys are never logged or exposed in debug output</li>
-                        <li>Keys are stored locally and never transmitted except to their respective APIs</li>
-                        <li>Use environment variables for additional security in shared environments</li>
-                    </ul>
-                </div>
-            </div>
-        `;
+        const securityNotice = securityEl.createDiv('security-notice');
+        securityNotice.createEl('span', { cls: 'security-icon', text: '🔒' });
+
+        const securityText = securityNotice.createDiv('security-text');
+        securityText.createEl('strong', { text: 'Security Notice:' });
+
+        const list = securityText.createEl('ul');
+        const items = [
+            'API keys are encrypted using AES-256-GCM',
+            'Keys are never logged or exposed in debug output',
+            'Keys are stored locally and never transmitted except to their respective APIs',
+            'Use environment variables for additional security in shared environments'
+        ];
+
+        items.forEach(item => {
+            list.createEl('li', { text: item });
+        });
         
         // 보안 설정 버튼
         new ButtonComponent(securityEl)
@@ -534,13 +560,15 @@ export class APIKeyManager {
      */
     private async validateWhisperKey(key: string): Promise<boolean> {
         try {
-            const response = await fetch('https://api.openai.com/v1/models', {
+            const response = await requestUrl({
+                url: 'https://api.openai.com/v1/models',
+                method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${key}`
+                    Authorization: `Bearer ${key}`
                 }
             });
             
-            return response.ok;
+            return response.status >= 200 && response.status < 300;
         } catch (error) {
             console.error('Whisper key validation error:', error);
             return false;
@@ -552,13 +580,15 @@ export class APIKeyManager {
      */
     private async validateDeepgramKey(key: string): Promise<boolean> {
         try {
-            const response = await fetch('https://api.deepgram.com/v1/projects', {
+            const response = await requestUrl({
+                url: 'https://api.deepgram.com/v1/projects',
+                method: 'GET',
                 headers: {
-                    'Authorization': `Token ${key}`
+                    Authorization: `Token ${key}`
                 }
             });
             
-            return response.ok;
+            return response.status >= 200 && response.status < 300;
         } catch (error) {
             console.error('Deepgram key validation error:', error);
             return false;
@@ -589,11 +619,8 @@ export class APIKeyManager {
             const el = container as HTMLElement;
             const provider = el.classList.contains('whisper') ? 'whisper' : 'deepgram';
             
-            if (currentProvider === 'auto' || currentProvider === provider) {
-                el.style.display = '';
-            } else {
-                el.style.display = 'none';
-            }
+            const shouldShow = currentProvider === 'auto' || currentProvider === provider;
+            el.classList.toggle('sn-hidden', !shouldShow);
         });
     }
     
@@ -742,22 +769,31 @@ export class APIKeyManager {
         modal.titleEl.setText('Environment Variable Setup');
         
         const contentEl = modal.contentEl;
-        contentEl.innerHTML = `
-            <div class="env-var-instructions">
-                <p>To use environment variables for API keys:</p>
-                <ol>
-                    <li>Set the following environment variables:</li>
-                    <ul>
-                        <li><code>OPENAI_API_KEY</code> for Whisper</li>
-                        <li><code>DEEPGRAM_API_KEY</code> for Deepgram</li>
-                    </ul>
-                    <li>Restart Obsidian</li>
-                    <li>The plugin will automatically load keys from environment</li>
-                </ol>
-                <p class="warning">⚠️ Environment variables take precedence over saved keys</p>
-            </div>
-        `;
-        
+        const instructions = contentEl.createDiv('env-var-instructions');
+        instructions.createEl('p', { text: 'To use environment variables for API keys:' });
+
+        const orderedList = instructions.createEl('ol');
+
+        const envItem = orderedList.createEl('li');
+        envItem.setText('Set the following environment variables:');
+        const envList = envItem.createEl('ul');
+
+        const whisperItem = envList.createEl('li');
+        whisperItem.createEl('code', { text: 'OPENAI_API_KEY' });
+        whisperItem.appendText(' for Whisper');
+
+        const deepgramItem = envList.createEl('li');
+        deepgramItem.createEl('code', { text: 'DEEPGRAM_API_KEY' });
+        deepgramItem.appendText(' for Deepgram');
+
+        orderedList.createEl('li', { text: 'Restart Obsidian' });
+        orderedList.createEl('li', { text: 'The plugin will automatically load keys from environment' });
+
+        instructions.createEl('p', {
+            cls: 'warning',
+            text: '⚠️ Environment variables take precedence over saved keys'
+        });
+
         modal.open();
     }
     

@@ -306,6 +306,7 @@ export class WhisperService implements IWhisperService {
             }
         } catch (error) {
             if ((error as Error).name === 'AbortError') {
+                this.logger.debug('Transcription cancelled by user');
                 throw new WhisperAPIError('Transcription cancelled', 'CANCELLED', undefined, false);
             }
             this.logger.error('Transcription request failed', error as Error);

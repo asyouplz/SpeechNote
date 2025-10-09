@@ -346,26 +346,48 @@ export class UIComponentFactory {
         return new Promise((resolve) => {
             const modal = document.createElement('div');
             modal.className = 'modal-container';
-            modal.innerHTML = `
-                <div class="modal-bg"></div>
-                <div class="modal">
-                    <div class="modal-close-button" aria-label="Close">×</div>
-                    <div class="modal-title">${title}</div>
-                    <div class="modal-content">
-                        <p>${message}</p>
-                    </div>
-                    <div class="modal-button-container">
-                        <button class="mod-cta">${confirmText}</button>
-                        <button>${cancelText}</button>
-                    </div>
-                </div>
-            `;
+
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-bg';
+            modal.appendChild(backdrop);
+
+            const dialog = document.createElement('div');
+            dialog.className = 'modal';
+            modal.appendChild(dialog);
+
+            const closeBtn = document.createElement('div');
+            closeBtn.className = 'modal-close-button';
+            closeBtn.setAttribute('aria-label', 'Close');
+            closeBtn.textContent = '×';
+            dialog.appendChild(closeBtn);
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'modal-title';
+            titleEl.textContent = title;
+            dialog.appendChild(titleEl);
+
+            const content = document.createElement('div');
+            content.className = 'modal-content';
+            const messageEl = document.createElement('p');
+            messageEl.textContent = message;
+            content.appendChild(messageEl);
+            dialog.appendChild(content);
+
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'modal-button-container';
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.className = 'mod-cta';
+            confirmBtn.textContent = confirmText;
+            buttonContainer.appendChild(confirmBtn);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = cancelText;
+            buttonContainer.appendChild(cancelBtn);
+
+            dialog.appendChild(buttonContainer);
             
             document.body.appendChild(modal);
-            
-            const confirmBtn = modal.querySelector('.mod-cta') as HTMLButtonElement;
-            const cancelBtn = modal.querySelectorAll('button')[1] as HTMLButtonElement;
-            const closeBtn = modal.querySelector('.modal-close-button') as HTMLElement;
             
             const close = (result: boolean) => {
                 document.body.removeChild(modal);
@@ -375,7 +397,7 @@ export class UIComponentFactory {
             confirmBtn.onclick = () => close(true);
             cancelBtn.onclick = () => close(false);
             closeBtn.onclick = () => close(false);
-            modal.querySelector('.modal-bg')!.addEventListener('click', () => close(false));
+            backdrop.addEventListener('click', () => close(false));
             
             // 포커스 설정
             confirmBtn.focus();

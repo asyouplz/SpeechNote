@@ -226,24 +226,33 @@ export class ErrorBoundary {
         this.fallbackUI = this.container.createDiv({ cls: 'error-boundary-fallback' });
         
         const isRecoverable = error instanceof SettingsError && error.isRecoverable();
-        
-        this.fallbackUI.innerHTML = `
-            <div class="error-container">
-                <div class="error-icon">⚠️</div>
-                <h3>문제가 발생했습니다</h3>
-                <p class="error-message">${this.getSafeErrorMessage(error)}</p>
-                ${isRecoverable ? `
-                    <button class="mod-cta retry-button">다시 시도</button>
-                    <button class="reset-button">설정 초기화</button>
-                ` : `
-                    <button class="refresh-button">새로고침</button>
-                `}
-                <details class="error-details">
-                    <summary>기술적 세부사항</summary>
-                    <pre>${this.getErrorDetails(error)}</pre>
-                </details>
-            </div>
-        `;
+        const container = this.fallbackUI.createDiv({ cls: 'error-container' });
+        container.createDiv({ cls: 'error-icon', text: '⚠️' });
+        container.createEl('h3', { text: '문제가 발생했습니다' });
+        container.createEl('p', {
+            cls: 'error-message',
+            text: this.getSafeErrorMessage(error)
+        });
+
+        if (isRecoverable) {
+            container.createEl('button', {
+                cls: 'mod-cta retry-button',
+                text: '다시 시도'
+            });
+            container.createEl('button', {
+                cls: 'reset-button',
+                text: '설정 초기화'
+            });
+        } else {
+            container.createEl('button', {
+                cls: 'refresh-button',
+                text: '새로고침'
+            });
+        }
+
+        const detailsEl = container.createEl('details', { cls: 'error-details' });
+        detailsEl.createEl('summary', { text: '기술적 세부사항' });
+        detailsEl.createEl('pre', { text: this.getErrorDetails(error) });
         
         // 버튼 이벤트 핸들러
         this.attachFallbackHandlers(error);

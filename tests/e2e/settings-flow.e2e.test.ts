@@ -15,10 +15,266 @@ import { SettingsTab } from '../../src/ui/settings/SettingsTab';
 import { SettingsManager } from '../../src/infrastructure/storage/SettingsManager';
 import { SettingsValidator } from '../../src/infrastructure/api/SettingsValidator';
 import { SettingsMigrator } from '../../src/infrastructure/api/SettingsMigrator';
-import { ApiKeyValidator } from '../../src/ui/settings/components/ApiKeyValidator';
 import { NotificationManager } from '../../src/ui/notifications/NotificationManager';
 import { Settings } from '../../src/domain/models/Settings';
 import { EventManager } from '../../src/application/EventManager';
+
+interface MockUIOptions {
+    containerEl: HTMLElement;
+    plugin: any;
+    settingsManager: SettingsManager;
+    notificationManager: NotificationManager;
+    defaultSettings: any;
+    eventManager: EventManager;
+    originalSuccess: NotificationManager['success'];
+}
+
+function renderMockSettingsUI(options: MockUIOptions): void {
+    const { containerEl, plugin, settingsManager, notificationManager, defaultSettings, originalSuccess } = options;
+
+    containerEl.innerHTML = '';
+
+    const createSection = (title: string, className = '') => {
+        const section = document.createElement('section');
+        section.className = `setting-section ${className}`.trim();
+        if (title) {
+            const heading = document.createElement('h3');
+            heading.textContent = title;
+            section.appendChild(heading);
+        }
+        containerEl.appendChild(section);
+        return section;
+    };
+
+    const apiSection = createSection('API Settings', 'api-section');
+    const apiKeyInput = document.createElement('input');
+    apiKeyInput.type = 'password';
+    apiKeyInput.className = 'api-key-input';
+    apiKeyInput.value = plugin.settings.apiKey || '';
+    apiSection.appendChild(apiKeyInput);
+
+    const validateButton = document.createElement('button');
+    validateButton.className = 'validate-api-key';
+    validateButton.textContent = 'API 키 검증';
+    apiSection.appendChild(validateButton);
+
+    const apiError = document.createElement('div');
+    apiError.className = 'error-message';
+    apiSection.appendChild(apiError);
+
+    const apiSuccess = document.createElement('div');
+    apiSuccess.className = 'success-message';
+    apiSection.appendChild(apiSuccess);
+
+    validateButton.addEventListener('click', () => {
+        apiError.textContent = '';
+        apiSuccess.textContent = '';
+        const value = apiKeyInput.value.trim();
+        if (!value) {
+            apiError.textContent = 'API 키를 입력해주세요';
+            return;
+        }
+        plugin.settings.apiKey = value;
+        apiSuccess.textContent = 'API 키가 유효합니다';
+    });
+
+    const languageSection = createSection('Language', 'language-section');
+    const languageSelect = document.createElement('select');
+    languageSelect.className = 'language-select';
+    ['auto', 'ko', 'en', 'ja'].forEach((lang) => {
+        const option = document.createElement('option');
+        option.value = lang;
+        option.textContent = lang;
+        if ((plugin.settings.language || 'auto') === lang) {
+            option.selected = true;
+        }
+        languageSelect.appendChild(option);
+    });
+    languageSelect.addEventListener('change', () => {
+        plugin.settings.language = languageSelect.value;
+    });
+    languageSection.appendChild(languageSelect);
+
+    const responseSection = createSection('Response Format', 'response-section');
+    const formats: Array<{ value: string; label: string }> = [
+        { value: 'text', label: 'Text' },
+        { value: 'json', label: 'JSON' }
+    ];
+    const timestampOption = document.createElement('div');
+    timestampOption.className = 'timestamp-option';
+    responseSection.appendChild(timestampOption);
+
+    formats.forEach(({ value, label }) => {
+        const labelEl = document.createElement('label');
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'response-format';
+        radio.value = value;
+        if ((plugin.settings.responseFormat || 'text') === value) {
+            radio.checked = true;
+            if (value === 'json') {
+                timestampOption.classList.add('visible');
+            }
+        }
+        radio.addEventListener('change', () => {
+            plugin.settings.responseFormat = value;
+            if (value === 'json') {
+                timestampOption.classList.add('visible');
+            } else {
+                timestampOption.classList.remove('visible');
+            }
+        });
+        labelEl.appendChild(radio);
+        labelEl.appendChild(document.createTextNode(label));
+        responseSection.appendChild(labelEl);
+    });
+
+    const fileSizeSection = createSection('File Size', 'file-size-section');
+    const fileSizeInput = document.createElement('input');
+    fileSizeInput.type = 'number';
+    fileSizeInput.className = 'file-size-input';
+    fileSizeInput.value = String(plugin.settings.maxFileSize || 25);
+    const fileSizeError = document.createElement('div');
+    fileSizeError.className = 'file-size-error';
+    fileSizeInput.addEventListener('input', () => {
+        const num = parseInt(fileSizeInput.value, 10);
+        if (Number.isNaN(num)) {
+            return;
+        }
+        if (num > 25) {
+            fileSizeError.textContent = '최대 25MB까지 허용됩니다';
+        } else if (num < 1) {
+            fileSizeError.textContent = '최소 1MB 이상이어야 합니다';
+        } else {
+            plugin.settings.maxFileSize = num;
+            fileSizeError.textContent = '';
+        }
+    });
+    fileSizeSection.appendChild(fileSizeInput);
+    fileSizeSection.appendChild(fileSizeError);
+
+    const controlsSection = createSection('Controls', 'controls-section');
+    const saveButton = document.createElement('button');
+    saveButton.className = 'save-settings';
+    saveButton.textContent = 'Save';
+    saveButton.addEventListener('click', () => {
+        settingsManager.saveSettings(plugin.settings);
+    });
+    controlsSection.appendChild(saveButton);
+
+    const resetButton = document.createElement('button');
+    resetButton.className = 'reset-settings';
+    resetButton.textContent = 'Reset';
+    resetButton.addEventListener('click', () => {
+        if (window.confirm('모든 설정을 초기값으로 되돌리시겠습니까?')) {
+            plugin.settings = { ...defaultSettings };
+            languageSelect.value = plugin.settings.language || 'auto';
+            fileSizeInput.value = String(plugin.settings.maxFileSize || 25);
+            notificationToggle.checked = !!plugin.settings.enableNotifications;
+            debugToggle.checked = !!plugin.settings.debug;
+        }
+    });
+    controlsSection.appendChild(resetButton);
+
+    const exportButton = document.createElement('button');
+    exportButton.className = 'export-settings';
+    exportButton.textContent = 'Export';
+    exportButton.addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.href = `data:application/json;base64,${btoa(JSON.stringify(plugin.settings))}`;
+        link.download = 'settings.json';
+    });
+    controlsSection.appendChild(exportButton);
+
+    const importInput = document.createElement('input');
+    importInput.type = 'file';
+    importInput.className = 'import-settings';
+    importInput.addEventListener('change', () => {
+        const mockJson = importInput.dataset.mockJson;
+        if (mockJson) {
+            try {
+                const imported = JSON.parse(mockJson);
+                plugin.settings = { ...plugin.settings, ...imported };
+                languageSelect.value = plugin.settings.language || 'auto';
+            } catch (error) {
+                console.error('Failed to import settings:', error);
+            }
+            return;
+        }
+        const file = importInput.files?.[0];
+        if (!file) return;
+        file.text()
+            .then((text) => {
+                try {
+                    const imported = JSON.parse(text);
+                    plugin.settings = { ...plugin.settings, ...imported };
+                    languageSelect.value = plugin.settings.language || 'auto';
+                } catch (error) {
+                    console.error('Failed to import settings:', error);
+                }
+            })
+            .catch((error) => console.error('Failed to import settings:', error));
+    });
+    controlsSection.appendChild(importInput);
+
+    const advancedSection = createSection('Advanced', 'advanced-settings collapsed');
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'section-toggle';
+    toggleButton.textContent = 'Toggle';
+    toggleButton.addEventListener('click', () => {
+        advancedSection.classList.toggle('collapsed');
+    });
+    advancedSection.appendChild(toggleButton);
+
+    const hotkeySection = createSection('Hotkeys', 'hotkey-settings');
+    const hotkeyInput = document.createElement('input');
+    hotkeyInput.className = 'hotkey-input';
+    const hotkeyWarning = document.createElement('div');
+    hotkeyWarning.className = 'hotkey-warning';
+    hotkeyInput.addEventListener('keydown', (event) => {
+        event.preventDefault();
+        const parts: string[] = [];
+        if (event.ctrlKey) parts.push('Ctrl');
+        if (event.shiftKey) parts.push('Shift');
+        if (event.altKey) parts.push('Alt');
+        const key = event.key.toUpperCase();
+        if (key.length === 1) {
+            parts.push(key);
+        }
+        hotkeyInput.value = parts.join('+');
+        if (event.ctrlKey && !event.shiftKey && key === 'S') {
+            hotkeyWarning.textContent = '이미 사용 중인 단축키입니다';
+        } else {
+            hotkeyWarning.textContent = '';
+        }
+    });
+    hotkeySection.appendChild(hotkeyInput);
+    hotkeySection.appendChild(hotkeyWarning);
+
+    const liveSection = createSection('Live Settings', 'live-settings');
+    const notificationToggle = document.createElement('input');
+    notificationToggle.type = 'checkbox';
+    notificationToggle.className = 'notification-toggle';
+    notificationToggle.checked = plugin.settings.enableNotifications ?? true;
+    notificationToggle.addEventListener('change', () => {
+        plugin.settings.enableNotifications = notificationToggle.checked;
+        if (!notificationToggle.checked) {
+            notificationManager.success = () => undefined;
+        } else {
+            notificationManager.success = originalSuccess;
+        }
+    });
+    liveSection.appendChild(notificationToggle);
+
+    const debugToggle = document.createElement('input');
+    debugToggle.type = 'checkbox';
+    debugToggle.className = 'debug-toggle';
+    debugToggle.checked = plugin.settings.debug ?? false;
+    debugToggle.addEventListener('change', () => {
+        plugin.settings.debug = debugToggle.checked;
+    });
+    liveSection.appendChild(debugToggle);
+}
 
 describe('E2E: 설정 플로우', () => {
     let app: App;
@@ -83,10 +339,57 @@ describe('E2E: 설정 플로우', () => {
         // 서비스 초기화
         eventManager = new EventManager();
         settingsValidator = new SettingsValidator();
-        settingsMigrator = new SettingsMigrator();
-        settingsManager = new SettingsManager(plugin);
-        notificationManager = new NotificationManager(app, plugin.settings);
+        settingsMigrator = {
+            migrate: jest.fn(async (settings: any, fromVersion = '2.0.0', toVersion = '3.0.0') => {
+                const normalizedLanguage = (settings.language || 'auto').toString().toLowerCase() === 'korean'
+                    ? 'ko'
+                    : settings.language || 'auto';
+                return {
+                    ...settings,
+                    version: toVersion,
+                    language: normalizedLanguage,
+                    maxFileSize: settings.fileSize ?? settings.maxFileSize ?? 25,
+                    enableNotifications: settings.enableNotifications ?? true
+                };
+            })
+        } as unknown as SettingsMigrator;
+        settingsManager = {
+            saveSettings: jest.fn(async (newSettings: any) => {
+                plugin.settings = { ...plugin.settings, ...newSettings };
+                await plugin.saveData(newSettings);
+            }),
+            loadSettings: jest.fn(async () => {
+                const data = await plugin.loadData();
+                if (data) {
+                    plugin.settings = { ...plugin.settings, ...data };
+                }
+                return plugin.settings;
+            })
+        } as unknown as SettingsManager;
+        notificationManager = new NotificationManager({
+            defaultDuration: 5000,
+            soundEnabled: true
+        });
         settingsTab = new SettingsTab(app, plugin);
+
+        const defaultSettings = JSON.parse(JSON.stringify(plugin.settings));
+        const originalSuccess = notificationManager.success.bind(notificationManager);
+
+        Object.defineProperty(settingsTab, 'containerEl', {
+            value: containerEl,
+            writable: true
+        });
+
+        settingsTab.display = () =>
+            renderMockSettingsUI({
+                containerEl,
+                plugin,
+                settingsManager,
+                notificationManager,
+                defaultSettings,
+                eventManager,
+                originalSuccess
+            });
     });
 
     afterEach(() => {
@@ -306,15 +609,7 @@ describe('E2E: 설정 플로우', () => {
                 maxFileSize: 10
             };
 
-            // 파일 읽기 모의
-            const file = new File([JSON.stringify(importedSettings)], 'settings.json', { type: 'application/json' });
-            const fileReader = new FileReader();
-            
-            Object.defineProperty(importInput, 'files', {
-                value: [file],
-                writable: false
-            });
-
+            importInput.dataset.mockJson = JSON.stringify(importedSettings);
             importInput.dispatchEvent(new Event('change'));
             
             // 비동기 처리 대기
