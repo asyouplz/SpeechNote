@@ -555,7 +555,7 @@ export class DeepgramSettings {
                         // Show/hide chunk size setting based on toggle
                         const chunkSizeSetting = container.querySelector('.chunk-size-setting') as HTMLElement;
                         if (chunkSizeSetting) {
-                            chunkSizeSetting.style.display = value ? 'flex' : 'none';
+                            chunkSizeSetting.classList.toggle('sn-hidden', !value);
                         }
                     });
             });
@@ -580,23 +580,34 @@ export class DeepgramSettings {
         
         // Initially hide if auto-chunking is disabled
         if (!this.plugin.settings.autoChunking) {
-            chunkSizeSetting.settingEl.style.display = 'none';
+            chunkSizeSetting.settingEl.addClass('sn-hidden');
         }
         
         // Add informational note about chunking
         const noteEl = container.createDiv();
         noteEl.addClass('setting-item-description');
-        noteEl.style.marginTop = '10px';
-        noteEl.innerHTML = `
-            <strong>Note on Large Files:</strong><br>
-            • Files larger than 50MB may experience timeout errors<br>
-            • Auto-chunking splits files into manageable pieces<br>
-            • Each chunk is processed separately and results are merged<br>
-            • For best results with very large files (>100MB), consider:<br>
-            &nbsp;&nbsp;- Using the 'enhanced' model for faster processing<br>
-            &nbsp;&nbsp;- Reducing audio bitrate to 64-128 kbps<br>
-            &nbsp;&nbsp;- Converting to efficient formats (MP3, OGG)
-        `;
+        noteEl.addClass('deepgram-note');
+        noteEl.createEl('strong', { text: 'Note on Large Files:' });
+
+        const primaryList = noteEl.createEl('ul');
+        ['Files larger than 50MB may experience timeout errors',
+            'Auto-chunking splits files into manageable pieces',
+            'Each chunk is processed separately and results are merged'
+        ].forEach(item => {
+            primaryList.createEl('li', { text: item });
+        });
+
+        noteEl.createEl('p', {
+            text: 'For best results with very large files (>100MB), consider:'
+        });
+        const secondaryList = noteEl.createEl('ul');
+        [
+            "Using the 'enhanced' model for faster processing",
+            'Reducing audio bitrate to 64-128 kbps',
+            'Converting to efficient formats (MP3, OGG)'
+        ].forEach(item => {
+            secondaryList.createEl('li', { text: item });
+        });
     }
 
     /**

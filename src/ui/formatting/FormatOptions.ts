@@ -78,7 +78,7 @@ export class FormatOptionsModal extends Modal {
                 tab.addClass('active');
                 content.addClass('active');
             } else {
-                content.style.display = 'none';
+                content.addClass('sn-hidden');
             }
 
             tabContents.push(content);
@@ -90,13 +90,13 @@ export class FormatOptionsModal extends Modal {
                 });
                 tabContents.forEach(c => {
                     c.removeClass('active');
-                    c.style.display = 'none';
+                    c.addClass('sn-hidden');
                 });
 
                 // 선택된 탭 활성화
                 tab.addClass('active');
                 content.addClass('active');
-                content.style.display = 'block';
+                content.removeClass('sn-hidden');
             };
         });
 
@@ -710,4 +710,3 @@ export const FormatOptions = {
 };
 
 export { FormatOptionsModal as default };
-

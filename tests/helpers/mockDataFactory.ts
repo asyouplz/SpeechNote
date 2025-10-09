@@ -3,7 +3,7 @@
  * 테스트에서 재사용 가능한 mock 데이터 생성 함수들을 제공합니다.
  */
 
-import { TFile, Vault } from 'obsidian';
+import { FileStats, TFile, Vault } from 'obsidian';
 import type {
     WhisperResponse,
     TranscriptionResult,
@@ -37,18 +37,26 @@ export function createMockAudioFile(options: {
 
     const config = { ...defaults, ...options };
 
-    return {
+    const file = Object.create<TFile>(TFile.prototype);
+
+    const stat: FileStats = {
+        size: config.size,
+        mtime: config.mtime,
+        ctime: config.ctime
+    };
+
+    const vaultStub = Object.create<Vault>(Object.prototype);
+
+    Object.assign(file, {
         name: config.name,
         path: config.path,
         extension: config.extension,
-        stat: {
-            size: config.size,
-            mtime: config.mtime,
-            ctime: config.ctime
-        },
-        vault: {} as Vault,
+        stat,
+        vault: vaultStub,
         basename: config.name.replace(/\.[^/.]+$/, '')
-    } as TFile;
+    });
+
+    return file;
 }
 
 /**
@@ -342,7 +350,7 @@ export function createMockVault(): Partial<Vault> {
         readBinary: jest.fn().mockResolvedValue(createMockArrayBuffer()),
         read: jest.fn().mockResolvedValue('Test content'),
         modify: jest.fn().mockResolvedValue(undefined),
-        create: jest.fn().mockResolvedValue({} as TFile),
+        create: jest.fn().mockResolvedValue(createMockAudioFile()),
         delete: jest.fn().mockResolvedValue(undefined),
         rename: jest.fn().mockResolvedValue(undefined)
     };

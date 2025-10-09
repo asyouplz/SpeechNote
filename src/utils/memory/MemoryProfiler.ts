@@ -71,7 +71,9 @@ export class MemoryProfiler {
         this.isMonitoring = true;
         this.profileLoop();
         
-        console.log('Memory profiling started');
+        if (process.env.NODE_ENV === 'development') {
+            console.debug('Memory profiling started');
+        }
     }
 
     /**
@@ -87,7 +89,9 @@ export class MemoryProfiler {
             this.monitoringInterval = undefined;
         }
         
-        console.log('Memory profiling stopped');
+        if (process.env.NODE_ENV === 'development') {
+            console.debug('Memory profiling stopped');
+        }
     }
 
     /**
@@ -319,7 +323,9 @@ export class MemoryProfiler {
         // Chrome의 경우 gc() 함수 사용 가능 (--expose-gc 플래그 필요)
         if (typeof (window as any).gc === 'function') {
             (window as any).gc();
-            console.log('Garbage collection triggered');
+            if (process.env.NODE_ENV === 'development') {
+                console.debug('Garbage collection triggered');
+            }
         }
 
         // 커스텀 정리 이벤트 발생

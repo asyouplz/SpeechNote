@@ -511,9 +511,12 @@
     right: 0;
     bottom: 0;
     z-index: 9999;
-    display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.progress-indicator.sn-flex {
+    display: flex;
 }
 
 .progress-overlay {
@@ -546,6 +549,10 @@
 .progress-spinner {
     margin-bottom: 20px;
     color: var(--interactive-accent);
+}
+
+.progress-spinner.is-spinning svg {
+    animation: spin 1s linear infinite;
 }
 
 @keyframes spin {

@@ -1,4 +1,6 @@
 import { Plugin, Notice, PluginSettingTab, App, MarkdownView, Modal, Setting, ButtonComponent, TFile } from 'obsidian';
+import { Logger } from './infrastructure/logging/Logger';
+import { assertTFile } from './utils/fs/typeGuards';
 
 // 기본 설정 인터페이스
 interface SpeechToTextSettings {
@@ -53,9 +55,10 @@ export default class SpeechToTextPlugin extends Plugin {
     logger: any;
     errorHandler: any;
     settingsManager: any;
+    private log = new Logger('SpeechToText:Legacy');
 
     async onload() {
-        console.log('Loading Speech-to-Text plugin');
+        this.log.info('Loading Speech-to-Text plugin');
         
         try {
             // 1. 설정 먼저 로드
@@ -86,7 +89,7 @@ export default class SpeechToTextPlugin extends Plugin {
     }
 
     onunload() {
-        console.log('Unloading Speech-to-Text plugin');
+        this.log.info('Unloading Speech-to-Text plugin');
         
         // StatusBar 아이템 제거
         if (this.statusBarItem) {
@@ -261,6 +264,7 @@ export default class SpeechToTextPlugin extends Plugin {
     }
 
     async transcribeFile(file: TFile) {
+        assertTFile(file, 'SpeechToTextPluginLegacy.transcribeFile');
         new Notice(`Transcribing ${file.name}...`);
         // 실제 transcription 로직은 나중에 구현
     }

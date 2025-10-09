@@ -118,7 +118,7 @@ export class RecentFiles {
         
         // 파일 아이콘
         const icon = fileItem.createDiv('file-icon');
-        icon.innerHTML = this.getFileIcon(file.extension);
+        icon.setText(this.getFileIcon(file.extension));
         
         // 파일 정보
         const fileInfo = fileItem.createDiv('file-info');
@@ -159,7 +159,7 @@ export class RecentFiles {
             cls: 'select-btn',
             title: '파일 선택'
         });
-        selectBtn.innerHTML = this.getSelectIcon();
+        selectBtn.appendChild(this.createSelectIcon());
         selectBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (this.fileCallback) {
@@ -172,7 +172,7 @@ export class RecentFiles {
             cls: 'remove-btn',
             title: '목록에서 제거'
         });
-        removeBtn.innerHTML = this.getRemoveIcon();
+        removeBtn.appendChild(this.createRemoveIcon());
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.removeRecentFile(entry.path);
@@ -333,23 +333,39 @@ export class RecentFiles {
     /**
      * 선택 아이콘
      */
-    private getSelectIcon(): string {
-        return `
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 12L2 8L3.4 6.6L6 9.2L12.6 2.6L14 4L6 12Z" fill="currentColor"/>
-            </svg>
-        `;
+    private createSelectIcon(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '16');
+        svg.setAttribute('height', '16');
+        svg.setAttribute('viewBox', '0 0 16 16');
+        svg.setAttribute('fill', 'none');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M6 12L2 8L3.4 6.6L6 9.2L12.6 2.6L14 4L6 12Z');
+        path.setAttribute('fill', 'currentColor');
+        svg.appendChild(path);
+
+        return svg;
     }
 
     /**
      * 제거 아이콘
      */
-    private getRemoveIcon(): string {
-        return `
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-        `;
+    private createRemoveIcon(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '16');
+        svg.setAttribute('height', '16');
+        svg.setAttribute('viewBox', '0 0 16 16');
+        svg.setAttribute('fill', 'none');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M12 4L4 12M4 4L12 12');
+        path.setAttribute('stroke', 'currentColor');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(path);
+
+        return svg;
     }
 
     /**

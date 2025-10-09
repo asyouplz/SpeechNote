@@ -59,25 +59,14 @@ export const UI_CONSTANTS = {
     
     // 스타일
     STYLES: {
-        WARNING_BOX: 'padding: 8px; margin-bottom: 16px; border-radius: 4px;',
-        INFO_CONTAINER: `
-            background: var(--background-secondary);
-            padding: 12px;
-            border-radius: 6px;
-            margin: 10px 0;
-            font-size: 0.9em;
-        `,
-        METRICS_ROW: 'display: flex; gap: 20px; margin-top: 8px;',
-        LANGUAGES_ROW: 'margin-top: 8px;',
-        COST_CONTAINER: `
-            background: var(--background-modifier-border);
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 20px;
-        `,
-        ERROR_CONTAINER: 'padding: 12px; margin-bottom: 20px; border-radius: 6px;',
-        ERROR_DETAILS: 'font-size: 0.85em; overflow: auto;',
-        DESCRIPTION_MARGIN: 'margin-bottom: 20px;'
+        WARNING_BOX: 'deepgram-warning-box',
+        INFO_CONTAINER: 'deepgram-info-container',
+        METRICS_ROW: 'deepgram-metrics-row',
+        LANGUAGES_ROW: 'deepgram-languages-row',
+        COST_CONTAINER: 'deepgram-cost-container',
+        ERROR_CONTAINER: 'deepgram-error-container',
+        ERROR_DETAILS: 'deepgram-error-details',
+        DESCRIPTION_MARGIN: 'deepgram-description'
     }
 } as const;
 

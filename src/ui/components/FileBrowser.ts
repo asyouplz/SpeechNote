@@ -94,11 +94,11 @@ export class FileBrowser {
             cls: 'sort-order-btn',
             title: '정렬 순서 변경'
         });
-        sortOrderBtn.innerHTML = this.sortOrder === 'asc' ? '↑' : '↓';
+        sortOrderBtn.setText(this.sortOrder === 'asc' ? '↑' : '↓');
         
         sortOrderBtn.addEventListener('click', () => {
             this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-            sortOrderBtn.innerHTML = this.sortOrder === 'asc' ? '↑' : '↓';
+            sortOrderBtn.setText(this.sortOrder === 'asc' ? '↑' : '↓');
             this.createFileList();
         });
 
@@ -107,7 +107,7 @@ export class FileBrowser {
             cls: 'refresh-btn',
             title: '새로고침'
         });
-        refreshBtn.innerHTML = this.getRefreshIcon();
+        refreshBtn.appendChild(this.createRefreshIcon());
         refreshBtn.addEventListener('click', () => this.render());
     }
 
@@ -188,7 +188,7 @@ export class FileBrowser {
         
         // 파일 아이콘
         const icon = fileItem.createDiv('file-icon');
-        icon.innerHTML = this.getFileIcon(file.extension);
+        icon.setText(this.getFileIcon(file.extension));
         
         // 파일 정보
         const fileInfo = fileItem.createDiv('file-info');
@@ -372,11 +372,21 @@ export class FileBrowser {
     /**
      * 새로고침 아이콘
      */
-    private getRefreshIcon(): string {
-        return `
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13.65 2.35C12.2 0.9 10.21 0 8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C11.73 16 14.84 13.45 15.73 10H13.65C12.83 12.33 10.61 14 8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C9.66 2 11.14 2.69 12.22 3.78L9 7H16V0L13.65 2.35Z" fill="currentColor"/>
-            </svg>
-        `;
+    private createRefreshIcon(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '16');
+        svg.setAttribute('height', '16');
+        svg.setAttribute('viewBox', '0 0 16 16');
+        svg.setAttribute('fill', 'none');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute(
+            'd',
+            'M13.65 2.35C12.2 0.9 10.21 0 8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C11.73 16 14.84 13.45 15.73 10H13.65C12.83 12.33 10.61 14 8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C9.66 2 11.14 2.69 12.22 3.78L9 7H16V0L13.65 2.35Z'
+        );
+        path.setAttribute('fill', 'currentColor');
+        svg.appendChild(path);
+
+        return svg;
     }
 }

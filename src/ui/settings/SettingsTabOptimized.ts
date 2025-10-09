@@ -148,7 +148,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
         
         // Add loading indicator
         const loadingEl = containerEl.createDiv('settings-loading');
-        loadingEl.style.display = 'none';
+        loadingEl.addClass('sn-hidden');
     }
 
     /**
@@ -444,7 +444,7 @@ class SettingsHeader extends SectionRenderer {
         
         // Save status indicator
         const statusEl = headerEl.createDiv({ cls: 'save-status' });
-        statusEl.style.display = this.state.isDirty ? 'block' : 'none';
+        statusEl.classList.toggle('sn-hidden', !this.state.isDirty);
     }
 }
 

@@ -38,7 +38,9 @@ export class ProgressIndicator {
         if (!this.container) return;
 
         this.progressElement = this.container.createDiv('progress-indicator');
-        this.progressElement.style.display = 'none';
+        this.progressElement.addClass('sn-hidden');
+        this.progressElement.addClass('sn-fade');
+        this.progressElement.addClass('sn-fade-hidden');
         
         // 오버레이
         const overlay = this.progressElement.createDiv('progress-overlay');
@@ -48,11 +50,11 @@ export class ProgressIndicator {
         
         // 스피너
         const spinner = content.createDiv('progress-spinner');
-        spinner.innerHTML = this.getSpinnerSVG();
+        spinner.appendChild(this.getSpinnerSVG());
         
         // 진행률 바 컨테이너
         const barContainer = content.createDiv('progress-bar-container');
-        barContainer.style.display = 'none';
+        barContainer.addClass('sn-hidden');
         
         // 진행률 바
         const progressBar = barContainer.createDiv('progress-bar');
@@ -69,7 +71,7 @@ export class ProgressIndicator {
             cls: 'progress-cancel-btn',
             text: '취소'
         });
-        cancelBtn.style.display = 'none';
+        cancelBtn.addClass('sn-hidden');
         cancelBtn.addEventListener('click', () => {
             if (this.cancelCallback) {
                 this.cancelCallback();
@@ -88,7 +90,8 @@ export class ProgressIndicator {
         this.currentProgress = 0;
         
         // 요소 표시
-        this.progressElement.style.display = 'flex';
+        this.progressElement.removeClass('sn-hidden');
+        this.progressElement.addClass('sn-flex');
         
         // 메시지 설정
         if (message) {
@@ -103,18 +106,19 @@ export class ProgressIndicator {
         const spinner = this.progressElement.querySelector('.progress-spinner') as HTMLElement;
         
         if (showProgressBar) {
-            barContainer.style.display = 'block';
-            spinner.style.display = 'none';
+            barContainer.removeClass('sn-hidden');
+            spinner.addClass('sn-hidden');
+            spinner.removeClass('is-spinning');
             this.update(0);
         } else {
-            barContainer.style.display = 'none';
-            spinner.style.display = 'block';
+            barContainer.addClass('sn-hidden');
+            spinner.removeClass('sn-hidden');
             this.startSpinnerAnimation();
         }
         
         // 취소 버튼 표시/숨김
         const cancelBtn = this.progressElement.querySelector('.progress-cancel-btn') as HTMLElement;
-        cancelBtn.style.display = cancellable ? 'block' : 'none';
+        cancelBtn.toggleClass('sn-hidden', !cancellable);
         
         // 페이드인 애니메이션
         this.fadeIn();
@@ -132,7 +136,8 @@ export class ProgressIndicator {
         // 페이드아웃 애니메이션
         this.fadeOut(() => {
             if (this.progressElement) {
-                this.progressElement.style.display = 'none';
+                this.progressElement.addClass('sn-hidden');
+                this.progressElement.removeClass('sn-flex');
             }
         });
     }
@@ -230,7 +235,7 @@ export class ProgressIndicator {
             // 스피너를 에러 아이콘으로 변경
             const spinner = content.querySelector('.progress-spinner') as HTMLElement;
             if (spinner) {
-                spinner.innerHTML = this.getErrorIcon();
+                spinner.replaceChildren(this.getErrorIcon());
             }
         }
         
@@ -253,7 +258,7 @@ export class ProgressIndicator {
             // 스피너를 성공 아이콘으로 변경
             const spinner = content.querySelector('.progress-spinner') as HTMLElement;
             if (spinner) {
-                spinner.innerHTML = this.getSuccessIcon();
+                spinner.replaceChildren(this.getSuccessIcon());
             }
         }
         
@@ -272,9 +277,9 @@ export class ProgressIndicator {
      * 스피너 애니메이션 시작
      */
     private startSpinnerAnimation() {
-        const spinner = this.progressElement?.querySelector('.progress-spinner svg') as SVGElement;
+        const spinner = this.progressElement?.querySelector('.progress-spinner') as HTMLElement;
         if (spinner) {
-            spinner.style.animation = 'spin 1s linear infinite';
+            spinner.addClass('is-spinning');
         }
     }
 
@@ -282,9 +287,9 @@ export class ProgressIndicator {
      * 스피너 애니메이션 중지
      */
     private stopSpinnerAnimation() {
-        const spinner = this.progressElement?.querySelector('.progress-spinner svg') as SVGElement;
+        const spinner = this.progressElement?.querySelector('.progress-spinner') as HTMLElement;
         if (spinner) {
-            spinner.style.animation = 'none';
+            spinner.removeClass('is-spinning');
         }
     }
 
@@ -294,14 +299,10 @@ export class ProgressIndicator {
     private fadeIn() {
         if (!this.progressElement) return;
         
-        this.progressElement.style.opacity = '0';
-        this.progressElement.style.transition = 'opacity 0.3s ease-in';
-        
-        setTimeout(() => {
-            if (this.progressElement) {
-                this.progressElement.style.opacity = '1';
-            }
-        }, 10);
+        this.progressElement.removeClass('sn-fade-hidden');
+        requestAnimationFrame(() => {
+            this.progressElement?.addClass('sn-fade-visible');
+        });
     }
 
     /**
@@ -310,8 +311,8 @@ export class ProgressIndicator {
     private fadeOut(callback?: () => void) {
         if (!this.progressElement) return;
         
-        this.progressElement.style.transition = 'opacity 0.3s ease-out';
-        this.progressElement.style.opacity = '0';
+        this.progressElement.removeClass('sn-fade-visible');
+        this.progressElement.addClass('sn-fade-hidden');
         
         setTimeout(() => {
             if (callback) {
@@ -323,40 +324,95 @@ export class ProgressIndicator {
     /**
      * 스피너 SVG
      */
-    private getSpinnerSVG(): string {
-        return `
-            <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" fill="none" opacity="0.2"/>
-                <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" fill="none" 
-                        stroke-dasharray="80" stroke-dashoffset="60" stroke-linecap="round"/>
-            </svg>
-        `;
+    private getSpinnerSVG(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '40');
+        svg.setAttribute('height', '40');
+        svg.setAttribute('viewBox', '0 0 40 40');
+
+        const background = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        background.setAttribute('cx', '20');
+        background.setAttribute('cy', '20');
+        background.setAttribute('r', '18');
+        background.setAttribute('stroke', 'currentColor');
+        background.setAttribute('stroke-width', '3');
+        background.setAttribute('fill', 'none');
+        background.setAttribute('opacity', '0.2');
+        svg.appendChild(background);
+
+        const arc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        arc.setAttribute('cx', '20');
+        arc.setAttribute('cy', '20');
+        arc.setAttribute('r', '18');
+        arc.setAttribute('stroke', 'currentColor');
+        arc.setAttribute('stroke-width', '3');
+        arc.setAttribute('fill', 'none');
+        arc.setAttribute('stroke-dasharray', '80');
+        arc.setAttribute('stroke-dashoffset', '60');
+        arc.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(arc);
+
+        return svg;
     }
 
     /**
      * 성공 아이콘
      */
-    private getSuccessIcon(): string {
-        return `
-            <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" fill="none"/>
-                <path d="M12 20L17 25L28 14" stroke="currentColor" stroke-width="3" 
-                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </svg>
-        `;
+    private getSuccessIcon(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '40');
+        svg.setAttribute('height', '40');
+        svg.setAttribute('viewBox', '0 0 40 40');
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '20');
+        circle.setAttribute('cy', '20');
+        circle.setAttribute('r', '18');
+        circle.setAttribute('stroke', 'currentColor');
+        circle.setAttribute('stroke-width', '3');
+        circle.setAttribute('fill', 'none');
+        svg.appendChild(circle);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M12 20L17 25L28 14');
+        path.setAttribute('stroke', 'currentColor');
+        path.setAttribute('stroke-width', '3');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('fill', 'none');
+        svg.appendChild(path);
+
+        return svg;
     }
 
     /**
      * 에러 아이콘
      */
-    private getErrorIcon(): string {
-        return `
-            <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="3" fill="none"/>
-                <path d="M14 14L26 26M26 14L14 26" stroke="currentColor" stroke-width="3" 
-                      stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        `;
+    private getErrorIcon(): SVGElement {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '40');
+        svg.setAttribute('height', '40');
+        svg.setAttribute('viewBox', '0 0 40 40');
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '20');
+        circle.setAttribute('cy', '20');
+        circle.setAttribute('r', '18');
+        circle.setAttribute('stroke', 'currentColor');
+        circle.setAttribute('stroke-width', '3');
+        circle.setAttribute('fill', 'none');
+        svg.appendChild(circle);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M14 14L26 26M26 14L14 26');
+        path.setAttribute('stroke', 'currentColor');
+        path.setAttribute('stroke-width', '3');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('fill', 'none');
+        svg.appendChild(path);
+
+        return svg;
     }
 
     /**

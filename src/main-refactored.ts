@@ -1,4 +1,4 @@
-import { Plugin, App, Notice, MarkdownView } from 'obsidian';
+import { Plugin, App, Notice, MarkdownView, TFile } from 'obsidian';
 import { DependencyContainer, ServiceTokens } from './architecture/DependencyContainer';
 import { PluginLifecycleManager, LifecyclePhase, InitializationTask } from './architecture/PluginLifecycleManager';
 import { ErrorBoundary } from './architecture/ErrorBoundary';
@@ -18,6 +18,7 @@ import { TextFormatter } from './core/transcription/TextFormatter';
 import { FilePickerModal } from './ui/modals/FilePickerModal';
 import { FormatOptionsModal } from './ui/formatting/FormatOptions';
 import { DEFAULT_SETTINGS } from './domain/models/Settings';
+import { assertTFile } from './utils/fs/typeGuards';
 
 /**
  * 리팩토링된 Speech to Text 플러그인
@@ -48,7 +49,8 @@ export default class SpeechToTextPlugin extends Plugin {
      * 플러그인 로드
      */
     async onload() {
-        console.log('Loading Speech-to-Text plugin (Refactored)');
+        this.logger = new Logger('SpeechToText:Refactored');
+        this.logger.info('Loading Speech-to-Text plugin (Refactored)');
         
         try {
             // 아키텍처 컴포넌트 초기화
@@ -60,7 +62,7 @@ export default class SpeechToTextPlugin extends Plugin {
             // 플러그인 초기화 실행
             await this.lifecycleManager.initialize();
             
-            console.log('Speech-to-Text plugin loaded successfully');
+            this.logger.info('Speech-to-Text plugin loaded successfully');
             new Notice('Speech-to-Text plugin loaded successfully');
         } catch (error) {
             console.error('Failed to load Speech-to-Text plugin:', error);
@@ -75,7 +77,7 @@ export default class SpeechToTextPlugin extends Plugin {
      * 플러그인 언로드
      */
     async onunload() {
-        console.log('Unloading Speech-to-Text plugin');
+        this.logger?.info('Unloading Speech-to-Text plugin');
         
         if (this.lifecycleManager) {
             await this.lifecycleManager.shutdown();
@@ -85,7 +87,7 @@ export default class SpeechToTextPlugin extends Plugin {
             this.container.dispose();
         }
         
-        console.log('Speech-to-Text plugin unloaded');
+        this.logger?.info('Speech-to-Text plugin unloaded');
     }
 
     /**
@@ -396,7 +398,8 @@ export default class SpeechToTextPlugin extends Plugin {
     /**
      * 파일 변환
      */
-    private async transcribeFile(file: any): Promise<void> {
+    private async transcribeFile(file: TFile): Promise<void> {
+        assertTFile(file, 'SpeechToTextPluginRefactored.transcribeFile');
         if (!this.settings.apiKey) {
             new Notice('Please configure your API key in settings');
             return;
@@ -510,7 +513,7 @@ export default class SpeechToTextPlugin extends Plugin {
      * 최소 기능 모드로 폴백
      */
     private async fallbackToMinimalMode(): Promise<void> {
-        console.log('Falling back to minimal mode');
+        this.logger?.warn('Falling back to minimal mode');
         
         // 최소한의 명령어만 등록
         this.addCommand({

@@ -212,8 +212,8 @@ export class StatusBarManager implements IDisposable {
      * StatusBar 표시
      */
     public show(): void {
-        if (this.statusBarItem && 'style' in this.statusBarItem) {
-            (this.statusBarItem as HTMLElement).style.display = '';
+        if (this.statusBarItem) {
+            (this.statusBarItem as HTMLElement).classList.remove('sn-hidden');
         }
     }
 
@@ -221,8 +221,8 @@ export class StatusBarManager implements IDisposable {
      * StatusBar 숨기기
      */
     public hide(): void {
-        if (this.statusBarItem && 'style' in this.statusBarItem) {
-            (this.statusBarItem as HTMLElement).style.display = 'none';
+        if (this.statusBarItem) {
+            (this.statusBarItem as HTMLElement).classList.add('sn-hidden');
         }
     }
 
