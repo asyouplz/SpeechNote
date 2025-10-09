@@ -3,6 +3,38 @@
 /* Import settings styles */
 @import url('./src/ui/settings/settings.css');
 
+/* Utility Helpers */
+.sn-hidden {
+    display: none !important;
+}
+
+.sn-flex {
+    display: flex !important;
+}
+
+.sn-block {
+    display: block !important;
+}
+
+.sn-fade {
+    transition: opacity 0.3s ease;
+}
+
+.sn-fade-hidden {
+    opacity: 0 !important;
+}
+
+.sn-fade-visible {
+    opacity: 1 !important;
+}
+
+.sn-info-box {
+    margin: 10px 0;
+    padding: 10px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+}
+
 /* File Picker Modal */
 .speech-to-text-file-list {
     max-height: 400px;

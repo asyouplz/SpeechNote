@@ -14,8 +14,12 @@ export class SimpleSettingsTab extends PluginSettingTab {
 
     display(): void {
         const { containerEl } = this;
-        
-        console.log('=== SimpleSettingsTab display() called ===');
+        if (!containerEl) {
+            this.debug('SimpleSettingsTab display called without container element');
+            return;
+        }
+
+        this.debug('=== SimpleSettingsTab display() called ===');
         containerEl.empty();
         
         // 제목
@@ -25,32 +29,32 @@ export class SimpleSettingsTab extends PluginSettingTab {
         containerEl.createEl('h3', { text: 'API Configuration' });
         
         try {
-            console.log('Creating provider dropdown...');
+            this.debug('Creating provider dropdown...');
             
             // Provider 선택
             new Setting(containerEl)
                 .setName('Transcription Provider')
                 .setDesc('Select the speech-to-text provider')
                 .addDropdown(dropdown => {
-                    console.log('Adding options to dropdown...');
+                    this.debug('Adding options to dropdown...');
                     dropdown
                         .addOption('auto', 'Auto (Intelligent Selection)')
                         .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
-                            console.log('Provider changed to:', value);
+                            this.debug('Provider changed to:', value);
                             this.plugin.settings.provider = value as 'auto' | 'whisper' | 'deepgram';
                             await this.plugin.saveSettings();
                             // UI 새로고침
                             this.display();
                         });
-                    console.log('Dropdown created successfully');
+                    this.debug('Dropdown created successfully');
                 });
                 
             // 선택된 Provider에 따라 API 키 표시
             const provider = this.plugin.settings.provider || 'auto';
-            console.log('Current provider:', provider);
+            this.debug('Current provider:', provider);
             
             // Auto 모드일 때는 양쪽 API 키 모두 표시
             if (provider === 'auto' || provider === 'whisper') {
@@ -148,14 +152,20 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 cls: 'debug-info'
             });
             
-            console.log('=== SimpleSettingsTab rendered successfully ===');
-            
+            this.debug('=== SimpleSettingsTab rendered successfully ===');
+
         } catch (error) {
             console.error('Error in SimpleSettingsTab:', error);
             containerEl.createEl('p', { 
                 text: `Error: ${error}`,
                 cls: 'mod-warning'
             });
+        }
+    }
+
+    private debug(...args: unknown[]): void {
+        if (this.plugin.settings?.debugMode) {
+            console.debug('[SimpleSettingsTab]', ...args);
         }
     }
 }

@@ -321,20 +321,20 @@ export class ProgressBar {
             this.progressFill.style.width = '';
             
             if (this.percentageElement) {
-                this.percentageElement.style.display = 'none';
+                this.percentageElement.classList.add('sn-hidden');
             }
             if (this.timeRemainingElement) {
-                this.timeRemainingElement.style.display = 'none';
+                this.timeRemainingElement.classList.add('sn-hidden');
             }
         } else {
             this.progressFill.classList.remove('progress-bar__fill--indeterminate');
             this.updateProgress(this.currentValue);
             
             if (this.percentageElement) {
-                this.percentageElement.style.display = '';
+                this.percentageElement.classList.remove('sn-hidden');
             }
             if (this.timeRemainingElement) {
-                this.timeRemainingElement.style.display = '';
+                this.timeRemainingElement.classList.remove('sn-hidden');
             }
         }
     }

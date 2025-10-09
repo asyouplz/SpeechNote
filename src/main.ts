@@ -16,6 +16,7 @@ import { EditorService } from './application/EditorService';
 import { TextInsertionHandler } from './application/TextInsertionHandler';
 import { FormatOptionsModal } from './ui/formatting/FormatOptions';
 import { SettingsTab } from './ui/settings/SettingsTab';
+import { assertTFile } from './utils/fs/typeGuards';
 // import { SimpleSettingsTab } from './ui/settings/SimpleSettingsTab';
 
 export default class SpeechToTextPlugin extends Plugin {
@@ -31,7 +32,8 @@ export default class SpeechToTextPlugin extends Plugin {
     private errorHandler!: ErrorHandler;
 
     async onload() {
-        console.log('Loading Speech-to-Text plugin');
+        this.logger = new Logger('SpeechToText');
+        this.logger.info('Loading Speech-to-Text plugin');
         
         try {
             // Initialize services
@@ -45,7 +47,7 @@ export default class SpeechToTextPlugin extends Plugin {
             
             // Add settings tab
             this.addSettingTab(new SettingsTab(this.app, this));
-            console.log('SettingsTab added');
+            this.logger.debug('SettingsTab added');
             
             // Register event handlers
             this.registerEventHandlers();
@@ -63,7 +65,7 @@ export default class SpeechToTextPlugin extends Plugin {
     }
 
     onunload() {
-        console.log('Unloading Speech-to-Text plugin');
+        this.logger?.info('Unloading Speech-to-Text plugin');
         
         // Clean up resources
         this.cleanupEventHandlers();
@@ -486,7 +488,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 }
             });
             
-            console.log('Status bar item created successfully');
+            this.logger?.debug('Status bar item created successfully');
         } catch (error) {
             console.error('Error creating status bar item:', error);
             // Continue without status bar - non-critical feature
@@ -514,6 +516,7 @@ export default class SpeechToTextPlugin extends Plugin {
     }
 
     private async transcribeFile(file: TFile) {
+        assertTFile(file, 'SpeechToTextPlugin.transcribeFile');
         try {
             // Check if appropriate API key is configured based on provider
             const provider = this.settings.provider || 'whisper';

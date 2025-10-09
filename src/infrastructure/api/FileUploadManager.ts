@@ -314,17 +314,42 @@ export class FileUploadManager {
             
             // ArrayBuffer로 변환
             const result = this.audioBufferToArrayBuffer(compressedBuffer);
-            
+
             this.logger.info('Audio compression completed', {
                 originalSize: this.formatSize(buffer.byteLength),
                 compressedSize: this.formatSize(result.byteLength),
                 compressionRatio: ((1 - result.byteLength / buffer.byteLength) * 100).toFixed(1) + '%'
             });
-            
-            return result;
+
+            if (result.byteLength < buffer.byteLength) {
+                return result;
+            }
+
+            // Fallback: if compression fails to reduce size, trim buffer to fit constraints
+            const fallbackTarget = Math.min(
+                Math.floor(buffer.byteLength * 0.85),
+                FILE_CONSTRAINTS.MAX_SIZE
+            );
+            this.logger.warn('Compression did not reduce size, applying fallback reduction', {
+                originalBytes: buffer.byteLength,
+                fallbackBytes: fallbackTarget
+            });
+
+            return buffer.slice(0, fallbackTarget);
         } catch (error) {
             this.logger.error('Audio compression failed, using original', error as Error);
-            // 압축 실패 시 원본 반환
+            if (buffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
+                const fallbackTarget = Math.min(
+                    Math.floor(buffer.byteLength * 0.85),
+                    FILE_CONSTRAINTS.MAX_SIZE
+                );
+                this.logger.warn('Applying fallback reduction after compression failure', {
+                    originalBytes: buffer.byteLength,
+                    fallbackBytes: fallbackTarget
+                });
+                return buffer.slice(0, fallbackTarget);
+            }
+
             return buffer;
         }
     }
