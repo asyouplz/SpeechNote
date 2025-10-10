@@ -143,3 +143,6 @@ docs/
 !AGENTS.ko.md
 !CODE_OF_CONDUCT.md
 
+# Requirement documents
+requirment*.md
+
