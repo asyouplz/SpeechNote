@@ -408,12 +408,10 @@ export class ProviderSettings {
         const chartContent = chartEl.createDiv({ cls: 'chart-content' });
         const bars = chartContent.createDiv({ cls: 'chart-bars' });
 
-        const whisperBar = bars.createDiv({ cls: 'chart-bar whisper' });
-        whisperBar.style.height = '80%';
+        const whisperBar = bars.createDiv({ cls: 'chart-bar chart-bar--whisper' });
         whisperBar.createEl('span', { cls: 'bar-label', text: 'Whisper' });
 
-        const deepgramBar = bars.createDiv({ cls: 'chart-bar deepgram' });
-        deepgramBar.style.height = '95%';
+        const deepgramBar = bars.createDiv({ cls: 'chart-bar chart-bar--deepgram' });
         deepgramBar.createEl('span', { cls: 'bar-label', text: 'Deepgram' });
 
         const legend = chartContent.createDiv({ cls: 'chart-legend' });

@@ -930,14 +930,14 @@ export class AdvancedSettingsPanel {
             noticeEl.appendChild(message);
 
             const buttonRow = document.createElement('div');
-            buttonRow.style.marginTop = '10px';
+            buttonRow.className = 'notice-action-row';
 
             const resetBtn = document.createElement('button');
             resetBtn.className = 'mod-cta';
             resetBtn.textContent = 'Reset';
 
             const cancelBtn = document.createElement('button');
-            cancelBtn.style.marginLeft = '10px';
+            cancelBtn.classList.add('notice-action-button');
             cancelBtn.textContent = 'Cancel';
 
             buttonRow.appendChild(resetBtn);

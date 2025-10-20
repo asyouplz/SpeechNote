@@ -139,8 +139,7 @@ export class PulseLoader {
         // 펄스 요소들
         for (let i = 0; i < 3; i++) {
             const pulse = document.createElement('div');
-            pulse.className = 'pulse-dot';
-            pulse.style.animationDelay = `${i * 0.15}s`;
+            pulse.className = `pulse-dot pulse-dot--${i + 1}`;
             this.element.appendChild(pulse);
         }
         
@@ -193,17 +192,25 @@ export class SkeletonLoader {
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', '콘텐츠를 불러오는 중');
         
-        for (let i = 0; i < (this.options.lines || 3); i++) {
+        const lineCount = this.options.lines ?? 3;
+        const heightModifier = this.getLineHeightModifier(this.options.lineHeight);
+        const spacingModifier = this.getSpacingModifier(this.options.spacing);
+
+        if (heightModifier) {
+            this.element.classList.add(heightModifier);
+        }
+        if (spacingModifier) {
+            this.element.classList.add(spacingModifier);
+        }
+
+        for (let i = 0; i < lineCount; i++) {
             const line = document.createElement('div');
-            line.className = `skeleton-line ${this.options.animated ? 'skeleton-animated' : ''}`;
-            line.style.height = this.options.lineHeight || '20px';
-            line.style.marginBottom = this.options.spacing || '10px';
-            
-            // 마지막 줄은 짧게
-            if (i === (this.options.lines || 3) - 1) {
-                line.style.width = '70%';
+            const classes = ['skeleton-line'];
+            if (this.options.animated !== false) {
+                classes.push('skeleton-animated');
             }
-            
+            line.className = classes.join(' ');
+
             this.element.appendChild(line);
         }
         
@@ -213,6 +220,59 @@ export class SkeletonLoader {
     destroy() {
         this.element?.remove();
         this.element = null;
+    }
+
+    private getLineHeightModifier(lineHeight?: string): string {
+        const value = this.normalizeToken(lineHeight);
+        switch (value) {
+            case 'sm':
+            case 'small':
+            case 'compact':
+            case '12px':
+            case '14px':
+            case '0.75rem':
+            case '0.875rem':
+                return 'loading-skeleton--height-sm';
+            case 'lg':
+            case 'large':
+            case 'comfortable':
+            case '24px':
+            case '28px':
+            case '1.5rem':
+                return 'loading-skeleton--height-lg';
+            default:
+                return 'loading-skeleton--height-md';
+        }
+    }
+
+    private getSpacingModifier(spacing?: string): string {
+        const value = this.normalizeToken(spacing);
+        switch (value) {
+            case 'none':
+            case '0':
+            case '0px':
+            case '0rem':
+                return 'loading-skeleton--spacing-none';
+            case 'sm':
+            case 'small':
+            case 'compact':
+            case '6px':
+            case '0.375rem':
+                return 'loading-skeleton--spacing-sm';
+            case 'lg':
+            case 'large':
+            case 'comfortable':
+            case '16px':
+            case '1rem':
+                return 'loading-skeleton--spacing-lg';
+            default:
+                return 'loading-skeleton--spacing-md';
+        }
+    }
+
+    private normalizeToken(value?: string): string | undefined {
+        if (!value) return undefined;
+        return value.trim().toLowerCase();
     }
 }
 
