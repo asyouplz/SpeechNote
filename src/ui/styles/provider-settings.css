@@ -460,6 +460,60 @@
     background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
 }
 
+/* Comparison Chart */
+.comparison-chart {
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+}
+
+.chart-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    height: 160px;
+}
+
+.chart-bar {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    border-radius: 8px 8px 0 0;
+    height: 100%;
+    transition: transform 0.2s ease;
+}
+
+.chart-bar--whisper {
+    height: 80%;
+    background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.chart-bar--deepgram {
+    height: 95%;
+    background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
+}
+
+.chart-bar .bar-label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-on-accent, #ffffff);
+}
+
+.chart-legend {
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
 /* Split Display (A/B Testing) */
 .split-display {
     margin-top: 15px;
@@ -511,6 +565,26 @@
     padding: 15px;
     background: var(--background-primary-alt);
     border-radius: 6px;
+}
+
+.notice-action-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.notice-action-button {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    background: var(--background-primary);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.notice-action-button:hover {
+    background: var(--background-modifier-hover);
 }
 
 /* === Metrics Section === */

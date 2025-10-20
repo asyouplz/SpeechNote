@@ -93,6 +93,18 @@
     animation: pulse 1.5s ease-in-out infinite;
 }
 
+.pulse-dot--1 {
+    animation-delay: 0s;
+}
+
+.pulse-dot--2 {
+    animation-delay: 0.15s;
+}
+
+.pulse-dot--3 {
+    animation-delay: 0.3s;
+}
+
 @keyframes pulse {
     0%, 80%, 100% {
         opacity: 0.3;
@@ -123,6 +135,38 @@
 
 .skeleton-animated {
     animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.loading-skeleton .skeleton-line:last-child {
+    width: 70%;
+}
+
+.loading-skeleton--height-sm .skeleton-line {
+    height: 14px;
+}
+
+.loading-skeleton--height-md .skeleton-line {
+    height: 20px;
+}
+
+.loading-skeleton--height-lg .skeleton-line {
+    height: 28px;
+}
+
+.loading-skeleton--spacing-none .skeleton-line:not(:last-child) {
+    margin-bottom: 0;
+}
+
+.loading-skeleton--spacing-sm .skeleton-line:not(:last-child) {
+    margin-bottom: 6px;
+}
+
+.loading-skeleton--spacing-md .skeleton-line:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.loading-skeleton--spacing-lg .skeleton-line:not(:last-child) {
+    margin-bottom: 16px;
 }
 
 @keyframes skeleton-loading {
