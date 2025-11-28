@@ -12,7 +12,7 @@ import { DeepgramServiceRefactored } from './DeepgramServiceRefactored';
 // Provider-specific constants
 const DEEPGRAM_CONSTANTS = {
     PROVIDER_NAME: 'Deepgram',
-    DEFAULT_MODEL: 'nova-2',
+    DEFAULT_MODEL: 'nova-3',
     MAX_FILE_SIZE: 2 * 1024 * 1024 * 1024, // 2GB
     DEFAULT_TIMEOUT: 30000,
     DEFAULT_CONCURRENCY: 5,
@@ -42,6 +42,7 @@ const DEEPGRAM_FEATURES = [
 
 // Model tiers with pricing
 const DEEPGRAM_MODELS = {
+    'nova-3': { tier: 'nova-3', costPerMinute: 0.0043 },
     'nova-2': { tier: 'nova-2', costPerMinute: 0.0043 },
     'nova': { tier: 'nova-2', costPerMinute: 0.0043 },
     'enhanced': { tier: 'enhanced', costPerMinute: 0.0145 },
@@ -61,7 +62,7 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
         config?: Partial<ProviderConfig>
     ) {
         super(DEEPGRAM_CONSTANTS.PROVIDER_NAME, logger, config);
-        
+
         this.deepgramService = new DeepgramServiceRefactored({
             apiKey: config?.apiKey ?? apiKey,
             logger,
@@ -111,7 +112,7 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
 
             // Parse and return response
             const result = this.deepgramService.parseResponse(response);
-            
+
             // Enhance with processing time
             if (result.metadata) {
                 result.metadata.processingTime = this.getElapsedTime();
@@ -166,7 +167,7 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
     async isAvailable(): Promise<boolean> {
         try {
             const stats = this.deepgramService.getStats();
-            
+
             // Check if circuit breaker is open
             if (stats.circuitBreaker.state === 'OPEN') {
                 return false;
@@ -180,11 +181,11 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
             // Perform test transcription
             const testAudio = new ArrayBuffer(1024);
             await this.deepgramService.transcribe(testAudio);
-            
+
             return true;
         } catch (error) {
             const message = (error as Error).message.toLowerCase();
-            
+
             // Temporary issues mean service is unavailable
             const temporaryIssues = ['circuit', 'unavailable', 'timeout', 'rate limit'];
             return !temporaryIssues.some(issue => message.includes(issue));
@@ -220,7 +221,7 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
         const modelKey = (model ?? this.config.model ?? DEEPGRAM_CONSTANTS.DEFAULT_MODEL) as keyof typeof DEEPGRAM_MODELS;
         const modelConfig = DEEPGRAM_MODELS[modelKey] ?? DEEPGRAM_MODELS['nova-2'];
         const minutes = durationSeconds / 60;
-        
+
         return minutes * modelConfig.costPerMinute;
     }
 
@@ -255,7 +256,7 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
     /**
      * Map generic model name to Deepgram tier
      */
-    private mapModelToTier(model?: string): 'nova-2' | 'enhanced' | 'base' {
+    private mapModelToTier(model?: string): 'nova-3' | 'nova-2' | 'enhanced' | 'base' {
         if (!model) {
             return DEEPGRAM_CONSTANTS.DEFAULT_MODEL;
         }

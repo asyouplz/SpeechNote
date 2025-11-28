@@ -18,7 +18,7 @@ const DEEPGRAM_CONFIG = {
     API_ENDPOINT: 'https://api.deepgram.com/v1/listen',
     MAX_FILE_SIZE: 2 * 1024 * 1024 * 1024, // 2GB
     DEFAULT_TIMEOUT: 120000, // 2 minutes base; overall cap handled by outer service
-    DEFAULT_MODEL: 'nova-2',
+    DEFAULT_MODEL: 'nova-3',
     WORDS_PER_SEGMENT: 10
 } as const;
 
@@ -145,7 +145,7 @@ export class DeepgramServiceRefactored {
     async validateApiKey(apiKey: string): Promise<boolean> {
         const testAudio = new ArrayBuffer(1024);
         const originalKey = this.config.apiKey;
-        
+
         try {
             this.config.apiKey = apiKey;
             await this.performTranscription(testAudio);
@@ -273,7 +273,13 @@ export class DeepgramServiceRefactored {
         const isNovaFamily = userTier.includes('nova');
 
         // Required parameters
-        if (isNovaFamily || (language && language.startsWith('ko'))) {
+        // Required parameters
+        // Nova-3 and newer models
+        if (userTier === 'nova-3') {
+            params.append('model', 'nova-3');
+        }
+        // Legacy Nova-2 handling
+        else if (isNovaFamily || (language && language.startsWith('ko'))) {
             params.append('model', '2-general');
             params.append('tier', 'nova');
         } else {
@@ -396,7 +402,7 @@ export class DeepgramServiceRefactored {
     private createSegment(words: any[], id: number): TranscriptionSegment {
         const text = words.map(w => w.word).join(' ');
         const totalConfidence = words.reduce((acc, w) => acc + w.confidence, 0);
-        
+
         return {
             id,
             start: words[0].start,
@@ -417,7 +423,7 @@ export class DeepgramServiceRefactored {
 
         const retryableMessages = ['network', 'timeout', 'econnreset', 'socket'];
         const message = error.message?.toLowerCase() ?? '';
-        
+
         return retryableMessages.some(msg => message.includes(msg));
     };
 
