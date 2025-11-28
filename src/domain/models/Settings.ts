@@ -99,7 +99,7 @@ export interface SpeechToTextSettings {
             enabled?: boolean;
             apiKey?: string;
             model?: string;
-            tier?: 'nova-2' | 'enhanced' | 'base';
+            tier?: 'nova-3' | 'nova-2' | 'enhanced' | 'base';
             features?: {
                 punctuation?: boolean;
                 smartFormat?: boolean;
