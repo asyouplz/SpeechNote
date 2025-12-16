@@ -1,4 +1,5 @@
-import { App, Plugin, WorkspaceLeaf } from 'obsidian';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { App, Plugin } from 'obsidian';
 import { DependencyContainer } from '../architecture/DependencyContainer';
 
 /**
@@ -124,7 +125,7 @@ export class TestEnvironment {
         this.container.registerSingleton('StateManager', () => ({
             getState: jest.fn().mockReturnValue({ status: 'idle' }),
             setState: jest.fn(),
-            subscribe: jest.fn().mockReturnValue(() => {}),
+            subscribe: jest.fn().mockReturnValue(() => undefined),
             reset: jest.fn()
         }));
 
@@ -176,8 +177,8 @@ export class TestHelpers {
      */
     static async waitFor(
         condition: () => boolean,
-        timeout: number = 5000,
-        interval: number = 100
+        timeout = 5000,
+        interval = 100
     ): Promise<void> {
         const startTime = Date.now();
         
@@ -193,16 +194,16 @@ export class TestHelpers {
      * 이벤트 발생 대기
      */
     static waitForEvent(
-        eventManager: any,
+        eventManager: { once: (event: string, handler: (data: unknown) => void) => void },
         eventName: string,
-        timeout: number = 5000
-    ): Promise<any> {
+        timeout = 5000
+    ): Promise<unknown> {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
                 reject(new Error(`Timeout waiting for event: ${eventName}`));
             }, timeout);
 
-            const handler = (data: any) => {
+            const handler = (data: unknown) => {
                 clearTimeout(timer);
                 resolve(data);
             };
@@ -215,16 +216,16 @@ export class TestHelpers {
      * 에러 발생 확인
      */
     static async expectError(
-        fn: () => Promise<any>,
+        fn: () => Promise<unknown>,
         errorMessage?: string
     ): Promise<void> {
         let errorThrown = false;
         
         try {
             await fn();
-        } catch (error: any) {
+        } catch (error) {
             errorThrown = true;
-            if (errorMessage && !error.message.includes(errorMessage)) {
+            if (error instanceof Error && errorMessage && !error.message.includes(errorMessage)) {
                 throw new Error(`Expected error message to include "${errorMessage}", but got: ${error.message}`);
             }
         }
@@ -238,7 +239,7 @@ export class TestHelpers {
      * 상태 변경 시뮬레이션
      */
     static simulateStateChange(
-        stateManager: any,
+        stateManager: { setState: (value: Record<string, unknown>) => void },
         states: Array<{ status: string; delay?: number }>
     ): Promise<void> {
         return states.reduce(async (promise, state) => {

@@ -52,12 +52,20 @@ export type PromiseType<T> = T extends Promise<infer U> ? U : never;
 /**
  * 함수 반환 타입 추출
  */
-export type ReturnTypeOf<T extends (...args: any) => any> = T extends (...args: any) => infer R ? R : never;
+export type ReturnTypeOf<T extends (...args: unknown[]) => unknown> = T extends (
+    ...args: unknown[]
+) => infer R
+    ? R
+    : never;
 
 /**
  * 함수 매개변수 타입 추출
  */
-export type ParametersOf<T extends (...args: any) => any> = T extends (...args: infer P) => any ? P : never;
+export type ParametersOf<T extends (...args: unknown[]) => unknown> = T extends (
+    ...args: infer P
+) => unknown
+    ? P
+    : never;
 
 /**
  * 객체의 값 타입들
@@ -122,17 +130,17 @@ export type Intersection<T, U> = T extends U ? T : never;
 /**
  * 함수 타입인지 확인
  */
-export type IsFunction<T> = T extends (...args: any[]) => any ? true : false;
+export type IsFunction<T> = T extends (...args: unknown[]) => unknown ? true : false;
 
 /**
  * 배열 타입인지 확인
  */
-export type IsArray<T> = T extends any[] ? true : false;
+export type IsArray<T> = T extends unknown[] ? true : false;
 
 /**
  * 객체 타입인지 확인
  */
-export type IsObject<T> = T extends object ? (T extends any[] ? false : true) : false;
+export type IsObject<T> = T extends object ? (T extends unknown[] ? false : true) : false;
 
 /**
  * 타입 병합
@@ -166,7 +174,7 @@ export type PathValue<T, P extends Path<T>> = P extends `${infer K}.${infer Rest
 /**
  * 타입 별칭
  */
-export type Alias<T> = T & {};
+export type Alias<T> = T;
 
 /**
  * 조건부 타입
@@ -176,7 +184,7 @@ export type If<C extends boolean, T, F> = C extends true ? T : F;
 /**
  * 타입 스위치
  */
-export type Switch<T extends string | number, Cases extends Record<T, any>, Default = never> = 
+export type Switch<T extends string | number, Cases extends Record<T, unknown>, Default = never> = 
     T extends keyof Cases ? Cases[T] : Default;
 
 /**

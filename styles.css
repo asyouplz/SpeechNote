@@ -281,3 +281,45 @@
     background-color: var(--background-modifier-error);
     color: var(--text-error);
 }
+
+/* Progress components - CSS variables */
+.progress-bar__fill,
+.toast__progress-fill,
+.notification__progress-fill,
+.progress-fill {
+    width: var(--sn-progress-width, 0%);
+    transition: width 0.3s ease-in-out;
+}
+
+.progress-bar__fill--indeterminate {
+    width: 100%;
+}
+
+.bar-chart__bar {
+    height: var(--sn-bar-height, 0%);
+}
+
+.weight-segment,
+.spending-progress,
+.split-a,
+.split-b {
+    width: var(--sn-width-pct, 0%);
+}
+
+.circular-progress,
+.semi-circular-progress {
+    width: var(--cp-size, 100px);
+}
+
+.circular-progress {
+    height: var(--cp-size, 100px);
+}
+
+.semi-circular-progress {
+    height: calc(var(--cp-size, 100px) / 2);
+}
+
+.circular-progress__circle,
+.semi-circular-progress__circle {
+    transition: stroke-dashoffset var(--cp-animation-duration, 500ms) ease-in-out;
+}

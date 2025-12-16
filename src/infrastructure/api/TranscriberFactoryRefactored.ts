@@ -5,7 +5,8 @@ import {
     TranscriptionProviderConfig,
     SelectionStrategy,
     ProviderMetrics,
-    ProviderUnavailableError
+    ProviderUnavailableError,
+    ABTestConfig
 } from './providers/ITranscriber';
 import { WhisperService } from './WhisperService';
 import { WhisperAdapter } from './providers/whisper/WhisperAdapter';
@@ -23,7 +24,7 @@ export class TranscriberFactoryRefactored {
     protected config: TranscriptionProviderConfig;
     protected readonly metricsTracker: MetricsTracker;
     protected readonly selector: ProviderSelector;
-    
+
     constructor(
         protected readonly settingsManager: ISettingsManager,
         protected readonly logger: ILogger
@@ -63,7 +64,7 @@ export class TranscriberFactoryRefactored {
         return this.selector.select(
             this.providers,
             SelectionStrategy.AB_TEST,
-            { 
+            {
                 userId,
                 abTestSplit: this.config.abTest.trafficSplit
             }
@@ -81,7 +82,7 @@ export class TranscriberFactoryRefactored {
         error?: Error
     ): void {
         this.metricsTracker.recordRequest(provider, success, latency, cost, error);
-        
+
         if (this.shouldSendMetrics()) {
             this.sendMetricsToEndpoint(provider);
         }
@@ -166,19 +167,19 @@ export class TranscriberFactoryRefactored {
      * Load configuration from settings
      */
     protected loadConfiguration(): TranscriptionProviderConfig {
-        const settings = this.settingsManager.get('transcription') || {};
-        
+        const settings = (this.settingsManager.get('transcription') as TranscriptionProviderConfig | any) || {};
+
         return {
             defaultProvider: settings.defaultProvider || 'whisper',
             autoSelect: settings.autoSelect || false,
-            selectionStrategy: settings.selectionStrategy || SelectionStrategy.MANUAL,
+            selectionStrategy: (settings.selectionStrategy as SelectionStrategy) || SelectionStrategy.MANUAL,
             fallbackEnabled: settings.fallbackEnabled !== false,
-            
+
             whisper: this.loadProviderConfig('whisper', settings),
             deepgram: this.loadProviderConfig('deepgram', settings),
-            
-            abTest: settings.abTest,
-            monitoring: settings.monitoring
+
+            abTest: settings.abTest as ABTestConfig | undefined,
+            monitoring: settings.monitoring as TranscriptionProviderConfig['monitoring'] | undefined
         };
     }
 
@@ -188,7 +189,7 @@ export class TranscriberFactoryRefactored {
     private loadProviderConfig(provider: TranscriptionProvider, settings: any) {
         const providerSettings = settings[provider] || {};
         const defaults = this.getProviderDefaults(provider);
-        
+
         return {
             enabled: providerSettings.enabled ?? defaults.enabled,
             apiKey: providerSettings.apiKey || settings.apiKey || '',
@@ -212,7 +213,7 @@ export class TranscriberFactoryRefactored {
             },
             deepgram: {
                 enabled: false,
-                model: 'nova-2',
+                model: 'nova-3',
                 maxConcurrency: 5,
                 timeout: 30000,
                 rateLimit: {
@@ -221,7 +222,7 @@ export class TranscriberFactoryRefactored {
                 }
             }
         };
-        
+
         return defaults[provider];
     }
 
@@ -231,7 +232,7 @@ export class TranscriberFactoryRefactored {
     private initializeProviders(): void {
         this.initializeWhisperProvider();
         this.initializeDeepgramProvider();
-        
+
         if (this.providers.size === 0) {
             this.logger.warn('No transcription providers initialized');
         }
@@ -242,7 +243,7 @@ export class TranscriberFactoryRefactored {
      */
     private initializeWhisperProvider(): void {
         const config = this.config.whisper;
-        
+
         if (!config?.enabled || !config.apiKey) {
             this.logger.debug('Whisper provider not initialized: disabled or missing API key');
             return;
@@ -251,7 +252,7 @@ export class TranscriberFactoryRefactored {
         try {
             const whisperService = new WhisperService(config.apiKey, this.logger);
             const whisperAdapter = new WhisperAdapter(whisperService, this.logger, config);
-            
+
             this.providers.set('whisper', whisperAdapter);
             this.logger.info('Whisper provider initialized');
         } catch (error) {
@@ -264,7 +265,7 @@ export class TranscriberFactoryRefactored {
      */
     private initializeDeepgramProvider(): void {
         const config = this.config.deepgram;
-        
+
         if (!config?.enabled || !config.apiKey) {
             this.logger.debug('Deepgram provider not initialized: disabled or missing API key');
             return;
@@ -276,7 +277,7 @@ export class TranscriberFactoryRefactored {
                 this.logger,
                 config
             );
-            
+
             this.providers.set('deepgram', deepgramAdapter);
             this.logger.info('Deepgram provider initialized');
         } catch (error) {
@@ -289,16 +290,16 @@ export class TranscriberFactoryRefactored {
      */
     private getSpecificProvider(preference: TranscriptionProvider): ITranscriber {
         const provider = this.providers.get(preference);
-        
+
         if (provider && provider.getConfig().enabled) {
             return provider;
         }
-        
+
         if (this.config.fallbackEnabled) {
             this.logger.warn(`Preferred provider ${preference} not available, falling back`);
             return this.getFallbackProvider(preference);
         }
-        
+
         throw new ProviderUnavailableError(preference);
     }
 
@@ -324,11 +325,11 @@ export class TranscriberFactoryRefactored {
      */
     private getDefaultProvider(): ITranscriber {
         const defaultProvider = this.providers.get(this.config.defaultProvider);
-        
+
         if (defaultProvider?.getConfig().enabled) {
             return defaultProvider;
         }
-        
+
         // Return first available provider
         for (const [name, provider] of this.providers) {
             if (provider.getConfig().enabled) {
@@ -336,7 +337,7 @@ export class TranscriberFactoryRefactored {
                 return provider;
             }
         }
-        
+
         throw new Error('No transcription provider available');
     }
 
@@ -349,7 +350,7 @@ export class TranscriberFactoryRefactored {
                 return provider;
             }
         }
-        
+
         throw new Error('No fallback provider available');
     }
 
@@ -381,7 +382,7 @@ export class TranscriberFactoryRefactored {
      */
     private shouldSendMetrics(): boolean {
         return Boolean(
-            this.config.monitoring?.enabled && 
+            this.config.monitoring?.enabled &&
             this.config.monitoring.metricsEndpoint
         );
     }
@@ -392,13 +393,13 @@ export class TranscriberFactoryRefactored {
     private async sendMetricsToEndpoint(provider: TranscriptionProvider): Promise<void> {
         const metrics = this.metricsTracker.getMetrics(provider);
         const stats = this.metricsTracker.getPerformanceStats(provider);
-        
+
         this.logger.debug('Sending metrics to monitoring endpoint', {
             provider,
             metrics,
             stats
         });
-        
+
         // Implementation would send to actual endpoint
         // For now, just log
     }
@@ -503,7 +504,7 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
                     deepgramConfig.model ??
                     this.settings.deepgram?.model ??
                     this.settings.deepgramModel ??
-                    'nova-2',
+                    'nova-3',
                 maxConcurrency: deepgramConfig.maxConcurrency ?? 5,
                 timeout: deepgramConfig.timeout ?? 30000,
                 rateLimit: deepgramConfig.rateLimit ?? { requests: 100, window: 60000 }

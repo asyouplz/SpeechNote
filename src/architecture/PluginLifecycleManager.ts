@@ -1,4 +1,4 @@
-import { Plugin, App, WorkspaceLeaf } from 'obsidian';
+import { Plugin, App } from 'obsidian';
 import { Logger } from '../infrastructure/logging/Logger';
 
 /**
@@ -149,7 +149,7 @@ export class PluginLifecycleManager {
     /**
      * UI 초기화 실패 처리
      */
-    private handleUIInitializationError(error: any): void {
+    private handleUIInitializationError(_error: unknown): void {
         this.logger.warn('UI initialization failed, running in degraded mode');
         // StatusBar나 SettingsTab 없이도 기본 기능은 동작하도록
         this.currentPhase = LifecyclePhase.READY;
@@ -244,9 +244,12 @@ export class PluginLifecycleManager {
 export class TaskExecutionError extends Error {
     constructor(
         public taskName: string,
-        public originalError: any
+        public originalError: unknown
     ) {
-        super(`Task ${taskName} failed: ${originalError?.message || originalError}`);
+        const originalMessage = originalError instanceof Error
+            ? originalError.message
+            : String(originalError);
+        super(`Task ${taskName} failed: ${originalMessage}`);
         this.name = 'TaskExecutionError';
     }
 }

@@ -4,7 +4,7 @@ import type { ILogger } from '../types';
 export class ErrorHandler {
     constructor(private logger: ILogger) {}
 
-    handle(error: unknown, context?: any): void {
+    handle(error: unknown, context?: Record<string, unknown>): void {
         const errorObj = error instanceof Error ? error : new Error(String(error));
         
         // Log the error

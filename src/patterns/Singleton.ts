@@ -7,14 +7,14 @@
  * Singleton 베이스 클래스
  */
 export abstract class Singleton {
-    private static instances = new Map<string, any>();
+    private static instances = new Map<string, unknown>();
     
     /**
      * 인스턴스 획득
      */
     protected static getInstance<T extends Singleton>(
-        this: new (...args: any[]) => T,
-        ...args: any[]
+        this: new (...args: unknown[]) => T,
+        ...args: unknown[]
     ): T {
         const className = this.name;
         
@@ -67,11 +67,10 @@ export function createSingleton<T>(
 /**
  * 클래스 데코레이터를 사용한 Singleton 패턴
  */
-export function SingletonDecorator<T extends { new(...args: any[]): {} }>(
-    constructor: T
-): T {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export function SingletonDecorator<T extends new (...args: any[]) => any>(constructor: T): T {
     let instance: InstanceType<T>;
-    
+
     return class extends constructor {
         constructor(...args: any[]) {
             if (instance) {
@@ -82,6 +81,7 @@ export function SingletonDecorator<T extends { new(...args: any[]): {} }>(
         }
     } as T;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * 비동기 Singleton 팩토리
@@ -113,7 +113,10 @@ export class LazySingleton<T> {
             this.instance = this.factory();
             this.isInitialized = true;
         }
-        return this.instance!;
+        if (this.instance === undefined) {
+            throw new Error('LazySingleton factory returned undefined instance');
+        }
+        return this.instance;
     }
     
     isInstantiated(): boolean {

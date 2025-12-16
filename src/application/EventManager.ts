@@ -6,7 +6,9 @@
 
 import { EventEmitter, type EventMap, type EventListener, type Unsubscribe } from '../patterns/Observer';
 import { SingletonDecorator } from '../patterns/Singleton';
-import type { ILogger } from '../types';
+import type { AppState, ILogger, ObsidianEditor, ObsidianEditorPosition, ObsidianMarkdownView } from '../types';
+import type { TFile } from 'obsidian';
+import type { InsertionOptions } from './TextInsertionHandler';
 
 /**
  * 애플리케이션 이벤트 맵 정의
@@ -14,35 +16,35 @@ import type { ILogger } from '../types';
 export interface AppEventMap extends EventMap {
     // Transcription 이벤트
     'transcription:start': { fileName: string; fileSize: number };
-    'transcription:complete': { text: string; duration: number; autoInsert?: boolean; options?: any };
+    'transcription:complete': { text: string; duration: number; autoInsert?: boolean; options?: InsertionOptions };
     'transcription:error': { error: Error; fileName?: string };
     'transcription:progress': { progress: number; message?: string };
     'transcription:cancelled': { fileName?: string };
     
     // Editor 이벤트
-    'editor:changed': { editor: any };
-    'editor:active': { view: any; editor: any };
-    'editor:text-inserted': { text: string; position?: any; options?: any };
+    'editor:changed': { editor: ObsidianEditor };
+    'editor:active': { view: ObsidianMarkdownView; editor: ObsidianEditor };
+    'editor:text-inserted': { text: string; position?: ObsidianEditorPosition; options?: Record<string, unknown> };
     'editor:text-replaced': { oldText: string; newText: string };
-    'editor:note-created': { file: any; content: string };
+    'editor:note-created': { file: TFile; content: string };
     
     // Text 처리 이벤트
-    'text:inserted': { text: string; options: any };
-    'text:preview': { text: string; options: any };
+    'text:inserted': { text: string; options: InsertionOptions };
+    'text:preview': { text: string; options: InsertionOptions };
     'text:formatted': { originalText: string; formattedText: string };
     
     // File 이벤트
-    'file:selected': { file: any };
-    'file:uploaded': { file: any; size: number };
-    'file:validated': { file: any; valid: boolean; errors?: string[] };
+    'file:selected': { file: TFile };
+    'file:uploaded': { file: TFile; size: number };
+    'file:validated': { file: TFile; valid: boolean; errors?: string[] };
     
     // Settings 이벤트
-    'settings:changed': { key: string; value: any };
-    'settings:loaded': { settings: any };
-    'settings:saved': { settings: any };
+    'settings:changed': { key: string; value: unknown };
+    'settings:loaded': { settings: Record<string, unknown> };
+    'settings:saved': { settings: Record<string, unknown> };
     
     // State 이벤트
-    'state:changed': { state: any; previousState: any };
+    'state:changed': { state: AppState; previousState: AppState };
     'state:error': { error: Error };
     
     // UI 이벤트
@@ -51,15 +53,15 @@ export interface AppEventMap extends EventMap {
     'ui:notification': { message: string; type: 'info' | 'warning' | 'error' | 'success' };
     
     // Status 이벤트
-    'status:clear': {};
+    'status:clear': Record<string, never>;
     
     // Stats 이벤트
-    'stats:cleared': {};
+    'stats:cleared': Record<string, never>;
     
     // Cache 이벤트
     'cache:hit': { key: string };
     'cache:miss': { key: string };
-    'cache:cleared': {};
+    'cache:cleared': Record<string, never>;
     
     // Network 이벤트
     'network:request-start': { url: string; method: string };
@@ -98,12 +100,14 @@ export class EventManager extends EventEmitter<AppEventMap> {
     /**
      * 이벤트 발생 (오버라이드 - 로깅 및 통계 추가)
      */
-    emit<K extends keyof AppEventMap>(event: K, data: AppEventMap[K]): void {
+    emit<K extends keyof AppEventMap>(event: K, data: AppEventMap[K]): void;
+    emit(event: string, data?: unknown): void;
+    emit(event: string, data?: unknown): void {
         // 통계 업데이트
-        this.updateStats(event);
+        this.updateStats(event as keyof AppEventMap);
         
         // 히스토리 기록
-        this.recordHistory(event, data);
+        this.recordHistory(event as keyof AppEventMap, data as AppEventMap[keyof AppEventMap]);
         
         // 디버그 로깅
         if (this.isDebugMode && this.logger) {
@@ -111,18 +115,20 @@ export class EventManager extends EventEmitter<AppEventMap> {
         }
         
         // 부모 클래스의 emit 호출
-        super.emit(event, data);
+        super.emit(event as keyof AppEventMap, data as AppEventMap[keyof AppEventMap]);
     }
     
     /**
      * 비동기 이벤트 발생 (오버라이드)
      */
-    async emitAsync<K extends keyof AppEventMap>(event: K, data: AppEventMap[K]): Promise<void> {
+    async emitAsync<K extends keyof AppEventMap>(event: K, data: AppEventMap[K]): Promise<void>;
+    async emitAsync(event: string, data?: unknown): Promise<void>;
+    async emitAsync(event: string, data?: unknown): Promise<void> {
         // 통계 업데이트
-        this.updateStats(event);
+        this.updateStats(event as keyof AppEventMap);
         
         // 히스토리 기록
-        this.recordHistory(event, data);
+        this.recordHistory(event as keyof AppEventMap, data as AppEventMap[keyof AppEventMap]);
         
         // 디버그 로깅
         if (this.isDebugMode && this.logger) {
@@ -130,7 +136,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         }
         
         // 부모 클래스의 emitAsync 호출
-        await super.emitAsync(event, data);
+        await super.emitAsync(event as keyof AppEventMap, data as AppEventMap[keyof AppEventMap]);
     }
     
     /**
@@ -139,12 +145,17 @@ export class EventManager extends EventEmitter<AppEventMap> {
     on<K extends keyof AppEventMap>(
         event: K, 
         listener: EventListener<AppEventMap[K]>
+    ): Unsubscribe;
+    on(event: string, listener: EventListener): Unsubscribe;
+    on(
+        event: string, 
+        listener: EventListener
     ): Unsubscribe {
         if (this.isDebugMode && this.logger) {
             this.logger.debug(`Listener registered for: ${String(event)}`);
         }
         
-        return super.on(event, listener);
+        return super.on(event as keyof AppEventMap, listener as EventListener<AppEventMap[keyof AppEventMap]>);
     }
     
     /**
@@ -153,12 +164,17 @@ export class EventManager extends EventEmitter<AppEventMap> {
     once<K extends keyof AppEventMap>(
         event: K, 
         listener: EventListener<AppEventMap[K]>
+    ): Unsubscribe;
+    once(event: string, listener: EventListener): Unsubscribe;
+    once(
+        event: string, 
+        listener: EventListener
     ): Unsubscribe {
         if (this.isDebugMode && this.logger) {
             this.logger.debug(`Once listener registered for: ${String(event)}`);
         }
         
-        return super.once(event, listener);
+        return super.once(event as keyof AppEventMap, listener as EventListener<AppEventMap[keyof AppEventMap]>);
     }
     
     /**
@@ -170,7 +186,9 @@ export class EventManager extends EventEmitter<AppEventMap> {
         transformer?: (data: AppEventMap[K]) => AppEventMap[K2]
     ): Unsubscribe {
         return this.on(sourceEvent, (data) => {
-            const transformedData = transformer ? transformer(data) : data as any;
+            const transformedData = transformer
+                ? transformer(data)
+                : (data as unknown as AppEventMap[K2]);
             this.emit(targetEvent, transformedData);
         });
     }
@@ -341,7 +359,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
  */
 interface EventHistoryEntry {
     event: string;
-    data?: any;
+    data?: AppEventMap[keyof AppEventMap];
     timestamp: number;
 }
 

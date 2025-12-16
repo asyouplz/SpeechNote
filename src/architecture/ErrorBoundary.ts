@@ -19,7 +19,7 @@ export interface ErrorContext {
     operation?: string;
     userId?: string;
     timestamp?: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 /**
@@ -70,12 +70,14 @@ export class ErrorBoundary {
         // API 에러 복구 전략
         this.addRecoveryStrategy({
             name: 'API Recovery',
-            canRecover: (error, context) => {
-                return error.message.includes('API') || 
-                       error.message.includes('Network') ||
-                       error.name === 'NetworkError';
+            canRecover: (error) => {
+                return (
+                    error.message.includes('API') ||
+                    error.message.includes('Network') ||
+                    error.name === 'NetworkError'
+                );
             },
-            recover: async (error, context) => {
+            recover: async (_error) => {
                 this.logger.warn('API error detected, will retry with exponential backoff');
                 // 재시도 로직은 별도 서비스에서 처리
             }
@@ -88,7 +90,7 @@ export class ErrorBoundary {
                 return context.component === 'SettingsManager' ||
                        error.message.includes('settings');
             },
-            recover: async (error, context) => {
+            recover: async (_error, _context) => {
                 this.logger.warn('Settings error detected, using default settings');
                 // 기본 설정으로 폴백
             }

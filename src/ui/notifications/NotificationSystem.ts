@@ -106,7 +106,7 @@ export class ToastNotification {
             progressBar.className = 'toast__progress';
             const progressFill = document.createElement('div');
             progressFill.className = 'toast__progress-fill';
-            progressFill.style.width = `${options.progress}%`;
+            progressFill.setAttribute('style', `--sn-progress-width:${options.progress}%`);
             progressBar.appendChild(progressFill);
             content.appendChild(progressBar);
         }
@@ -211,7 +211,7 @@ export class ToastNotification {
         
         const progressFill = toast.querySelector('.toast__progress-fill') as HTMLElement;
         if (progressFill) {
-            progressFill.style.width = `${progress}%`;
+            progressFill.setAttribute('style', `--sn-progress-width:${progress}%`);
         }
     }
     
