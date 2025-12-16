@@ -10,20 +10,20 @@
 export interface LazyLoadOptions {
     preload?: boolean;
     timeout?: number;
-    fallback?: any;
+    fallback?: unknown;
     onError?: (error: Error) => void;
-    onLoad?: (module: any) => void;
+    onLoad?: (module: unknown) => void;
 }
 
 export interface LoadingState {
     isLoading: boolean;
     error?: Error;
-    module?: any;
+    module?: unknown;
 }
 
 export class LazyLoader {
-    private static loadedModules = new Map<string, any>();
-    private static loadingPromises = new Map<string, Promise<any>>();
+    private static loadedModules = new Map<string, unknown>();
+    private static loadingPromises = new Map<string, Promise<unknown>>();
     private static preloadQueue = new Set<string>();
     private static loadingStates = new Map<string, LoadingState>();
 
@@ -36,12 +36,12 @@ export class LazyLoader {
     ): Promise<T> {
         // 이미 로드된 모듈 반환
         if (this.loadedModules.has(modulePath)) {
-            return this.loadedModules.get(modulePath);
+            return this.loadedModules.get(modulePath) as T;
         }
 
         // 현재 로딩 중인 경우 기존 Promise 반환
         if (this.loadingPromises.has(modulePath)) {
-            return this.loadingPromises.get(modulePath);
+            return this.loadingPromises.get(modulePath) as Promise<T>;
         }
 
         // 로딩 상태 업데이트
@@ -63,7 +63,7 @@ export class LazyLoader {
 
         try {
             const module = await promise;
-            this.loadedModules.set(modulePath, module);
+            this.loadedModules.set(modulePath, module as T);
             this.updateLoadingState(modulePath, { 
                 isLoading: false, 
                 module 
@@ -84,8 +84,8 @@ export class LazyLoader {
                 options.onError(error as Error);
             }
 
-            if (options.fallback) {
-                return options.fallback;
+            if (options.fallback !== undefined) {
+                return options.fallback as T;
             }
 
             throw error;
@@ -99,12 +99,13 @@ export class LazyLoader {
      */
     private static async performLoad<T>(
         modulePath: string,
-        options: LazyLoadOptions
+        _options: LazyLoadOptions
     ): Promise<T> {
         try {
             // 동적 import를 통한 모듈 로드
             const module = await this.dynamicImport(modulePath);
-            return module.default || module;
+            const resolved = (module as { default?: unknown }).default ?? module;
+            return resolved as T;
         } catch (error) {
             console.error(`Failed to load module: ${modulePath}`, error);
             throw error;
@@ -114,9 +115,9 @@ export class LazyLoader {
     /**
      * 동적 import 래퍼 (컴포넌트별 최적화)
      */
-    private static async dynamicImport(modulePath: string): Promise<any> {
+    private static async dynamicImport(modulePath: string): Promise<unknown> {
         // UI 컴포넌트 매핑
-        const moduleMap: Record<string, () => Promise<any>> = {
+        const moduleMap: Record<string, () => Promise<unknown>> = {
             // Dashboard components (낮은 우선순위)
             'StatisticsDashboard': () => import('../ui/dashboard/StatisticsDashboard'),
             
@@ -279,7 +280,7 @@ export function lazy<T>(
  * Suspense-like loading boundary
  */
 export class LoadingBoundary {
-    private loading = new Set<Promise<any>>();
+    private loading = new Set<Promise<unknown>>();
     
     async wrap<T>(promise: Promise<T>): Promise<T> {
         this.loading.add(promise);

@@ -8,6 +8,8 @@ export interface DeepgramSettings {
     enabled: boolean;
     model?: string;
     features?: DeepgramFeatures;
+    apiKey?: string;
+    diarizationConfig?: unknown;
 }
 
 export interface DeepgramFeatures {
@@ -24,7 +26,20 @@ export interface DeepgramFeatures {
 
 export interface TranscriptionSettings {
     deepgram?: DeepgramSettings;
-    [key: string]: any; // 다른 transcription 서비스를 위한 확장성
+    whisper?: {
+        enabled?: boolean;
+        apiKey?: string;
+        model?: string;
+        maxConcurrency?: number;
+        timeout?: number;
+    };
+    defaultProvider?: 'whisper' | 'deepgram';
+    autoSelect?: boolean;
+    selectionStrategy?: string;
+    fallbackEnabled?: boolean;
+    abTest?: unknown;
+    monitoring?: unknown;
+    [key: string]: unknown; // 다른 transcription 서비스를 위한 확장성
 }
 
 // UI 컴포넌트 타입
@@ -92,7 +107,7 @@ export interface ValidationResult {
 export interface DeepgramApiResponse {
     status: number;
     ok: boolean;
-    data?: any;
+    data?: unknown;
     error?: string;
 }
 
@@ -111,5 +126,5 @@ export interface PluginSettings {
     requestTimeout?: number;
     maxRetries?: number;
     monthlyBudget?: number;
-    [key: string]: any; // 기타 설정을 위한 확장성
+    [key: string]: unknown; // 기타 설정을 위한 확장성
 }

@@ -21,12 +21,13 @@ export function isError(value: unknown): value is Error {
 /**
  * Promise 타입 가드
  */
-export function isPromise<T = any>(value: unknown): value is Promise<T> {
-    return value instanceof Promise || (
-        typeof value === 'object' &&
-        value !== null &&
-        'then' in value &&
-        typeof (value as any).then === 'function'
+export function isPromise<T = unknown>(value: unknown): value is Promise<T> {
+    return (
+        value instanceof Promise ||
+        (typeof value === 'object' &&
+            value !== null &&
+            'then' in value &&
+            typeof (value as { then?: unknown }).then === 'function')
     );
 }
 
@@ -45,7 +46,12 @@ export function isWhisperResponse(value: unknown): value is WhisperResponse {
         return false;
     }
     
-    const response = value as any;
+    const response = value as {
+        text?: unknown;
+        language?: unknown;
+        duration?: unknown;
+        segments?: unknown;
+    };
     
     return (
         typeof response.text === 'string' &&
@@ -63,13 +69,20 @@ export function isWhisperOptions(value: unknown): value is WhisperOptions {
         return false;
     }
     
-    const options = value as any;
+    const options = value as {
+        model?: unknown;
+        prompt?: unknown;
+        responseFormat?: unknown;
+        temperature?: unknown;
+        language?: unknown;
+    };
     
     return (
         (options.model === undefined || typeof options.model === 'string') &&
         (options.prompt === undefined || typeof options.prompt === 'string') &&
         (options.responseFormat === undefined || 
-            ['json', 'text', 'srt', 'verbose_json', 'vtt'].includes(options.responseFormat)) &&
+            (typeof options.responseFormat === 'string' &&
+                ['json', 'text', 'srt', 'verbose_json', 'vtt'].includes(options.responseFormat))) &&
         (options.temperature === undefined || 
             (typeof options.temperature === 'number' && options.temperature >= 0 && options.temperature <= 1)) &&
         (options.language === undefined || typeof options.language === 'string')
@@ -84,7 +97,12 @@ export function isLogger(value: unknown): value is ILogger {
         return false;
     }
     
-    const logger = value as any;
+    const logger = value as {
+        debug?: unknown;
+        info?: unknown;
+        warn?: unknown;
+        error?: unknown;
+    };
     
     return (
         typeof logger.debug === 'function' &&
@@ -102,7 +120,12 @@ export function isSettingsManager(value: unknown): value is ISettingsManager {
         return false;
     }
     
-    const manager = value as any;
+    const manager = value as {
+        load?: unknown;
+        save?: unknown;
+        get?: unknown;
+        set?: unknown;
+    };
     
     return (
         typeof manager.load === 'function' &&
@@ -120,7 +143,11 @@ export function isWhisperService(value: unknown): value is IWhisperService {
         return false;
     }
     
-    const service = value as any;
+    const service = value as {
+        transcribe?: unknown;
+        cancel?: unknown;
+        validateApiKey?: unknown;
+    };
     
     return (
         typeof service.transcribe === 'function' &&
@@ -155,7 +182,7 @@ export function isRecord<K extends string | number | symbol, V>(
         return false;
     }
     
-    const record = value as Record<any, any>;
+    const record = value as Record<string | number | symbol, unknown>;
     
     for (const [key, val] of Object.entries(record)) {
         if (keyGuard && !keyGuard(key)) {
@@ -202,14 +229,18 @@ export function isNotEmpty(value: unknown): boolean {
 /**
  * 함수 타입 가드
  */
-export function isFunction(value: unknown): value is Function {
+export type AnyFunction = (...args: never[]) => unknown;
+
+export function isFunction(value: unknown): value is AnyFunction {
     return typeof value === 'function';
 }
 
 /**
  * 비동기 함수 타입 가드
  */
-export function isAsyncFunction(value: unknown): value is (...args: any[]) => Promise<any> {
+export function isAsyncFunction(
+    value: unknown
+): value is (...args: unknown[]) => Promise<unknown> {
     return typeof value === 'function' && value.constructor.name === 'AsyncFunction';
 }
 

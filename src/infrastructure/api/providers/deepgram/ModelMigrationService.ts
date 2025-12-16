@@ -375,7 +375,13 @@ export class ModelMigrationService {
         success: boolean;
         automatic: boolean;
     }> {
-        return this.settingsManager.get('migrationHistory') || [];
+        return (this.settingsManager.get('migrationHistory') as Array<{
+            timestamp: string;
+            fromModel: string;
+            toModel: string;
+            success: boolean;
+            automatic: boolean;
+        }>) || [];
     }
 
     /**
@@ -383,7 +389,7 @@ export class ModelMigrationService {
      */
 
     private getCurrentModel(): string | null {
-        const transcriptionSettings = this.settingsManager.get('transcription');
+        const transcriptionSettings = this.settingsManager.get('transcription') as any;
         return transcriptionSettings?.deepgram?.model || 
                transcriptionSettings?.model || 
                null;
@@ -619,7 +625,7 @@ export class ModelMigrationService {
     }
 
     private async updateModel(newModel: string): Promise<void> {
-        const transcriptionSettings = this.settingsManager.get('transcription') || {};
+        const transcriptionSettings = (this.settingsManager.get('transcription') as any) || {};
         
         if (transcriptionSettings.deepgram) {
             transcriptionSettings.deepgram.model = newModel;

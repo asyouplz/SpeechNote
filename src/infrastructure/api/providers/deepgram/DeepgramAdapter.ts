@@ -431,7 +431,7 @@ export class DeepgramAdapter implements ITranscriber {
         // 설정에서 사용자 화자 분리 설정 가져오기
         let userDiarizationConfig = null;
         if (this.settingsManager) {
-            const transcriptionSettings = this.settingsManager.get('transcription');
+            const transcriptionSettings = this.settingsManager.get('transcription') as any;
             userDiarizationConfig = transcriptionSettings?.deepgram?.diarizationConfig;
         }
 

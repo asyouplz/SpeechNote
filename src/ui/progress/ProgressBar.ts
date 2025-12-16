@@ -164,7 +164,7 @@ export class ProgressBar {
         if (!this.progressFill) return;
         
         this.currentValue = value;
-        this.progressFill.style.width = `${percentage}%`;
+        this.progressFill.style.setProperty('--sn-progress-width', `${percentage}%`);
         
         if (this.element) {
             this.element.setAttribute('aria-valuenow', String(value));
@@ -259,7 +259,7 @@ export class ProgressBar {
         this.startTime = 0;
         
         if (this.progressFill) {
-            this.progressFill.style.width = '0%';
+            this.progressFill.style.setProperty('--sn-progress-width', '0%');
         }
         
         if (this.percentageElement) {
@@ -318,7 +318,7 @@ export class ProgressBar {
         
         if (indeterminate) {
             this.progressFill.classList.add('progress-bar__fill--indeterminate');
-            this.progressFill.style.width = '';
+            this.progressFill.removeAttribute('style');
             
             if (this.percentageElement) {
                 this.percentageElement.classList.add('sn-hidden');

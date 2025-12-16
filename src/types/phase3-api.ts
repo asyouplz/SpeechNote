@@ -92,7 +92,7 @@ export interface ISettingsAPI {
     
     // 설정 검증
     validate(settings: Partial<SettingsSchema>): ValidationResult;
-    validateField<K extends keyof SettingsSchema>(key: K, value: any): ValidationResult;
+    validateField<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): ValidationResult;
     
     // 설정 마이그레이션
     migrate(fromVersion: string, toVersion: string): Promise<void>;
@@ -115,7 +115,11 @@ export interface ISettingsAPI {
 // 설정 관련 타입
 export type LanguageCode = 'en' | 'ko' | 'ja' | 'zh' | 'es' | 'fr' | 'de' | 'auto';
 export type ResetScope = 'all' | keyof SettingsSchema | Array<keyof SettingsSchema>;
-export type SettingsChangeListener = (key: string, newValue: any, oldValue: any) => void;
+export type SettingsChangeListener = (
+    key: string,
+    newValue: unknown,
+    oldValue: unknown
+) => void;
 export type Unsubscribe = () => void;
 
 export interface ExportOptions {
@@ -169,7 +173,7 @@ export interface TaskOptions {
     cancellable?: boolean;
     timeout?: number;
     retryOptions?: RetryOptions;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export type TaskPriority = 'low' | 'normal' | 'high' | 'critical';
@@ -179,7 +183,7 @@ export interface RetryOptions {
     delay: number;
     maxDelay: number;
     backoff: 'linear' | 'exponential';
-    shouldRetry?: (error: any, attempt: number) => boolean;
+    shouldRetry?: (error: unknown, attempt: number) => boolean;
 }
 
 /**
@@ -195,7 +199,7 @@ export interface TaskStatus {
     endTime?: number;
     eta?: number;
     error?: Error;
-    result?: any;
+    result?: unknown;
 }
 
 /**
@@ -244,7 +248,7 @@ export interface IProgressAPI {
     
     // 이벤트 리스너
     on(event: 'task:start', listener: (taskId: string) => void): Unsubscribe;
-    on(event: 'task:complete', listener: (taskId: string, result: any) => void): Unsubscribe;
+    on(event: 'task:complete', listener: (taskId: string, result: unknown) => void): Unsubscribe;
     on(event: 'task:error', listener: (taskId: string, error: Error) => void): Unsubscribe;
     on(event: 'task:cancel', listener: (taskId: string) => void): Unsubscribe;
 }
@@ -276,7 +280,7 @@ export interface IProgressTracker {
     
     // 이벤트 리스너
     on(event: 'progress', listener: (data: ProgressData) => void): Unsubscribe;
-    on(event: 'complete', listener: (result?: any) => void): Unsubscribe;
+    on(event: 'complete', listener: (result?: unknown) => void): Unsubscribe;
     on(event: 'error', listener: (error: Error) => void): Unsubscribe;
     on(event: 'pause', listener: () => void): Unsubscribe;
     on(event: 'resume', listener: () => void): Unsubscribe;
@@ -307,7 +311,7 @@ export interface NotificationOptions {
     progress?: number;
     persistent?: boolean;
     priority?: NotificationPriority;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -476,7 +480,7 @@ export interface IMemoryAPI {
     
     // 이벤트 리스너
     on(event: 'high-memory', listener: (info: MemoryInfo) => void): Unsubscribe;
-    on(event: 'memory-leak', listener: (details: any) => void): Unsubscribe;
+    on(event: 'memory-leak', listener: (details: unknown) => void): Unsubscribe;
 }
 
 // ============================================================================
@@ -537,7 +541,7 @@ export interface IProgressReporter {
 /**
  * 이벤트 이미터 인터페이스
  */
-export interface IEventEmitter<T extends Record<string, any[]>> {
+export interface IEventEmitter<T extends Record<string, unknown[]>> {
     on<K extends keyof T>(event: K, listener: (...args: T[K]) => void): Unsubscribe;
     once<K extends keyof T>(event: K, listener: (...args: T[K]) => void): Unsubscribe;
     off<K extends keyof T>(event: K, listener: (...args: T[K]) => void): void;

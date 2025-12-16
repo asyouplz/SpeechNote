@@ -12,12 +12,12 @@ export type Unsubscribe = () => void;
 /**
  * 이벤트 리스너 타입
  */
-export type EventListener<T = any> = (...args: T[]) => void | Promise<void>;
+export type EventListener<T = unknown> = (...args: T[]) => void | Promise<void>;
 
 /**
  * 이벤트 맵 타입
  */
-export type EventMap = Record<string, any[]>;
+export type EventMap = Record<string, unknown[]>;
 
 /**
  * 타입 안전한 이벤트 이미터 인터페이스
@@ -52,39 +52,46 @@ export interface ITypedEventEmitter<TEvents extends EventMap> {
 export abstract class EventEmitterAdapter<TEvents extends EventMap> 
     implements ITypedEventEmitter<TEvents> {
     
-    protected abstract emitter: any;
+    protected abstract emitter: {
+        on(event: string, listener: (...args: unknown[]) => void): void;
+        off(event: string, listener: (...args: unknown[]) => void): void;
+        emit(event: string, ...args: unknown[]): void;
+        removeAllListeners(event?: string): void;
+    };
     
     on<K extends keyof TEvents>(
         event: K,
         listener: (...args: TEvents[K]) => void
     ): Unsubscribe {
-        this.emitter.on(event as string, listener);
-        return () => this.emitter.off(event as string, listener);
+        const wrapped = (...args: unknown[]) => listener(...(args as TEvents[K]));
+        this.emitter.on(event as string, wrapped);
+        return () => this.emitter.off(event as string, wrapped);
     }
     
     once<K extends keyof TEvents>(
         event: K,
         listener: (...args: TEvents[K]) => void
     ): Unsubscribe {
-        const wrapper = (...args: TEvents[K]) => {
-            listener(...args);
+        const wrapper = (...args: unknown[]) => {
+            listener(...(args as TEvents[K]));
             this.off(event, wrapper);
         };
-        return this.on(event, wrapper);
+        this.emitter.on(event as string, wrapper);
+        return () => this.emitter.off(event as string, wrapper);
     }
     
     off<K extends keyof TEvents>(
         event: K,
         listener: (...args: TEvents[K]) => void
     ): void {
-        this.emitter.off(event as string, listener);
+        this.emitter.off(event as string, listener as (...args: unknown[]) => void);
     }
     
     emit<K extends keyof TEvents>(
         event: K,
         ...args: TEvents[K]
     ): void {
-        this.emitter.emit(event as string, ...args);
+        this.emitter.emit(event as string, ...(args as unknown[]));
     }
     
     removeAllListeners(event?: keyof TEvents): void {
@@ -101,7 +108,7 @@ export abstract class EventEmitterAdapter<TEvents extends EventMap>
  */
 export class EventManager {
     private static instance: EventManager;
-    private eventEmitters = new Map<string, ITypedEventEmitter<any>>();
+    private eventEmitters = new Map<string, ITypedEventEmitter<EventMap>>();
     
     static getInstance(): EventManager {
         if (!EventManager.instance) {
@@ -110,7 +117,7 @@ export class EventManager {
         return EventManager.instance;
     }
     
-    register(id: string, emitter: ITypedEventEmitter<any>): void {
+    register(id: string, emitter: ITypedEventEmitter<EventMap>): void {
         this.eventEmitters.set(id, emitter);
     }
     
@@ -122,7 +129,7 @@ export class EventManager {
         }
     }
     
-    get(id: string): ITypedEventEmitter<any> | undefined {
+    get(id: string): ITypedEventEmitter<EventMap> | undefined {
         return this.eventEmitters.get(id);
     }
     
