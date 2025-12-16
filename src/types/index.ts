@@ -1,4 +1,4 @@
-import { TFile } from 'obsidian';
+import type { Editor, EditorPosition, MarkdownView, TFile } from 'obsidian';
 
 // Domain Models
 export interface AudioFile {
@@ -116,12 +116,12 @@ export interface ValidationResult {
 }
 
 // Events
-export type EventHandler = (data: any) => void;
+export type EventHandler<T = unknown> = (data: T) => void;
 export type Unsubscribe = () => void;
 export type StateListener = (state: AppState, prevState?: AppState) => void;
 
 // Cache
-export interface CacheEntry<T = any> {
+export interface CacheEntry<T = unknown> {
     value: T;
     created: number;
     lastAccessed: number;
@@ -169,7 +169,7 @@ export interface FormatOptions {
 }
 
 export interface IEventManager {
-    emit(event: string, data: any): void;
+    emit(event: string, data?: unknown): void;
     on(event: string, handler: EventHandler): Unsubscribe;
     once(event: string, handler: EventHandler): Unsubscribe;
     off(event: string, handler?: EventHandler): void;
@@ -184,22 +184,26 @@ export interface IStateManager {
 }
 
 export interface ISettingsManager {
-    load(): Promise<any>;
-    save(settings: any): Promise<void>;
-    get<K extends string>(key: K): any;
-    set<K extends string>(key: K, value: any): Promise<void>;
+    load(): Promise<unknown>;
+    save(settings: unknown): Promise<void>;
+    get<K extends string>(key: K): unknown;
+    set<K extends string>(key: K, value: unknown): Promise<void>;
 }
 
 export interface ICacheManager {
-    get(key: string): Promise<any | null>;
-    set(key: string, value: any, ttl?: number): Promise<void>;
+    get<T = unknown>(key: string): Promise<T | null>;
+    set<T = unknown>(key: string, value: T, ttl?: number): Promise<void>;
     delete(key: string): Promise<void>;
     clear(): Promise<void>;
 }
 
 export interface ILogger {
-    debug(message: string, context?: any): void;
-    info(message: string, context?: any): void;
-    warn(message: string, context?: any): void;
-    error(message: string, error?: Error, context?: any): void;
+    debug<TContext = Record<string, unknown>>(message: string, context?: TContext): void;
+    info<TContext = Record<string, unknown>>(message: string, context?: TContext): void;
+    warn<TContext = Record<string, unknown>>(message: string, context?: TContext): void;
+    error<TContext = Record<string, unknown>>(message: string, error?: Error, context?: TContext): void;
 }
+
+export type ObsidianEditor = Editor;
+export type ObsidianEditorPosition = EditorPosition;
+export type ObsidianMarkdownView = MarkdownView;

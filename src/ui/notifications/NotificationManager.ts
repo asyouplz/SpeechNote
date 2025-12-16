@@ -306,7 +306,7 @@ class ToastChannel implements NotificationChannel {
             progressBar.className = 'toast__progress';
             const fill = document.createElement('div');
             fill.className = 'toast__progress-fill';
-            fill.style.width = `${notification.progress}%`;
+            fill.setAttribute('style', `--sn-progress-width:${notification.progress}%`);
             progressBar.appendChild(fill);
             toast.appendChild(progressBar);
         }
@@ -750,7 +750,7 @@ class ProgressNotification implements IProgressNotification {
         // 진행률 바 업데이트
         const progressFill = element.querySelector('.toast__progress-fill') as HTMLElement;
         if (progressFill) {
-            progressFill.style.width = `${this.options.progress}%`;
+            progressFill.setAttribute('style', `--sn-progress-width:${this.options.progress}%`);
         }
         
         // 타입별 스타일 업데이트

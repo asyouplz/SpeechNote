@@ -1,4 +1,3 @@
-import { App } from 'obsidian';
 import { Logger } from '../infrastructure/logging/Logger';
 
 /**
@@ -13,10 +12,10 @@ export enum ServiceLifetime {
 /**
  * 서비스 등록 정보
  */
-interface ServiceRegistration {
-    factory: (container: DependencyContainer) => any;
+interface ServiceRegistration<T = unknown> {
+    factory: (container: DependencyContainer) => T;
     lifetime: ServiceLifetime;
-    instance?: any;
+    instance?: T;
 }
 
 /**
@@ -24,8 +23,8 @@ interface ServiceRegistration {
  * 플러그인의 모든 서비스와 컴포넌트를 관리
  */
 export class DependencyContainer {
-    private services: Map<string | symbol, ServiceRegistration> = new Map();
-    private scopedInstances: Map<string | symbol, any> = new Map();
+    private services: Map<string | symbol, ServiceRegistration<unknown>> = new Map();
+    private scopedInstances: Map<string | symbol, unknown> = new Map();
     private logger: Logger;
 
     constructor() {
@@ -84,7 +83,7 @@ export class DependencyContainer {
      * 서비스 해결
      */
     public resolve<T>(token: string | symbol): T {
-        const registration = this.services.get(token);
+        const registration = this.services.get(token) as ServiceRegistration<T> | undefined;
         if (!registration) {
             throw new Error(`Service ${String(token)} not registered`);
         }
@@ -125,7 +124,7 @@ export class DependencyContainer {
     /**
      * 싱글톤 해결
      */
-    private resolveSingleton<T>(token: string | symbol, registration: ServiceRegistration): T {
+    private resolveSingleton<T>(token: string | symbol, registration: ServiceRegistration<T>): T {
         if (!registration.instance) {
             registration.instance = registration.factory(this);
             this.logger.debug(`Created singleton instance: ${String(token)}`);
@@ -136,20 +135,20 @@ export class DependencyContainer {
     /**
      * Transient 해결
      */
-    private resolveTransient<T>(registration: ServiceRegistration): T {
+    private resolveTransient<T>(registration: ServiceRegistration<T>): T {
         return registration.factory(this);
     }
 
     /**
      * Scoped 해결
      */
-    private resolveScoped<T>(token: string | symbol, registration: ServiceRegistration): T {
+    private resolveScoped<T>(token: string | symbol, registration: ServiceRegistration<T>): T {
         if (!this.scopedInstances.has(token)) {
             const instance = registration.factory(this);
             this.scopedInstances.set(token, instance);
             this.logger.debug(`Created scoped instance: ${String(token)}`);
         }
-        return this.scopedInstances.get(token);
+        return this.scopedInstances.get(token) as T;
     }
 
     /**
@@ -180,9 +179,10 @@ export class DependencyContainer {
     public dispose(): void {
         // Disposable 인터페이스를 구현한 서비스들 정리
         this.services.forEach((registration, token) => {
-            if (registration.instance && typeof registration.instance.dispose === 'function') {
+            const instance = registration.instance as { dispose?: () => void } | undefined;
+            if (instance?.dispose) {
                 try {
-                    registration.instance.dispose();
+                    instance.dispose();
                     this.logger.debug(`Disposed service: ${String(token)}`);
                 } catch (error) {
                     this.logger.error(`Failed to dispose service ${String(token)}`, error instanceof Error ? error : undefined);
@@ -198,7 +198,7 @@ export class DependencyContainer {
     /**
      * 서비스 토큰 생성 헬퍼
      */
-    public static createToken<T>(name: string): symbol {
+    public static createToken(name: string): symbol {
         return Symbol.for(name);
     }
 }

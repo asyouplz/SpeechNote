@@ -6,22 +6,22 @@
 /**
  * 팩토리 인터페이스
  */
-export interface IFactory<T, P = any> {
+export interface IFactory<T, P = unknown> {
     create(params?: P): T;
 }
 
 /**
  * 비동기 팩토리 인터페이스
  */
-export interface IAsyncFactory<T, P = any> {
+export interface IAsyncFactory<T, P = unknown> {
     create(params?: P): Promise<T>;
 }
 
 /**
  * 추상 팩토리 인터페이스
  */
-export interface IAbstractFactory<T extends Record<string, any>> {
-    create<K extends keyof T>(type: K, params?: any): T[K];
+export interface IAbstractFactory<T extends Record<string, unknown>> {
+    create<K extends keyof T>(type: K, params?: unknown): T[K];
 }
 
 /**
@@ -73,7 +73,7 @@ export class RegistryFactory<T> implements IFactory<T, string> {
 /**
  * 파라미터화된 팩토리
  */
-export class ParameterizedFactory<T, P = any> implements IFactory<T, P> {
+export class ParameterizedFactory<T, P = unknown> implements IFactory<T, P> {
     constructor(
         private creator: (params?: P) => T
     ) {}
@@ -86,20 +86,20 @@ export class ParameterizedFactory<T, P = any> implements IFactory<T, P> {
 /**
  * 조건부 팩토리
  */
-export class ConditionalFactory<T> {
+export class ConditionalFactory<T, P = unknown> {
     private conditions: Array<{
-        predicate: (params: any) => boolean;
-        creator: (params: any) => T;
+        predicate: (params: P) => boolean;
+        creator: (params: P) => T;
     }> = [];
     
-    private defaultCreator?: (params: any) => T;
+    private defaultCreator?: (params: P) => T;
     
     /**
      * 조건 추가
      */
     addCondition(
-        predicate: (params: any) => boolean,
-        creator: (params: any) => T
+        predicate: (params: P) => boolean,
+        creator: (params: P) => T
     ): this {
         this.conditions.push({ predicate, creator });
         return this;
@@ -108,7 +108,7 @@ export class ConditionalFactory<T> {
     /**
      * 기본 생성자 설정
      */
-    setDefault(creator: (params: any) => T): this {
+    setDefault(creator: (params: P) => T): this {
         this.defaultCreator = creator;
         return this;
     }
@@ -116,15 +116,15 @@ export class ConditionalFactory<T> {
     /**
      * 객체 생성
      */
-    create(params?: any): T {
+    create(params?: P): T {
         for (const { predicate, creator } of this.conditions) {
-            if (predicate(params)) {
-                return creator(params);
+            if (predicate(params as P)) {
+                return creator(params as P);
             }
         }
         
         if (this.defaultCreator) {
-            return this.defaultCreator(params);
+            return this.defaultCreator(params as P);
         }
         
         throw new Error('No matching condition and no default creator');
@@ -148,16 +148,11 @@ export class PoolFactory<T> {
      * 객체 획득
      */
     acquire(): T {
-        let item: T;
+        const item = this.pool.length > 0 ? this.pool.pop() : undefined;
+        const resolvedItem = item ?? this.creator();
         
-        if (this.pool.length > 0) {
-            item = this.pool.pop()!;
-        } else {
-            item = this.creator();
-        }
-        
-        this.inUse.add(item);
-        return item;
+        this.inUse.add(resolvedItem);
+        return resolvedItem;
     }
     
     /**
@@ -283,7 +278,7 @@ export function createFactory<T, P = void>(
 /**
  * 메모이제이션된 팩토리
  */
-export class MemoizedFactory<T, P = any> {
+export class MemoizedFactory<T, P = unknown> {
     private cache = new Map<string, T>();
     
     constructor(
@@ -298,7 +293,11 @@ export class MemoizedFactory<T, P = any> {
             this.cache.set(key, this.creator(params));
         }
         
-        return this.cache.get(key)!;
+        const value = this.cache.get(key);
+        if (value === undefined) {
+            throw new Error(`MemoizedFactory failed to create value for key ${key}`);
+        }
+        return value;
     }
     
     clearCache(): void {

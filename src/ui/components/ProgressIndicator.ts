@@ -155,7 +155,7 @@ export class ProgressIndicator {
         const progressText = this.progressElement.querySelector('.progress-text') as HTMLElement;
         
         if (progressFill && progressText) {
-            progressFill.style.width = `${this.currentProgress}%`;
+            progressFill.setAttribute('style', `--sn-progress-width:${this.currentProgress}%`);
             progressText.setText(`${Math.round(this.currentProgress)}%`);
             
             // 진행률에 따른 색상 변경

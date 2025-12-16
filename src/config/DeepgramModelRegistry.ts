@@ -185,20 +185,11 @@ const DEFAULT_CONFIG = {
 };
 
 import { DeepgramLogger } from '../ui/settings/helpers/DeepgramLogger';
+import deepgramModelsConfigJson from '../../config/deepgram-models.json';
 
-// Safe import with error handling
-let deepgramModelsConfig: typeof DEFAULT_CONFIG;
-const logger = DeepgramLogger.getInstance();
-
-try {
-    // Try to import the JSON file
-    const importedConfig = require('../../config/deepgram-models.json');
-    deepgramModelsConfig = importedConfig;
-    logger.info('Successfully loaded config from JSON file');
-} catch (error) {
-    logger.warn('Could not load deepgram-models.json, using fallback');
-    deepgramModelsConfig = DEFAULT_CONFIG;
-}
+// Safe import with fallback
+const deepgramModelsConfig: typeof DEFAULT_CONFIG =
+    (deepgramModelsConfigJson as unknown as typeof DEFAULT_CONFIG) ?? DEFAULT_CONFIG;
 
 /**
  * Deepgram 모델 정보 인터페이스
@@ -377,27 +368,34 @@ export class DeepgramModelRegistry {
     /**
      * Validate model structure
      */
-    private isValidModel(model: any): boolean {
-        return model && 
-               typeof model === 'object' &&
-               typeof model.id === 'string' &&
-               typeof model.name === 'string' &&
-               model.features &&
-               model.languages &&
-               Array.isArray(model.languages) &&
-               model.performance &&
-               model.pricing;
+    private isValidModel(model: unknown): model is DeepgramModel {
+        if (!model || typeof model !== 'object') {
+            return false;
+        }
+        const typed = model as Partial<DeepgramModel>;
+        return (
+            typeof typed.id === 'string' &&
+            typeof typed.name === 'string' &&
+            typed.features !== undefined &&
+            Array.isArray(typed.languages) &&
+            typeof typed.performance === 'object' &&
+            typeof typed.pricing === 'object'
+        );
     }
 
     /**
      * Validate feature structure
      */
-    private isValidFeature(feature: any): boolean {
-        return feature && 
-               typeof feature === 'object' &&
-               typeof feature.name === 'string' &&
-               typeof feature.description === 'string' &&
-               typeof feature.default === 'boolean';
+    private isValidFeature(feature: unknown): feature is DeepgramFeature {
+        if (!feature || typeof feature !== 'object') {
+            return false;
+        }
+        const typed = feature as Partial<DeepgramFeature>;
+        return (
+            typeof typed.name === 'string' &&
+            typeof typed.description === 'string' &&
+            typeof typed.default === 'boolean'
+        );
     }
 
     /**
@@ -522,32 +520,27 @@ export class DeepgramModelRegistry {
         requiredFeatures?: string[];
     }): DeepgramModel | null {
         let candidates = Array.from(this.models.values());
+        const { language, maxPrice, minAccuracy, requiredFeatures } = requirements;
 
         // 언어 필터링
-        if (requirements.language) {
-            candidates = candidates.filter(model => 
-                model.languages.includes(requirements.language!)
-            );
+        if (language) {
+            candidates = candidates.filter(model => model.languages.includes(language));
         }
 
         // 가격 필터링
-        if (requirements.maxPrice !== undefined) {
-            candidates = candidates.filter(model => 
-                model.pricing.perMinute <= requirements.maxPrice!
-            );
+        if (maxPrice !== undefined) {
+            candidates = candidates.filter(model => model.pricing.perMinute <= maxPrice);
         }
 
         // 정확도 필터링
-        if (requirements.minAccuracy !== undefined) {
-            candidates = candidates.filter(model => 
-                model.performance.accuracy >= requirements.minAccuracy!
-            );
+        if (minAccuracy !== undefined) {
+            candidates = candidates.filter(model => model.performance.accuracy >= minAccuracy);
         }
 
         // 필수 기능 필터링
-        if (requirements.requiredFeatures && requirements.requiredFeatures.length > 0) {
+        if (requiredFeatures && requiredFeatures.length > 0) {
             candidates = candidates.filter(model => 
-                requirements.requiredFeatures!.every(feature => 
+                requiredFeatures.every(feature => 
                     model.features[feature as keyof typeof model.features] === true
                 )
             );

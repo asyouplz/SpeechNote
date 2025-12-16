@@ -770,7 +770,7 @@ export class AdvancedSettingsPanel {
             const segment = document.createElement('div');
             segment.className = `weight-segment ${segmentInfo.cls}`;
             const percent = total === 0 ? 0 : (segmentInfo.value / total) * 100;
-            segment.style.width = `${percent}%`;
+            segment.setAttribute('style', `--sn-width-pct:${percent}%`);
 
             const label = document.createElement('span');
             label.textContent = segmentInfo.label;
@@ -826,7 +826,7 @@ export class AdvancedSettingsPanel {
         bar.className = 'spending-bar';
         const progress = document.createElement('div');
         progress.className = `spending-progress ${percentage > 80 ? 'warning' : ''}`.trim();
-        progress.style.width = `${Math.min(100, percentage)}%`;
+        progress.setAttribute('style', `--sn-width-pct:${Math.min(100, percentage)}%`);
         bar.appendChild(progress);
 
         spendingEl.appendChild(info);
@@ -859,7 +859,7 @@ export class AdvancedSettingsPanel {
 
         const providerA = document.createElement('div');
         providerA.className = 'split-a';
-        providerA.style.width = `${this.abTestSplit}%`;
+        providerA.setAttribute('style', `--sn-width-pct:${this.abTestSplit}%`);
         const providerALabel = document.createElement('span');
         providerALabel.textContent = `Provider A: ${this.abTestSplit}%`;
         providerA.appendChild(providerALabel);
@@ -867,7 +867,7 @@ export class AdvancedSettingsPanel {
         const providerBWidth = 100 - this.abTestSplit;
         const providerB = document.createElement('div');
         providerB.className = 'split-b';
-        providerB.style.width = `${providerBWidth}%`;
+        providerB.setAttribute('style', `--sn-width-pct:${providerBWidth}%`);
         const providerBLabel = document.createElement('span');
         providerBLabel.textContent = `Provider B: ${providerBWidth}%`;
         providerB.appendChild(providerBLabel);

@@ -5,7 +5,8 @@ import {
     TranscriptionProviderConfig,
     SelectionStrategy,
     ProviderMetrics,
-    ProviderUnavailableError
+    ProviderUnavailableError,
+    ABTestConfig
 } from './providers/ITranscriber';
 import { WhisperService } from './WhisperService';
 import { WhisperAdapter } from './providers/whisper/WhisperAdapter';
@@ -166,19 +167,19 @@ export class TranscriberFactoryRefactored {
      * Load configuration from settings
      */
     protected loadConfiguration(): TranscriptionProviderConfig {
-        const settings = this.settingsManager.get('transcription') || {};
+        const settings = (this.settingsManager.get('transcription') as TranscriptionProviderConfig | any) || {};
 
         return {
             defaultProvider: settings.defaultProvider || 'whisper',
             autoSelect: settings.autoSelect || false,
-            selectionStrategy: settings.selectionStrategy || SelectionStrategy.MANUAL,
+            selectionStrategy: (settings.selectionStrategy as SelectionStrategy) || SelectionStrategy.MANUAL,
             fallbackEnabled: settings.fallbackEnabled !== false,
 
             whisper: this.loadProviderConfig('whisper', settings),
             deepgram: this.loadProviderConfig('deepgram', settings),
 
-            abTest: settings.abTest,
-            monitoring: settings.monitoring
+            abTest: settings.abTest as ABTestConfig | undefined,
+            monitoring: settings.monitoring as TranscriptionProviderConfig['monitoring'] | undefined
         };
     }
 
