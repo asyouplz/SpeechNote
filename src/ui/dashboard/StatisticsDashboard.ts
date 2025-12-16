@@ -506,7 +506,7 @@ export class StatisticsDashboard {
             const bar = document.createElement('div');
             bar.className = 'bar-chart__bar';
             const height = (count / maxCount) * 100;
-            bar.style.height = `${height}%`;
+            bar.setAttribute('style', `--sn-bar-height:${height}%`);
 
             const valueLabel = document.createElement('span');
             valueLabel.className = 'bar-chart__value';

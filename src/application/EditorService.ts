@@ -20,7 +20,7 @@ export class EditorService {
     private readonly redoHistory: EditorAction[] = [];
     private readonly maxHistorySize = 50;
     private destroyed = false;
-    private readonly eventRefs: Array<{ event: string; callback: any }> = [];
+    private readonly eventRefs: Array<{ event: string; callback: (...args: unknown[]) => void }> = [];
 
     constructor(
         private app: App,
@@ -46,7 +46,8 @@ export class EditorService {
         this.eventRefs.push({ event: 'active-leaf-change', callback: activeLeafCallback });
 
         // 에디터 변경 감지
-        const editorChangeCallback = (editor: Editor) => {
+        const editorChangeCallback = (...args: unknown[]) => {
+            const [editor] = args as [Editor];
             if (this.destroyed) {
                 return;
             }
@@ -431,7 +432,10 @@ export class EditorService {
         const editor = this.getActiveEditor();
         if (!editor) return false;
 
-        const action = this.undoHistory.pop()!;
+        const action = this.undoHistory.pop();
+        if (!action) {
+            return false;
+        }
         this.redoHistory.push(action);
 
         try {
@@ -483,7 +487,10 @@ export class EditorService {
         const editor = this.getActiveEditor();
         if (!editor) return false;
 
-        const action = this.redoHistory.pop()!;
+        const action = this.redoHistory.pop();
+        if (!action) {
+            return false;
+        }
         this.undoHistory.push(action);
 
         try {
@@ -612,8 +619,8 @@ export class EditorService {
 
         // Remove all event listeners
         for (const ref of this.eventRefs) {
-            if (typeof (this.app.workspace as any).off === 'function') {
-                (this.app.workspace as any).off(ref.event, ref.callback);
+            if (typeof this.app.workspace.off === 'function') {
+                this.app.workspace.off(ref.event, ref.callback);
             }
         }
         this.eventRefs.length = 0;

@@ -2,7 +2,7 @@ import { Notice } from 'obsidian';
 import { EditorService } from './EditorService';
 import { EventManager } from './EventManager';
 import { Logger } from '../infrastructure/logging/Logger';
-import { FormatOptions, TextFormat } from '../ui/formatting/FormatOptions';
+import { TextFormat } from '../ui/formatting/FormatOptions';
 
 /**
  * 텍스트 삽입 핸들러 - 변환된 텍스트를 에디터에 삽입하는 로직 처리
@@ -375,7 +375,6 @@ export class TextInsertionHandler {
             case 'new-line':
                 const cursor = this.editorService.getCursorPosition();
                 if (cursor) {
-                    const newPosition = { line: cursor.line + 1, ch: 0 };
                     return await this.editorService.insertAtPosition(`\n${text}`, cursor);
                 }
                 return false;

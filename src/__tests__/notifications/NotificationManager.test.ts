@@ -10,7 +10,9 @@ describe('NotificationManager', () => {
 
     beforeEach(() => {
         // DOM 환경 설정
-        document.body.innerHTML = '';
+        while (document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        }
         manager = new NotificationManager({
             defaultDuration: 1000,
             soundEnabled: false // 테스트에서는 사운드 비활성화
