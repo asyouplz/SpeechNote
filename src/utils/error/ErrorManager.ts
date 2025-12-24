@@ -38,7 +38,7 @@ export interface ErrorInfo {
     code?: string;
     stack?: string;
     timestamp: number;
-    context?: Record<string, any>;
+    context?: Record<string, unknown>;
     userMessage?: string;
     recoverable?: boolean;
 }
@@ -536,17 +536,17 @@ export async function tryCatchAsync<T>(
  * 에러 재시도 데코레이터
  */
 export function retryOnError(
-    maxAttempts: number = 3,
-    delay: number = 1000
+    maxAttempts = 3,
+    delay = 1000
 ) {
     return function (
-        target: any,
+        target: unknown,
         propertyKey: string,
         descriptor: PropertyDescriptor
     ) {
         const originalMethod = descriptor.value;
         
-        descriptor.value = async function (...args: any[]) {
+        descriptor.value = async function (...args: unknown[]) {
             let lastError: Error;
             
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {

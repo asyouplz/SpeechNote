@@ -248,7 +248,7 @@ export class TranscriberFactory {
      * 설정 로드
      */
     private loadConfig(): TranscriptionProviderConfig {
-        const settings = (this.settingsManager.get('transcription') as TranscriptionProviderConfig | any) || {};
+        const settings = (this.settingsManager.get('transcription') as Partial<TranscriptionProviderConfig>) || {};
         
         return {
             defaultProvider: settings.defaultProvider || 'whisper',
@@ -258,7 +258,7 @@ export class TranscriberFactory {
             
             whisper: {
                 enabled: settings.whisper?.enabled !== false,
-                apiKey: settings.whisper?.apiKey || settings.apiKey || '',
+                apiKey: settings.whisper?.apiKey ?? '',
                 model: 'whisper-1',
                 maxConcurrency: 1,
                 timeout: 30000
@@ -266,14 +266,11 @@ export class TranscriberFactory {
             
             deepgram: {
                 enabled: settings.deepgram?.enabled || false,
-                apiKey: settings.deepgram?.apiKey || '',
+                apiKey: settings.deepgram?.apiKey ?? '',
                 model: settings.deepgram?.model || 'nova-2',
-                maxConcurrency: 5,
-                timeout: 30000,
-                rateLimit: {
-                    requests: 100,
-                    window: 60000
-                }
+                maxConcurrency: settings.deepgram?.maxConcurrency ?? 5,
+                timeout: settings.deepgram?.timeout ?? 30000,
+                rateLimit: settings.deepgram?.rateLimit ?? { requests: 100, window: 60000 }
             },
             
             abTest: settings.abTest as ABTestConfig | undefined,
@@ -308,15 +305,15 @@ export class TranscriberFactory {
         if (this.config.deepgram?.enabled && this.config.deepgram.apiKey) {
             try {
                 // Get timeout from settings, with fallback to default
-                const settingsTimeout = Number(this.settingsManager?.get('requestTimeout')) || 30000;
-                const configTimeout = this.config.deepgram.timeout || settingsTimeout;
-                
+        const settingsTimeout = Number(this.settingsManager?.get('requestTimeout')) || 30000;
+        const configTimeout = this.config.deepgram.timeout || settingsTimeout;
+
                 const deepgramService = new DeepgramService(
-                    this.config.deepgram.apiKey,
-                    this.logger,
-                    this.config.deepgram.rateLimit?.requests,
-                    configTimeout
-                );
+                this.config.deepgram.apiKey,
+                this.logger,
+                this.config.deepgram.rateLimit?.requests,
+                configTimeout
+            );
                 const deepgramAdapter = new DeepgramAdapter(
                     deepgramService,
                     this.logger,
@@ -488,7 +485,9 @@ export class TranscriberFactory {
      * Provider 활성화/비활성화
      */
     async toggleProvider(provider: TranscriptionProvider, enabled: boolean): Promise<void> {
-        const config = provider === 'whisper' ? this.config.whisper : this.config.deepgram;
+        const config = (provider === 'whisper' ? this.config.whisper : this.config.deepgram) ?? {
+            enabled: false
+        };
         
         if (config) {
             config.enabled = enabled;

@@ -13,7 +13,7 @@ export type CircuitBreakerState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
  * Generic Circuit Breaker implementation
  * Prevents cascading failures by temporarily blocking operations when failure threshold is reached
  */
-export class CircuitBreaker<T = any> {
+export class CircuitBreaker {
     private state: CircuitBreakerState = 'CLOSED';
     private failureCount = 0;
     private successCount = 0;

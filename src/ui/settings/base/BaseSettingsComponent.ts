@@ -1,4 +1,4 @@
-import { App, Setting, Notice, ButtonComponent } from 'obsidian';
+import { App, Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
 
 /**

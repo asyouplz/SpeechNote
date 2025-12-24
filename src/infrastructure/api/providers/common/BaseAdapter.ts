@@ -4,6 +4,7 @@ import {
     TranscriptionProvider,
     TranscriptionOptions,
     TranscriptionResponse,
+    TranscriptionSegment,
     ProviderCapabilities,
     ProviderConfig
 } from '../ITranscriber';
@@ -88,7 +89,7 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
     /**
      * Hook for subclasses to react to config changes
      */
-    protected onConfigUpdate(config: Partial<ProviderConfig>): void {
+    protected onConfigUpdate(_config: Partial<ProviderConfig>): void {
         // Override in subclasses if needed
     }
 
@@ -119,7 +120,7 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
             language?: string;
             confidence?: number;
             duration?: number;
-            segments?: any[];
+            segments?: unknown[];
             model?: string;
             wordCount?: number;
         }
@@ -127,13 +128,17 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
         const wordCount = options?.wordCount ?? this.countWords(text);
         const processingTime = this.getElapsedTime();
 
+        const segments = Array.isArray(options?.segments)
+            ? (options?.segments as TranscriptionSegment[])
+            : undefined;
+
         return {
             text,
             provider,
             language: options?.language,
             confidence: options?.confidence,
             duration: options?.duration,
-            segments: options?.segments,
+            segments,
             metadata: {
                 model: options?.model ?? this.config.model,
                 processingTime,
@@ -152,21 +157,21 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
     /**
      * Log debug information
      */
-    protected logDebug(message: string, data?: any): void {
+    protected logDebug(message: string, data?: unknown): void {
         this.logger.debug(`${this.providerName}: ${message}`, data);
     }
 
     /**
      * Log info information
      */
-    protected logInfo(message: string, data?: any): void {
+    protected logInfo(message: string, data?: unknown): void {
         this.logger.info(`${this.providerName}: ${message}`, data);
     }
 
     /**
      * Log warning
      */
-    protected logWarning(message: string, error?: Error, data?: any): void {
+    protected logWarning(message: string, error?: Error, data?: unknown): void {
         if (error) {
             this.logger.warn(`${this.providerName}: ${message}`, { error, data });
         } else {
@@ -177,7 +182,7 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
     /**
      * Log error
      */
-    protected logError(message: string, error: Error, data?: any): void {
+    protected logError(message: string, error: Error, data?: unknown): void {
         this.logger.error(`${this.providerName}: ${message}`, error, data);
     }
 

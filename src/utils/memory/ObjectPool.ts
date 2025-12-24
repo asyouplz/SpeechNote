@@ -173,8 +173,9 @@ export class ObjectPool<T> {
      */
     private destroyObject(obj: T): void {
         // 객체가 IDisposable 인터페이스를 구현하는 경우
-        if (typeof (obj as any).dispose === 'function') {
-            (obj as any).dispose();
+        const disposable = obj as { dispose?: () => void };
+        if (typeof disposable.dispose === 'function') {
+            disposable.dispose();
         }
         
         this.stats.destroyed++;
@@ -321,6 +322,8 @@ export class ObjectPool<T> {
  * 타입별 풀 매니저
  */
 export class PoolManager {
+    // Using any here to allow heterogeneous pool types under one registry
+    // without complex type gymnastics.
     private static pools = new Map<string, ObjectPool<any>>();
 
     /**
@@ -332,7 +335,7 @@ export class PoolManager {
     ): ObjectPool<T> {
         if (this.pools.has(name)) {
             console.warn(`Pool '${name}' already exists`);
-            return this.pools.get(name)!;
+            return this.pools.get(name)! as ObjectPool<T>;
         }
         
         const pool = new ObjectPool(options);
@@ -344,7 +347,7 @@ export class PoolManager {
      * 풀 가져오기
      */
     static get<T>(name: string): ObjectPool<T> | undefined {
-        return this.pools.get(name);
+        return this.pools.get(name) as ObjectPool<T> | undefined;
     }
 
     /**
@@ -396,7 +399,7 @@ export const bufferPool = new ObjectPool<ArrayBuffer>({
 });
 
 // Object 풀
-export const objectPool = new ObjectPool<Record<string, any>>({
+export const objectPool = new ObjectPool<Record<string, unknown>>({
     factory: () => ({}),
     reset: (obj) => {
         // 모든 속성 제거
@@ -409,7 +412,7 @@ export const objectPool = new ObjectPool<Record<string, any>>({
 });
 
 // Array 풀
-export const arrayPool = new ObjectPool<any[]>({
+export const arrayPool = new ObjectPool<unknown[]>({
     factory: () => [],
     reset: (arr) => {
         arr.length = 0;
@@ -419,7 +422,7 @@ export const arrayPool = new ObjectPool<any[]>({
 });
 
 // Map 풀
-export const mapPool = new ObjectPool<Map<any, any>>({
+export const mapPool = new ObjectPool<Map<unknown, unknown>>({
     factory: () => new Map(),
     reset: (map) => {
         map.clear();
@@ -429,7 +432,7 @@ export const mapPool = new ObjectPool<Map<any, any>>({
 });
 
 // Set 풀
-export const setPool = new ObjectPool<Set<any>>({
+export const setPool = new ObjectPool<Set<unknown>>({
     factory: () => new Set(),
     reset: (set) => {
         set.clear();

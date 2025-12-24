@@ -6,8 +6,6 @@
 import { TFile, Vault } from 'obsidian';
 import type { ILogger } from '../../types';
 import { formatFileSize } from '../../utils/common/formatters';
-import { validateFileSize, validateFileExtension } from '../../utils/common/validators';
-import { chunk, withTimeout } from '../../utils/common/helpers';
 
 export interface UploadProgress {
     loaded: number;
@@ -270,7 +268,7 @@ export class FileUploadManager {
      */
     private async compressAudio(
         buffer: ArrayBuffer,
-        metadata: AudioFileMetadata
+        _metadata: AudioFileMetadata
     ): Promise<ArrayBuffer> {
         this.ensureNotCancelled();
         this.logger.info('Starting audio compression', {
@@ -524,7 +522,7 @@ export class FileUploadManager {
         this.abortController = undefined;
     }
 
-    private ensureNotCancelled(message: string = 'Processing cancelled'): void {
+    private ensureNotCancelled(message = 'Processing cancelled'): void {
         if (this.abortController?.signal.aborted) {
             throw new Error(message);
         }

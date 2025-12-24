@@ -5,8 +5,7 @@ import {
     TranscriptionOptions,
     TranscriptionResponse,
     ProviderCapabilities,
-    ProviderConfig,
-    WhisperSpecificOptions
+    ProviderConfig
 } from '../ITranscriber';
 import { WhisperService } from '../../WhisperService';
 

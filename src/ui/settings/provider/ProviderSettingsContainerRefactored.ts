@@ -1,4 +1,4 @@
-import { App, Setting, Notice, Modal, ButtonComponent } from 'obsidian';
+import { App, Modal, ButtonComponent } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
 import { TranscriptionProvider, SelectionStrategy } from '../../../infrastructure/api/providers/ITranscriber';
 import { APIKeyManager } from './components/APIKeyManager';
@@ -233,7 +233,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         providers.forEach(provider => {
             const hasKey = this.hasApiKey(provider);
             const isConnected = state.connectionStatus.get(provider) || false;
-            const lastValidated = state.lastValidation.get(provider);
+            const _lastValidated = state.lastValidation.get(provider);
             
             UIComponentFactory.createCard(
                 containerEl,
@@ -307,7 +307,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * Provider 선택 내용
      */
-    private renderProviderSelectionContent(containerEl: HTMLElement): void {
+    private renderProviderSelectionContent(_containerEl: HTMLElement): void {
         // 여기에 기존 Provider 선택 UI 로직
         // 코드 간결성을 위해 생략
     }
@@ -351,7 +351,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * 메트릭 차트 렌더링
      */
-    private renderMetricsCharts(containerEl: HTMLElement, metrics: any): void {
+    private renderMetricsCharts(_containerEl: HTMLElement, _metrics: any): void {
         // 여기에 차트 렌더링 로직
         // 실제 구현은 차트 라이브러리 사용
     }
@@ -474,7 +474,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * Provider 연결 확인
      */
-    private async checkProviderConnection(provider: TranscriptionProvider): Promise<boolean> {
+    private async checkProviderConnection(_provider: TranscriptionProvider): Promise<boolean> {
         // 실제 연결 테스트 로직
         return true; // 임시
     }

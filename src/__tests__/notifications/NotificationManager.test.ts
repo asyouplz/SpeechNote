@@ -3,7 +3,6 @@
  */
 
 import { NotificationManager } from '../../ui/notifications/NotificationManager';
-import { NotificationType } from '../../types/phase3-api';
 
 describe('NotificationManager', () => {
     let manager: NotificationManager;

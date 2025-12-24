@@ -3,7 +3,7 @@ import type SpeechToTextPlugin from '../../../../main';
 import { TranscriptionProvider } from '../../../../infrastructure/api/providers/ITranscriber';
 import { Encryptor } from '../../../../infrastructure/security/Encryptor';
 import { BaseSettingsComponent } from '../../base/BaseSettingsComponent';
-import { UIComponentFactory, FormValidator } from '../../base/CommonUIComponents';
+import { UIComponentFactory } from '../../base/CommonUIComponents';
 
 /**
  * API 키 타입 정의
@@ -427,7 +427,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         const status = state?.status || 'unverified';
         const config = statusMap[status];
         
-        const statusEl = containerEl.createSpan({
+        const _statusEl = containerEl.createSpan({
             cls: `key-status ${config.class}`,
             text: `${config.icon} ${config.text}`,
             attr: {
@@ -443,7 +443,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
     private renderValidationMessage(containerEl: HTMLElement, state: ValidationState): void {
         if (!state.message) return;
         
-        const messageEl = containerEl.createDiv({
+        const _messageEl = containerEl.createDiv({
             cls: `validation-message message-${state.status}`,
             text: state.message,
             attr: {
@@ -457,7 +457,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
      * 최근 검증 시간 렌더링
      */
     private renderLastValidated(containerEl: HTMLElement, date: Date): void {
-        const timeEl = containerEl.createDiv({
+        const _timeEl = containerEl.createDiv({
             cls: 'last-validated',
             text: `최근 검증: ${this.formatRelativeTime(date)}`,
             attr: {

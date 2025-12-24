@@ -108,8 +108,6 @@ describe('ProgressTracker', () => {
         });
 
         it('일시정지 시간을 추적해야 함', (done) => {
-            const startTime = Date.now();
-            
             tracker.pause();
             
             setTimeout(() => {

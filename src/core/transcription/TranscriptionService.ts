@@ -20,7 +20,7 @@ export class TranscriptionService implements ITranscriptionService {
         private textFormatter: ITextFormatter,
         private eventManager: IEventManager,
         private logger: ILogger,
-        private settings?: any // 🔥 설정 주입
+        private settings?: Record<string, unknown> // 🔥 설정 주입
     ) {}
 
     async transcribe(file: TFile): Promise<TranscriptionResult> {
@@ -43,8 +43,10 @@ export class TranscriptionService implements ITranscriptionService {
             this.logger.debug('Starting transcription with WhisperService');
             
             // 🔥 언어 옵션 전달
-            const languagePreference = this.settings?.language;
-            const modelPreference = this.settings?.model;
+            const languagePreference =
+                typeof this.settings?.language === 'string' ? this.settings.language : undefined;
+            const modelPreference =
+                typeof this.settings?.model === 'string' ? this.settings.model : undefined;
             const hasTranscribeOptions = Boolean(languagePreference || modelPreference);
 
             if (hasTranscribeOptions) {

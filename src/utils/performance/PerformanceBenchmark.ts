@@ -11,7 +11,7 @@ export interface Metric {
     name: string;
     value: number;
     timestamp: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 export interface Stats {
@@ -44,6 +44,12 @@ export interface PerformanceThresholds {
         critical: number;
     };
 }
+
+type PerformanceMemory = {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+};
 
 export class PerformanceBenchmark {
     private static metrics = new Map<string, Metric[]>();
@@ -135,7 +141,7 @@ export class PerformanceBenchmark {
     static recordMetric(
         name: string,
         value: number,
-        metadata?: Record<string, any>
+        metadata?: Record<string, unknown>
     ): void {
         if (!this.metrics.has(name)) {
             this.metrics.set(name, []);
@@ -359,10 +365,12 @@ export class PerformanceBenchmark {
         
         // Cumulative Layout Shift (CLS)
         let clsValue = 0;
+        type LayoutShiftEntry = PerformanceEntry & { value: number; hadRecentInput: boolean };
         const clsObserver = new PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
-                if (!(entry as any).hadRecentInput) {
-                    clsValue += (entry as any).value;
+                const layoutEntry = entry as LayoutShiftEntry;
+                if (!layoutEntry.hadRecentInput) {
+                    clsValue += layoutEntry.value;
                     this.recordMetric('cls', clsValue);
                 }
             }
@@ -385,7 +393,12 @@ export class PerformanceBenchmark {
             return;
         }
         
-        const memory = (performance as any).memory;
+        const memory = (performance as Performance & { memory?: PerformanceMemory }).memory;
+        if (!memory) {
+            console.warn('Performance.memory not available');
+            return;
+        }
+
         this.recordMetric('memory.used', memory.usedJSHeapSize);
         this.recordMetric('memory.total', memory.totalJSHeapSize);
         this.recordMetric('memory.limit', memory.jsHeapSizeLimit);
@@ -459,7 +472,7 @@ export class PerformanceBenchmark {
  */
 export function Benchmark(name?: string) {
     return function (
-        target: any,
+        target: object,
         propertyName: string,
         descriptor: PropertyDescriptor
     ) {
@@ -467,14 +480,14 @@ export function Benchmark(name?: string) {
         const metricName = name || `${target.constructor.name}.${propertyName}`;
         
         if (originalMethod.constructor.name === 'AsyncFunction') {
-            descriptor.value = async function (...args: any[]) {
+            descriptor.value = async function (...args: unknown[]) {
                 return PerformanceBenchmark.measureAsync(
                     metricName,
                     () => originalMethod.apply(this, args)
                 );
             };
         } else {
-            descriptor.value = function (...args: any[]) {
+            descriptor.value = function (...args: unknown[]) {
                 return PerformanceBenchmark.measureSync(
                     metricName,
                     () => originalMethod.apply(this, args)

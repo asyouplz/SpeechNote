@@ -100,7 +100,7 @@ export class GeneralSettings {
                 .addOption('skip', '건너뛰기')
                 .addOption('ask', '물어보기')
                 .setValue('create') // 기본값
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 추가 설정 저장 로직
                     await this.plugin.saveSettings();
                 }));
@@ -126,7 +126,7 @@ export class GeneralSettings {
             .setDesc('작업 완료 및 오류 알림을 표시합니다')
             .addToggle(toggle => toggle
                 .setValue(true)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 알림 설정 저장
                     await this.plugin.saveSettings();
                 }));
@@ -137,7 +137,7 @@ export class GeneralSettings {
             .setDesc('작업 완료 시 사운드를 재생합니다')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 사운드 설정 저장
                     await this.plugin.saveSettings();
                 }));

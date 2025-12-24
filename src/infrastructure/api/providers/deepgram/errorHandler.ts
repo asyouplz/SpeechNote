@@ -14,8 +14,7 @@ import { ERROR_MESSAGES, DIAGNOSTIC_MESSAGES } from './constants';
 import type { 
     ValidationError, 
     DiagnosticInfo, 
-    AudioMetrics, 
-    ProcessingMetrics,
+    AudioMetrics,
     DeepgramAPIResponse 
 } from './types';
 
@@ -232,7 +231,7 @@ export class DeepgramErrorHandler {
     /**
      * TranscriptionError 세부 분석
      */
-    private analyzeTranscriptionError(error: TranscriptionError, context: any): ErrorAnalysis {
+    private analyzeTranscriptionError(error: TranscriptionError, _context: any): ErrorAnalysis {
         switch (error.code) {
             case 'SERVER_TIMEOUT':
                 return {

@@ -6,7 +6,7 @@ import { RecentFiles } from '../components/RecentFiles';
 import { ProgressIndicator } from '../components/ProgressIndicator';
 import { EventHandlers } from '../components/EventHandlers';
 import { ILogger } from '../../infrastructure/logging/Logger';
-import { AutoDisposable, EventListenerManager } from '../../utils/memory/MemoryManager';
+import { EventListenerManager } from '../../utils/memory/MemoryManager';
 import { debounceAsync } from '../../utils/async/AsyncManager';
 
 export interface FilePickerOptions {
@@ -184,14 +184,14 @@ export class FilePickerModalRefactored extends Modal {
         const { browseTab, browseContent, recentTab, recentContent } = tabContainer;
 
         // Browse tab events
-        this.components.fileBrowser.onFileSelected((file) => {
-            this.handleFileSelection(file);
+        this.components.fileBrowser.onFileSelected((file: TFile) => {
+            void this.handleFileSelection(file);
         });
 
         // Recent tab events
         if (this.components.recentFiles && recentTab && recentContent) {
-            this.components.recentFiles.onFileSelected((file) => {
-                this.handleFileSelection(file);
+            this.components.recentFiles.onFileSelected((file: TFile) => {
+                void this.handleFileSelection(file);
             });
 
             // Tab switching
@@ -240,14 +240,14 @@ export class FilePickerModalRefactored extends Modal {
         }
 
         // File browser
-        this.components.fileBrowser.onFileSelected((file) => {
-            this.handleFileSelection(file);
+        this.components.fileBrowser.onFileSelected((file: TFile) => {
+            void this.handleFileSelection(file);
         });
 
         // Recent files
         if (this.components.recentFiles) {
-            this.components.recentFiles.onFileSelected((file) => {
-                this.handleFileSelection(file);
+            this.components.recentFiles.onFileSelected((file: TFile) => {
+                void this.handleFileSelection(file);
             });
         }
     }
@@ -272,7 +272,8 @@ export class FilePickerModalRefactored extends Modal {
     /**
      * 파일 선택 처리 - 디바운스 적용
      */
-    private handleFileSelection = debounceAsync(async (file: TFile) => {
+    private handleFileSelection = debounceAsync(async (...args: unknown[]) => {
+        const file = args[0] as TFile;
         try {
             // Check for duplicates
             if (this.state.selectedFiles.some(f => f.path === file.path)) {

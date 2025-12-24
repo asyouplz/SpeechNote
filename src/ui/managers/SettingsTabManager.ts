@@ -10,7 +10,7 @@ import { SettingsTab } from '../settings/SettingsTab';
 export class SettingsTabManager implements IDisposable {
     private settingsTab: PluginSettingTab | null = null;
     private logger: Logger;
-    private isDisposed: boolean = false;
+    private isDisposed = false;
 
     constructor(
         private app: App,

@@ -407,7 +407,7 @@ export class KeyboardNavigationManager {
     /**
      * 메뉴 네비게이션
      */
-    private handleMenuNavigation(e: KeyboardEvent): void {
+    private handleMenuNavigation(_e: KeyboardEvent): void {
         // 메뉴 항목 네비게이션 로직
     }
     

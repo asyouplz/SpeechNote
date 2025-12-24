@@ -153,7 +153,7 @@ export class WeakCache<K extends object, V> {
     private cache = new WeakMap<K, { value: V; timestamp: number }>();
     private ttl: number;
 
-    constructor(ttl: number = Infinity) {
+    constructor(ttl = Infinity) {
         this.ttl = ttl;
     }
 
@@ -256,7 +256,7 @@ export class MemoryMonitor {
     /**
      * 모니터링 시작
      */
-    start(intervalMs: number = 5000): void {
+    start(intervalMs = 5000): void {
         if (this.monitoring) return;
         
         this.monitoring = true;
@@ -281,7 +281,10 @@ export class MemoryMonitor {
      */
     private async check(): Promise<void> {
         if ('memory' in performance) {
-            const memory = (performance as any).memory;
+            const memory = (performance as Performance & { memory?: MemoryInfo }).memory;
+            if (!memory) {
+                return;
+            }
             const info: MemoryInfo = {
                 usedJSHeapSize: memory.usedJSHeapSize,
                 totalJSHeapSize: memory.totalJSHeapSize,

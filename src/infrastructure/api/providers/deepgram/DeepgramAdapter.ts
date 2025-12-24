@@ -6,7 +6,6 @@ import type {
 } from '../../../../types/DeepgramTypes';
 import {
     ITranscriber,
-    TranscriptionProvider,
     TranscriptionOptions,
     TranscriptionResponse,
     ProviderCapabilities,
@@ -17,7 +16,6 @@ import {
 import { DeepgramService } from './DeepgramService';
 import { DiarizationConfig, DEFAULT_DIARIZATION_CONFIG } from './DiarizationFormatter';
 import { AudioChunker } from './audioChunker';
-import { DEEPGRAM_API } from './constants';
 
 /**
  * DeepgramService를 ITranscriber 인터페이스에 맞게 변환하는 Adapter
@@ -56,7 +54,6 @@ export class DeepgramAdapter implements ITranscriber {
         audio: ArrayBuffer,
         options?: TranscriptionOptions
     ): Promise<TranscriptionResponse> {
-        const startTime = Date.now();
         const audioSizeMB = audio.byteLength / (1024 * 1024);
         
         this.logger.debug(
