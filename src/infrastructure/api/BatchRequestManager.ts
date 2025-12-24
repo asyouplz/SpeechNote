@@ -9,12 +9,12 @@ import { requestUrl } from 'obsidian';
  * - 서버 부하 감소
  */
 
-export interface BatchRequest<T = any> {
+export interface BatchRequest<T = unknown> {
     id: string;
     endpoint: string;
     method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-    params?: any;
-    body?: any;
+    params?: unknown;
+    body?: unknown;
     headers?: Record<string, string>;
     priority: 'high' | 'normal' | 'low';
     resolve: (value: T) => void;
@@ -34,7 +34,7 @@ export interface BatchOptions {
 export interface BatchResponse {
     id: string;
     success: boolean;
-    data?: any;
+    data?: unknown;
     error?: string;
 }
 
@@ -46,8 +46,10 @@ export interface BatchStats {
     networkSavings: number;
 }
 
+type AnyBatch = BatchRequest<unknown>;
+
 export class BatchRequestManager {
-    private queues = new Map<string, BatchRequest[]>();
+    private queues = new Map<string, AnyBatch[]>();
     private timers = new Map<string, number>();
     private stats: BatchStats = {
         totalRequests: 0,
@@ -64,11 +66,11 @@ export class BatchRequestManager {
     private readonly priorityQueuing: boolean;
 
     constructor(options: BatchOptions = {}) {
-        this.maxBatchSize = options.maxBatchSize || 10;
-        this.batchDelay = options.batchDelay || 50;
-        this.maxRetries = options.maxRetries || 3;
-        this.enableCompression = options.enableCompression || false;
-        this.priorityQueuing = options.priorityQueuing || true;
+        this.maxBatchSize = options.maxBatchSize ?? 10;
+        this.batchDelay = options.batchDelay ?? 50;
+        this.maxRetries = options.maxRetries ?? 3;
+        this.enableCompression = options.enableCompression ?? false;
+        this.priorityQueuing = options.priorityQueuing ?? true;
     }
 
     /**
@@ -77,9 +79,9 @@ export class BatchRequestManager {
     async addRequest<T>(
         endpoint: string,
         method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-        params?: any,
+        params?: unknown,
         options: {
-            body?: any;
+            body?: unknown;
             headers?: Record<string, string>;
             priority?: 'high' | 'normal' | 'low';
         } = {}
@@ -99,7 +101,7 @@ export class BatchRequestManager {
                 retries: 0
             };
 
-            this.enqueueRequest(request);
+            this.enqueueRequest(request as AnyBatch);
             this.stats.totalRequests++;
         });
     }
@@ -107,7 +109,7 @@ export class BatchRequestManager {
     /**
      * 요청을 큐에 추가하고 배치 처리 스케줄
      */
-    private enqueueRequest(request: BatchRequest): void {
+    private enqueueRequest(request: AnyBatch): void {
         const batchKey = this.getBatchKey(request);
         
         if (!this.queues.has(batchKey)) {
@@ -115,7 +117,7 @@ export class BatchRequestManager {
         }
         
         const queue = this.queues.get(batchKey)!;
-        queue.push(request);
+        queue.push(request as AnyBatch);
 
         // 우선순위 정렬
         if (this.priorityQueuing) {
@@ -190,7 +192,7 @@ export class BatchRequestManager {
     /**
      * 배치 요청 전송
      */
-    private async sendBatchRequest(batch: BatchRequest[]): Promise<BatchResponse[]> {
+    private async sendBatchRequest(batch: AnyBatch[]): Promise<BatchResponse[]> {
         const batchPayload = {
             requests: batch.map(req => ({
                 id: req.id,
@@ -231,7 +233,7 @@ export class BatchRequestManager {
      * 배치 응답 처리
      */
     private processBatchResponses(
-        batch: BatchRequest[],
+        batch: AnyBatch[],
         responses: BatchResponse[]
     ): void {
         const responseMap = new Map(
@@ -257,7 +259,7 @@ export class BatchRequestManager {
     /**
      * 배치 에러 처리
      */
-    private handleBatchError(batch: BatchRequest[], error: Error): void {
+    private handleBatchError(batch: AnyBatch[], error: Error): void {
         batch.forEach(request => {
             if (request.retries! < this.maxRetries) {
                 // 재시도
@@ -273,7 +275,7 @@ export class BatchRequestManager {
     /**
      * 배치 키 생성 (같은 엔드포인트끼리 묶기)
      */
-    private getBatchKey(request: BatchRequest): string {
+    private getBatchKey(request: AnyBatch): string {
         // 메서드와 엔드포인트 기준으로 그룹화
         const baseEndpoint = request.endpoint.split('?')[0];
         return `${request.method}:${baseEndpoint}`;
@@ -289,7 +291,7 @@ export class BatchRequestManager {
     /**
      * 우선순위별 정렬
      */
-    private sortByPriority(queue: BatchRequest[]): void {
+    private sortByPriority(queue: BatchRequest<unknown>[]): void {
         const priorityOrder = { high: 0, normal: 1, low: 2 };
         
         queue.sort((a, b) => {
@@ -380,8 +382,8 @@ export async function batchRequest<T>(
     endpoint: string,
     options: {
         method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-        params?: any;
-        body?: any;
+        params?: unknown;
+        body?: unknown;
         priority?: 'high' | 'normal' | 'low';
     } = {}
 ): Promise<T> {

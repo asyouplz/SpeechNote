@@ -9,7 +9,7 @@
  */
 
 import type { ILogger, ISettingsManager } from '../../../../types';
-import { ModelCapabilityManager, type ModelCapabilities, type CompatibilityCheck } from './ModelCapabilityManager';
+import { ModelCapabilityManager, type CompatibilityCheck } from './ModelCapabilityManager';
 
 // 마이그레이션 타입 정의
 export interface MigrationRule {
@@ -452,12 +452,12 @@ export class ModelMigrationService {
                 return false; // 기본적으로 사용자 동의 필요
 
             case 'cost_threshold':
-                const maxIncrease = condition.parameters.maxIncrease || 20;
+                const _maxIncrease = condition.parameters.maxIncrease || 20;
                 // 비용 증가율 계산 로직
                 return true; // 임시 구현
 
             case 'feature_compatible':
-                const requiredFeatures = condition.parameters.requiredFeatures || [];
+                const _requiredFeatures = condition.parameters.requiredFeatures || [];
                 // 기능 호환성 체크
                 return true; // 임시 구현
 

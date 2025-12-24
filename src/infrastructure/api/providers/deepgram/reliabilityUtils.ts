@@ -259,7 +259,7 @@ export class ReliabilityManager {
 
     constructor(
         logger: ILogger,
-        requestsPerMinute: number = 100
+        requestsPerMinute = 100
     ) {
         this.rateLimiter = new RateLimiter(requestsPerMinute, logger);
         this.circuitBreaker = new CircuitBreaker(logger);

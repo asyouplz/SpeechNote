@@ -1,4 +1,4 @@
-import { Plugin, Notice, PluginSettingTab, App, MarkdownView, Modal, Setting, ButtonComponent, TFile } from 'obsidian';
+import { Plugin, Notice, PluginSettingTab, App, Modal, Setting, ButtonComponent, TFile } from 'obsidian';
 import { Logger } from './infrastructure/logging/Logger';
 import { assertTFile } from './utils/fs/typeGuards';
 
@@ -111,16 +111,16 @@ export default class SpeechToTextPlugin extends Plugin {
     async initializeServices() {
         // 임시 구현 - 실제 서비스는 나중에 구현
         this.stateManager = {
-            subscribe: (callback: Function) => {
+            subscribe: (_callback: Function) => {
                 // 상태 관리자 구독 로직
             },
-            setState: (state: any) => {
+            setState: (_state: any) => {
                 // 상태 설정 로직
             }
         };
         
         this.eventManager = {
-            on: (event: string, callback: Function) => {
+            on: (_event: string, _callback: Function) => {
                 // 이벤트 리스너 등록
             },
             removeAllListeners: () => {
@@ -143,26 +143,25 @@ export default class SpeechToTextPlugin extends Plugin {
             id: 'show-settings',
             name: 'Open Speech-to-Text settings',
             callback: () => {
-                // @ts-ignore - 옵시디언 내부 API
-                this.app.setting.open();
-                // @ts-ignore
-                this.app.setting.openTabById(this.manifest.id);
+                const maybeSetting = (this.app as unknown as { setting?: { open: () => void; openTabById?: (id: string) => void } }).setting;
+                maybeSetting?.open();
+                maybeSetting?.openTabById?.(this.manifest.id);
             }
         });
     }
 
     registerEventHandlers() {
         // 이벤트 핸들러 등록
-        this.eventManager.on('transcription:start', (data: any) => {
+        this.eventManager.on('transcription:start', (_data: any) => {
             this.updateStatusBar('🎙️ Transcribing...');
         });
 
-        this.eventManager.on('transcription:complete', (data: any) => {
+        this.eventManager.on('transcription:complete', (_data: any) => {
             this.updateStatusBar('✅ Complete');
             setTimeout(() => this.updateStatusBar(''), 3000);
         });
 
-        this.eventManager.on('transcription:error', (data: any) => {
+        this.eventManager.on('transcription:error', (_data: any) => {
             this.updateStatusBar('❌ Error');
             setTimeout(() => this.updateStatusBar(''), 3000);
         });

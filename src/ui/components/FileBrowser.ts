@@ -1,4 +1,4 @@
-import { App, TFile, TFolder, TAbstractFile } from 'obsidian';
+import { App, TFile } from 'obsidian';
 
 /**
  * 파일 브라우저 컴포넌트
@@ -298,7 +298,7 @@ export class FileBrowser {
     /**
      * 파일 선택
      */
-    private selectFile(file: TFile) {
+    private selectFile(_file: TFile) {
         // 선택 표시 (시각적 피드백은 이미 처리됨)
         // 필요시 추가 로직
     }

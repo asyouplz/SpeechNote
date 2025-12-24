@@ -3,9 +3,8 @@
  * UI 컴포넌트 생성과 렌더링 책임 분리
  */
 
-import { Setting } from 'obsidian';
 import { UI_CONSTANTS, CONFIG_CONSTANTS } from '../../../config/DeepgramConstants';
-import { DeepgramModel, DeepgramFeature } from '../../../config/DeepgramModelRegistry';
+import { DeepgramModel } from '../../../config/DeepgramModelRegistry';
 
 export class DeepgramUIBuilder {
     private containerEl: HTMLElement;

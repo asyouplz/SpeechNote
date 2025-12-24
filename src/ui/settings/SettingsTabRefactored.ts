@@ -1,6 +1,5 @@
 import { App, PluginSettingTab, Setting, Notice, Modal, ButtonComponent } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
-import { PluginSettings } from '../../infrastructure/storage/SettingsManager';
 import { ApiKeyValidator } from './components/ApiKeyValidator';
 import { ShortcutSettings } from './components/ShortcutSettings';
 import { AdvancedSettings } from './components/AdvancedSettings';

@@ -1,4 +1,4 @@
-import { Setting, SliderComponent } from 'obsidian';
+import { Setting } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
 
 /**
@@ -117,7 +117,7 @@ export class AudioSettings {
             .setDesc('업로드 전 오디오 파일을 최적화합니다')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 오디오 전처리 설정
                     await this.plugin.saveSettings();
                 }));
@@ -128,7 +128,7 @@ export class AudioSettings {
             .setDesc('배경 소음을 자동으로 제거합니다 (실험적)')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 노이즈 제거 설정
                     await this.plugin.saveSettings();
                 }))

@@ -455,7 +455,7 @@ export function createDebouncedSave<T>(
         }
         
         timeoutId = window.setTimeout(() => {
-            saveFn(settings);
+            void saveFn(settings);
             timeoutId = undefined;
         }, delay);
     };

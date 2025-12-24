@@ -1,6 +1,6 @@
-import { Plugin, App, Notice, MarkdownView, TFile } from 'obsidian';
+import { Plugin, Notice, MarkdownView, TFile } from 'obsidian';
 import { DependencyContainer, ServiceTokens } from './architecture/DependencyContainer';
-import { PluginLifecycleManager, LifecyclePhase, InitializationTask } from './architecture/PluginLifecycleManager';
+import { PluginLifecycleManager, LifecyclePhase } from './architecture/PluginLifecycleManager';
 import { ErrorBoundary } from './architecture/ErrorBoundary';
 import { StatusBarManager } from './ui/managers/StatusBarManager';
 import { SettingsTabManager } from './ui/managers/SettingsTabManager';
@@ -10,7 +10,6 @@ import { SettingsManager } from './infrastructure/storage/SettingsManager';
 import { StateManager } from './application/StateManager';
 import { EventManager } from './application/EventManager';
 import { EditorService } from './application/EditorService';
-import { TextInsertionHandler } from './application/TextInsertionHandler';
 import { TranscriptionService } from './core/transcription/TranscriptionService';
 import { WhisperService } from './infrastructure/api/WhisperService';
 import { AudioProcessor } from './core/transcription/AudioProcessor';
@@ -440,7 +439,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 addTimestamp: this.settings.addTimestamp || false,
                 language: this.settings.language
             },
-            async (options) => {
+            async (_options) => {
                 if (text) {
                     await this.insertTranscription(text);
                 } else {

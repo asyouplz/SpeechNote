@@ -67,7 +67,7 @@ export class ProviderSelector {
      */
     private defaultStrategy(
         providers: Array<[TranscriptionProvider, ITranscriber]>,
-        context?: SelectionContext
+        _context?: SelectionContext
     ): ITranscriber {
         return providers[0][1];
     }
@@ -77,7 +77,7 @@ export class ProviderSelector {
      */
     private selectByCost(
         providers: Array<[TranscriptionProvider, ITranscriber]>,
-        context?: SelectionContext
+        _context?: SelectionContext
     ): ITranscriber {
         let bestProvider = providers[0];
         let lowestCost = Infinity;
@@ -101,7 +101,7 @@ export class ProviderSelector {
      */
     private selectByPerformance(
         providers: Array<[TranscriptionProvider, ITranscriber]>,
-        context?: SelectionContext
+        _context?: SelectionContext
     ): ITranscriber {
         let bestProvider = providers[0];
         let bestScore = -Infinity;
@@ -124,7 +124,7 @@ export class ProviderSelector {
      */
     private selectByQuality(
         providers: Array<[TranscriptionProvider, ITranscriber]>,
-        context?: SelectionContext
+        _context?: SelectionContext
     ): ITranscriber {
         let bestProvider = providers[0];
         let bestQuality = 0;
@@ -147,7 +147,7 @@ export class ProviderSelector {
      */
     private selectRoundRobin(
         providers: Array<[TranscriptionProvider, ITranscriber]>,
-        context?: SelectionContext
+        _context?: SelectionContext
     ): ITranscriber {
         const provider = providers[this.roundRobinIndex % providers.length];
         this.roundRobinIndex++;

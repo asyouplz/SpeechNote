@@ -5,11 +5,8 @@ import { DeepgramService } from '../../infrastructure/api/providers/deepgram/Dee
 import { WhisperAdapter } from '../../infrastructure/api/providers/whisper/WhisperAdapter';
 import { DeepgramAdapter } from '../../infrastructure/api/providers/deepgram/DeepgramAdapter';
 import {
-    ITranscriber,
-    TranscriptionProvider,
     TranscriptionOptions,
-    TranscriptionResponse,
-    SelectionStrategy
+    TranscriptionResponse
 } from '../../infrastructure/api/providers/ITranscriber';
 import type { ILogger, ISettingsManager } from '../../types';
 

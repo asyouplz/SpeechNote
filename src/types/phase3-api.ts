@@ -18,6 +18,7 @@ export interface SettingsSchema {
     audio: AudioSettings;
     advanced: AdvancedSettings;
     shortcuts: ShortcutSettings;
+    [key: string]: unknown;
 }
 
 export interface GeneralSettings {
@@ -106,10 +107,7 @@ export interface ISettingsAPI {
     reset(scope?: ResetScope): Promise<void>;
     
     // 이벤트 리스너
-    on(event: 'change', listener: SettingsChangeListener): Unsubscribe;
-    on(event: 'save', listener: () => void): Unsubscribe;
-    on(event: 'reset', listener: (scope: ResetScope) => void): Unsubscribe;
-    on(event: 'migrate', listener: (from: string, to: string) => void): Unsubscribe;
+    on(event: string, listener: (...args: unknown[]) => void): Unsubscribe;
 }
 
 // 설정 관련 타입

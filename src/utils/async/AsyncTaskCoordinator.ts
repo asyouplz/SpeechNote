@@ -8,8 +8,7 @@
 
 import { 
     CancellablePromise, 
-    Semaphore, 
-    AsyncQueue,
+    Semaphore,
     withTimeout,
     retryAsync
 } from './AsyncManager';
@@ -24,7 +23,7 @@ export interface TaskOptions {
     retryCount?: number;
     retryDelay?: number;
     cancellable?: boolean;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 /**
@@ -47,7 +46,7 @@ export interface TaskResult<T> {
     result?: T;
     error?: Error;
     duration?: number;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 }
 
 /**
@@ -195,7 +194,7 @@ export class CancellationToken {
  * 취소 에러
  */
 export class CancellationError extends Error {
-    constructor(message: string = 'Task was cancelled') {
+    constructor(message = 'Task was cancelled') {
         super(message);
         this.name = 'CancellationError';
     }
@@ -238,7 +237,7 @@ class AsyncTask<T> {
 
             // Create cancellable promise
             this.cancellablePromise = new CancellablePromise<T>(
-                async (resolve, reject, signal) => {
+                async (resolve, reject, _signal) => {
                     try {
                         // Setup cancellation handler
                         const unsubscribe = cancellationToken.onCancelled(() => {
@@ -366,7 +365,7 @@ export class ConcurrencyManager {
     /**
      * 슬롯 획득
      */
-    async acquire(priority: number = 0): Promise<void> {
+    async acquire(priority = 0): Promise<void> {
         return new Promise((resolve) => {
             this.priorityQueue.enqueue(resolve, priority);
             this.processQueue();
@@ -417,7 +416,7 @@ export class ConcurrencyManager {
 class PriorityQueue<T> {
     private heap: Array<{ priority: number; item: T }> = [];
 
-    enqueue(item: T, priority: number = 0): void {
+    enqueue(item: T, priority = 0): void {
         this.heap.push({ priority, item });
         this.bubbleUp(this.heap.length - 1);
     }
@@ -464,7 +463,8 @@ class PriorityQueue<T> {
         const element = this.heap[index];
         const length = this.heap.length;
 
-        while (true) {
+        let searching = true;
+        while (searching) {
             const leftChildIndex = 2 * index + 1;
             const rightChildIndex = 2 * index + 2;
             let swap = -1;
@@ -484,7 +484,10 @@ class PriorityQueue<T> {
                 }
             }
 
-            if (swap === -1) break;
+            if (swap === -1) {
+                searching = false;
+                continue;
+            }
 
             this.heap[index] = this.heap[swap];
             index = swap;
@@ -498,13 +501,13 @@ class PriorityQueue<T> {
  * 비동기 작업 조정자
  */
 export class AsyncTaskCoordinator extends EventEmitter {
-    private tasks: Map<string, AsyncTask<any>> = new Map();
+    private tasks: Map<string, AsyncTask<unknown>> = new Map();
     private concurrencyManager: ConcurrencyManager;
     private cancellationTokens: Map<string, CancellationToken> = new Map();
     private progressReporters: Map<string, ProgressReporter> = new Map();
     private taskCounter = 0;
 
-    constructor(maxConcurrency: number = 3) {
+    constructor(maxConcurrency = 3) {
         super();
         this.concurrencyManager = new ConcurrencyManager(maxConcurrency);
     }
@@ -543,7 +546,7 @@ export class AsyncTaskCoordinator extends EventEmitter {
             });
 
             // Run task
-            const result = await task.run(progressReporter, cancellationToken);
+            await task.run(progressReporter, cancellationToken);
 
             // Emit task completed event
             const taskResult = task.getResult();

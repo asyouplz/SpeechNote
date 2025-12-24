@@ -1,4 +1,4 @@
-import { App, Modal, Setting, DropdownComponent, ToggleComponent, TextComponent } from 'obsidian';
+import { App, Modal, Setting, DropdownComponent } from 'obsidian';
 import { InsertionOptions, InsertionMode } from '../../application/TextInsertionHandler';
 
 /**
@@ -541,12 +541,12 @@ export class FormatOptionsModal extends Modal {
         const sampleText = "This is a sample transcribed text to show how the formatting will be applied.";
         
         // 포맷 적용 시뮬레이션
-        let preview = this.simulateFormatting(sampleText);
+        const preview = this.simulateFormatting(sampleText);
         
         // 프리뷰 표시
         this.previewContainer.empty();
         
-        const previewEl = this.previewContainer.createEl('pre', {
+        this.previewContainer.createEl('pre', {
             text: preview,
             cls: 'format-preview'
         });
@@ -560,30 +560,35 @@ export class FormatOptionsModal extends Modal {
 
         // 포맷 적용
         switch (this.options.format) {
-            case 'quote':
+            case 'quote': {
                 formatted = `> ${formatted}`;
                 if (this.options.quoteAuthor) {
                     formatted += `\n> \n> — ${this.options.quoteAuthor}`;
                 }
                 break;
-            case 'bullet':
+            }
+            case 'bullet': {
                 const bullet = this.options.bulletChar || '-';
                 formatted = `${bullet} ${formatted}`;
                 break;
-            case 'heading':
+            }
+            case 'heading': {
                 const level = this.options.headingLevel || 2;
                 formatted = `${'#'.repeat(level)} ${formatted}`;
                 break;
-            case 'code':
+            }
+            case 'code': {
                 const lang = this.options.codeLanguage || '';
                 formatted = `\`\`\`${lang}\n${formatted}\n\`\`\``;
                 break;
-            case 'callout':
+            }
+            case 'callout': {
                 const type = this.options.calloutType || 'info';
                 const title = this.options.calloutTitle || '';
                 const foldable = this.options.calloutFoldable ? '+' : '';
                 formatted = `> [!${type}]${foldable} ${title}\n> ${formatted}`;
                 break;
+            }
         }
 
         // 타임스탬프 추가

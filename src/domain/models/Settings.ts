@@ -119,6 +119,7 @@ export interface SpeechToTextSettings {
             metricsEndpoint?: string;
         };
     };
+    [key: string]: unknown;
 }
 
 export type WhisperModel = 'whisper-1';

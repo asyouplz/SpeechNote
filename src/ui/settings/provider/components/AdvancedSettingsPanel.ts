@@ -1,4 +1,4 @@
-import { Setting, Notice, ToggleComponent, SliderComponent, DropdownComponent, TextComponent } from 'obsidian';
+import { Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../../../main';
 import { SelectionStrategy } from '../../../../infrastructure/api/providers/ITranscriber';
 

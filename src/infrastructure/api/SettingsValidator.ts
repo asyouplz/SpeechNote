@@ -13,7 +13,7 @@ import type {
  * 설정 검증기
  */
 export class SettingsValidator {
-    private validators: Map<string, (value: any) => ValidationResult>;
+    private validators: Map<string, (value: unknown) => ValidationResult>;
 
     constructor() {
         this.validators = new Map();
@@ -48,15 +48,16 @@ export class SettingsValidator {
     /**
      * 개별 필드 검증
      */
-    validateField<K extends keyof SettingsSchema>(key: K, value: any): ValidationResult {
-        const validator = this.validators.get(key);
+    validateField<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): ValidationResult {
+        const fieldKey = String(key);
+        const validator = this.validators.get(fieldKey);
         if (!validator) {
             // 알 수 없는 필드는 경고
             return {
                 valid: true,
                 warnings: [{
-                    field: key,
-                    message: `Unknown setting field: ${key}`,
+                    field: fieldKey,
+                    message: `Unknown setting field: ${fieldKey}`,
                     suggestion: 'This field may be deprecated or invalid'
                 }]
             };
@@ -70,11 +71,12 @@ export class SettingsValidator {
      */
     private initializeValidators(): void {
         // General 설정 검증
-        this.validators.set('general', (value) => {
+        this.validators.set('general', (value: unknown) => {
+            const general = value as Partial<SettingsSchema['general']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!value || typeof value !== 'object') {
+            if (!general || typeof general !== 'object') {
                 errors.push({
                     field: 'general',
                     message: 'General settings must be an object',
@@ -84,38 +86,38 @@ export class SettingsValidator {
             }
 
             // 언어 코드 검증
-            if (value.language) {
+            if (general.language) {
                 const validLanguages = ['auto', 'en', 'ko', 'ja', 'zh', 'es', 'fr', 'de'];
-                if (!validLanguages.includes(value.language)) {
+                if (!validLanguages.includes(general.language)) {
                     errors.push({
                         field: 'general.language',
-                        message: `Invalid language code: ${value.language}`,
+                        message: `Invalid language code: ${general.language}`,
                         code: 'INVALID_LANGUAGE'
                     });
                 }
             }
 
             // 테마 검증
-            if (value.theme) {
+            if (general.theme) {
                 const validThemes = ['light', 'dark', 'auto'];
-                if (!validThemes.includes(value.theme)) {
+                if (!validThemes.includes(general.theme)) {
                     errors.push({
                         field: 'general.theme',
-                        message: `Invalid theme: ${value.theme}`,
+                        message: `Invalid theme: ${general.theme}`,
                         code: 'INVALID_THEME'
                     });
                 }
             }
 
             // 저장 간격 검증
-            if (value.saveInterval !== undefined) {
-                if (typeof value.saveInterval !== 'number' || value.saveInterval < 1000) {
+            if (general.saveInterval !== undefined) {
+                if (typeof general.saveInterval !== 'number' || general.saveInterval < 1000) {
                     errors.push({
                         field: 'general.saveInterval',
                         message: 'Save interval must be at least 1000ms',
                         code: 'INVALID_INTERVAL'
                     });
-                } else if (value.saveInterval < 10000) {
+                } else if (general.saveInterval < 10000) {
                     warnings.push({
                         field: 'general.saveInterval',
                         message: 'Save interval is very short',
@@ -132,11 +134,12 @@ export class SettingsValidator {
         });
 
         // API 설정 검증
-        this.validators.set('api', (value) => {
+        this.validators.set('api', (value: unknown) => {
+            const api = value as Partial<SettingsSchema['api']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!value || typeof value !== 'object') {
+            if (!api || typeof api !== 'object') {
                 errors.push({
                     field: 'api',
                     message: 'API settings must be an object',
@@ -146,27 +149,27 @@ export class SettingsValidator {
             }
 
             // 프로바이더 검증
-            if (value.provider) {
+            if (api.provider) {
                 const validProviders = ['openai', 'azure', 'custom'];
-                if (!validProviders.includes(value.provider)) {
+                if (!validProviders.includes(api.provider)) {
                     errors.push({
                         field: 'api.provider',
-                        message: `Invalid provider: ${value.provider}`,
+                        message: `Invalid provider: ${api.provider}`,
                         code: 'INVALID_PROVIDER'
                     });
                 }
             }
 
             // 엔드포인트 검증 (커스텀 프로바이더)
-            if (value.provider === 'custom' && !value.endpoint) {
+            if (api.provider === 'custom' && !api.endpoint) {
                 errors.push({
                     field: 'api.endpoint',
                     message: 'Custom provider requires an endpoint URL',
                     code: 'MISSING_ENDPOINT'
                 });
-            } else if (value.endpoint) {
+            } else if (api.endpoint) {
                 try {
-                    new URL(value.endpoint);
+                    new URL(api.endpoint);
                 } catch {
                     errors.push({
                         field: 'api.endpoint',
@@ -177,26 +180,26 @@ export class SettingsValidator {
             }
 
             // 모델 검증
-            if (value.model && value.provider === 'openai') {
+            if (api.model && api.provider === 'openai') {
                 const validModels = ['whisper-1'];
-                if (!validModels.includes(value.model)) {
+                if (!validModels.includes(api.model)) {
                     warnings.push({
                         field: 'api.model',
-                        message: `Unknown OpenAI model: ${value.model}`,
+                        message: `Unknown OpenAI model: ${api.model}`,
                         suggestion: 'Consider using "whisper-1"'
                     });
                 }
             }
 
             // 토큰 한계 검증
-            if (value.maxTokens !== undefined) {
-                if (typeof value.maxTokens !== 'number' || value.maxTokens < 1) {
+            if (api.maxTokens !== undefined) {
+                if (typeof api.maxTokens !== 'number' || api.maxTokens < 1) {
                     errors.push({
                         field: 'api.maxTokens',
                         message: 'Max tokens must be a positive number',
                         code: 'INVALID_TOKENS'
                     });
-                } else if (value.maxTokens > 32768) {
+                } else if (api.maxTokens > 32768) {
                     warnings.push({
                         field: 'api.maxTokens',
                         message: 'Max tokens is very high',
@@ -206,9 +209,9 @@ export class SettingsValidator {
             }
 
             // Temperature 검증
-            if (value.temperature !== undefined) {
-                if (typeof value.temperature !== 'number' || 
-                    value.temperature < 0 || value.temperature > 2) {
+            if (api.temperature !== undefined) {
+                if (typeof api.temperature !== 'number' || 
+                    api.temperature < 0 || api.temperature > 2) {
                     errors.push({
                         field: 'api.temperature',
                         message: 'Temperature must be between 0 and 2',
@@ -225,11 +228,12 @@ export class SettingsValidator {
         });
 
         // Audio 설정 검증
-        this.validators.set('audio', (value) => {
+        this.validators.set('audio', (value: unknown) => {
+            const audio = value as Partial<SettingsSchema['audio']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!value || typeof value !== 'object') {
+            if (!audio || typeof audio !== 'object') {
                 errors.push({
                     field: 'audio',
                     message: 'Audio settings must be an object',
@@ -239,44 +243,44 @@ export class SettingsValidator {
             }
 
             // 포맷 검증
-            if (value.format) {
+            if (audio.format) {
                 const validFormats = ['mp3', 'm4a', 'wav', 'webm'];
-                if (!validFormats.includes(value.format)) {
+                if (!validFormats.includes(audio.format)) {
                     errors.push({
                         field: 'audio.format',
-                        message: `Invalid audio format: ${value.format}`,
+                        message: `Invalid audio format: ${audio.format}`,
                         code: 'INVALID_FORMAT'
                     });
                 }
             }
 
             // 품질 검증
-            if (value.quality) {
+            if (audio.quality) {
                 const validQualities = ['low', 'medium', 'high', 'lossless'];
-                if (!validQualities.includes(value.quality)) {
+                if (!validQualities.includes(audio.quality)) {
                     errors.push({
                         field: 'audio.quality',
-                        message: `Invalid audio quality: ${value.quality}`,
+                        message: `Invalid audio quality: ${audio.quality}`,
                         code: 'INVALID_QUALITY'
                     });
                 }
             }
 
             // 샘플 레이트 검증
-            if (value.sampleRate !== undefined) {
+            if (audio.sampleRate !== undefined) {
                 const validRates = [8000, 16000, 22050, 44100, 48000];
-                if (!validRates.includes(value.sampleRate)) {
+                if (!validRates.includes(audio.sampleRate as number)) {
                     errors.push({
                         field: 'audio.sampleRate',
-                        message: `Invalid sample rate: ${value.sampleRate}`,
+                        message: `Invalid sample rate: ${audio.sampleRate}`,
                         code: 'INVALID_SAMPLE_RATE'
                     });
                 }
             }
 
             // 채널 검증
-            if (value.channels !== undefined) {
-                if (value.channels !== 1 && value.channels !== 2) {
+            if (audio.channels !== undefined) {
+                if (audio.channels !== 1 && audio.channels !== 2) {
                     errors.push({
                         field: 'audio.channels',
                         message: 'Channels must be 1 (mono) or 2 (stereo)',
@@ -293,11 +297,12 @@ export class SettingsValidator {
         });
 
         // Advanced 설정 검증
-        this.validators.set('advanced', (value) => {
+        this.validators.set('advanced', (value: unknown) => {
+            const advanced = value as Partial<SettingsSchema['advanced']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!value || typeof value !== 'object') {
+            if (!advanced || typeof advanced !== 'object') {
                 errors.push({
                     field: 'advanced',
                     message: 'Advanced settings must be an object',
@@ -307,15 +312,15 @@ export class SettingsValidator {
             }
 
             // 캐시 설정 검증
-            if (value.cache) {
-                if (value.cache.maxSize !== undefined) {
-                    if (typeof value.cache.maxSize !== 'number' || value.cache.maxSize < 0) {
+            if (advanced.cache) {
+                if (advanced.cache.maxSize !== undefined) {
+                    if (typeof advanced.cache.maxSize !== 'number' || advanced.cache.maxSize < 0) {
                         errors.push({
                             field: 'advanced.cache.maxSize',
                             message: 'Cache max size must be a positive number',
                             code: 'INVALID_CACHE_SIZE'
                         });
-                    } else if (value.cache.maxSize > 500 * 1024 * 1024) {
+                    } else if (advanced.cache.maxSize > 500 * 1024 * 1024) {
                         warnings.push({
                             field: 'advanced.cache.maxSize',
                             message: 'Cache size is very large (>500MB)',
@@ -324,8 +329,8 @@ export class SettingsValidator {
                     }
                 }
 
-                if (value.cache.ttl !== undefined) {
-                    if (typeof value.cache.ttl !== 'number' || value.cache.ttl < 0) {
+                if (advanced.cache.ttl !== undefined) {
+                    if (typeof advanced.cache.ttl !== 'number' || advanced.cache.ttl < 0) {
                         errors.push({
                             field: 'advanced.cache.ttl',
                             message: 'Cache TTL must be a positive number',
@@ -336,11 +341,11 @@ export class SettingsValidator {
             }
 
             // 성능 설정 검증
-            if (value.performance) {
-                if (value.performance.maxConcurrency !== undefined) {
-                    if (typeof value.performance.maxConcurrency !== 'number' || 
-                        value.performance.maxConcurrency < 1 || 
-                        value.performance.maxConcurrency > 10) {
+            if (advanced.performance) {
+                if (advanced.performance.maxConcurrency !== undefined) {
+                    if (typeof advanced.performance.maxConcurrency !== 'number' || 
+                        advanced.performance.maxConcurrency < 1 || 
+                        advanced.performance.maxConcurrency > 10) {
                         errors.push({
                             field: 'advanced.performance.maxConcurrency',
                             message: 'Max concurrency must be between 1 and 10',
@@ -349,15 +354,15 @@ export class SettingsValidator {
                     }
                 }
 
-                if (value.performance.timeout !== undefined) {
-                    if (typeof value.performance.timeout !== 'number' || 
-                        value.performance.timeout < 1000) {
+                if (advanced.performance.timeout !== undefined) {
+                    if (typeof advanced.performance.timeout !== 'number' || 
+                        advanced.performance.timeout < 1000) {
                         errors.push({
                             field: 'advanced.performance.timeout',
                             message: 'Timeout must be at least 1000ms',
                             code: 'INVALID_TIMEOUT'
                         });
-                    } else if (value.performance.timeout > 300000) {
+                    } else if (advanced.performance.timeout > 300000) {
                         warnings.push({
                             field: 'advanced.performance.timeout',
                             message: 'Timeout is very long (>5 minutes)',
@@ -368,13 +373,13 @@ export class SettingsValidator {
             }
 
             // 디버그 설정 검증
-            if (value.debug) {
-                if (value.debug.logLevel) {
+            if (advanced.debug) {
+                if (advanced.debug.logLevel) {
                     const validLevels = ['error', 'warn', 'info', 'debug'];
-                    if (!validLevels.includes(value.debug.logLevel)) {
+                    if (!validLevels.includes(advanced.debug.logLevel)) {
                         errors.push({
                             field: 'advanced.debug.logLevel',
-                            message: `Invalid log level: ${value.debug.logLevel}`,
+                            message: `Invalid log level: ${advanced.debug.logLevel}`,
                             code: 'INVALID_LOG_LEVEL'
                         });
                     }
@@ -389,11 +394,12 @@ export class SettingsValidator {
         });
 
         // Shortcuts 설정 검증
-        this.validators.set('shortcuts', (value) => {
+        this.validators.set('shortcuts', (value: unknown) => {
+            const shortcuts = value as Partial<SettingsSchema['shortcuts']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!value || typeof value !== 'object') {
+            if (!shortcuts || typeof shortcuts !== 'object') {
                 errors.push({
                     field: 'shortcuts',
                     message: 'Shortcut settings must be an object',
@@ -416,15 +422,15 @@ export class SettingsValidator {
             };
 
             // 각 단축키 검증
-            for (const [key, shortcut] of Object.entries(value)) {
+            for (const [key, shortcut] of Object.entries(shortcuts)) {
                 if (typeof shortcut === 'string') {
                     validateShortcut(key, shortcut);
                 }
             }
 
             // 중복 단축키 확인
-            const shortcuts = Object.values(value).filter(v => typeof v === 'string');
-            const duplicates = shortcuts.filter((item, index) => shortcuts.indexOf(item) !== index);
+            const shortcutValues = Object.values(shortcuts).filter(v => typeof v === 'string');
+            const duplicates = shortcutValues.filter((item, index) => shortcutValues.indexOf(item) !== index);
             if (duplicates.length > 0) {
                 warnings.push({
                     field: 'shortcuts',

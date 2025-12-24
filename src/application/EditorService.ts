@@ -163,6 +163,9 @@ export class EditorService {
             return false;
         }
 
+        // Maintain async contract for upstream callers
+        await Promise.resolve();
+
         try {
             const cursor = editor.getCursor();
             
@@ -211,6 +214,8 @@ export class EditorService {
             return false;
         }
 
+        await Promise.resolve();
+
         try {
             const selection = editor.getSelection();
             const range = this.getSelectionRange();
@@ -257,6 +262,8 @@ export class EditorService {
             this.logger.warn('No active editor for text insertion');
             return false;
         }
+
+        await Promise.resolve();
 
         try {
             if (recordHistory) {
@@ -384,6 +391,8 @@ export class EditorService {
         const editor = this.getActiveEditor();
         if (!editor) return false;
 
+        await Promise.resolve();
+
         try {
             const oldContent = editor.getValue();
             
@@ -428,6 +437,8 @@ export class EditorService {
             this.logger.debug('No actions to undo');
             return false;
         }
+
+        await Promise.resolve();
 
         const editor = this.getActiveEditor();
         if (!editor) return false;
@@ -483,6 +494,8 @@ export class EditorService {
             this.logger.debug('No actions to redo');
             return false;
         }
+
+        await Promise.resolve();
 
         const editor = this.getActiveEditor();
         if (!editor) return false;

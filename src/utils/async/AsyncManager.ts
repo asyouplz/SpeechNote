@@ -18,7 +18,7 @@ export class CancellablePromise<T> {
     constructor(
         executor: (
             resolve: (value: T) => void,
-            reject: (reason?: any) => void,
+            reject: (reason?: unknown) => void,
             signal: AbortSignal
         ) => void,
         onCancel?: () => void
@@ -48,7 +48,7 @@ export class CancellablePromise<T> {
      */
     then<TResult1 = T, TResult2 = never>(
         onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
+        onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | undefined | null
     ): Promise<TResult1 | TResult2> {
         return this.promise.then(onfulfilled, onrejected);
     }
@@ -57,7 +57,7 @@ export class CancellablePromise<T> {
      * 에러 처리
      */
     catch<TResult = never>(
-        onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null
+        onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | undefined | null
     ): Promise<T | TResult> {
         return this.promise.catch(onrejected);
     }
@@ -147,8 +147,8 @@ export interface RetryOptions {
     delay?: number;
     maxDelay?: number;
     backoff?: 'linear' | 'exponential';
-    shouldRetry?: (error: any, attempt: number) => boolean;
-    onRetry?: (error: any, attempt: number) => void;
+    shouldRetry?: (error: unknown, attempt: number) => boolean;
+    onRetry?: (error: unknown, attempt: number) => void;
 }
 
 /**
@@ -167,7 +167,7 @@ export async function retryAsync<T>(
         onRetry
     } = options;
 
-    let lastError: any;
+    let lastError: unknown;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -213,14 +213,16 @@ export function withTimeout<T>(
 /**
  * 디바운스된 비동기 함수
  */
-export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
+type AsyncReturn<T extends (...args: unknown[]) => Promise<unknown>> = Awaited<ReturnType<T>>;
+
+export function debounceAsync<T extends (...args: unknown[]) => Promise<unknown>>(
     fn: T,
     delay: number
-): (...args: Parameters<T>) => Promise<ReturnType<T>> {
+): (...args: Parameters<T>) => Promise<AsyncReturn<T>> {
     let timeoutId: number | null = null;
-    let lastPromise: Promise<ReturnType<T>> | null = null;
+    let lastPromise: Promise<AsyncReturn<T>> | null = null;
 
-    return (...args: Parameters<T>): Promise<ReturnType<T>> => {
+    return (...args: Parameters<T>): Promise<AsyncReturn<T>> => {
         if (timeoutId) {
             clearTimeout(timeoutId);
         }
@@ -229,7 +231,7 @@ export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
             timeoutId = window.setTimeout(async () => {
                 try {
                     const result = await fn(...args);
-                    resolve(result);
+                    resolve(result as AsyncReturn<T>);
                 } catch (error) {
                     reject(error);
                 }
@@ -243,19 +245,19 @@ export function debounceAsync<T extends (...args: any[]) => Promise<any>>(
 /**
  * 쓰로틀된 비동기 함수
  */
-export function throttleAsync<T extends (...args: any[]) => Promise<any>>(
+export function throttleAsync<T extends (...args: unknown[]) => Promise<unknown>>(
     fn: T,
     limit: number
-): (...args: Parameters<T>) => Promise<ReturnType<T> | void> {
+): (...args: Parameters<T>) => Promise<AsyncReturn<T> | undefined> {
     let inThrottle = false;
-    let lastResult: ReturnType<T>;
+    let lastResult: AsyncReturn<T> | undefined;
 
-    return async (...args: Parameters<T>): Promise<ReturnType<T> | void> => {
+    return async (...args: Parameters<T>): Promise<AsyncReturn<T> | undefined> => {
         if (!inThrottle) {
             inThrottle = true;
             
             try {
-                lastResult = await fn(...args);
+                lastResult = (await fn(...args)) as AsyncReturn<T>;
                 return lastResult;
             } finally {
                 setTimeout(() => {
@@ -271,12 +273,12 @@ export function throttleAsync<T extends (...args: any[]) => Promise<any>>(
 /**
  * Promise 배치 처리
  */
-export async function batchPromises<T>(
+export async function batchPromises<T, R>(
     items: T[],
     batchSize: number,
-    processor: (item: T) => Promise<any>
-): Promise<any[]> {
-    const results: any[] = [];
+    processor: (item: T) => Promise<R>
+): Promise<R[]> {
+    const results: R[] = [];
     
     for (let i = 0; i < items.length; i += batchSize) {
         const batch = items.slice(i, i + batchSize);
@@ -342,7 +344,7 @@ export class PromisePipeline<T> {
     /**
      * 에러 처리
      */
-    catch(fn: (error: any) => T | Promise<T>): PromisePipeline<T> {
+    catch(fn: (error: unknown) => T | Promise<T>): PromisePipeline<T> {
         const newValue = this.value.catch(fn);
         return new PromisePipeline(newValue);
     }
@@ -367,7 +369,7 @@ export function sleep(ms: number): Promise<void> {
  */
 export type PromiseResult<T> = 
     | { status: 'fulfilled'; value: T }
-    | { status: 'rejected'; reason: any };
+    | { status: 'rejected'; reason: unknown };
 
 /**
  * 모든 Promise 결과 수집 (실패 포함)
@@ -395,7 +397,7 @@ export class AsyncQueue<T> {
     private concurrency: number;
     private active = 0;
 
-    constructor(concurrency: number = 1) {
+    constructor(concurrency = 1) {
         this.concurrency = concurrency;
     }
 

@@ -368,9 +368,9 @@ interface ShortcutInfo {
  * 단축키 설정 모달
  */
 class ShortcutModal extends Modal {
-    private currentKey: string = '';
+    private currentKey = '';
     private recordedKeys: Set<string> = new Set();
-    private isRecording: boolean = false;
+    private isRecording = false;
 
     constructor(
         app: App,

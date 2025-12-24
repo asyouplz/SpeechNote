@@ -23,7 +23,7 @@ export class CircularProgress {
     protected backgroundCircle: SVGPathElement | null = null;
     protected percentageText: SVGTextElement | null = null;
     protected options: Required<CircularProgressOptions>;
-    protected currentProgress: number = 0;
+    protected currentProgress = 0;
     protected animationFrame: number | null = null;
 
     constructor(options: CircularProgressOptions = {}) {
@@ -125,7 +125,7 @@ export class CircularProgress {
     /**
      * 진행률 업데이트
      */
-    updateProgress(progress: number, animate: boolean = true): void {
+    updateProgress(progress: number, animate = true): void {
         if (!this.progressCircle) return;
         
         const clampedProgress = Math.min(100, Math.max(0, progress));

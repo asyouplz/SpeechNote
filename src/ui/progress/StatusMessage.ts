@@ -290,9 +290,9 @@ export class StatusMessageDisplay {
     private element: HTMLElement | null = null;
     private messageQueue: StatusMessage[] = [];
     private currentLanguage: Language = 'ko';
-    private maxMessages: number = 50;
-    private showTimestamp: boolean = true;
-    private autoScroll: boolean = true;
+    private maxMessages = 50;
+    private showTimestamp = true;
+    private autoScroll = true;
     private eventManager: EventManager;
     
     constructor(options: {

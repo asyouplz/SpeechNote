@@ -46,8 +46,8 @@ export class SettingsTab extends PluginSettingTab {
         
         // Add debug info section at the top
         const debugSection = containerEl.createEl('details', { cls: 'speech-to-text-debug' });
-        const debugSummary = debugSection.createEl('summary', { text: 'Debug Information' });
-        const debugContent = debugSection.createEl('pre', { 
+        const _debugSummary = debugSection.createEl('summary', { text: 'Debug Information' });
+        const _debugContent = debugSection.createEl('pre', { 
             text: JSON.stringify({
                 pluginExists: !!this.plugin,
                 settingsExists: !!this.plugin?.settings,

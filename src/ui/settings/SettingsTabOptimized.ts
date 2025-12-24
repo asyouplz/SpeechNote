@@ -1,12 +1,11 @@
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
-import { PluginSettings } from '../../infrastructure/storage/SettingsManager';
 import { ApiKeyValidator } from './components/ApiKeyValidator';
 import { ShortcutSettings } from './components/ShortcutSettings';
 import { AdvancedSettings } from './components/AdvancedSettings';
 import { GeneralSettings } from './components/GeneralSettings';
 import { AudioSettings } from './components/AudioSettings';
-import { AutoDisposable, EventListenerManager } from '../../utils/memory/MemoryManager';
+import { EventListenerManager } from '../../utils/memory/MemoryManager';
 import { debounceAsync } from '../../utils/async/AsyncManager';
 import { GlobalErrorManager, ErrorType, ErrorSeverity } from '../../utils/error/ErrorManager';
 

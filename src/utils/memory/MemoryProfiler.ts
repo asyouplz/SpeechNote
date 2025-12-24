@@ -129,7 +129,7 @@ export class MemoryProfiler {
      * 메모리 스냅샷 촬영
      */
     private async takeSnapshot(): Promise<MemorySnapshot> {
-        const memory = (performance as any).memory;
+        const memory = (performance as Performance & { memory?: { totalJSHeapSize: number; usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
         
         return {
             timestamp: Date.now(),
@@ -321,8 +321,8 @@ export class MemoryProfiler {
      */
     private triggerCleanup(): void {
         // Chrome의 경우 gc() 함수 사용 가능 (--expose-gc 플래그 필요)
-        if (typeof (window as any).gc === 'function') {
-            (window as any).gc();
+        if (typeof (window as typeof window & { gc?: () => void }).gc === 'function') {
+            (window as typeof window & { gc?: () => void }).gc?.();
             if (process.env.NODE_ENV === 'development') {
                 console.debug('Garbage collection triggered');
             }
@@ -378,7 +378,7 @@ export class MemoryProfiler {
      * 동기적 스냅샷 촬영
      */
     private takeSnapshotSync(): MemorySnapshot {
-        const memory = (performance as any).memory;
+        const memory = (performance as Performance & { memory?: { totalJSHeapSize: number; usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
         
         return {
             timestamp: Date.now(),

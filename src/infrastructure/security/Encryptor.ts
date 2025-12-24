@@ -3,7 +3,6 @@
  * Web Crypto API를 사용한 안전한 데이터 암호화/복호화
  */
 
-import { Notice } from 'obsidian';
 
 export interface EncryptedData {
     data: string;      // Base64 encoded encrypted data

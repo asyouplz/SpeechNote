@@ -64,6 +64,7 @@ export class ErrorBoundary {
             recover: async (error, context) => {
                 this.logger.warn(`UI component error in ${context.component}, attempting graceful degradation`);
                 // UI 컴포넌트는 무시하고 계속 진행
+                await Promise.resolve();
             }
         });
 
@@ -80,6 +81,7 @@ export class ErrorBoundary {
             recover: async (_error) => {
                 this.logger.warn('API error detected, will retry with exponential backoff');
                 // 재시도 로직은 별도 서비스에서 처리
+                await Promise.resolve();
             }
         });
 
@@ -93,6 +95,7 @@ export class ErrorBoundary {
             recover: async (_error, _context) => {
                 this.logger.warn('Settings error detected, using default settings');
                 // 기본 설정으로 폴백
+                await Promise.resolve();
             }
         });
     }

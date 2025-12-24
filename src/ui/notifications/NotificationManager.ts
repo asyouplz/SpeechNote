@@ -47,7 +47,7 @@ class NoopChannel implements NotificationChannel {
 class PriorityQueue<T> {
     private heap: Array<{ priority: number; item: T }> = [];
 
-    enqueue(item: T, priority: number = 0): void {
+    enqueue(item: T, priority = 0): void {
         this.heap.push({ priority, item });
         this.bubbleUp(this.heap.length - 1);
     }
@@ -90,7 +90,8 @@ class PriorityQueue<T> {
         const element = this.heap[index];
         const length = this.heap.length;
         
-        while (true) {
+        let searching = true;
+        while (searching) {
             const leftChildIdx = 2 * index + 1;
             const rightChildIdx = 2 * index + 2;
             let swapIdx = -1;
@@ -110,7 +111,10 @@ class PriorityQueue<T> {
                 }
             }
             
-            if (swapIdx === -1) break;
+            if (swapIdx === -1) {
+                searching = false;
+                continue;
+            }
             
             this.heap[index] = this.heap[swapIdx];
             index = swapIdx;
@@ -129,7 +133,7 @@ class RateLimiter {
     private maxPerMinute: number;
     private maxPerType: Map<NotificationType, number>;
 
-    constructor(maxPerMinute: number = 30, maxPerType?: Map<NotificationType, number>) {
+    constructor(maxPerMinute = 30, maxPerType?: Map<NotificationType, number>) {
         this.maxPerMinute = maxPerMinute;
         this.maxPerType = maxPerType || new Map([
             ['error', 10],
@@ -589,7 +593,7 @@ class StatusBarChannel implements NotificationChannel {
  */
 class SoundChannel implements NotificationChannel {
     private sounds: Map<NotificationType, string> = new Map();
-    private enabled: boolean = true;
+    private enabled = true;
     private audioCache: Map<string, HTMLAudioElement> = new Map();
 
     constructor() {
@@ -646,7 +650,7 @@ class SoundChannel implements NotificationChannel {
         return audio;
     }
 
-    dismiss(notificationId: string): void {
+    dismiss(_notificationId: string): void {
         // Sound 채널은 dismiss 동작 없음
     }
 
@@ -769,7 +773,7 @@ export class NotificationManager implements INotificationAPI {
     private config: NotificationConfig;
     private activeNotifications: Map<string, NotificationOptions> = new Map();
     private eventManager: EventManager;
-    private notificationCounter: number = 0;
+    private notificationCounter = 0;
     private recentMessages: Map<string, number> = new Map(); // 최근 메시지 추적
     private recentMessageTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
@@ -1003,7 +1007,7 @@ export class NotificationManager implements INotificationAPI {
     /**
      * 입력 대화상자
      */
-    async prompt(message: string, options?: PromptOptions): Promise<string | null> {
+    async prompt(_message: string, _options?: PromptOptions): Promise<string | null> {
         return new Promise((resolve) => {
             // 구현 예정
             resolve(null);

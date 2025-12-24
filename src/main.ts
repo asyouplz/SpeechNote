@@ -1,8 +1,7 @@
-import { App, Plugin, Notice, TFile, Modal, MarkdownView, Menu } from 'obsidian';
+import { App, Plugin, Notice, TFile, Modal, MarkdownView } from 'obsidian';
 import { SpeechToTextSettings, DEFAULT_SETTINGS } from './domain/models/Settings';
 import { TranscriptionService } from './core/transcription/TranscriptionService';
 import { WhisperService } from './infrastructure/api/WhisperService';
-import { DeepgramService } from './infrastructure/api/providers/deepgram/DeepgramService';
 import { TranscriberFactory } from './infrastructure/api/TranscriberFactory';
 import { TranscriberToWhisperAdapter } from './infrastructure/api/adapters/TranscriberToWhisperAdapter';
 import { AudioProcessor } from './core/transcription/AudioProcessor';

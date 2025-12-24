@@ -1,4 +1,4 @@
-import { Setting, Notice, ButtonComponent, TextComponent, Modal, App, requestUrl } from 'obsidian';
+import { Setting, Notice, ButtonComponent, Modal, requestUrl } from 'obsidian';
 import type SpeechToTextPlugin from '../../../../main';
 import { TranscriptionProvider } from '../../../../infrastructure/api/providers/ITranscriber';
 import { Encryptor } from '../../../../infrastructure/security/Encryptor';
@@ -141,16 +141,16 @@ export class APIKeyManager {
         }
         
         // 가시성 토글 버튼
-        const visibilityBtn = this.createVisibilityToggle(inputContainer, inputEl, provider);
+        const _visibilityBtn = this.createVisibilityToggle(inputContainer, inputEl, provider);
         
         // 검증 버튼
         const validateBtn = this.createValidationButton(inputContainer, inputEl, provider, validationRegex);
         
         // 복사 버튼
-        const copyBtn = this.createCopyButton(inputContainer, provider);
+        const _copyBtn = this.createCopyButton(inputContainer, provider);
         
         // 삭제 버튼
-        const deleteBtn = this.createDeleteButton(inputContainer, provider);
+        const _deleteBtn = this.createDeleteButton(inputContainer, provider);
         
         // 입력 이벤트 핸들러
         this.attachInputHandlers(inputEl, provider, validationRegex, validateBtn);
@@ -453,7 +453,7 @@ export class APIKeyManager {
     private renderLastValidation(containerEl: HTMLElement, provider: TranscriptionProvider): void {
         const status = this.validationStatus.get(provider);
         if (status && status.lastValidated) {
-            const timeEl = containerEl.createEl('div', { 
+            const _timeEl = containerEl.createEl('div', { 
                 cls: 'last-validation-time',
                 text: `Last verified: ${this.formatTime(status.lastValidated)}`
             });

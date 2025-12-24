@@ -92,7 +92,7 @@ class StepManager {
     /**
      * 단계 추가
      */
-    addStep(stepId: string, name: string, weight: number = 1) {
+    addStep(stepId: string, name: string, weight = 1) {
         this.steps.set(stepId, {
             id: stepId,
             name,
@@ -186,20 +186,20 @@ class StepManager {
 export class ProgressTracker implements IProgressTracker {
     private taskId: string;
     private totalSteps: number;
-    private currentProgress: number = 0;
+    private currentProgress = 0;
     private status: 'running' | 'paused' | 'completed' | 'failed' = 'running';
-    private message: string = '';
+    private message = '';
     private startTime: number;
-    private pausedTime: number = 0;
-    private totalPausedDuration: number = 0;
+    private pausedTime = 0;
+    private totalPausedDuration = 0;
     private estimator: ETAEstimator;
     private stepManager: StepManager;
     private eventManager: EventManager;
-    private isPaused: boolean = false;
-    private isCancelled: boolean = false;
+    private isPaused = false;
+    private isCancelled = false;
     private emitter: EventEmitter;
 
-    constructor(taskId: string, totalSteps: number = 100) {
+    constructor(taskId: string, totalSteps = 100) {
         this.emitter = new EventEmitter();
         this.taskId = taskId;
         this.totalSteps = totalSteps;
@@ -256,7 +256,7 @@ export class ProgressTracker implements IProgressTracker {
     /**
      * 진행률 증가
      */
-    increment(delta: number = 1): void {
+    increment(delta = 1): void {
         this.update(this.currentProgress + delta);
     }
 
@@ -304,7 +304,7 @@ export class ProgressTracker implements IProgressTracker {
     /**
      * 단계 추가
      */
-    addStep(stepId: string, name: string, weight: number = 1): void {
+    addStep(stepId: string, name: string, weight = 1): void {
         this.stepManager.addStep(stepId, name, weight);
     }
 
@@ -550,7 +550,7 @@ export class ProgressTrackingSystem {
     /**
      * 작업 시작
      */
-    startTask(taskId: string, totalSteps: number = 100): ProgressTracker {
+    startTask(taskId: string, totalSteps = 100): ProgressTracker {
         // 기존 추적기가 있으면 제거
         if (this.trackers.has(taskId)) {
             const existing = this.trackers.get(taskId);
