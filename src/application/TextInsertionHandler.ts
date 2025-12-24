@@ -125,6 +125,8 @@ export class TextInsertionHandler {
         text: string, 
         options: InsertionOptions
     ): Promise<string> {
+        await Promise.resolve();
+
         let formatted = text;
 
         // 기본 정리
@@ -391,6 +393,8 @@ export class TextInsertionHandler {
         text: string, 
         options: InsertionOptions
     ): Promise<boolean> {
+        await Promise.resolve();
+
         // 프리뷰 모달 표시 (별도 구현 필요)
         new Notice(`Preview:\n${text.substring(0, 100)}...`);
         

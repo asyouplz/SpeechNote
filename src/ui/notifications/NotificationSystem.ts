@@ -38,7 +38,7 @@ export interface NotificationAction {
 export class ToastNotification {
     private static container: HTMLElement | null = null;
     private static notifications: Map<string, HTMLElement> = new Map();
-    private static soundEnabled: boolean = true;
+    private static soundEnabled = true;
     private static defaultPosition: NotificationPosition = 'top-right';
     
     /**

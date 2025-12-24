@@ -13,7 +13,7 @@ export function sleep(ms: number): Promise<void> {
 /**
  * 디바운스 함수 생성
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
     func: T,
     wait: number
 ): (...args: Parameters<T>) => void {
@@ -34,7 +34,7 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * 쓰로틀 함수 생성
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
     func: T,
     limit: number
 ): (...args: Parameters<T>) => void {
@@ -96,7 +96,7 @@ export async function retry<T>(
 /**
  * 안전한 JSON 파싱
  */
-export function safeJsonParse<T = any>(
+export function safeJsonParse<T = unknown>(
     jsonString: string,
     fallback: T
 ): T {
@@ -116,11 +116,11 @@ export function deepClone<T>(obj: T): T {
     }
     
     if (obj instanceof Date) {
-        return new Date(obj.getTime()) as any;
+        return new Date(obj.getTime()) as unknown as T;
     }
     
     if (obj instanceof Array) {
-        return obj.map(item => deepClone(item)) as any;
+        return obj.map(item => deepClone(item)) as unknown as T;
     }
     
     if (obj instanceof Map) {
@@ -128,7 +128,7 @@ export function deepClone<T>(obj: T): T {
         obj.forEach((value, key) => {
             cloned.set(key, deepClone(value));
         });
-        return cloned as any;
+        return cloned as unknown as T;
     }
     
     if (obj instanceof Set) {
@@ -136,12 +136,12 @@ export function deepClone<T>(obj: T): T {
         obj.forEach(value => {
             cloned.add(deepClone(value));
         });
-        return cloned as any;
+        return cloned as unknown as T;
     }
     
     const cloned = {} as T;
     for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
             cloned[key] = deepClone(obj[key]);
         }
     }
@@ -152,7 +152,7 @@ export function deepClone<T>(obj: T): T {
 /**
  * 객체 병합 (깊은 병합)
  */
-export function deepMerge<T extends Record<string, any>>(
+export function deepMerge<T extends Record<string, unknown>>(
     target: T,
     ...sources: Partial<T>[]
 ): T {
@@ -162,13 +162,17 @@ export function deepMerge<T extends Record<string, any>>(
     
     if (isObject(target) && isObject(source)) {
         for (const key in source) {
-            if (isObject(source[key])) {
-                if (!target[key]) {
-                    Object.assign(target, { [key]: {} });
-                }
-                deepMerge(target[key], source[key] as Partial<T[Extract<keyof T, string>]>);
+            const sourceValue = source[key];
+            if (isObject(sourceValue)) {
+                const targetValue = target[key];
+                const base = isObject(targetValue) ? targetValue : {};
+                const merged = deepMerge(
+                    base as Record<string, unknown>,
+                    sourceValue as Record<string, unknown>
+                );
+                Object.assign(target, { [key]: merged as T[Extract<keyof T, string>] });
             } else {
-                Object.assign(target, { [key]: source[key] });
+                Object.assign(target, { [key]: sourceValue });
             }
         }
     }
@@ -179,14 +183,14 @@ export function deepMerge<T extends Record<string, any>>(
 /**
  * 객체인지 확인
  */
-export function isObject(item: any): item is Record<string, any> {
-    return item && typeof item === 'object' && !Array.isArray(item);
+export function isObject(item: unknown): item is Record<string, unknown> {
+    return item !== null && typeof item === 'object' && !Array.isArray(item);
 }
 
 /**
  * 빈 객체인지 확인
  */
-export function isEmpty(obj: any): boolean {
+export function isEmpty(obj: unknown): boolean {
     if (obj == null) return true;
     if (typeof obj === 'string' || Array.isArray(obj)) return obj.length === 0;
     if (obj instanceof Map || obj instanceof Set) return obj.size === 0;
@@ -219,7 +223,7 @@ export function chunk<T>(array: T[], size: number): T[][] {
 /**
  * 배열에서 중복 제거
  */
-export function unique<T>(array: T[], key?: (item: T) => any): T[] {
+export function unique<T>(array: T[], key?: (item: T) => unknown): T[] {
     if (!key) {
         return [...new Set(array)];
     }
@@ -270,7 +274,7 @@ export function ensureError(value: unknown): Error {
 /**
  * 메모이제이션
  */
-export function memoize<T extends (...args: any[]) => any>(
+export function memoize<T extends (...args: unknown[]) => unknown>(
     fn: T,
     keyResolver?: (...args: Parameters<T>) => string
 ): T {
@@ -283,7 +287,7 @@ export function memoize<T extends (...args: any[]) => any>(
             return cache.get(key);
         }
         
-        const result = fn(...args);
+        const result = fn(...args) as ReturnType<T>;
         cache.set(key, result);
         return result;
     }) as T;

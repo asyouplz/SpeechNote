@@ -9,7 +9,7 @@
  */
 
 import type { ILogger } from '../../../../types';
-import { DIARIZATION_DEFAULTS, LOGGING } from './constants';
+import { DIARIZATION_DEFAULTS } from './constants';
 
 // 타입 정의
 export interface DiarizedWord {
@@ -391,7 +391,7 @@ export class DiarizationFormatter {
     private applyCustomFormat(
         segment: DiarizedSegment, 
         speakerLabel: string, 
-        config: DiarizationConfig
+        _config: DiarizationConfig
     ): string {
         // 기본적으로 prefix 형태로 처리 (확장 가능)
         return `${speakerLabel}: ${segment.text}`;

@@ -2,13 +2,12 @@
  * Phase 3 개선된 설정 탭 UI
  */
 
-import { App, PluginSettingTab, Setting, Notice, Modal, ButtonComponent, ToggleComponent } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice, Modal, ButtonComponent } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
 import { SettingsAPI } from '../../infrastructure/api/SettingsAPI';
 import { SecureApiKeyManager } from '../../infrastructure/security/Encryptor';
 import { SettingsValidator } from '../../infrastructure/api/SettingsValidator';
-import type { SettingsSchema, ValidationResult } from '../../types/phase3-api';
-import { AutoDisposable, ResourceManager } from '../../utils/memory/MemoryManager';
+import { ResourceManager } from '../../utils/memory/MemoryManager';
 
 /**
  * 개선된 설정 탭
@@ -19,7 +18,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private apiKeyManager: SecureApiKeyManager;
     private validator: SettingsValidator;
     private memoryManager: ResourceManager;
-    private isDirty: boolean = false;
+    private isDirty = false;
     private autoSaveTimeout: NodeJS.Timeout | null = null;
 
     constructor(app: App, plugin: SpeechToTextPlugin) {
@@ -63,7 +62,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         this.createHeader(containerEl);
 
         // 탭 네비게이션
-        const tabContainer = this.createTabNavigation(containerEl);
+        const _tabContainer = this.createTabNavigation(containerEl);
         
         // 섹션 컨테이너
         const contentContainer = containerEl.createDiv({ cls: 'settings-content' });

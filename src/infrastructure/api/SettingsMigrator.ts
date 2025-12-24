@@ -2,9 +2,9 @@
  * 설정 마이그레이션 시스템
  */
 
-import type { SettingsSchema } from '../../types/phase3-api';
+import type { SettingsSchema, LanguageCode } from '../../types/phase3-api';
 
-type Migration = (settings: any) => Promise<any>;
+type Migration = (settings: SettingsSchema) => Promise<SettingsSchema>;
 
 /**
  * 설정 마이그레이터
@@ -35,7 +35,7 @@ export class SettingsMigrator {
      * 마이그레이션 실행
      */
     async migrate(
-        currentSettings: any,
+        currentSettings: SettingsSchema,
         fromVersion: string,
         toVersion: string
     ): Promise<SettingsSchema> {
@@ -135,9 +135,9 @@ export class SettingsMigrator {
             return {
                 ...settings,
                 // autoSave 추가
-                autoSave: settings.autoSave ?? true,
+                autoSave: (settings as Record<string, unknown>).autoSave ?? true,
                 // 캐시 설정 추가
-                enableCache: settings.enableCache ?? true
+                enableCache: (settings as Record<string, unknown>).enableCache ?? true
             };
         });
 
@@ -146,7 +146,7 @@ export class SettingsMigrator {
             return {
                 ...settings,
                 // 언어 설정 마이그레이션
-                language: settings.language || 'auto',
+                language: this.normalizeLegacyLanguage(settings.language as string | undefined) as LanguageCode,
                 // 청크 크기 추가
                 chunkSize: settings.chunkSize ?? 1024 * 1024
             };
@@ -154,36 +154,67 @@ export class SettingsMigrator {
 
         // 1.2.0 -> 2.0.0 (메이저 업데이트)
         this.migrations.set('1.2.0->2.0.0', async (settings) => {
-            // 구조 변경: flat -> nested
-            return {
+            const getBool = (val: unknown, fallback: boolean) =>
+                typeof val === 'boolean' ? val : fallback;
+            const getNum = (val: unknown, fallback: number) =>
+                typeof val === 'number' ? val : fallback;
+
+            const migrated: SettingsSchema = {
                 version: '2.0.0',
                 general: {
-                    language: settings.language || 'auto',
-                    autoSave: settings.autoSave ?? true,
-                    saveInterval: settings.saveInterval ?? 30000
+                    language: this.normalizeLegacyLanguage(settings.language as string | undefined) as LanguageCode,
+                    autoSave: getBool((settings as Record<string, unknown>).autoSave, true),
+                    saveInterval: getNum((settings as Record<string, unknown>).saveInterval, 30000),
+                    theme: 'auto',
+                    notifications: {
+                        enabled: true,
+                        sound: false,
+                        position: 'top-right'
+                    }
                 },
                 api: {
                     provider: 'openai',
-                    apiKey: settings.apiKey,
-                    model: settings.model || 'whisper-1',
-                    maxTokens: settings.maxTokens ?? 4096
+                    apiKey: (settings as Record<string, unknown>).apiKey as string | undefined,
+                    model: ((settings as Record<string, unknown>).model as string) || 'whisper-1',
+                    maxTokens: getNum((settings as Record<string, unknown>).maxTokens, 4096),
+                    temperature: 0.5
                 },
                 audio: {
-                    format: settings.audioFormat || 'webm',
-                    quality: settings.audioQuality || 'high',
-                    sampleRate: settings.sampleRate ?? 16000
+                    format: ((settings as Record<string, unknown>).audioFormat as string) || 'webm',
+                    quality: ((settings as Record<string, unknown>).audioQuality as string) || 'high',
+                    sampleRate: getNum((settings as Record<string, unknown>).sampleRate, 16000),
+                    channels: 1,
+                    language: this.normalizeLegacyLanguage(settings.language as string | undefined),
+                    enhanceAudio: false
                 },
                 advanced: {
                     cache: {
-                        enabled: settings.enableCache ?? true,
-                        maxSize: settings.cacheSize ?? 100 * 1024 * 1024
+                        enabled: getBool((settings as Record<string, unknown>).enableCache, true),
+                        maxSize: getNum((settings as Record<string, unknown>).cacheSize, 100 * 1024 * 1024),
+                        ttl: 60_000
                     },
                     performance: {
-                        chunkSize: settings.chunkSize ?? 1024 * 1024,
-                        maxConcurrency: settings.maxConcurrency ?? 3
+                        chunkSize: getNum((settings as Record<string, unknown>).chunkSize, 1024 * 1024),
+                        maxConcurrency: getNum((settings as Record<string, unknown>).maxConcurrency, 3),
+                        timeout: 30_000,
+                        useWebWorkers: false
+                    },
+                    debug: {
+                        enabled: false,
+                        logLevel: 'warn',
+                        saveLogsToFile: false
                     }
+                },
+                shortcuts: {
+                    startTranscription: 'Mod+Shift+S',
+                    stopTranscription: 'Mod+Shift+X',
+                    pauseTranscription: 'Mod+Shift+P',
+                    openSettings: 'Mod+,',
+                    openFilePicker: 'Mod+Shift+O'
                 }
             };
+
+            return migrated;
         });
 
         // 2.0.0 -> 2.1.0
@@ -204,8 +235,8 @@ export class SettingsMigrator {
                 // 채널 설정 추가
                 audio: {
                     ...settings.audio,
-                    channels: 1,
-                    enhanceAudio: false
+                    channels: settings.audio?.channels ?? 1,
+                    enhanceAudio: settings.audio?.enhanceAudio ?? false
                 }
             };
         });
@@ -248,10 +279,10 @@ export class SettingsMigrator {
                 version: '3.0.0',
                 general: {
                     ...settings.general,
-                    language: this.normalizeLegacyLanguage(settings.general?.language || (settings as any).language),
+                    language: this.normalizeLegacyLanguage(settings.general?.language || (settings as Record<string, unknown>).language) as LanguageCode,
                     theme: settings.general?.theme || 'auto',
                     autoSave: settings.general?.autoSave ?? true,
-                    saveInterval: settings.general?.saveInterval ?? 30000,
+                    saveInterval: typeof settings.general?.saveInterval === 'number' ? settings.general.saveInterval : 30000,
                     notifications: settings.general?.notifications || {
                         enabled: true,
                         sound: false,
@@ -262,18 +293,22 @@ export class SettingsMigrator {
                     provider: settings.api?.provider || 'openai',
                     endpoint: settings.api?.endpoint,
                     model: settings.api?.model || 'whisper-1',
-                    maxTokens: settings.api?.maxTokens ?? 4096,
+                    maxTokens: typeof settings.api?.maxTokens === 'number' ? settings.api.maxTokens : 4096,
                     temperature: settings.api?.temperature ?? 0.5
                     // apiKey는 별도 암호화 저장으로 이동
                 },
                 audio: {
                     format: settings.audio?.format || 'webm',
                     quality: settings.audio?.quality || 'high',
-                    sampleRate: settings.audio?.sampleRate ?? 16000,
+                    sampleRate: typeof settings.audio?.sampleRate === 'number' ? settings.audio.sampleRate : 16000,
                     channels: settings.audio?.channels ?? 1,
-                    language: this.normalizeLegacyLanguage(settings.audio?.language || (settings as any).language),
-                    enhanceAudio: settings.audio?.enhanceAudio ?? true
-                },
+                language: this.normalizeLegacyLanguage(
+                    typeof (settings.audio?.language ?? (settings as Record<string, unknown>).language) === 'string'
+                        ? (settings.audio?.language ?? (settings as Record<string, unknown>).language) as string
+                        : undefined
+                ) as LanguageCode,
+                enhanceAudio: settings.audio?.enhanceAudio ?? true
+            },
                 advanced: {
                     cache: {
                         enabled: settings.advanced?.cache?.enabled ?? true,
@@ -301,30 +336,14 @@ export class SettingsMigrator {
                 }
             };
 
-            // API 키는 마이그레이션 후 별도 처리 필요
-            if (apiKey) {
-                // 임시로 메모리에 보관 (실제 저장은 SecureApiKeyManager에서 처리)
-                (newSettings as any).__migratedApiKey = apiKey;
-            }
-
-            const migrated = newSettings as SettingsSchema & {
-                language?: string;
-                maxFileSize?: number;
-                enableNotifications?: boolean;
-            };
-
-            migrated.language = newSettings.general.language;
-            migrated.maxFileSize = (settings as any).fileSize ?? 25;
-            migrated.enableNotifications = newSettings.general.notifications?.enabled ?? true;
-
-            return migrated;
+            return newSettings;
         });
     }
 
     /**
      * 백업 생성
      */
-    async createBackup(settings: any): Promise<string> {
+    async createBackup(settings: SettingsSchema): Promise<string> {
         const backup = {
             timestamp: new Date().toISOString(),
             version: settings.version || 'unknown',
@@ -343,14 +362,14 @@ export class SettingsMigrator {
     /**
      * 백업 복원
      */
-    async restoreBackup(backupKey: string): Promise<any> {
+    async restoreBackup(backupKey: string): Promise<SettingsSchema> {
         const backupData = localStorage.getItem(backupKey);
         if (!backupData) {
             throw new Error('Backup not found');
         }
 
         const backup = JSON.parse(backupData);
-        return backup.settings;
+        return backup.settings as SettingsSchema;
     }
 
     /**

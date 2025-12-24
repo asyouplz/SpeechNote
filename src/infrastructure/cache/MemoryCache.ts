@@ -91,7 +91,7 @@ export class MemoryCache<T = any> {
     /**
      * 캐시에 값 저장
      */
-    set(key: string, data: T, ttl?: number): void {
+    set(key: string, data: T, _ttl?: number): void {
         const size = this.estimateSize(data);
         
         // 메모리 제한 체크

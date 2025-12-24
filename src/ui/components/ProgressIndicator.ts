@@ -43,7 +43,7 @@ export class ProgressIndicator {
         this.progressElement.addClass('sn-fade-hidden');
         
         // 오버레이
-        const overlay = this.progressElement.createDiv('progress-overlay');
+        const _overlay = this.progressElement.createDiv('progress-overlay');
         
         // 컨테이너
         const content = this.progressElement.createDiv('progress-content');
@@ -58,7 +58,7 @@ export class ProgressIndicator {
         
         // 진행률 바
         const progressBar = barContainer.createDiv('progress-bar');
-        const progressFill = progressBar.createDiv('progress-fill');
+        const _progressFill = progressBar.createDiv('progress-fill');
         const progressText = progressBar.createDiv('progress-text');
         progressText.setText('0%');
         
@@ -83,7 +83,7 @@ export class ProgressIndicator {
     /**
      * 진행 상태 표시
      */
-    show(message?: string, showProgressBar: boolean = false, cancellable: boolean = false) {
+    show(message?: string, showProgressBar = false, cancellable = false) {
         if (!this.progressElement) return;
         
         this.isVisible = true;
@@ -182,7 +182,7 @@ export class ProgressIndicator {
     /**
      * 진행률 업데이트 (부드러운 애니메이션)
      */
-    animateProgress(targetProgress: number, duration: number = 500) {
+    animateProgress(targetProgress: number, duration = 500) {
         if (!this.isVisible || !this.progressElement) return;
         
         const startProgress = this.currentProgress;

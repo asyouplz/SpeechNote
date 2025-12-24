@@ -216,7 +216,7 @@ export class DeepgramSettings {
             .setName(UI_CONSTANTS.MESSAGES.MODEL_LABEL)
             .setDesc(UI_CONSTANTS.MESSAGES.MODEL_DESC);
 
-        const dropdown = setting.addDropdown(dropdown => {
+        const _dropdown = setting.addDropdown(dropdown => {
             this.populateModelDropdown(dropdown);
             this.setupModelDropdownHandlers(dropdown);
             return dropdown;

@@ -1,4 +1,4 @@
-import { Setting, ButtonComponent } from 'obsidian';
+import { Setting } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
 import { Notice } from 'obsidian';
 
@@ -121,7 +121,7 @@ export class AdvancedSettings {
                 .addOption('info', '정보 이상')
                 .addOption('debug', '모든 로그')
                 .setValue('info')
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 로그 레벨 설정
                     await this.plugin.saveSettings();
                 }));
@@ -132,7 +132,7 @@ export class AdvancedSettings {
             .setDesc('로그를 파일로 저장합니다')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 로그 파일 저장 설정
                     await this.plugin.saveSettings();
                 }));
@@ -177,7 +177,7 @@ export class AdvancedSettings {
                 .addOption('2', '2개')
                 .addOption('3', '3개 (빠름)')
                 .setValue('1')
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 동시 처리 설정
                     await this.plugin.saveSettings();
                 }));
@@ -188,7 +188,7 @@ export class AdvancedSettings {
             .setDesc('실패한 작업을 자동으로 재시도합니다')
             .addToggle(toggle => toggle
                 .setValue(true)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 자동 재시도 설정
                     await this.plugin.saveSettings();
                 }));
@@ -203,7 +203,7 @@ export class AdvancedSettings {
                 .addOption('3', '3회')
                 .addOption('5', '5회')
                 .setValue('3')
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 재시도 횟수 설정
                     await this.plugin.saveSettings();
                 }));
@@ -232,7 +232,7 @@ export class AdvancedSettings {
             .setDesc('메모리 사용을 최적화합니다 (큰 파일 처리 시 유용)')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 메모리 최적화 설정
                     await this.plugin.saveSettings();
                 }));
@@ -256,7 +256,7 @@ export class AdvancedSettings {
             .setDesc('여러 파일을 한 번에 처리합니다')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 배치 처리 설정
                     await this.plugin.saveSettings();
                 }));
@@ -267,7 +267,7 @@ export class AdvancedSettings {
             .setDesc('녹음과 동시에 실시간으로 변환합니다')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 실시간 변환 설정
                     await this.plugin.saveSettings();
                 }))
@@ -279,7 +279,7 @@ export class AdvancedSettings {
             .setDesc('여러 화자를 구분하여 표시합니다')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 화자 분리 설정
                     await this.plugin.saveSettings();
                 }))
@@ -291,7 +291,7 @@ export class AdvancedSettings {
             .setDesc('변환된 텍스트를 자동으로 번역합니다')
             .addToggle(toggle => toggle
                 .setValue(false)
-                .onChange(async (value) => {
+                .onChange(async (_value) => {
                     // 자동 번역 설정
                     await this.plugin.saveSettings();
                 }))

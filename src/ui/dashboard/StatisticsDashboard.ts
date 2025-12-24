@@ -7,7 +7,6 @@
  */
 
 import { EventManager } from '../../application/EventManager';
-import { ProgressBar } from '../progress/ProgressBar';
 
 export interface TranscriptionRecord {
     id: string;
@@ -578,7 +577,7 @@ export class StatisticsDashboard {
     /**
      * 히스토리 테이블 업데이트
      */
-    private updateHistoryTable(filter: string = 'all') {
+    private updateHistoryTable(filter = 'all') {
         const tbody = this.element?.querySelector('.history__tbody');
         if (!tbody) return;
         

@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf } from 'obsidian';
+import { Plugin } from 'obsidian';
 import { Logger } from '../../infrastructure/logging/Logger';
 import { StateManager } from '../../application/StateManager';
 import { IDisposable } from '../../architecture/DependencyContainer';
@@ -22,7 +22,7 @@ export class StatusBarManager implements IDisposable {
     private hideTimeout: NodeJS.Timeout | null = null;
     private unsubscribe: (() => void) | null = null;
     private logger: Logger;
-    private isDisposed: boolean = false;
+    private isDisposed = false;
 
     constructor(
         private plugin: Plugin,

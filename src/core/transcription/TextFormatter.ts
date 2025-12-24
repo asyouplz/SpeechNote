@@ -10,7 +10,7 @@ export class TextFormatter implements ITextFormatter {
 
     format(text: string, options?: FormatOptions): string {
         const shouldClean = options?.cleanupText !== false;
-        let formattedText = shouldClean ? this.cleanUp(text) : text;
+        const formattedText = shouldClean ? this.cleanUp(text) : text;
 
         // Apply formatting based on settings
         if (this.settings.timestampFormat !== 'none' && options?.includeTimestamps) {
@@ -25,7 +25,6 @@ export class TextFormatter implements ITextFormatter {
             return text;
         }
 
-        const lines = text.split('\n');
         const result: string[] = [];
 
         segments.forEach((segment) => {

@@ -1,9 +1,8 @@
 import { requestUrl, RequestUrlParam } from 'obsidian';
 import type { IWhisperService, WhisperOptions, WhisperResponse, ILogger } from '../../types';
-import { retry, sleep, withTimeout } from '../../utils/common/helpers';
-import { validateApiKey, validateRange } from '../../utils/common/validators';
-import { formatFileSize, truncateText } from '../../utils/common/formatters';
-import { isWhisperResponse } from '../../types/guards';
+import { sleep } from '../../utils/common/helpers';
+import { validateRange } from '../../utils/common/validators';
+import { truncateText } from '../../utils/common/formatters';
 
 // 커스텀 에러 클래스
 export class WhisperAPIError extends Error {
@@ -19,7 +18,7 @@ export class WhisperAPIError extends Error {
 }
 
 export class AuthenticationError extends WhisperAPIError {
-    constructor(message: string = 'Invalid API key') {
+    constructor(message = 'Invalid API key') {
         super(message, 'AUTH_ERROR', 401, false);
     }
 }
@@ -88,7 +87,7 @@ class ExponentialBackoffRetry implements RetryStrategy {
         );
     }
     
-    private isRetryable(error: any): boolean {
+    private isRetryable(error: unknown): boolean {
         if (error instanceof WhisperAPIError) {
             return error.isRetryable;
         }
@@ -217,7 +216,7 @@ export class WhisperService implements IWhisperService {
     private abortController?: AbortController;
     private retryStrategy: RetryStrategy;
     private circuitBreaker: CircuitBreaker;
-    private requestQueue: Promise<any> = Promise.resolve();
+    private requestQueue: Promise<void> = Promise.resolve();
     private pendingRequests: Array<() => Promise<void>> = [];
     private isProcessingQueue = false;
 
@@ -300,7 +299,7 @@ export class WhisperService implements IWhisperService {
             });
 
             if (response.status === 200) {
-                return this.parseResponse(response.json, processingTime);
+                return this.parseResponse(response.json as WhisperResponse, processingTime);
             } else {
                 throw await this.handleAPIError(response);
             }
@@ -369,7 +368,7 @@ export class WhisperService implements IWhisperService {
         } as RequestUrlParam;
     }
 
-    private parseResponse(json: any, processingTime: number): WhisperResponse {
+    private parseResponse(json: unknown, processingTime: number): WhisperResponse {
         if (json === undefined || json === null) {
             const duration = Math.max(processingTime / 1000, 0.001);
             return {
@@ -389,22 +388,23 @@ export class WhisperService implements IWhisperService {
 
         // JSON 형식 응답
         const fallbackDuration = Math.max(processingTime / 1000, 0.001);
+        const safe = json as Partial<WhisperResponse>;
         const response: WhisperResponse = {
-            text: json.text || '',
-            language: json.language,
-            duration: json.duration || fallbackDuration
+            text: typeof safe.text === 'string' ? safe.text : '',
+            language: typeof safe.language === 'string' ? safe.language : undefined,
+            duration: typeof safe.duration === 'number' ? safe.duration : fallbackDuration
         };
         
         // verbose_json 형식인 경우 segments 포함
-        if (json.segments) {
-            response.segments = json.segments;
+        if (Array.isArray((safe as { segments?: unknown }).segments)) {
+            response.segments = (safe as { segments: unknown[] }).segments as WhisperResponse['segments'];
         }
         
         return response;
     }
 
-    private async handleAPIError(response: any): Promise<never> {
-        const errorBody = response.json;
+    private async handleAPIError(response: { status: number; headers?: Record<string, string>; json?: unknown; text?: string }): Promise<never> {
+        const errorBody = response.json as { error?: { message?: string } } | undefined;
         const errorMessage = errorBody?.error?.message || 'Unknown error';
         
         this.logger.error(`API Error: ${response.status} - ${errorMessage}`, undefined,
@@ -446,12 +446,12 @@ export class WhisperService implements IWhisperService {
         }
     }
 
-    private getMimeType(options?: WhisperOptions): string {
+    private getMimeType(_options?: WhisperOptions): string {
         // 기본값은 audio/m4a
         return 'audio/m4a';
     }
 
-    private truncatePrompt(prompt: string, maxTokens: number = 224): string {
+    private truncatePrompt(prompt: string, maxTokens = 224): string {
         // 대략 1 토큰 = 4 문자로 계산
         const maxChars = maxTokens * 4;
         return truncateText(prompt, maxChars);

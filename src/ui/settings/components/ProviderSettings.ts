@@ -1,4 +1,4 @@
-import { Setting, Notice, ToggleComponent, DropdownComponent, SliderComponent } from 'obsidian';
+import { Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
 import { TranscriptionProvider, SelectionStrategy } from '../../../infrastructure/api/providers/ITranscriber';
 
@@ -628,7 +628,7 @@ export class ProviderSettings {
     /**
      * Provider 통계 가져오기
      */
-    private getProviderStats(provider: TranscriptionProvider): {
+    private getProviderStats(_provider: TranscriptionProvider): {
         successRate: number;
         avgLatency: number;
         totalRequests: number;

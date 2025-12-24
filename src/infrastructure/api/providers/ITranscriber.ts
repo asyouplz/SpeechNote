@@ -225,7 +225,7 @@ export class TranscriptionError extends Error {
 
 // Provider별 에러 타입
 export class ProviderAuthenticationError extends TranscriptionError {
-    constructor(provider: TranscriptionProvider, message: string = 'Invalid API key') {
+    constructor(provider: TranscriptionProvider, message = 'Invalid API key') {
         super(message, 'AUTH_ERROR', provider, false, 401);
     }
 }

@@ -268,7 +268,7 @@ export class ErrorBoundary {
         
         // 민감한 정보 제거
         const message = error.message
-            .replace(/api[_\-]?key[s]?/gi, 'API_KEY')
+            .replace(/api[-_]?key[s]?/gi, 'API_KEY')
             .replace(/token[s]?/gi, 'TOKEN')
             .replace(/password[s]?/gi, 'PASSWORD');
         

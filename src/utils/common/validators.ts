@@ -152,7 +152,7 @@ export function validateStringLength(
 /**
  * JSON 문자열 검증
  */
-export function validateJson(jsonString: string): { valid: boolean; data?: any; error?: string } {
+export function validateJson(jsonString: string): { valid: boolean; data?: unknown; error?: string } {
     try {
         const data = JSON.parse(jsonString);
         return { valid: true, data };
@@ -215,7 +215,7 @@ export function validateArray<T>(
 /**
  * 필수 필드 검증
  */
-export function validateRequiredFields<T extends Record<string, any>>(
+export function validateRequiredFields<T extends Record<string, unknown>>(
     obj: T, 
     requiredFields: (keyof T)[]
 ): { valid: boolean; missingFields?: string[] } {

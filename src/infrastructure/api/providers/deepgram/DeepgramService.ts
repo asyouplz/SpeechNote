@@ -1,7 +1,6 @@
 import { requestUrl, RequestUrlParam } from 'obsidian';
 import type { ILogger } from '../../../../types';
 import {
-    TranscriptionProvider,
     DeepgramSpecificOptions,
     TranscriptionResponse,
     TranscriptionSegment,
@@ -13,17 +12,12 @@ import {
 import { 
     DiarizationFormatter, 
     DiarizedWord, 
-    DiarizationConfig,
-    DEFAULT_DIARIZATION_CONFIG 
+    DiarizationConfig 
 } from './DiarizationFormatter';
 import { 
     DEEPGRAM_API, 
-    AUDIO_VALIDATION, 
-    RELIABILITY,
-    AUDIO_FORMATS,
-    ERROR_MESSAGES,
-    DIARIZATION_DEFAULTS,
-    LOGGING
+    AUDIO_VALIDATION,
+    ERROR_MESSAGES
 } from './constants';
 
 // 오디오 검증 유틸리티
@@ -418,7 +412,7 @@ export class DeepgramService {
     private readonly API_ENDPOINT = 'https://api.deepgram.com/v1/listen';
     private readonly MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB (Deepgram 지원)
     private timeout: number; // configurable timeout
-    private lastAudioSize: number = 0; // Track last audio size for error messages
+    private lastAudioSize = 0; // Track last audio size for error messages
     
     private abortController?: AbortController;
     private circuitBreaker: CircuitBreaker;
@@ -430,8 +424,8 @@ export class DeepgramService {
     constructor(
         private apiKey: string,
         private logger: ILogger,
-        requestsPerMinute: number = 100,
-        timeout: number = 30000
+        requestsPerMinute = 100,
+        timeout = 30000
     ) {
         this.timeout = timeout;
         this.circuitBreaker = new CircuitBreaker(logger);

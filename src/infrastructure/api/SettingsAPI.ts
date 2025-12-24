@@ -10,9 +10,7 @@ import type {
     ExportOptions, 
     ImportOptions,
     ImportResult,
-    ResetScope,
-    ValidationError,
-    ValidationWarning
+    ResetScope
 } from '../../types/phase3-api';
 import type { Unsubscribe } from '../../types/events';
 import { SecureApiKeyManager, SettingsEncryptor } from '../security/Encryptor';
@@ -116,9 +114,10 @@ export class SettingsAPI implements ISettingsAPI {
         }
 
         // API 키 특별 처리
-        if (key === 'api' && (value as any).apiKey) {
-            const apiKey = (value as any).apiKey;
-            if (!apiKey.includes('*')) { // 마스킹되지 않은 실제 키인 경우
+        if (key === 'api') {
+            const apiVal = value as SettingsSchema['api'];
+            const apiKey = apiVal?.apiKey;
+            if (apiKey && !apiKey.includes('*')) { // 마스킹되지 않은 실제 키인 경우
                 await this.apiKeyManager.storeApiKey(apiKey);
             }
         }
@@ -168,7 +167,7 @@ export class SettingsAPI implements ISettingsAPI {
     /**
      * 필드 검증
      */
-    validateField<K extends keyof SettingsSchema>(key: K, value: any): ValidationResult {
+    validateField<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): ValidationResult {
         return this.validator.validateField(key, value);
     }
 
@@ -212,7 +211,7 @@ export class SettingsAPI implements ISettingsAPI {
         }
 
         // 암호화 옵션
-        let finalData: any = exportData;
+        let finalData: unknown = exportData;
         if (options.encrypt && options.password) {
             finalData = await this.encryptor.encryptSensitiveSettings(exportData);
         }
@@ -255,14 +254,14 @@ export class SettingsAPI implements ISettingsAPI {
             }
 
             // 검증
-            let validation: any = null;
+        let validation: ValidationResult | null = null;
             if (options.validate) {
                 validation = this.validate(importedSettings);
                 if (!validation.valid) {
                     return {
                         success: false,
                         imported: {},
-                        errors: validation.errors?.map((e: any) => e.message)
+                        errors: validation.errors?.map(e => e.message)
                     };
                 }
             }
@@ -283,7 +282,7 @@ export class SettingsAPI implements ISettingsAPI {
             return {
                 success: true,
                 imported: importedSettings,
-                warnings: (validation as any).warnings?.map((w: any) => w.message)
+                warnings: validation?.warnings?.map(w => w.message)
             };
         } catch (error) {
             return {
@@ -303,10 +302,12 @@ export class SettingsAPI implements ISettingsAPI {
             await this.apiKeyManager.clearApiKey();
         } else if (Array.isArray(scope)) {
             scope.forEach(key => {
-                (this.settings as any)[key] = (this.defaultSettings as any)[key];
+                const typedKey = key as keyof SettingsSchema;
+                this.settings[typedKey] = this.defaultSettings[typedKey];
             });
         } else {
-            (this.settings as any)[scope] = (this.defaultSettings as any)[scope];
+            const typedKey = scope as keyof SettingsSchema;
+            this.settings[typedKey] = this.defaultSettings[typedKey];
         }
 
         await this.save();
@@ -316,11 +317,7 @@ export class SettingsAPI implements ISettingsAPI {
     /**
      * 이벤트 리스너 등록 - ISettingsAPI 인터페이스 구현
      */
-    on(event: 'change', listener: (key: string, newValue: any, oldValue: any) => void): Unsubscribe;
-    on(event: 'save', listener: () => void): Unsubscribe;
-    on(event: 'reset', listener: (scope: ResetScope) => void): Unsubscribe;
-    on(event: 'migrate', listener: (from: string, to: string) => void): Unsubscribe;
-    on(event: string, listener: (...args: any[]) => void): Unsubscribe {
+    on(event: string, listener: (...args: unknown[]) => void): Unsubscribe {
         this.emitter.on(event, listener);
         return () => this.emitter.off(event, listener);
     }
@@ -406,7 +403,10 @@ export class SettingsAPI implements ISettingsAPI {
     private async compress(data: Uint8Array): Promise<Uint8Array> {
         // CompressionStream API 사용 (브라우저 지원 확인 필요)
         if ('CompressionStream' in window) {
-            const cs = new (window as any).CompressionStream('gzip');
+            const cs = new (window as typeof window & { CompressionStream: new (type: string) => unknown }).CompressionStream('gzip') as unknown as {
+                writable: WritableStream<Uint8Array>;
+                readable: ReadableStream<Uint8Array>;
+            };
             const writer = cs.writable.getWriter();
             writer.write(data);
             writer.close();
@@ -414,10 +414,13 @@ export class SettingsAPI implements ISettingsAPI {
             const chunks: Uint8Array[] = [];
             const reader = cs.readable.getReader();
             
-            while (true) {
+            let finished = false;
+            while (!finished) {
                 const { done, value } = await reader.read();
-                if (done) break;
-                chunks.push(value);
+                finished = done;
+                if (!done && value) {
+                    chunks.push(value);
+                }
             }
             
             // 청크 결합
@@ -443,7 +446,10 @@ export class SettingsAPI implements ISettingsAPI {
     private async decompress(data: Uint8Array): Promise<Uint8Array> {
         // DecompressionStream API 사용
         if ('DecompressionStream' in window) {
-            const ds = new (window as any).DecompressionStream('gzip');
+            const ds = new (window as typeof window & { DecompressionStream: new (type: string) => unknown }).DecompressionStream('gzip') as unknown as {
+                writable: WritableStream<Uint8Array>;
+                readable: ReadableStream<Uint8Array>;
+            };
             const writer = ds.writable.getWriter();
             writer.write(data);
             writer.close();
@@ -451,10 +457,13 @@ export class SettingsAPI implements ISettingsAPI {
             const chunks: Uint8Array[] = [];
             const reader = ds.readable.getReader();
             
-            while (true) {
+            let finished = false;
+            while (!finished) {
                 const { done, value } = await reader.read();
-                if (done) break;
-                chunks.push(value);
+                finished = done;
+                if (!done && value) {
+                    chunks.push(value);
+                }
             }
             
             // 청크 결합

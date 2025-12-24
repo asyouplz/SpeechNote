@@ -7,7 +7,7 @@ import { LOG_PREFIX, LOG_LEVEL, LogLevel } from '../../../config/DeepgramConstan
 
 export class DeepgramLogger {
     private static instance: DeepgramLogger;
-    private enabled: boolean = true;
+    private enabled = true;
     private minLevel: LogLevel = LOG_LEVEL.INFO;
 
     private constructor() {}

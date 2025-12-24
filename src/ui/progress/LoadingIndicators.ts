@@ -6,7 +6,6 @@
  * - 상태별 아이콘
  */
 
-import { EventManager } from '../../application/EventManager';
 
 export interface LoadingIndicatorOptions {
     type: 'spinner' | 'pulse' | 'skeleton' | 'dots';

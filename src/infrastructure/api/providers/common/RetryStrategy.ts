@@ -6,7 +6,7 @@ export interface RetryConfig {
     maxDelayMs?: number;
     exponentialBase?: number;
     jitterEnabled?: boolean;
-    retryCondition?: (error: any) => boolean;
+    retryCondition?: (error: unknown) => boolean;
 }
 
 export enum RetryStrategy {
@@ -25,7 +25,7 @@ export class RetryHandler {
     private readonly maxDelayMs: number;
     private readonly exponentialBase: number;
     private readonly jitterEnabled: boolean;
-    private readonly retryCondition: (error: any) => boolean;
+    private readonly retryCondition: (error: unknown) => boolean;
 
     constructor(
         private readonly name: string,
@@ -65,7 +65,7 @@ export class RetryHandler {
                     const delay = this.calculateDelay(attempt);
                     this.logger.debug(
                         `${this.name}: Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`,
-                        { error: lastError.message }
+                        { error: lastError instanceof Error ? lastError.message : String(lastError) }
                     );
                     await this.sleep(delay);
                 }
@@ -92,7 +92,7 @@ export class RetryHandler {
     /**
      * Determine if operation should be retried
      */
-    private shouldRetry(error: any, attempt: number): boolean {
+    private shouldRetry(error: unknown, attempt: number): boolean {
         if (attempt >= this.maxRetries - 1) {
             return false;
         }
@@ -102,25 +102,26 @@ export class RetryHandler {
     /**
      * Default retry condition
      */
-    private defaultRetryCondition(error: any): boolean {
+    private defaultRetryCondition(error: unknown): boolean {
         // Retry on network errors
-        if (error.message?.toLowerCase().includes('network')) {
+        if (error instanceof Error && error.message?.toLowerCase().includes('network')) {
             return true;
         }
         
         // Retry on timeout
-        if (error.message?.toLowerCase().includes('timeout')) {
+        if (error instanceof Error && error.message?.toLowerCase().includes('timeout')) {
             return true;
         }
         
         // Retry on specific HTTP status codes
-        if (error.statusCode) {
+        const statusCode = (error as { statusCode?: number } | undefined)?.statusCode;
+        if (statusCode) {
             const retryableCodes = [408, 429, 500, 502, 503, 504];
-            return retryableCodes.includes(error.statusCode);
+            return retryableCodes.includes(statusCode);
         }
         
         // Don't retry on explicit non-retryable errors
-        if (error.isRetryable === false) {
+        if ((error as { isRetryable?: boolean } | undefined)?.isRetryable === false) {
             return false;
         }
         
@@ -172,8 +173,8 @@ export class RetryHandler {
         const message = `${this.name}: Operation failed after ${this.maxRetries} attempts${context ? ` for ${context}` : ''}: ${error.message}`;
         const wrappedError = new Error(message);
         wrappedError.stack = error.stack;
-        (wrappedError as any).originalError = error;
-        (wrappedError as any).retriesExhausted = true;
+        (wrappedError as Error & { originalError?: Error; retriesExhausted?: boolean }).originalError = error;
+        (wrappedError as Error & { originalError?: Error; retriesExhausted?: boolean }).retriesExhausted = true;
         return wrappedError;
     }
 

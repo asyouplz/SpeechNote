@@ -1,4 +1,4 @@
-import { App, Setting, Notice, Modal, ButtonComponent, TextAreaComponent } from 'obsidian';
+import { App, Setting, Notice, Modal, ButtonComponent } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
 import { TranscriptionProvider, SelectionStrategy } from '../../../infrastructure/api/providers/ITranscriber';
 import { APIKeyManager } from './components/APIKeyManager';
@@ -368,7 +368,7 @@ export class ProviderSettingsContainer {
     /**
      * 성능 인디케이터
      */
-    private getPerformanceIndicator(provider: TranscriptionProvider): string {
+    private getPerformanceIndicator(_provider: TranscriptionProvider): string {
         // TODO: 실제 메트릭 연동
         const score = Math.random() * 100; // 임시 값
         
@@ -677,7 +677,7 @@ export class ProviderSettingsContainer {
     /**
      * Provider 가시성 업데이트
      */
-    private updateProviderVisibility(containerEl: HTMLElement): void {
+    private updateProviderVisibility(_containerEl: HTMLElement): void {
         // APIKeyManager에게 가시성 업데이트 요청
         this.apiKeyManager.updateVisibility(this.currentProvider);
     }

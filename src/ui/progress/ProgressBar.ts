@@ -39,8 +39,8 @@ export class ProgressBar {
     private percentageElement: HTMLElement | null = null;
     private timeRemainingElement: HTMLElement | null = null;
     private options: ProgressBarOptions;
-    private startTime: number = 0;
-    private currentValue: number = 0;
+    private startTime = 0;
+    private currentValue = 0;
     private animationFrame: number | null = null;
     private eventManager: EventManager;
 
@@ -136,7 +136,7 @@ export class ProgressBar {
     /**
      * 진행률 업데이트
      */
-    updateProgress(value: number, animate: boolean = true) {
+    updateProgress(value: number, animate = true) {
         if (!this.progressFill || this.options.indeterminate) return;
         
         const clampedValue = Math.max(this.options.min || 0, Math.min(this.options.max || 100, value));
@@ -180,7 +180,7 @@ export class ProgressBar {
     /**
      * 애니메이션으로 진행률 업데이트
      */
-    private animateToValue(targetValue: number, targetPercentage: number) {
+    private animateToValue(targetValue: number, _targetPercentage: number) {
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
@@ -362,8 +362,8 @@ export class ProgressBar {
 export class MultiStepProgressBar {
     private element: HTMLElement | null = null;
     private steps: ProgressStep[] = [];
-    private currentStepIndex: number = -1;
-    private overallProgress: number = 0;
+    private currentStepIndex = -1;
+    private overallProgress = 0;
     private progressBar: ProgressBar;
     private stepsContainer: HTMLElement | null = null;
     private eventManager: EventManager;
@@ -456,7 +456,7 @@ export class MultiStepProgressBar {
     /**
      * 단계 완료
      */
-    completeStep(stepId: string, progress: number = 100) {
+    completeStep(stepId: string, progress = 100) {
         const step = this.steps.find(s => s.id === stepId);
         if (!step) return;
         
@@ -510,7 +510,7 @@ export class MultiStepProgressBar {
     /**
      * 전체 진행률 계산
      */
-    private calculateOverallProgress(currentStepProgress: number = 0) {
+    private calculateOverallProgress(currentStepProgress = 0) {
         let totalProgress = 0;
         
         this.steps.forEach((step, index) => {
