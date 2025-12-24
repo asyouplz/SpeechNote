@@ -158,6 +158,20 @@ export class SettingsMigrator {
                 typeof val === 'boolean' ? val : fallback;
             const getNum = (val: unknown, fallback: number) =>
                 typeof val === 'number' ? val : fallback;
+            const pickFormat = (val: unknown): SettingsSchema['audio']['format'] => {
+                const allowed: SettingsSchema['audio']['format'][] = ['mp3', 'm4a', 'wav', 'webm'];
+                return allowed.includes(val as SettingsSchema['audio']['format']) ? (val as SettingsSchema['audio']['format']) : 'webm';
+            };
+            const pickQuality = (val: unknown): SettingsSchema['audio']['quality'] => {
+                const allowed: SettingsSchema['audio']['quality'][] = ['low', 'medium', 'high', 'lossless'];
+                return allowed.includes(val as SettingsSchema['audio']['quality']) ? (val as SettingsSchema['audio']['quality']) : 'high';
+            };
+            const pickSampleRate = (val: unknown): SettingsSchema['audio']['sampleRate'] => {
+                const allowed: SettingsSchema['audio']['sampleRate'][] = [8000, 16000, 22050, 44100, 48000];
+                return allowed.includes(val as SettingsSchema['audio']['sampleRate'])
+                    ? (val as SettingsSchema['audio']['sampleRate'])
+                    : 16000;
+            };
 
             const migrated: SettingsSchema = {
                 version: '2.0.0',
@@ -180,9 +194,9 @@ export class SettingsMigrator {
                     temperature: 0.5
                 },
                 audio: {
-                    format: ((settings as Record<string, unknown>).audioFormat as string) || 'webm',
-                    quality: ((settings as Record<string, unknown>).audioQuality as string) || 'high',
-                    sampleRate: getNum((settings as Record<string, unknown>).sampleRate, 16000),
+                    format: pickFormat((settings as Record<string, unknown>).audioFormat),
+                    quality: pickQuality((settings as Record<string, unknown>).audioQuality),
+                    sampleRate: pickSampleRate((settings as Record<string, unknown>).sampleRate),
                     channels: 1,
                     language: this.normalizeLegacyLanguage(settings.language as string | undefined),
                     enhanceAudio: false
