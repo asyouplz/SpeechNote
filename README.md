@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-3.0.1-blue.svg)](https://github.com/asyouplz/SpeechNote/releases)
+[![Version](https://img.shields.io/badge/version-3.0.4-blue.svg)](https://github.com/asyouplz/SpeechNote/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D0.15.0-purple.svg)](https://obsidian.md)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20API-orange.svg)](https://platform.openai.com/docs/guides/speech-to-text)
@@ -473,7 +473,12 @@ If this project helped you:
 
 ## Recent Updates
 
-### 🚀 v3.0.1 (Latest) - Enterprise Architecture & Performance
+### 🚀 v3.0.4 (Latest) - Settings Stability & Deepgram Cleanup
+- 🛠️ **Settings Stability**: Improves plugin settings reliability
+- 🧹 **Deepgram Refactor**: Cleanup and refactor for provider integration
+- 🧩 **General Fixes**: Minor bug fixes and improvements
+
+### v3.0.1 - Enterprise Architecture & Performance
 - 🏗️ **Clean Architecture**: Domain-driven design with clear separation of concerns
 - 🎯 **Modular Structure**: Organized into application, core, domain, infrastructure layers
 - ⚡ **Performance Monitoring**: Built-in performance benchmarking and memory management
@@ -954,7 +959,12 @@ SpeechNote/
 
 ## 최근 업데이트
 
-### 🚀 v3.0.1 (최신) - 엔터프라이즈 아키텍처 및 성능
+### 🚀 v3.0.4 (최신) - 설정 안정화 및 Deepgram 정리
+- 🛠️ **설정 안정화**: 플러그인 설정 신뢰성 개선
+- 🧹 **Deepgram 리팩터링**: 공급자 통합 구조 정리
+- 🧩 **기타 수정**: 소소한 버그 수정 및 개선
+
+### v3.0.1 - 엔터프라이즈 아키텍처 및 성능
 - 🏗️ **클린 아키텍처**: 관심사 분리를 갖춘 도메인 주도 설계
 - 🎯 **모듈식 구조**: application, core, domain, infrastructure 레이어로 구성
 - ⚡ **성능 모니터링**: 내장 성능 벤치마킹 및 메모리 관리
