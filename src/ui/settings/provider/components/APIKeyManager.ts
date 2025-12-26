@@ -809,7 +809,7 @@ export class APIKeyManager {
         // UI 업데이트
         const container = document.querySelector(`.api-key-input-container.${provider}`);
         if (container) {
-            const statusEl = container.querySelector('.key-status-indicator');
+            const statusEl = container.querySelector<HTMLElement>('.key-status-indicator');
             if (statusEl) {
                 this.updateStatusIndicator(statusEl, provider);
             }
