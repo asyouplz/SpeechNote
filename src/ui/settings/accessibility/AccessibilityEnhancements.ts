@@ -154,7 +154,7 @@ export class ScreenReaderAnnouncer {
             this.liveRegion!.setAttribute('aria-live', 'assertive');
         }
         
-        this.processQueue();
+        void this.processQueue();
     }
     
     /**

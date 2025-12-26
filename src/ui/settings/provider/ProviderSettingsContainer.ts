@@ -36,7 +36,7 @@ export class ProviderSettingsContainer {
         this.apiKeyManager = new APIKeyManager(plugin);
         this.advancedPanel = new AdvancedSettingsPanel(plugin);
         
-        this.initialize();
+        void this.initialize();
     }
     
     /**

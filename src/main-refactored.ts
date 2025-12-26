@@ -287,7 +287,7 @@ export default class SpeechToTextPlugin extends Plugin {
             id: 'transcribe-audio',
             name: 'Transcribe audio file',
             callback: () => {
-                this.errorBoundary.wrap(
+                void this.errorBoundary.wrap(
                     () => this.showAudioFilePicker(),
                     { component: 'Command', operation: 'transcribe-audio' }
                 );
@@ -313,7 +313,7 @@ export default class SpeechToTextPlugin extends Plugin {
             id: 'show-format-options',
             name: 'Show text formatting options',
             callback: () => {
-                this.errorBoundary.wrap(
+                void this.errorBoundary.wrap(
                     () => this.showFormatOptions(),
                     { component: 'Command', operation: 'show-format-options' }
                 );
@@ -413,7 +413,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 await this.insertTranscription(result.text);
             }
         } catch (error) {
-            this.errorBoundary.handleError(
+            void this.errorBoundary.handleError(
                 error as Error,
                 { component: 'TranscriptionService', operation: 'transcribe' }
             );
@@ -472,15 +472,17 @@ export default class SpeechToTextPlugin extends Plugin {
             case 'cursor':
                 editor.replaceSelection(text);
                 break;
-            case 'end':
+            case 'end': {
                 const lastLine = editor.lastLine();
                 const currentText = editor.getLine(lastLine);
                 editor.setLine(lastLine, currentText + '\n\n' + text);
                 break;
-            case 'beginning':
+            }
+            case 'beginning': {
                 const firstLineText = editor.getLine(0);
                 editor.setLine(0, text + '\n\n' + firstLineText);
                 break;
+            }
         }
     }
 

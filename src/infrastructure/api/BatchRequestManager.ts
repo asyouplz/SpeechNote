@@ -101,7 +101,7 @@ export class BatchRequestManager {
                 retries: 0
             };
 
-            this.enqueueRequest(request as AnyBatch);
+            this.enqueueRequest(request);
             this.stats.totalRequests++;
         });
     }
@@ -117,7 +117,7 @@ export class BatchRequestManager {
         }
         
         const queue = this.queues.get(batchKey)!;
-        queue.push(request as AnyBatch);
+        queue.push(request);
 
         // 우선순위 정렬
         if (this.priorityQueuing) {
@@ -141,7 +141,7 @@ export class BatchRequestManager {
         if (this.timers.has(batchKey)) return;
 
         const timer = window.setTimeout(() => {
-            this.processBatch(batchKey);
+            void this.processBatch(batchKey);
             this.timers.delete(batchKey);
         }, this.batchDelay);
 
@@ -157,7 +157,7 @@ export class BatchRequestManager {
             clearTimeout(timer);
             this.timers.delete(batchKey);
         }
-        this.processBatch(batchKey);
+        void this.processBatch(batchKey);
     }
 
     /**
