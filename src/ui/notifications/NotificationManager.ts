@@ -684,7 +684,7 @@ class ProgressNotification implements IProgressNotification {
             progress: 0
         };
         
-        this.init();
+        void this.init();
     }
 
     private async init(): Promise<void> {
@@ -857,7 +857,7 @@ export class NotificationManager implements INotificationAPI {
         
         // 채널 선택 및 전송
         const channels = this.selectChannels(notification);
-        Promise.all(
+        void Promise.all(
             channels.map(channel => 
                 channel.send(notification).catch(error => {
                     console.error('Notification channel error:', error);
@@ -977,7 +977,7 @@ export class NotificationManager implements INotificationAPI {
             const modal = new ModalChannel();
             const id = this.generateNotificationId();
             
-            modal.send({
+            void modal.send({
                 type: 'info',
                 title: options?.title || '확인',
                 message,
@@ -1022,7 +1022,7 @@ export class NotificationManager implements INotificationAPI {
             const modal = new ModalChannel();
             const id = this.generateNotificationId();
             
-            modal.send({
+            void modal.send({
                 type: 'info',
                 title: title || '알림',
                 message,

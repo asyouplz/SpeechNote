@@ -44,11 +44,10 @@
   ],
   "author": "Taesun Lee",
   "license": "MIT",
-  "dependencies": {
-    "@deepgram/sdk": "^3.9.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
+    "@deepgram/sdk": "^3.9.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^16.18.126",
     "@typescript-eslint/eslint-plugin": "^5.29.0",

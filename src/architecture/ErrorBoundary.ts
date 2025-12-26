@@ -107,7 +107,7 @@ export class ErrorBoundary {
         // 처리되지 않은 Promise rejection 처리
         if (typeof window !== 'undefined') {
             window.addEventListener('unhandledrejection', (event) => {
-                this.handleError(
+                void this.handleError(
                     new Error(event.reason?.message || 'Unhandled Promise rejection'),
                     { component: 'Global', operation: 'Promise' }
                 );
@@ -116,7 +116,7 @@ export class ErrorBoundary {
 
             // 전역 에러 처리
             window.addEventListener('error', (event) => {
-                this.handleError(
+                void this.handleError(
                     event.error || new Error(event.message),
                     { component: 'Global', operation: 'Runtime' }
                 );
@@ -158,7 +158,7 @@ export class ErrorBoundary {
         try {
             return fn();
         } catch (error) {
-            this.handleError(error as Error, context);
+            void this.handleError(error as Error, context);
             return undefined;
         }
     }
