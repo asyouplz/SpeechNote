@@ -516,7 +516,7 @@ export class FileUploadManager {
      */
     cleanup(): void {
         if (this.audioContext) {
-            this.audioContext.close();
+            void this.audioContext.close();
             this.audioContext = undefined;
         }
         this.abortController = undefined;

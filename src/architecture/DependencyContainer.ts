@@ -99,7 +99,7 @@ export class DependencyContainer {
                 return this.resolveScoped<T>(token, registration);
             
             default:
-                throw new Error(`Unknown lifetime: ${registration.lifetime}`);
+                throw new Error(`Unknown lifetime: ${String(registration.lifetime)}`);
         }
     }
 

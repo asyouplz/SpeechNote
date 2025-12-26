@@ -59,7 +59,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         this.apiKeyManager = new APIKeyManager(plugin);
         this.advancedPanel = new AdvancedSettingsPanel(plugin);
         
-        this.initialize();
+        void this.initialize();
     }
     
     /**
@@ -488,7 +488,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         
         // 5분마다 상태 업데이트
         this.statusUpdateInterval = window.setInterval(() => {
-            this.checkAllConnectionsOptimized();
+            void this.checkAllConnectionsOptimized();
         }, 5 * 60 * 1000);
         
         this.disposables.push(() => this.stopStatusMonitoring());

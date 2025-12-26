@@ -43,7 +43,7 @@ export class SettingsMigrator {
         
         if (path.length === 0) {
             // 마이그레이션 경로가 없으면 그대로 반환
-            return currentSettings as SettingsSchema;
+            return currentSettings;
         }
 
         let settings = currentSettings;
@@ -62,7 +62,7 @@ export class SettingsMigrator {
         // 버전 업데이트
         settings.version = toVersion;
         
-        return settings as SettingsSchema;
+        return settings;
     }
 
     /**
@@ -383,7 +383,7 @@ export class SettingsMigrator {
         }
 
         const backup = JSON.parse(backupData);
-        return backup.settings as SettingsSchema;
+        return backup.settings;
     }
 
     /**
