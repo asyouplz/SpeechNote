@@ -117,7 +117,7 @@ export class ShortcutSettings {
                 .onClick(() => {
                     this.openShortcutModal(shortcut.id, shortcut.name, (newKey) => {
                         if (newKey) {
-                            void this.setShortcut(shortcut.id, newKey);
+                            this.setShortcut(shortcut.id, newKey);
                             keyDisplay.textContent = newKey;
                             keyDisplay.className = 'shortcut-set';
                         }
@@ -130,7 +130,7 @@ export class ShortcutSettings {
                     .setButtonText('삭제')
                     .setWarning()
                     .onClick(async () => {
-                        await this.removeShortcut(shortcut.id);
+                        this.removeShortcut(shortcut.id);
                         keyDisplay.textContent = '설정 안 됨';
                         keyDisplay.className = 'shortcut-unset';
                     }));
@@ -181,7 +181,7 @@ export class ShortcutSettings {
                             return;
                         }
                         // 기존 단축키 제거
-                        void this.removeShortcut(existingCommand);
+                        this.removeShortcut(existingCommand);
                     }
                 }
                 onSubmit(key);

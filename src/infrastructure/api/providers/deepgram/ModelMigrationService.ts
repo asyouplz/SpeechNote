@@ -451,17 +451,15 @@ export class ModelMigrationService {
                 // 실제 구현에서는 UI를 통해 사용자 동의를 받아야 함
                 return false; // 기본적으로 사용자 동의 필요
 
-            case 'cost_threshold': {
+            case 'cost_threshold':
                 const _maxIncrease = condition.parameters.maxIncrease || 20;
                 // 비용 증가율 계산 로직
                 return true; // 임시 구현
-            }
 
-            case 'feature_compatible': {
+            case 'feature_compatible':
                 const _requiredFeatures = condition.parameters.requiredFeatures || [];
                 // 기능 호환성 체크
                 return true; // 임시 구현
-            }
 
             default:
                 return true;
@@ -564,7 +562,7 @@ export class ModelMigrationService {
                 break;
 
             default:
-                throw new Error(`Unknown migration action: ${String(step.action)}`);
+                throw new Error(`Unknown migration action: ${step.action}`);
         }
     }
 
@@ -621,7 +619,7 @@ export class ModelMigrationService {
         }
 
         const backupId = `migration_backup_${Date.now()}`;
-        await this.settingsManager.set(`backup.${backupId}`, backup);
+        this.settingsManager.set(`backup.${backupId}`, backup);
         
         this.logger.debug('Settings backup created', { backupId, settingsCount: settingsToBackup.length });
     }

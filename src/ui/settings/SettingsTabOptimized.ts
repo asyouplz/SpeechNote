@@ -215,7 +215,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
         section.render();
         section.onSettingsChange(() => {
             this.state.isDirty = true;
-            void this.saveSettings();
+            this.saveSettings();
         });
         
         this.components.sectionRenderers.set('api', section);
@@ -310,7 +310,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
         inputs.forEach(input => {
             this.eventManager.add(input as HTMLElement, 'change', () => {
                 this.state.isDirty = true;
-                void this.saveSettings();
+                this.saveSettings();
             });
         });
     }
@@ -580,7 +580,7 @@ class SecureApiKeyInput {
         
         // Validate on button click
         this.eventManager.add(this.validateBtn, 'click', () => {
-            void this.validate();
+            this.validate();
         });
         
         // Track changes
@@ -659,23 +659,17 @@ class SettingsFooter extends SectionRenderer {
         new Setting(footer)
             .addButton(btn => btn
                 .setButtonText('설정 내보내기')
-                .onClick(() => {
-                    void this.exportSettings();
-                }))
+                .onClick(() => this.exportSettings()))
             .addButton(btn => btn
                 .setButtonText('설정 가져오기')
-                .onClick(() => {
-                    void this.importSettings();
-                }));
+                .onClick(() => this.importSettings()));
         
         // Reset button
         new Setting(footer)
             .addButton(btn => btn
                 .setButtonText('기본값으로 재설정')
                 .setWarning()
-                .onClick(() => {
-                    void this.resetSettings();
-                }));
+                .onClick(() => this.resetSettings()));
     }
     
     private async exportSettings(): Promise<void> {

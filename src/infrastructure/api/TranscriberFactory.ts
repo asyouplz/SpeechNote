@@ -253,7 +253,7 @@ export class TranscriberFactory {
         return {
             defaultProvider: settings.defaultProvider || 'whisper',
             autoSelect: settings.autoSelect || false,
-            selectionStrategy: settings.selectionStrategy || SelectionStrategy.MANUAL,
+            selectionStrategy: (settings.selectionStrategy as SelectionStrategy) || SelectionStrategy.MANUAL,
             fallbackEnabled: settings.fallbackEnabled !== false,
             
             whisper: {
@@ -424,7 +424,7 @@ export class TranscriberFactory {
         
         // 모니터링 엔드포인트로 전송 (설정된 경우)
         if (this.config.monitoring?.enabled && this.config.monitoring.metricsEndpoint) {
-            void this.sendMetricsToEndpoint(provider);
+            this.sendMetricsToEndpoint(provider);
         }
     }
     

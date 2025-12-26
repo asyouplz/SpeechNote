@@ -418,7 +418,7 @@ export class AsyncQueue<T> {
             });
 
             if (!this.running) {
-                void this.run();
+                this.run();
             }
         });
     }
@@ -433,10 +433,10 @@ export class AsyncQueue<T> {
             const task = this.queue.shift();
             if (task) {
                 this.active++;
-                void task().finally(() => {
+                task().finally(() => {
                     this.active--;
                     if (this.queue.length > 0) {
-                        void this.run();
+                        this.run();
                     } else if (this.active === 0) {
                         this.running = false;
                     }

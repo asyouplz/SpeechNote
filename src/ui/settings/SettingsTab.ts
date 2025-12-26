@@ -216,7 +216,7 @@ export class SettingsTab extends PluginSettingTab {
                 default:
                     console.warn('Unknown provider:', provider);
                     containerEl.createEl('p', {
-                        text: `Unknown provider: ${String(provider)}`,
+                        text: `Unknown provider: ${provider}`,
                         cls: 'mod-warning'
                     });
             }

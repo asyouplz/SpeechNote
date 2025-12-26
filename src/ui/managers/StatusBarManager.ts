@@ -213,7 +213,7 @@ export class StatusBarManager implements IDisposable {
      */
     public show(): void {
         if (this.statusBarItem) {
-            this.statusBarItem.classList.remove('sn-hidden');
+            (this.statusBarItem as HTMLElement).classList.remove('sn-hidden');
         }
     }
 
@@ -222,7 +222,7 @@ export class StatusBarManager implements IDisposable {
      */
     public hide(): void {
         if (this.statusBarItem) {
-            this.statusBarItem.classList.add('sn-hidden');
+            (this.statusBarItem as HTMLElement).classList.add('sn-hidden');
         }
     }
 

@@ -68,7 +68,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
         containerEl.empty();
         containerEl.addClass('speech-to-text-settings');
 
-        void tryCatchAsync(async () => {
+        tryCatchAsync(async () => {
             await this.renderContent(containerEl);
         }, {
             onError: (error) => {
