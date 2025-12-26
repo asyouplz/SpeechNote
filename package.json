@@ -1,6 +1,6 @@
 {
   "name": "obsidian-speech-to-text",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "Convert audio recordings to text in Obsidian using multiple AI providers (OpenAI Whisper, Deepgram)",
   "main": "main.js",
   "scripts": {
