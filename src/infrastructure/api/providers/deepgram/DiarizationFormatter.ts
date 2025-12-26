@@ -375,9 +375,10 @@ export class DiarizationFormatter {
         }
 
         switch (numbering) {
-            case 'alphabetic':
+            case 'alphabetic': {
                 const letter = String.fromCharCode(65 + (speakerNumber % 26)); // A, B, C...
                 return `${prefix} ${letter}`;
+            }
             
             case 'numeric':
             default:

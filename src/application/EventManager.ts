@@ -104,10 +104,10 @@ export class EventManager extends EventEmitter<AppEventMap> {
     emit(event: string, data?: unknown): void;
     emit(event: string, data?: unknown): void {
         // 통계 업데이트
-        this.updateStats(event as keyof AppEventMap);
+        this.updateStats(event);
         
         // 히스토리 기록
-        this.recordHistory(event as keyof AppEventMap, data as AppEventMap[keyof AppEventMap]);
+        this.recordHistory(event, data as AppEventMap[keyof AppEventMap]);
         
         // 디버그 로깅
         if (this.isDebugMode && this.logger) {
@@ -115,7 +115,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         }
         
         // 부모 클래스의 emit 호출
-        super.emit(event as keyof AppEventMap, data as AppEventMap[keyof AppEventMap]);
+        super.emit(event, data as AppEventMap[keyof AppEventMap]);
     }
     
     /**
@@ -125,10 +125,10 @@ export class EventManager extends EventEmitter<AppEventMap> {
     async emitAsync(event: string, data?: unknown): Promise<void>;
     async emitAsync(event: string, data?: unknown): Promise<void> {
         // 통계 업데이트
-        this.updateStats(event as keyof AppEventMap);
+        this.updateStats(event);
         
         // 히스토리 기록
-        this.recordHistory(event as keyof AppEventMap, data as AppEventMap[keyof AppEventMap]);
+        this.recordHistory(event, data as AppEventMap[keyof AppEventMap]);
         
         // 디버그 로깅
         if (this.isDebugMode && this.logger) {
@@ -136,7 +136,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         }
         
         // 부모 클래스의 emitAsync 호출
-        await super.emitAsync(event as keyof AppEventMap, data as AppEventMap[keyof AppEventMap]);
+        await super.emitAsync(event, data as AppEventMap[keyof AppEventMap]);
     }
     
     /**
@@ -203,7 +203,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
     ): Unsubscribe {
         return this.on(event, (data) => {
             if (predicate(data)) {
-                listener(data);
+                void listener(data);
             }
         });
     }
@@ -224,7 +224,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
             }
             
             timeoutId = setTimeout(() => {
-                listener(data);
+                void listener(data);
                 timeoutId = null;
             }, wait);
         });
@@ -242,7 +242,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         
         return this.on(event, (data) => {
             if (!inThrottle) {
-                listener(data);
+                void listener(data);
                 inThrottle = true;
                 setTimeout(() => {
                     inThrottle = false;
@@ -330,7 +330,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         return {
             totalEvents: eventNames.length,
             totalListeners: eventNames.reduce((sum: number, event) => 
-                sum + this.listenerCount(event as keyof AppEventMap), 0
+                sum + this.listenerCount(event), 0
             ),
             totalEmitted: Array.from(this.eventStats.values()).reduce((sum, count) => 
                 sum + count, 0

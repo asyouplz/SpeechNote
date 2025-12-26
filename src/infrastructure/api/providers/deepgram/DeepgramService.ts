@@ -233,7 +233,7 @@ class RateLimiter {
     async acquire(): Promise<void> {
         return new Promise<void>(resolve => {
             this.queue.push(resolve);
-            this.processQueue();
+            void this.processQueue();
         });
     }
     
@@ -785,17 +785,18 @@ export class DeepgramService {
                     false,
                     402
                 );
-            case 429:
+            case 429: {
                 const retryAfter = response.headers?.['retry-after'];
                 throw new ProviderRateLimitError(
                     'deepgram',
                     retryAfter ? parseInt(retryAfter) : undefined
                 );
+            }
             case 500:
             case 502:
             case 503:
                 throw new ProviderUnavailableError('deepgram');
-            case 504:
+            case 504: {
                 // Extract file size info if available
                 const sizeInfo = this.lastAudioSize ? ` (${Math.round(this.lastAudioSize / (1024 * 1024))}MB)` : '';
                 throw new TranscriptionError(
@@ -805,6 +806,7 @@ export class DeepgramService {
                     true, // retryable
                     504
                 );
+            }
             default:
                 throw new TranscriptionError(
                     `API error: ${errorMessage}`,

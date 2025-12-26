@@ -183,7 +183,7 @@ export class FilePickerModal extends Modal {
         
         // 파일 선택 이벤트
         this.fileBrowser.onFileSelected((file) => {
-            this.handleFileSelection(file);
+            void this.handleFileSelection(file);
         });
 
         return browseContent;
@@ -197,7 +197,7 @@ export class FilePickerModal extends Modal {
             
             // 최근 파일 선택 이벤트
             this.recentFiles.onFileSelected((file) => {
-                this.handleFileSelection(file);
+                void this.handleFileSelection(file);
             });
         }
 
@@ -433,7 +433,7 @@ export class FilePickerModal extends Modal {
             }
             
             if (e.key === 'Enter' && this.selectedFiles.length > 0) {
-                this.processSelectedFiles();
+                void this.processSelectedFiles();
             }
         });
     }

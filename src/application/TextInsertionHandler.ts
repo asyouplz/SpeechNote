@@ -367,19 +367,21 @@ export class TextInsertionHandler {
             case 'prepend':
                 return await this.editorService.prependToDocument(text, true);
                 
-            case 'line-end':
+            case 'line-end': {
                 const lineNumber = this.editorService.getCurrentLineNumber();
                 if (lineNumber !== null) {
                     return await this.editorService.appendToLine(lineNumber, text);
                 }
                 return false;
+            }
                 
-            case 'new-line':
+            case 'new-line': {
                 const cursor = this.editorService.getCursorPosition();
                 if (cursor) {
                     return await this.editorService.insertAtPosition(`\n${text}`, cursor);
                 }
                 return false;
+            }
                 
             default:
                 return await this.editorService.insertAtCursor(text);

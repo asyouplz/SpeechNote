@@ -135,7 +135,7 @@ export default class SpeechToTextPlugin extends Plugin {
             id: 'transcribe-audio',
             name: 'Transcribe audio file',
             callback: () => {
-                this.showAudioFilePicker();
+                void this.showAudioFilePicker();
             }
         });
 

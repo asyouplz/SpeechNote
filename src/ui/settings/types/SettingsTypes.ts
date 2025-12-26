@@ -427,8 +427,8 @@ export function deepEqual(a: unknown, b: unknown): boolean {
     
     if (typeof a !== 'object') return false;
     
-    const keysA = Object.keys(a as object);
-    const keysB = Object.keys(b as object);
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
     
     if (keysA.length !== keysB.length) return false;
     

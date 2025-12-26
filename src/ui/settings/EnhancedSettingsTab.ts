@@ -30,7 +30,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         this.memoryManager = new ResourceManager();
         
         // 초기화
-        this.initialize();
+        void this.initialize();
     }
 
     /**
@@ -179,16 +179,16 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 this.showGeneralSettings(container);
                 break;
             case 'api':
-                this.showApiSettings(container);
+                void this.showApiSettings(container);
                 break;
             case 'audio':
-                this.showAudioSettings(container);
+                void this.showAudioSettings(container);
                 break;
             case 'advanced':
-                this.showAdvancedSettings(container);
+                void this.showAdvancedSettings(container);
                 break;
             case 'shortcuts':
-                this.showShortcutSettings(container);
+                void this.showShortcutSettings(container);
                 break;
             case 'about':
                 this.showAbout(container);
@@ -224,7 +224,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                     dropdown.addOption(code, name);
                 });
                 
-                this.settingsAPI.get('general').then(general => {
+                void this.settingsAPI.get('general').then(general => {
                     dropdown.setValue(general.language);
                 });
                 
@@ -245,7 +245,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                     .addOption('light', 'Light')
                     .addOption('dark', 'Dark');
                 
-                this.settingsAPI.get('general').then(general => {
+                void this.settingsAPI.get('general').then(general => {
                     dropdown.setValue(general.theme);
                 });
                 
@@ -262,7 +262,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setName('Auto Save')
             .setDesc('Automatically save transcriptions')
             .addToggle(toggle => {
-                this.settingsAPI.get('general').then(general => {
+                void this.settingsAPI.get('general').then(general => {
                     toggle.setValue(general.autoSave);
                 });
                 
@@ -282,7 +282,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                     .setLimits(10, 300, 10)
                     .setDynamicTooltip();
                 
-                this.settingsAPI.get('general').then(general => {
+                void this.settingsAPI.get('general').then(general => {
                     slider.setValue(general.saveInterval / 1000);
                 });
                 
@@ -301,7 +301,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setName('Enable Notifications')
             .setDesc('Show notifications for events')
             .addToggle(toggle => {
-                this.settingsAPI.get('general').then(general => {
+                void this.settingsAPI.get('general').then(general => {
                     toggle.setValue(general.notifications.enabled);
                 });
                 
@@ -316,7 +316,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setName('Sound')
             .setDesc('Play sound with notifications')
             .addToggle(toggle => {
-                this.settingsAPI.get('general').then(general => {
+                void this.settingsAPI.get('general').then(general => {
                     toggle.setValue(general.notifications.sound);
                 });
                 
@@ -346,7 +346,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                     .addOption('azure', 'Azure Speech Services')
                     .addOption('custom', 'Custom Endpoint');
                 
-                this.settingsAPI.get('api').then(api => {
+                void this.settingsAPI.get('api').then(api => {
                     dropdown.setValue(api.provider);
                 });
                 
@@ -356,7 +356,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                     await this.settingsAPI.set('api', api);
                     
                     // UI 업데이트
-                    this.showApiSettings(container);
+                    void this.showApiSettings(container);
                 });
             });
 
@@ -831,7 +831,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .onClick(async () => {
                 const defaults = this.settingsAPI.getDefault('shortcuts');
                 await this.settingsAPI.set('shortcuts', defaults);
-                this.showShortcutSettings(container); // 화면 새로고침
+                await this.showShortcutSettings(container); // 화면 새로고침
                 new Notice('Shortcuts reset to defaults');
             });
     }
