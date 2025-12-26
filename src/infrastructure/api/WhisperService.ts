@@ -424,9 +424,10 @@ export class WhisperService implements IWhisperService {
                 );
             case 401:
                 throw new AuthenticationError();
-            case 429:
+            case 429: {
                 const retryAfter = response.headers?.['retry-after'];
                 throw new RateLimitError(retryAfter ? parseInt(retryAfter) : undefined);
+            }
             case 413:
                 throw new FileTooLargeError();
             case 500:

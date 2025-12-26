@@ -30,7 +30,7 @@ export class RateLimiter {
     async acquire(): Promise<void> {
         return new Promise<void>(resolve => {
             this.queue.push(resolve);
-            this.processQueue();
+            void this.processQueue();
         });
     }
     

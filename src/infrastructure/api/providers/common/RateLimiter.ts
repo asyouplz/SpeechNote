@@ -70,7 +70,7 @@ export class RateLimiter {
             }
 
             this.queue.push(resolve);
-            this.processQueue();
+            void this.processQueue();
         });
     }
 

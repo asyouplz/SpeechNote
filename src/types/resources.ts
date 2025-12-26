@@ -154,7 +154,7 @@ export class ResourcePool<T extends IDisposable> {
         private maxSize = 10,
         private minSize = 2
     ) {
-        this.initialize();
+        void this.initialize();
     }
     
     private async initialize(): Promise<void> {

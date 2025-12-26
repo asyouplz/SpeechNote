@@ -85,7 +85,7 @@ export class TranscriberFactoryRefactored {
         this.metricsTracker.recordRequest(provider, success, latency, cost, error);
 
         if (this.shouldSendMetrics()) {
-            this.sendMetricsToEndpoint(provider);
+            void this.sendMetricsToEndpoint(provider);
         }
     }
 
@@ -542,7 +542,7 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
             enabled: Boolean(deepgramApiKey),
             apiKey: deepgramApiKey,
             model:
-                this.pickString((deepgramConfigRaw as Partial<ProviderConfig>).model) ??
+                this.pickString(deepgramConfigRaw?.model) ??
                 this.pickString(deepgramSettings?.model) ??
                 this.settings.deepgramModel ??
                 'nova-3',

@@ -29,7 +29,7 @@ export class APIKeyManager {
     
     constructor(private plugin: SpeechToTextPlugin) {
         this.encryptor = new Encryptor();
-        this.loadApiKeys();
+        void this.loadApiKeys();
     }
     
     /**
@@ -131,7 +131,7 @@ export class APIKeyManager {
                 'autocomplete': 'off',
                 'spellcheck': 'false'
             }
-        }) as HTMLInputElement;
+        });
         
         // 현재 값 설정
         const currentKey = this.apiKeys.get(provider);
@@ -293,7 +293,7 @@ export class APIKeyManager {
                 'aria-label': 'Verify API key',
                 'title': 'Test API key validity'
             }
-        }) as HTMLButtonElement;
+        });
         
         btn.onclick = async () => {
             const value = inputEl.value;
@@ -809,7 +809,7 @@ export class APIKeyManager {
         // UI 업데이트
         const container = document.querySelector(`.api-key-input-container.${provider}`);
         if (container) {
-            const statusEl = container.querySelector('.key-status-indicator') as HTMLElement;
+            const statusEl = container.querySelector('.key-status-indicator');
             if (statusEl) {
                 this.updateStatusIndicator(statusEl, provider);
             }
