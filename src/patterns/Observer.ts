@@ -78,7 +78,7 @@ export class EventEmitter<T extends EventMap = EventMap> {
         // 일반 리스너 실행
         (this.events.get(event) as Set<EventListener<T[K]>> | undefined)?.forEach(listener => {
             try {
-                void listener(data);
+                listener(data);
             } catch (error) {
                 console.error(`Error in event listener for ${String(event)}:`, error);
             }
@@ -89,7 +89,7 @@ export class EventEmitter<T extends EventMap = EventMap> {
         if (onceListeners) {
             onceListeners.forEach(listener => {
                 try {
-                    void listener(data);
+                    listener(data);
                 } catch (error) {
                     console.error(`Error in once listener for ${String(event)}:`, error);
                 }
@@ -181,7 +181,7 @@ export class Subject<T> implements IObservable<T> {
     notify(data: T): void {
         this.observers.forEach(observer => {
             try {
-                void observer.update(data);
+                observer.update(data);
             } catch (error) {
                 console.error('Error notifying observer:', error);
             }
@@ -225,7 +225,7 @@ export class BehaviorSubject<T> extends Subject<T> {
     
     subscribe(observer: IObserver<T>): Unsubscribe {
         // 구독 시 현재 값을 즉시 전달
-        void observer.update(this.value);
+        observer.update(this.value);
         return super.subscribe(observer);
     }
 }

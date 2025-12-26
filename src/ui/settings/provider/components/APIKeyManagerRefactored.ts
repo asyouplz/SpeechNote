@@ -81,7 +81,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
     constructor(plugin: SpeechToTextPlugin) {
         super(plugin);
         this.encryptor = new Encryptor();
-        void this.initialize();
+        this.initialize();
     }
     
     /**
@@ -227,7 +227,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
                 'aria-label': `${config.name} API 키`,
                 'aria-describedby': `${provider}-validation-message`
             }
-        });
+        }) as HTMLInputElement;
         
         // 기존 값 설정
         if (keyData?.key) {
@@ -363,7 +363,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
                 'aria-label': 'API 키 검증',
                 'title': 'API 키 유효성 검사'
             }
-        });
+        }) as HTMLButtonElement;
         
         btn.onclick = async () => {
             await this.validateApiKeyWithUI(inputEl, provider, config, btn);
@@ -775,11 +775,11 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             
             await this.withErrorHandling(async () => {
                 const content = await file.text();
-                const keys = JSON.parse(content) as Record<string, string>;
+                const keys = JSON.parse(content);
                 
                 for (const [provider, key] of Object.entries(keys)) {
-                    if (this.isTranscriptionProvider(provider)) {
-                        await this.saveApiKey(provider, key);
+                    if (this.providerConfigs.has(provider as TranscriptionProvider)) {
+                        await this.saveApiKey(provider as TranscriptionProvider, key as string);
                     }
                 }
                 
@@ -819,10 +819,6 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             URL.revokeObjectURL(url);
             this.showNotice('API 키를 내보냈습니다');
         }, 'API 키 내보내기 실패');
-    }
-    
-    private isTranscriptionProvider(value: string): value is TranscriptionProvider {
-        return value === 'whisper' || value === 'deepgram';
     }
     
     /**

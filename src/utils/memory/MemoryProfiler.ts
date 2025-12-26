@@ -69,7 +69,7 @@ export class MemoryProfiler {
         if (this.isMonitoring || !this.isSupported()) return;
 
         this.isMonitoring = true;
-        void this.profileLoop();
+        this.profileLoop();
         
         if (process.env.NODE_ENV === 'development') {
             console.debug('Memory profiling started');
@@ -120,9 +120,7 @@ export class MemoryProfiler {
 
         // 다음 스냅샷 스케줄
         this.monitoringInterval = window.setTimeout(
-            () => {
-                void this.profileLoop();
-            },
+            () => this.profileLoop(),
             this.snapshotInterval
         );
     }

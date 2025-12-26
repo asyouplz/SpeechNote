@@ -86,7 +86,7 @@ export class GlobalErrorManager {
     private setupGlobalHandlers(): void {
         // Unhandled rejection 처리
         window.addEventListener('unhandledrejection', (event) => {
-            void this.handleError(new Error(event.reason), {
+            this.handleError(new Error(event.reason), {
                 type: ErrorType.UNKNOWN,
                 severity: ErrorSeverity.HIGH,
                 context: { promise: true }
@@ -96,7 +96,7 @@ export class GlobalErrorManager {
 
         // 일반 에러 처리
         window.addEventListener('error', (event) => {
-            void this.handleError(event.error || new Error(event.message), {
+            this.handleError(event.error || new Error(event.message), {
                 type: ErrorType.UNKNOWN,
                 severity: ErrorSeverity.HIGH,
                 context: {
@@ -419,7 +419,7 @@ export class ErrorBoundary {
         this.errorHandler(error);
         
         // 전역 에러 매니저에 보고
-        void GlobalErrorManager.getInstance().handleError(error, {
+        GlobalErrorManager.getInstance().handleError(error, {
             type: ErrorType.UNKNOWN,
             severity: ErrorSeverity.MEDIUM,
             context: { boundary: true }
@@ -486,7 +486,7 @@ export function tryCatch<T>(
             options.onError(err);
         }
         
-        void GlobalErrorManager.getInstance().handleError(err, {
+        GlobalErrorManager.getInstance().handleError(err, {
             type: ErrorType.UNKNOWN,
             severity: ErrorSeverity.LOW
         });

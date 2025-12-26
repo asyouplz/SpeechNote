@@ -142,13 +142,12 @@ export class DeepgramErrorHandler {
                     false,
                     402
                 );
-            case 429: {
+            case 429:
                 const retryAfter = response.headers?.['retry-after'];
                 throw new ProviderRateLimitError(
                     'deepgram',
                     retryAfter ? parseInt(retryAfter) : undefined
                 );
-            }
             case 500:
             case 502:
             case 503:

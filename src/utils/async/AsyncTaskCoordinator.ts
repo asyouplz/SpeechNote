@@ -368,7 +368,7 @@ export class ConcurrencyManager {
     async acquire(priority = 0): Promise<void> {
         return new Promise((resolve) => {
             this.priorityQueue.enqueue(resolve, priority);
-            void this.processQueue();
+            this.processQueue();
         });
     }
 
@@ -378,7 +378,7 @@ export class ConcurrencyManager {
     release(): void {
         this.semaphore.release();
         this.activeCount--;
-        void this.processQueue();
+        this.processQueue();
     }
 
     /**

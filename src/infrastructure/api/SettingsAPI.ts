@@ -302,11 +302,11 @@ export class SettingsAPI implements ISettingsAPI {
             await this.apiKeyManager.clearApiKey();
         } else if (Array.isArray(scope)) {
             scope.forEach(key => {
-                const typedKey = key;
+                const typedKey = key as keyof SettingsSchema;
                 this.settings[typedKey] = this.defaultSettings[typedKey];
             });
         } else {
-            const typedKey = scope;
+            const typedKey = scope as keyof SettingsSchema;
             this.settings[typedKey] = this.defaultSettings[typedKey];
         }
 
@@ -408,8 +408,8 @@ export class SettingsAPI implements ISettingsAPI {
                 readable: ReadableStream<Uint8Array>;
             };
             const writer = cs.writable.getWriter();
-            await writer.write(data);
-            await writer.close();
+            writer.write(data);
+            writer.close();
             
             const chunks: Uint8Array[] = [];
             const reader = cs.readable.getReader();
@@ -451,8 +451,8 @@ export class SettingsAPI implements ISettingsAPI {
                 readable: ReadableStream<Uint8Array>;
             };
             const writer = ds.writable.getWriter();
-            await writer.write(data);
-            await writer.close();
+            writer.write(data);
+            writer.close();
             
             const chunks: Uint8Array[] = [];
             const reader = ds.readable.getReader();

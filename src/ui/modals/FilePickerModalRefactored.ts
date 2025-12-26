@@ -168,9 +168,7 @@ export class FilePickerModalRefactored extends Modal {
         uiBuilder.buildProgressSection();
         uiBuilder.buildFooter(
             () => this.handleCancel(),
-            () => {
-                void this.handleSubmit();
-            },
+            () => this.handleSubmit(),
             this.state.selectedFiles.length
         );
 
@@ -263,7 +261,7 @@ export class FilePickerModalRefactored extends Modal {
                 this.handleCancel();
             } else if (e.key === 'Enter' && !this.state.isProcessing) {
                 if (this.state.selectedFiles.length > 0) {
-                    void this.handleSubmit();
+                    this.handleSubmit();
                 }
             }
         };

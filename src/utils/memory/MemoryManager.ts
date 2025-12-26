@@ -261,7 +261,7 @@ export class MemoryMonitor {
         
         this.monitoring = true;
         this.interval = window.setInterval(() => {
-            void this.check();
+            this.check();
         }, intervalMs);
     }
 

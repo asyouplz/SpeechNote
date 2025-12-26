@@ -278,7 +278,7 @@ export default class SpeechToTextPlugin extends Plugin {
             id: 'transcribe-audio-file',
             name: 'Transcribe audio file',
             callback: () => {
-                void this.showAudioFilePicker();
+                this.showAudioFilePicker();
             }
         });
 
@@ -635,17 +635,15 @@ export default class SpeechToTextPlugin extends Plugin {
             case 'cursor':
                 editor.replaceSelection(text);
                 break;
-            case 'end': {
+            case 'end':
                 const lastLine = editor.lastLine();
                 const lastLineText = editor.getLine(lastLine);
                 editor.setLine(lastLine, lastLineText + '\n\n' + text);
                 break;
-            }
-            case 'beginning': {
+            case 'beginning':
                 const firstLineText = editor.getLine(0);
                 editor.setLine(0, text + '\n\n' + firstLineText);
                 break;
-            }
         }
     }
 

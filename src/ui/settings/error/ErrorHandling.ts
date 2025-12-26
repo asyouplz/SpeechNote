@@ -412,7 +412,7 @@ class StorageErrorHandler implements ErrorHandler {
         
         // 저장소 용량 확인
         if ('storage' in navigator && 'estimate' in navigator.storage) {
-            void navigator.storage.estimate().then(estimate => {
+            navigator.storage.estimate().then(estimate => {
                 const percentUsed = ((estimate.usage || 0) / (estimate.quota || 1)) * 100;
                 if (percentUsed > 90) {
                     new Notice('저장 공간이 부족합니다. 일부 데이터를 정리해주세요.');

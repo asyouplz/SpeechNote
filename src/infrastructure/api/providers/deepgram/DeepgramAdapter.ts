@@ -377,9 +377,11 @@ export class DeepgramAdapter implements ITranscriber {
             deepgramOptions.tier = requestedTier;
         }
 
-        const transcriptionSettings = this.settingsManager?.get('transcription');
-        const deepgramSettings = transcriptionSettings?.deepgram;
-        const deepgramFeatures = deepgramSettings?.features;
+        const transcriptionSettings = this.settingsManager?.get(
+            'transcription'
+        ) as SettingsStoreTranscriptionSettings | undefined;
+        const deepgramSettings = transcriptionSettings?.deepgram as DeepgramSettings | undefined;
+        const deepgramFeatures = deepgramSettings?.features as DeepgramFeatures | undefined;
 
         if (deepgramFeatures) {
             this.logger.debug(
