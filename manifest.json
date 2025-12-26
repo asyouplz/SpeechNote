@@ -1,7 +1,7 @@
 {
 	"id": "speech-to-text",
 	"name": "Speech to Text",
-	"version": "3.0.4",
+	"version": "3.0.5",
 	"minAppVersion": "0.15.0",
 	"description": "Convert audio recordings to text using multiple AI providers (OpenAI Whisper, Deepgram)",
 	"author": "Taesun Lee",
