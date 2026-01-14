@@ -1,6 +1,6 @@
 /**
  * ObjectPool - Phase 4 Performance Optimization
- * 
+ *
  * 재사용 가능한 객체 풀 구현
  * - 가비지 컬렉션 압력 감소
  * - 메모리 할당/해제 오버헤드 감소
@@ -39,14 +39,14 @@ export class ObjectPool<T> {
     private readonly growthStrategy: 'linear' | 'exponential';
     private readonly shrinkStrategy: 'aggressive' | 'conservative';
     private readonly idleTimeout: number;
-    
+
     private stats = {
         created: 0,
         destroyed: 0,
         reused: 0,
-        acquires: 0
+        acquires: 0,
     };
-    
+
     private shrinkTimer?: number;
     private lastShrinkTime = Date.now();
 
@@ -62,7 +62,7 @@ export class ObjectPool<T> {
 
         // 초기 객체 생성
         this.preallocate();
-        
+
         // 주기적인 크기 조정
         this.scheduleShrink();
     }
@@ -72,17 +72,17 @@ export class ObjectPool<T> {
      */
     acquire(): T {
         this.stats.acquires++;
-        
+
         // 사용 가능한 객체 찾기
         let obj = this.findAvailableObject();
-        
+
         if (!obj) {
             // 새 객체 생성
             obj = this.createObject();
         } else {
             this.stats.reused++;
         }
-        
+
         this.inUse.add(obj);
         return obj;
     }
@@ -97,17 +97,17 @@ export class ObjectPool<T> {
         }
 
         this.inUse.delete(obj);
-        
+
         // 객체 초기화
         try {
             this.reset(obj);
-            
+
             // 유효성 검사
             if (this.validate && !this.validate(obj)) {
                 this.destroyObject(obj);
                 return;
             }
-            
+
             // 풀 크기 제한 확인
             if (this.available.length < this.maxSize) {
                 this.available.push(obj);
@@ -125,11 +125,11 @@ export class ObjectPool<T> {
      */
     acquireBatch(count: number): T[] {
         const batch: T[] = [];
-        
+
         for (let i = 0; i < count; i++) {
             batch.push(this.acquire());
         }
-        
+
         return batch;
     }
 
@@ -137,7 +137,7 @@ export class ObjectPool<T> {
      * 여러 객체 한번에 반환
      */
     releaseBatch(objects: T[]): void {
-        objects.forEach(obj => this.release(obj));
+        objects.forEach((obj) => this.release(obj));
     }
 
     /**
@@ -146,16 +146,16 @@ export class ObjectPool<T> {
     private findAvailableObject(): T | null {
         while (this.available.length > 0) {
             const obj = this.available.pop()!;
-            
+
             // 유효성 검사
             if (!this.validate || this.validate(obj)) {
                 return obj;
             }
-            
+
             // 유효하지 않은 객체 제거
             this.destroyObject(obj);
         }
-        
+
         return null;
     }
 
@@ -177,7 +177,7 @@ export class ObjectPool<T> {
         if (typeof disposable.dispose === 'function') {
             disposable.dispose();
         }
-        
+
         this.stats.destroyed++;
     }
 
@@ -195,23 +195,17 @@ export class ObjectPool<T> {
      */
     private grow(): void {
         const currentSize = this.available.length + this.inUse.size;
-        
+
         if (currentSize >= this.maxSize) return;
-        
+
         let growthAmount: number;
-        
+
         if (this.growthStrategy === 'exponential') {
-            growthAmount = Math.min(
-                currentSize,
-                this.maxSize - currentSize
-            );
+            growthAmount = Math.min(currentSize, this.maxSize - currentSize);
         } else {
-            growthAmount = Math.min(
-                this.minSize,
-                this.maxSize - currentSize
-            );
+            growthAmount = Math.min(this.minSize, this.maxSize - currentSize);
         }
-        
+
         for (let i = 0; i < growthAmount; i++) {
             this.available.push(this.createObject());
         }
@@ -222,35 +216,32 @@ export class ObjectPool<T> {
      */
     private shrink(): void {
         const currentSize = this.available.length + this.inUse.size;
-        
+
         if (currentSize <= this.minSize) return;
-        
+
         const now = Date.now();
         const timeSinceLastShrink = now - this.lastShrinkTime;
-        
+
         // 너무 자주 축소하지 않도록
         if (timeSinceLastShrink < this.idleTimeout) return;
-        
+
         let shrinkAmount: number;
-        
+
         if (this.shrinkStrategy === 'aggressive') {
             // 사용하지 않는 모든 객체 제거 (최소 크기까지)
-            shrinkAmount = Math.max(
-                0,
-                this.available.length - this.minSize
-            );
+            shrinkAmount = Math.max(0, this.available.length - this.minSize);
         } else {
             // 절반만 제거
             shrinkAmount = Math.floor(this.available.length / 2);
         }
-        
+
         for (let i = 0; i < shrinkAmount; i++) {
             const obj = this.available.pop();
             if (obj) {
                 this.destroyObject(obj);
             }
         }
-        
+
         this.lastShrinkTime = now;
     }
 
@@ -273,15 +264,15 @@ export class ObjectPool<T> {
         if (this.inUse.size > 0) {
             console.warn(`Clearing pool with ${this.inUse.size} objects still in use`);
         }
-        
+
         // 모든 객체 제거
-        [...this.available, ...this.inUse].forEach(obj => {
+        [...this.available, ...this.inUse].forEach((obj) => {
             this.destroyObject(obj);
         });
-        
+
         this.available = [];
         this.inUse.clear();
-        
+
         // 최소 크기로 재생성
         this.preallocate();
     }
@@ -291,10 +282,8 @@ export class ObjectPool<T> {
      */
     getStats(): PoolStats {
         const total = this.available.length + this.inUse.size;
-        const hitRate = this.stats.acquires > 0
-            ? this.stats.reused / this.stats.acquires
-            : 0;
-        
+        const hitRate = this.stats.acquires > 0 ? this.stats.reused / this.stats.acquires : 0;
+
         return {
             available: this.available.length,
             inUse: this.inUse.size,
@@ -302,7 +291,7 @@ export class ObjectPool<T> {
             created: this.stats.created,
             destroyed: this.stats.destroyed,
             reused: this.stats.reused,
-            hitRate
+            hitRate,
         };
     }
 
@@ -313,7 +302,7 @@ export class ObjectPool<T> {
         if (this.shrinkTimer) {
             clearInterval(this.shrinkTimer);
         }
-        
+
         this.clear();
     }
 }
@@ -329,15 +318,12 @@ export class PoolManager {
     /**
      * 풀 등록
      */
-    static register<T>(
-        name: string,
-        options: PoolOptions<T>
-    ): ObjectPool<T> {
+    static register<T>(name: string, options: PoolOptions<T>): ObjectPool<T> {
         if (this.pools.has(name)) {
             console.warn(`Pool '${name}' already exists`);
             return this.pools.get(name)! as ObjectPool<T>;
         }
-        
+
         const pool = new ObjectPool(options);
         this.pools.set(name, pool);
         return pool;
@@ -366,11 +352,11 @@ export class PoolManager {
      */
     static getAllStats(): Record<string, PoolStats> {
         const stats: Record<string, PoolStats> = {};
-        
+
         this.pools.forEach((pool, name) => {
             stats[name] = pool.getStats();
         });
-        
+
         return stats;
     }
 
@@ -378,7 +364,7 @@ export class PoolManager {
      * 모든 풀 정리
      */
     static destroyAll(): void {
-        this.pools.forEach(pool => pool.destroy());
+        this.pools.forEach((pool) => pool.destroy());
         this.pools.clear();
     }
 }
@@ -395,7 +381,7 @@ export const bufferPool = new ObjectPool<ArrayBuffer>({
         new Uint8Array(buffer).fill(0);
     },
     minSize: 5,
-    maxSize: 20
+    maxSize: 20,
 });
 
 // Object 풀
@@ -408,7 +394,7 @@ export const objectPool = new ObjectPool<Record<string, unknown>>({
         }
     },
     minSize: 10,
-    maxSize: 100
+    maxSize: 100,
 });
 
 // Array 풀
@@ -418,7 +404,7 @@ export const arrayPool = new ObjectPool<unknown[]>({
         arr.length = 0;
     },
     minSize: 10,
-    maxSize: 50
+    maxSize: 50,
 });
 
 // Map 풀
@@ -428,7 +414,7 @@ export const mapPool = new ObjectPool<Map<unknown, unknown>>({
         map.clear();
     },
     minSize: 5,
-    maxSize: 30
+    maxSize: 30,
 });
 
 // Set 풀
@@ -438,5 +424,5 @@ export const setPool = new ObjectPool<Set<unknown>>({
         set.clear();
     },
     minSize: 5,
-    maxSize: 30
+    maxSize: 30,
 });

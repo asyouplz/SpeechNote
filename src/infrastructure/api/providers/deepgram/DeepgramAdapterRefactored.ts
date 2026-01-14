@@ -4,7 +4,7 @@ import {
     TranscriptionResponse,
     ProviderCapabilities,
     ProviderConfig,
-    DeepgramSpecificOptions
+    DeepgramSpecificOptions,
 } from '../ITranscriber';
 import { BaseTranscriptionAdapter } from '../common/BaseAdapter';
 import { DeepgramServiceRefactored } from './DeepgramServiceRefactored';
@@ -16,37 +16,92 @@ const DEEPGRAM_CONSTANTS = {
     MAX_FILE_SIZE: 2 * 1024 * 1024 * 1024, // 2GB
     DEFAULT_TIMEOUT: 30000,
     DEFAULT_CONCURRENCY: 5,
-    DEFAULT_RATE_LIMIT: 100
+    DEFAULT_RATE_LIMIT: 100,
 } as const;
 
 // Supported languages (comprehensive list)
 const DEEPGRAM_LANGUAGES = [
-    'en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'ru', 'zh', 'ja',
-    'ko', 'ar', 'tr', 'hi', 'pl', 'sv', 'da', 'no', 'fi', 'el',
-    'he', 'id', 'ms', 'th', 'vi', 'ta', 'te', 'uk', 'cs', 'ro',
-    'hu', 'bg', 'ca', 'hr', 'sr', 'sl', 'sk', 'lt', 'lv', 'et'
+    'en',
+    'es',
+    'fr',
+    'de',
+    'it',
+    'pt',
+    'nl',
+    'ru',
+    'zh',
+    'ja',
+    'ko',
+    'ar',
+    'tr',
+    'hi',
+    'pl',
+    'sv',
+    'da',
+    'no',
+    'fi',
+    'el',
+    'he',
+    'id',
+    'ms',
+    'th',
+    'vi',
+    'ta',
+    'te',
+    'uk',
+    'cs',
+    'ro',
+    'hu',
+    'bg',
+    'ca',
+    'hr',
+    'sr',
+    'sl',
+    'sk',
+    'lt',
+    'lv',
+    'et',
 ] as const;
 
 // Supported audio formats
 const DEEPGRAM_AUDIO_FORMATS = [
-    'mp3', 'mp4', 'wav', 'flac', 'ogg', 'opus',
-    'm4a', 'webm', 'amr', 'ac3', 'aac', 'wma'
+    'mp3',
+    'mp4',
+    'wav',
+    'flac',
+    'ogg',
+    'opus',
+    'm4a',
+    'webm',
+    'amr',
+    'ac3',
+    'aac',
+    'wma',
 ] as const;
 
 // Available features
 const DEEPGRAM_FEATURES = [
-    'transcription', 'punctuation', 'smart_formatting', 'diarization',
-    'numerals', 'profanity_filter', 'redaction', 'keywords',
-    'language_detection', 'streaming', 'real_time', 'multi_channel'
+    'transcription',
+    'punctuation',
+    'smart_formatting',
+    'diarization',
+    'numerals',
+    'profanity_filter',
+    'redaction',
+    'keywords',
+    'language_detection',
+    'streaming',
+    'real_time',
+    'multi_channel',
 ] as const;
 
 // Model tiers with pricing
 const DEEPGRAM_MODELS = {
     'nova-3': { tier: 'nova-3', costPerMinute: 0.0043 },
     'nova-2': { tier: 'nova-2', costPerMinute: 0.0043 },
-    'nova': { tier: 'nova-2', costPerMinute: 0.0043 },
-    'enhanced': { tier: 'enhanced', costPerMinute: 0.0145 },
-    'base': { tier: 'base', costPerMinute: 0.0125 }
+    nova: { tier: 'nova-2', costPerMinute: 0.0043 },
+    enhanced: { tier: 'enhanced', costPerMinute: 0.0145 },
+    base: { tier: 'base', costPerMinute: 0.0125 },
 } as const;
 
 /**
@@ -56,18 +111,14 @@ const DEEPGRAM_MODELS = {
 export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
     private deepgramService: DeepgramServiceRefactored;
 
-    constructor(
-        apiKey: string,
-        logger: ILogger,
-        config?: Partial<ProviderConfig>
-    ) {
+    constructor(apiKey: string, logger: ILogger, config?: Partial<ProviderConfig>) {
         super(DEEPGRAM_CONSTANTS.PROVIDER_NAME, logger, config);
 
         this.deepgramService = new DeepgramServiceRefactored({
             apiKey: config?.apiKey ?? apiKey,
             logger,
             requestsPerMinute: config?.rateLimit?.requests ?? DEEPGRAM_CONSTANTS.DEFAULT_RATE_LIMIT,
-            timeout: config?.timeout ?? DEEPGRAM_CONSTANTS.DEFAULT_TIMEOUT
+            timeout: config?.timeout ?? DEEPGRAM_CONSTANTS.DEFAULT_TIMEOUT,
         });
     }
 
@@ -83,8 +134,8 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
             timeout: DEEPGRAM_CONSTANTS.DEFAULT_TIMEOUT,
             rateLimit: {
                 requests: DEEPGRAM_CONSTANTS.DEFAULT_RATE_LIMIT,
-                window: 60000
-            }
+                window: 60000,
+            },
         };
     }
 
@@ -120,7 +171,6 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
 
             this.logInfo(`Transcription completed in ${this.getElapsedTime()}ms`);
             return result;
-
         } catch (error) {
             this.logError('Transcription failed', error as Error);
             throw error;
@@ -157,7 +207,7 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
             maxFileSize: DEEPGRAM_CONSTANTS.MAX_FILE_SIZE,
             audioFormats: [...DEEPGRAM_AUDIO_FORMATS],
             features: [...DEEPGRAM_FEATURES],
-            models: Object.keys(DEEPGRAM_MODELS)
+            models: Object.keys(DEEPGRAM_MODELS),
         };
     }
 
@@ -188,7 +238,7 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
 
             // Temporary issues mean service is unavailable
             const temporaryIssues = ['circuit', 'unavailable', 'timeout', 'rate limit'];
-            return !temporaryIssues.some(issue => message.includes(issue));
+            return !temporaryIssues.some((issue) => message.includes(issue));
         }
     }
 
@@ -201,8 +251,9 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
             this.deepgramService = new DeepgramServiceRefactored({
                 apiKey: config.apiKey,
                 logger: this.logger,
-                requestsPerMinute: this.config.rateLimit?.requests ?? DEEPGRAM_CONSTANTS.DEFAULT_RATE_LIMIT,
-                timeout: this.config.timeout ?? DEEPGRAM_CONSTANTS.DEFAULT_TIMEOUT
+                requestsPerMinute:
+                    this.config.rateLimit?.requests ?? DEEPGRAM_CONSTANTS.DEFAULT_RATE_LIMIT,
+                timeout: this.config.timeout ?? DEEPGRAM_CONSTANTS.DEFAULT_TIMEOUT,
             });
         }
     }
@@ -218,7 +269,9 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
      * Estimate transcription cost
      */
     estimateCost(durationSeconds: number, model?: string): number {
-        const modelKey = (model ?? this.config.model ?? DEEPGRAM_CONSTANTS.DEFAULT_MODEL) as keyof typeof DEEPGRAM_MODELS;
+        const modelKey = (model ??
+            this.config.model ??
+            DEEPGRAM_CONSTANTS.DEFAULT_MODEL) as keyof typeof DEEPGRAM_MODELS;
         const modelConfig = DEEPGRAM_MODELS[modelKey] ?? DEEPGRAM_MODELS['nova-2'];
         const minutes = durationSeconds / 60;
 
@@ -239,14 +292,14 @@ export class DeepgramAdapterRefactored extends BaseTranscriptionAdapter {
         const deepgramOptions: DeepgramSpecificOptions = {
             tier: this.mapModelToTier(options?.model),
             punctuate: true,
-            smartFormat: true
+            smartFormat: true,
         };
 
         // Apply Deepgram-specific options if provided
         if (options?.deepgram) {
             return {
                 ...deepgramOptions,
-                ...options.deepgram
+                ...options.deepgram,
             };
         }
 

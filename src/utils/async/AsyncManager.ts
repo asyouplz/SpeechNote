@@ -118,7 +118,7 @@ export class Semaphore {
      */
     release(): void {
         this.permits++;
-        
+
         if (this.waitQueue.length > 0 && this.permits > 0) {
             this.permits--;
             const resolve = this.waitQueue.shift();
@@ -154,17 +154,14 @@ export interface RetryOptions {
 /**
  * 재시도 가능한 비동기 작업
  */
-export async function retryAsync<T>(
-    fn: () => Promise<T>,
-    options: RetryOptions = {}
-): Promise<T> {
+export async function retryAsync<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
     const {
         maxAttempts = 3,
         delay = 1000,
         maxDelay = 30000,
         backoff = 'exponential',
         shouldRetry = () => true,
-        onRetry
+        onRetry,
     } = options;
 
     let lastError: unknown;
@@ -181,9 +178,10 @@ export async function retryAsync<T>(
 
             onRetry?.(error, attempt);
 
-            const currentDelay = backoff === 'exponential'
-                ? Math.min(delay * Math.pow(2, attempt - 1), maxDelay)
-                : delay;
+            const currentDelay =
+                backoff === 'exponential'
+                    ? Math.min(delay * Math.pow(2, attempt - 1), maxDelay)
+                    : delay;
 
             await sleep(currentDelay);
         }
@@ -206,7 +204,7 @@ export function withTimeout<T>(
             setTimeout(() => {
                 reject(timeoutError || new Error(`Operation timed out after ${timeoutMs}ms`));
             }, timeoutMs);
-        })
+        }),
     ]);
 }
 
@@ -253,7 +251,7 @@ export function throttleAsync<Args extends unknown[], R>(
     return async (...args: Args): Promise<R | undefined> => {
         if (!inThrottle) {
             inThrottle = true;
-            
+
             try {
                 lastResult = await fn(...args);
                 return lastResult;
@@ -263,7 +261,7 @@ export function throttleAsync<Args extends unknown[], R>(
                 }, limit);
             }
         }
-        
+
         return lastResult;
     };
 }
@@ -277,13 +275,13 @@ export async function batchPromises<T, R>(
     processor: (item: T) => Promise<R>
 ): Promise<R[]> {
     const results: R[] = [];
-    
+
     for (let i = 0; i < items.length; i += batchSize) {
         const batch = items.slice(i, i + batchSize);
         const batchResults = await Promise.all(batch.map(processor));
         results.push(...batchResults);
     }
-    
+
     return results;
 }
 
@@ -295,11 +293,11 @@ export async function sequentialPromises<T, R>(
     processor: (item: T, index: number) => Promise<R>
 ): Promise<R[]> {
     const results: R[] = [];
-    
+
     for (let i = 0; i < items.length; i++) {
         results.push(await processor(items[i], i));
     }
-    
+
     return results;
 }
 
@@ -329,13 +327,12 @@ export class PromisePipeline<T> {
         fn: (value: T) => R | Promise<R>
     ): PromisePipeline<T | R> {
         const newValue = this.value.then(async (value) => {
-            const shouldApply = typeof condition === 'function'
-                ? await condition(value)
-                : condition;
-            
+            const shouldApply =
+                typeof condition === 'function' ? await condition(value) : condition;
+
             return shouldApply ? await fn(value) : value;
         });
-        
+
         return new PromisePipeline(newValue);
     }
 
@@ -359,24 +356,22 @@ export class PromisePipeline<T> {
  * Sleep 유틸리티
  */
 export function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * Promise 결과 래핑
  */
-export type PromiseResult<T> = 
+export type PromiseResult<T> =
     | { status: 'fulfilled'; value: T }
     | { status: 'rejected'; reason: unknown };
 
 /**
  * 모든 Promise 결과 수집 (실패 포함)
  */
-export function allSettled<T>(
-    promises: Promise<T>[]
-): Promise<PromiseResult<T>[]> {
-    return Promise.allSettled(promises).then(results =>
-        results.map(result => {
+export function allSettled<T>(promises: Promise<T>[]): Promise<PromiseResult<T>[]> {
+    return Promise.allSettled(promises).then((results) =>
+        results.map((result) => {
             if (result.status === 'fulfilled') {
                 return { status: 'fulfilled', value: result.value };
             } else {

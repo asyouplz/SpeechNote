@@ -42,25 +42,22 @@ const FILE_CONSTRAINTS = {
     MIN_SIZE: 100, // 100 bytes
     CHUNK_SIZE: 5 * 1024 * 1024, // 5MB chunks for processing
     SUPPORTED_FORMATS: {
-        'm4a': 'audio/mp4',
-        'mp3': 'audio/mpeg',
-        'wav': 'audio/wav',
-        'mp4': 'audio/mp4',
-        'mpeg': 'audio/mpeg',
-        'mpga': 'audio/mpeg',
-        'webm': 'audio/webm',
-        'ogg': 'audio/ogg'
-    } as const
+        m4a: 'audio/mp4',
+        mp3: 'audio/mpeg',
+        wav: 'audio/wav',
+        mp4: 'audio/mp4',
+        mpeg: 'audio/mpeg',
+        mpga: 'audio/mpeg',
+        webm: 'audio/webm',
+        ogg: 'audio/ogg',
+    } as const,
 };
 
 export class FileUploadManager {
     private abortController?: AbortController;
     private audioContext?: AudioContext;
 
-    constructor(
-        private vault: Vault,
-        private logger: ILogger
-    ) {}
+    constructor(private vault: Vault, private logger: ILogger) {}
 
     private normalizeError(error: unknown): Error {
         return error instanceof Error ? error : new Error('Unknown error');
@@ -87,49 +84,49 @@ export class FileUploadManager {
                 total: file.stat.size,
                 percentage: 0,
                 status: 'preparing',
-                message: 'Validating file...'
+                message: 'Validating file...',
             });
-            
+
             await this.validateFile(file);
             this.ensureNotCancelled();
-            
+
             // 2. 파일 읽기
             this.updateProgress(onProgress, {
                 loaded: 0,
                 total: file.stat.size,
                 percentage: 10,
                 status: 'preparing',
-                message: 'Reading file...'
+                message: 'Reading file...',
             });
-            
+
             const buffer = await this.readFile(file);
             this.ensureNotCancelled();
-            
+
             // 3. 메타데이터 추출
             this.updateProgress(onProgress, {
                 loaded: buffer.byteLength,
                 total: file.stat.size,
                 percentage: 30,
                 status: 'processing',
-                message: 'Extracting metadata...'
+                message: 'Extracting metadata...',
             });
-            
+
             const metadata = await this.extractMetadata(file, buffer);
             this.ensureNotCancelled();
-            
+
             // 4. 필요시 압축
             let processedBuffer = buffer;
             let compressed = false;
-            
+
             if (buffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
                 this.updateProgress(onProgress, {
                     loaded: buffer.byteLength,
                     total: file.stat.size,
                     percentage: 50,
                     status: 'processing',
-                    message: 'Compressing audio...'
+                    message: 'Compressing audio...',
                 });
-                
+
                 processedBuffer = await this.compressAudio(buffer, metadata);
                 this.ensureNotCancelled();
                 compressed = true;
@@ -137,28 +134,28 @@ export class FileUploadManager {
                 if (processedBuffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
                     throw new Error(
                         `File is still too large after compression. ` +
-                        `Original: ${this.formatSize(buffer.byteLength)}, ` +
-                        `Compressed: ${this.formatSize(processedBuffer.byteLength)}. ` +
-                        `Please reduce the file size by using a lower bitrate or shorter duration.`
+                            `Original: ${this.formatSize(buffer.byteLength)}, ` +
+                            `Compressed: ${this.formatSize(processedBuffer.byteLength)}. ` +
+                            `Please reduce the file size by using a lower bitrate or shorter duration.`
                     );
                 }
             }
-            
+
             // 5. 완료
             this.updateProgress(onProgress, {
                 loaded: processedBuffer.byteLength,
                 total: processedBuffer.byteLength,
                 percentage: 100,
                 status: 'completed',
-                message: 'File ready for upload'
+                message: 'File ready for upload',
             });
-            
+
             return {
                 buffer: processedBuffer,
                 metadata,
                 compressed,
                 originalSize: buffer.byteLength,
-                processedSize: processedBuffer.byteLength
+                processedSize: processedBuffer.byteLength,
             };
         } catch (error) {
             this.updateProgress(onProgress, {
@@ -166,7 +163,7 @@ export class FileUploadManager {
                 total: file.stat.size,
                 percentage: 0,
                 status: 'error',
-                message: this.resolveErrorMessage(error)
+                message: this.resolveErrorMessage(error),
             });
             throw error;
         } finally {
@@ -180,32 +177,38 @@ export class FileUploadManager {
      */
     private validateFile(file: TFile): void {
         const extension = file.extension.toLowerCase();
-        
+
         // 확장자 검증
         if (!this.isSupportedFormat(extension)) {
             throw new Error(
                 `Unsupported file format: .${extension}. ` +
-                `Supported formats: ${Object.keys(FILE_CONSTRAINTS.SUPPORTED_FORMATS).map(ext => `.${ext}`).join(', ')}`
+                    `Supported formats: ${Object.keys(FILE_CONSTRAINTS.SUPPORTED_FORMATS)
+                        .map((ext) => `.${ext}`)
+                        .join(', ')}`
             );
         }
-        
+
         // 파일 크기 검증
         if (file.stat.size < FILE_CONSTRAINTS.MIN_SIZE) {
-            throw new Error(`File is too small (${file.stat.size} bytes). Minimum size is ${FILE_CONSTRAINTS.MIN_SIZE} bytes.`);
+            throw new Error(
+                `File is too small (${file.stat.size} bytes). Minimum size is ${FILE_CONSTRAINTS.MIN_SIZE} bytes.`
+            );
         }
-        
+
         if (file.stat.size > FILE_CONSTRAINTS.MAX_SIZE * 2) {
             // 압축으로도 해결 불가능한 크기
             throw new Error(
                 `File is too large (${this.formatSize(file.stat.size)}). ` +
-                `Maximum size before compression is ${this.formatSize(FILE_CONSTRAINTS.MAX_SIZE * 2)}.`
+                    `Maximum size before compression is ${this.formatSize(
+                        FILE_CONSTRAINTS.MAX_SIZE * 2
+                    )}.`
             );
         }
-        
+
         this.logger.debug('File validation passed', {
             path: file.path,
             size: file.stat.size,
-            extension
+            extension,
         });
     }
 
@@ -215,15 +218,15 @@ export class FileUploadManager {
     private async readFile(file: TFile): Promise<ArrayBuffer> {
         try {
             const buffer = await this.vault.readBinary(file);
-            
+
             // 매직 바이트 검증 (선택적)
             if (!this.validateMagicBytes(file.extension, buffer)) {
                 this.logger.warn('File content does not match expected format', {
                     path: file.path,
-                    extension: file.extension
+                    extension: file.extension,
                 });
             }
-            
+
             return buffer;
         } catch (error) {
             if (error instanceof Error) {
@@ -247,27 +250,27 @@ export class FileUploadManager {
             name: file.name,
             path: file.path,
             extension: file.extension.toLowerCase(),
-            mimeType: this.getMimeType(file.extension)
+            mimeType: this.getMimeType(file.extension),
         };
-        
+
         // Web Audio API를 사용한 메타데이터 추출 시도
         try {
             const audioData = await this.decodeAudioData(buffer);
             metadata.duration = audioData.duration;
             metadata.sampleRate = audioData.sampleRate;
             metadata.channels = audioData.numberOfChannels;
-            
+
             // 비트레이트 추정
             if (metadata.duration > 0) {
                 metadata.bitrate = Math.round((buffer.byteLength * 8) / metadata.duration / 1000); // kbps
             }
-            
+
             this.logger.debug('Audio metadata extracted', metadata);
         } catch (error) {
             this.logger.warn('Failed to extract audio metadata', this.normalizeError(error));
             // 메타데이터 추출 실패는 치명적이지 않음
         }
-        
+
         return metadata;
     }
 
@@ -280,29 +283,29 @@ export class FileUploadManager {
     ): Promise<ArrayBuffer> {
         this.ensureNotCancelled();
         this.logger.info('Starting audio compression', {
-            originalSize: formatFileSize(buffer.byteLength)
+            originalSize: formatFileSize(buffer.byteLength),
         });
-        
+
         try {
             // Web Audio API를 사용한 압축
             const audioBuffer = await this.decodeAudioData(buffer);
-            
+
             // 타겟 샘플링 레이트 계산 (최대 16kHz for speech)
             const targetSampleRate = Math.min(audioBuffer.sampleRate, 16000);
             const targetChannels = 1; // 모노로 변환
-            
+
             // Offline Audio Context를 사용한 리샘플링
             const offlineContext = new OfflineAudioContext(
                 targetChannels,
                 audioBuffer.duration * targetSampleRate,
                 targetSampleRate
             );
-            
+
             // 소스 생성 및 연결
             this.ensureNotCancelled();
             const source = offlineContext.createBufferSource();
             source.buffer = audioBuffer;
-            
+
             // 모노 변환을 위한 채널 머저
             if (audioBuffer.numberOfChannels > 1) {
                 const merger = offlineContext.createChannelMerger(1);
@@ -311,20 +314,21 @@ export class FileUploadManager {
             } else {
                 source.connect(offlineContext.destination);
             }
-            
+
             source.start();
-            
+
             // 렌더링
             const compressedBuffer = await offlineContext.startRendering();
             this.ensureNotCancelled();
-            
+
             // ArrayBuffer로 변환
             const result = this.audioBufferToArrayBuffer(compressedBuffer);
 
             this.logger.info('Audio compression completed', {
                 originalSize: this.formatSize(buffer.byteLength),
                 compressedSize: this.formatSize(result.byteLength),
-                compressionRatio: ((1 - result.byteLength / buffer.byteLength) * 100).toFixed(1) + '%'
+                compressionRatio:
+                    ((1 - result.byteLength / buffer.byteLength) * 100).toFixed(1) + '%',
             });
 
             if (result.byteLength < buffer.byteLength) {
@@ -338,12 +342,15 @@ export class FileUploadManager {
             );
             this.logger.warn('Compression did not reduce size, applying fallback reduction', {
                 originalBytes: buffer.byteLength,
-                fallbackBytes: fallbackTarget
+                fallbackBytes: fallbackTarget,
             });
 
             return buffer.slice(0, fallbackTarget);
         } catch (error) {
-            this.logger.error('Audio compression failed, using original', this.normalizeError(error));
+            this.logger.error(
+                'Audio compression failed, using original',
+                this.normalizeError(error)
+            );
             if (buffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
                 const fallbackTarget = Math.min(
                     Math.floor(buffer.byteLength * 0.85),
@@ -351,7 +358,7 @@ export class FileUploadManager {
                 );
                 this.logger.warn('Applying fallback reduction after compression failure', {
                     originalBytes: buffer.byteLength,
-                    fallbackBytes: fallbackTarget
+                    fallbackBytes: fallbackTarget,
                 });
                 return buffer.slice(0, fallbackTarget);
             }
@@ -369,18 +376,18 @@ export class FileUploadManager {
         const numberOfChannels = audioBuffer.numberOfChannels;
         const sampleRate = audioBuffer.sampleRate;
         const bitsPerSample = 16;
-        
+
         const dataLength = length * numberOfChannels * (bitsPerSample / 8);
         const buffer = new ArrayBuffer(44 + dataLength);
         const view = new DataView(buffer);
-        
+
         // WAV 헤더 작성
         const writeString = (offset: number, string: string) => {
             for (let i = 0; i < string.length; i++) {
                 view.setUint8(offset + i, string.charCodeAt(i));
             }
         };
-        
+
         writeString(0, 'RIFF');
         view.setUint32(4, 36 + dataLength, true);
         writeString(8, 'WAVE');
@@ -394,18 +401,18 @@ export class FileUploadManager {
         view.setUint16(34, bitsPerSample, true);
         writeString(36, 'data');
         view.setUint32(40, dataLength, true);
-        
+
         // 오디오 데이터 작성
         let offset = 44;
         for (let i = 0; i < length; i++) {
             for (let channel = 0; channel < numberOfChannels; channel++) {
                 const sample = audioBuffer.getChannelData(channel)[i];
-                const value = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                const value = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
                 view.setInt16(offset, value, true);
                 offset += 2;
             }
         }
-        
+
         return buffer;
     }
 
@@ -414,9 +421,12 @@ export class FileUploadManager {
      */
     private async decodeAudioData(buffer: ArrayBuffer): Promise<AudioBuffer> {
         if (!this.audioContext) {
-            const audioContextCtor = Reflect.get(globalThis, 'AudioContext') ??
+            const audioContextCtor =
+                Reflect.get(globalThis, 'AudioContext') ??
                 Reflect.get(globalThis, 'webkitAudioContext');
-            const AudioContextCtor = this.isAudioContextCtor(audioContextCtor) ? audioContextCtor : null;
+            const AudioContextCtor = this.isAudioContextCtor(audioContextCtor)
+                ? audioContextCtor
+                : null;
             if (!AudioContextCtor) {
                 throw new Error('AudioContext is not available in this environment.');
             }
@@ -433,15 +443,15 @@ export class FileUploadManager {
      */
     private validateMagicBytes(extension: string, buffer: ArrayBuffer): boolean {
         const magicBytes: Record<string, number[]> = {
-            'm4a': [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
-            'mp3': [0xFF, 0xFB],
-            'wav': [0x52, 0x49, 0x46, 0x46], // RIFF
-            'ogg': [0x4F, 0x67, 0x67, 0x53]  // OggS
+            m4a: [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
+            mp3: [0xff, 0xfb],
+            wav: [0x52, 0x49, 0x46, 0x46], // RIFF
+            ogg: [0x4f, 0x67, 0x67, 0x53], // OggS
         };
-        
+
         const expectedBytes = magicBytes[extension.toLowerCase()];
         if (!expectedBytes) return true; // 알 수 없는 형식은 통과
-        
+
         const bytes = new Uint8Array(buffer.slice(0, expectedBytes.length));
         return expectedBytes.every((byte, index) => bytes[index] === byte);
     }
@@ -451,9 +461,7 @@ export class FileUploadManager {
      */
     private getMimeType(extension: string): string {
         const ext = extension.toLowerCase();
-        return this.isSupportedFormat(ext)
-            ? FILE_CONSTRAINTS.SUPPORTED_FORMATS[ext]
-            : 'audio/mpeg';
+        return this.isSupportedFormat(ext) ? FILE_CONSTRAINTS.SUPPORTED_FORMATS[ext] : 'audio/mpeg';
     }
 
     /**
@@ -481,7 +489,7 @@ export class FileUploadManager {
         if (callback) {
             callback(progress);
         }
-        
+
         this.logger.debug('Upload progress', progress);
     }
 
@@ -499,15 +507,15 @@ export class FileUploadManager {
 
         for (let i = 0; i < totalChunks; i++) {
             this.ensureNotCancelled('Upload cancelled');
-            
+
             const start = i * chunkSize;
             const end = Math.min(start + chunkSize, buffer.byteLength);
             const chunk = buffer.slice(start, end);
-            
+
             yield chunk;
-            
+
             // CPU에 여유 시간 제공
-            await new Promise(resolve => setTimeout(resolve, 0));
+            await new Promise((resolve) => setTimeout(resolve, 0));
         }
     }
 
@@ -548,5 +556,4 @@ export class FileUploadManager {
         }
         return 'Unknown error';
     }
-
 }

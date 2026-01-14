@@ -6,7 +6,7 @@ import { TextFormat } from '../ui/formatting/FormatOptions';
 
 /**
  * 텍스트 삽입 핸들러 - 변환된 텍스트를 에디터에 삽입하는 로직 처리
- * 
+ *
  * 주요 기능:
  * - 다양한 삽입 모드 지원
  * - 포맷팅 적용
@@ -20,7 +20,7 @@ export class TextInsertionHandler {
     private lastInsertedText = '';
     private insertionHistory: InsertionRecord[] = [];
     private readonly maxHistorySize = 20;
-    
+
     private normalizeError(error: unknown): Error {
         return error instanceof Error ? error : new Error('Unknown error');
     }
@@ -50,14 +50,14 @@ export class TextInsertionHandler {
      * 변환 완료 텍스트 처리
      */
     private async handleTranscriptionComplete(
-        text: string, 
+        text: string,
         options?: InsertionOptions
     ): Promise<void> {
         const defaultOptions: InsertionOptions = {
             mode: 'cursor',
             format: 'plain',
             addTimestamp: false,
-            ...options
+            ...options,
         };
 
         await this.insertText(text, defaultOptions);
@@ -66,10 +66,7 @@ export class TextInsertionHandler {
     /**
      * 텍스트 삽입 메인 메서드
      */
-    async insertText(
-        text: string, 
-        options: InsertionOptions
-    ): Promise<boolean> {
+    async insertText(text: string, options: InsertionOptions): Promise<boolean> {
         try {
             // 에디터 체크
             if (!this.editorService.hasActiveEditor()) {
@@ -77,7 +74,7 @@ export class TextInsertionHandler {
                 if (options.createNewNote) {
                     return await this.createNewNoteWithText(text, options);
                 }
-                
+
                 new Notice('No active editor. Please open a note first.');
                 return false;
             }
@@ -99,18 +96,18 @@ export class TextInsertionHandler {
                     text: formattedText,
                     originalText: text,
                     options,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
                 });
 
                 // 이벤트 발생
                 this.eventManager.emit('text:inserted', {
                     text: formattedText,
-                    options
+                    options,
                 });
 
                 this.logger.debug('Text inserted successfully', {
                     mode: options.mode,
-                    textLength: formattedText.length
+                    textLength: formattedText.length,
                 });
             }
 
@@ -125,10 +122,7 @@ export class TextInsertionHandler {
     /**
      * 텍스트 포맷팅 적용
      */
-    private async formatText(
-        text: string, 
-        options: InsertionOptions
-    ): Promise<string> {
+    private async formatText(text: string, options: InsertionOptions): Promise<string> {
         await Promise.resolve();
 
         let formatted = text;
@@ -182,9 +176,9 @@ export class TextInsertionHandler {
     private cleanupText(text: string): string {
         return text
             .trim()
-            .replace(/\r\n/g, '\n')  // 줄바꿈 정규화
-            .replace(/\n{3,}/g, '\n\n')  // 과도한 줄바꿈 제거
-            .replace(/^\s+|\s+$/gm, '');  // 각 줄 앞뒤 공백 제거
+            .replace(/\r\n/g, '\n') // 줄바꿈 정규화
+            .replace(/\n{3,}/g, '\n\n') // 과도한 줄바꿈 제거
+            .replace(/^\s+|\s+$/gm, ''); // 각 줄 앞뒤 공백 제거
     }
 
     /**
@@ -197,7 +191,7 @@ export class TextInsertionHandler {
         if (options.paragraphBreaks) {
             formatted = formatted
                 .split(/\n+/)
-                .filter(p => p.trim())
+                .filter((p) => p.trim())
                 .join('\n\n');
         }
 
@@ -209,12 +203,12 @@ export class TextInsertionHandler {
      */
     private applyQuoteFormat(text: string, options: InsertionOptions): string {
         const lines = text.split('\n');
-        const quoted = lines.map(line => `> ${line}`).join('\n');
-        
+        const quoted = lines.map((line) => `> ${line}`).join('\n');
+
         if (options.quoteAuthor) {
             return `${quoted}\n> \n> — ${options.quoteAuthor}`;
         }
-        
+
         return quoted;
     }
 
@@ -222,10 +216,10 @@ export class TextInsertionHandler {
      * 불릿 포맷 적용
      */
     private applyBulletFormat(text: string, options: InsertionOptions): string {
-        const lines = text.split('\n').filter(line => line.trim());
+        const lines = text.split('\n').filter((line) => line.trim());
         const bulletChar = options.bulletChar || '-';
-        
-        return lines.map(line => `${bulletChar} ${line}`).join('\n');
+
+        return lines.map((line) => `${bulletChar} ${line}`).join('\n');
     }
 
     /**
@@ -234,13 +228,13 @@ export class TextInsertionHandler {
     private applyHeadingFormat(text: string, options: InsertionOptions): string {
         const level = options.headingLevel || 2;
         const prefix = '#'.repeat(level);
-        
+
         // 첫 줄만 제목으로
         const lines = text.split('\n');
         if (lines.length > 0) {
             lines[0] = `${prefix} ${lines[0]}`;
         }
-        
+
         return lines.join('\n');
     }
 
@@ -259,7 +253,7 @@ export class TextInsertionHandler {
         const type = options.calloutType || 'info';
         const title = options.calloutTitle || '';
         const foldable = options.calloutFoldable ? '+' : '';
-        
+
         return `> [!${type}]${foldable} ${title}\n> ${text.replace(/\n/g, '\n> ')}`;
     }
 
@@ -269,7 +263,7 @@ export class TextInsertionHandler {
     private addTimestamp(text: string, format?: string): string {
         const now = new Date();
         const timestamp = format ? this.formatDate(now, format) : now.toISOString();
-        
+
         return `[${timestamp}]\n${text}`;
     }
 
@@ -278,12 +272,12 @@ export class TextInsertionHandler {
      */
     private formatDate(date: Date, format: string): string {
         const replacements: Record<string, string> = {
-            'YYYY': date.getFullYear().toString(),
-            'MM': (date.getMonth() + 1).toString().padStart(2, '0'),
-            'DD': date.getDate().toString().padStart(2, '0'),
-            'HH': date.getHours().toString().padStart(2, '0'),
-            'mm': date.getMinutes().toString().padStart(2, '0'),
-            'ss': date.getSeconds().toString().padStart(2, '0')
+            YYYY: date.getFullYear().toString(),
+            MM: (date.getMonth() + 1).toString().padStart(2, '0'),
+            DD: date.getDate().toString().padStart(2, '0'),
+            HH: date.getHours().toString().padStart(2, '0'),
+            mm: date.getMinutes().toString().padStart(2, '0'),
+            ss: date.getSeconds().toString().padStart(2, '0'),
         };
 
         let formatted = format;
@@ -330,8 +324,8 @@ export class TextInsertionHandler {
     private processKoreanText(text: string): string {
         // 한국어 맞춤법 교정이나 특수 처리
         return text
-            .replace(/\s+([.,!?])/g, '$1')  // 구두점 앞 공백 제거
-            .replace(/([.,!?])\s*/g, '$1 ')  // 구두점 뒤 공백 추가
+            .replace(/\s+([.,!?])/g, '$1') // 구두점 앞 공백 제거
+            .replace(/([.,!?])\s*/g, '$1 ') // 구두점 뒤 공백 추가
             .trim();
     }
 
@@ -354,23 +348,20 @@ export class TextInsertionHandler {
     /**
      * 실제 삽입 실행
      */
-    private async executeInsertion(
-        text: string, 
-        options: InsertionOptions
-    ): Promise<boolean> {
+    private async executeInsertion(text: string, options: InsertionOptions): Promise<boolean> {
         switch (options.mode) {
             case 'cursor':
                 return await this.editorService.insertAtCursor(text);
-                
+
             case 'replace':
                 return await this.editorService.replaceSelection(text);
-                
+
             case 'append':
                 return await this.editorService.appendToDocument(text, true);
-                
+
             case 'prepend':
                 return await this.editorService.prependToDocument(text, true);
-                
+
             case 'line-end': {
                 const lineNumber = this.editorService.getCurrentLineNumber();
                 if (lineNumber !== null) {
@@ -378,7 +369,7 @@ export class TextInsertionHandler {
                 }
                 return false;
             }
-                
+
             case 'new-line': {
                 const cursor = this.editorService.getCursorPosition();
                 if (cursor) {
@@ -386,7 +377,7 @@ export class TextInsertionHandler {
                 }
                 return false;
             }
-                
+
             default:
                 return await this.editorService.insertAtCursor(text);
         }
@@ -395,41 +386,31 @@ export class TextInsertionHandler {
     /**
      * 프리뷰 표시
      */
-    private async showPreview(
-        text: string, 
-        options: InsertionOptions
-    ): Promise<boolean> {
+    private async showPreview(text: string, options: InsertionOptions): Promise<boolean> {
         await Promise.resolve();
 
         // 프리뷰 모달 표시 (별도 구현 필요)
         new Notice(`Preview:\n${text.substring(0, 100)}...`);
-        
+
         this.eventManager.emit('text:preview', {
             text,
-            options
+            options,
         });
-        
+
         return true;
     }
 
     /**
      * 새 노트 생성 및 텍스트 삽입
      */
-    private async createNewNoteWithText(
-        text: string, 
-        options: InsertionOptions
-    ): Promise<boolean> {
+    private async createNewNoteWithText(text: string, options: InsertionOptions): Promise<boolean> {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const fileName = options.noteTitle || `Transcription-${timestamp}.md`;
         const folder = options.noteFolder || '';
-        
+
         const content = await this.formatText(text, options);
-        
-        return await this.editorService.createAndOpenNote(
-            fileName,
-            content,
-            folder
-        );
+
+        return await this.editorService.createAndOpenNote(fileName, content, folder);
     }
 
     /**
@@ -437,12 +418,12 @@ export class TextInsertionHandler {
      */
     private recordInsertion(record: InsertionRecord): void {
         this.insertionHistory.push(record);
-        
+
         // 히스토리 크기 제한
         if (this.insertionHistory.length > this.maxHistorySize) {
             this.insertionHistory.shift();
         }
-        
+
         this.lastInsertedText = record.text;
     }
 
@@ -520,13 +501,13 @@ export interface InsertionOptions {
 /**
  * 삽입 모드
  */
-export type InsertionMode = 
-    | 'cursor'      // 커서 위치
-    | 'replace'     // 선택 영역 대체
-    | 'append'      // 문서 끝
-    | 'prepend'     // 문서 시작
-    | 'line-end'    // 현재 줄 끝
-    | 'new-line';   // 새 줄
+export type InsertionMode =
+    | 'cursor' // 커서 위치
+    | 'replace' // 선택 영역 대체
+    | 'append' // 문서 끝
+    | 'prepend' // 문서 시작
+    | 'line-end' // 현재 줄 끝
+    | 'new-line'; // 새 줄
 
 /**
  * 삽입 기록

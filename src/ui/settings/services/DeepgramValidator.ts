@@ -31,10 +31,10 @@ export class DeepgramValidator {
                 url: API_CONSTANTS.ENDPOINTS.VALIDATION,
                 method,
                 headers: {
-                    'Authorization': `${API_CONSTANTS.HEADERS.AUTHORIZATION_PREFIX} ${apiKey}`,
-                    'Content-Type': API_CONSTANTS.HEADERS.CONTENT_TYPE
+                    Authorization: `${API_CONSTANTS.HEADERS.AUTHORIZATION_PREFIX} ${apiKey}`,
+                    'Content-Type': API_CONSTANTS.HEADERS.CONTENT_TYPE,
                 },
-                throw: false
+                throw: false,
             };
 
             const res = await requestUrl(req);
@@ -60,13 +60,13 @@ export class DeepgramValidator {
         if (!key || key.length < 10) {
             return '';
         }
-        
+
         const { VISIBLE_START, VISIBLE_END, CHAR } = API_CONSTANTS.MASK;
-        
+
         if (key.length <= VISIBLE_START + VISIBLE_END) {
             return key;
         }
-        
+
         const masked = CHAR.repeat(key.length - VISIBLE_START - VISIBLE_END);
         return key.substring(0, VISIBLE_START) + masked + key.substring(key.length - VISIBLE_END);
     }
@@ -77,12 +77,12 @@ export class DeepgramValidator {
     public validateTimeout(value: string): number | null {
         const timeout = parseInt(value) * 1000;
         const { MIN, MAX } = API_CONSTANTS.TIMEOUT;
-        
+
         if (isNaN(timeout) || timeout < MIN || timeout > MAX) {
             this.logger.warn(`Invalid timeout value: ${value}`);
             return null;
         }
-        
+
         return timeout;
     }
 
@@ -92,12 +92,12 @@ export class DeepgramValidator {
     public validateRetries(value: string): number | null {
         const retries = parseInt(value);
         const { MIN, MAX } = CONFIG_CONSTANTS.RETRIES;
-        
+
         if (isNaN(retries) || retries < MIN || retries > MAX) {
             this.logger.warn(`Invalid retries value: ${value}`);
             return null;
         }
-        
+
         return retries;
     }
 }

@@ -1,6 +1,6 @@
 /**
  * 화자 분리(Diarization) 텍스트 포맷팅 서비스
- * 
+ *
  * 핵심 기능:
  * - 단어 레벨 화자 정보를 세그먼트 레벨로 그룹화
  * - 연속된 같은 화자 발화 병합
@@ -75,18 +75,18 @@ export const DEFAULT_DIARIZATION_CONFIG: DiarizationConfig = {
     format: 'speaker_prefix',
     speakerLabels: {
         prefix: 'Speaker',
-        numbering: 'numeric'
+        numbering: 'numeric',
     },
     merging: {
         consecutiveThreshold: DIARIZATION_DEFAULTS.CONSECUTIVE_THRESHOLD,
-        minSegmentLength: DIARIZATION_DEFAULTS.MIN_SEGMENT_LENGTH
+        minSegmentLength: DIARIZATION_DEFAULTS.MIN_SEGMENT_LENGTH,
     },
     output: {
         includeTimestamps: false,
         includeConfidence: false,
         paragraphBreaks: true,
-        lineBreaksBetweenSpeakers: true
-    }
+        lineBreaksBetweenSpeakers: true,
+    },
 };
 
 /**
@@ -99,11 +99,11 @@ export class DiarizationFormatter {
      * 단어 배열을 화자별로 그룹화하여 포맷된 텍스트를 생성합니다.
      */
     formatTranscript(
-        words: DiarizedWord[], 
+        words: DiarizedWord[],
         config: DiarizationConfig = DEFAULT_DIARIZATION_CONFIG
     ): DiarizationResult {
         const startTime = Date.now();
-        
+
         this.logFormatStart(words, config);
 
         // 화자 정보 검증 및 폴백 처리
@@ -114,7 +114,7 @@ export class DiarizationFormatter {
 
         // 핵심 처리 파이프라인
         const result = this.processTranscriptWithSpeakers(words, config);
-        
+
         this.logFormatComplete(result, Date.now() - startTime);
         return result;
     }
@@ -123,7 +123,7 @@ export class DiarizationFormatter {
      * 화자 정보가 있는 경우의 처리 파이프라인
      */
     private processTranscriptWithSpeakers(
-        words: DiarizedWord[], 
+        words: DiarizedWord[],
         config: DiarizationConfig
     ): DiarizationResult {
         const segments = this.buildSegments(words, config);
@@ -131,13 +131,13 @@ export class DiarizationFormatter {
 
         const statistics = this.calculateStatistics(segments, words);
         const formattedText = this.formatSegments(segments, config);
-        
+
         return {
             formattedText,
             segments,
             speakerCount: statistics.totalSpeakers,
             statistics,
-            originalWordCount: words.length
+            originalWordCount: words.length,
         };
     }
 
@@ -147,7 +147,7 @@ export class DiarizationFormatter {
     private logFormatStart(words: DiarizedWord[], config: DiarizationConfig): void {
         this.logger.debug('=== DiarizationFormatter.formatTranscript START ===', {
             wordCount: words.length,
-            config
+            config,
         });
     }
 
@@ -159,7 +159,7 @@ export class DiarizationFormatter {
             processingTime,
             speakerCount: result.speakerCount,
             segmentCount: result.segments.length,
-            formattedTextLength: result.formattedText.length
+            formattedTextLength: result.formattedText.length,
         });
     }
 
@@ -167,28 +167,29 @@ export class DiarizationFormatter {
      * 단어들이 화자 정보를 포함하는지 확인
      */
     private hasSpeakerInformation(words: DiarizedWord[]): boolean {
-        return words.some(word => word.speaker !== undefined && word.speaker >= 0);
+        return words.some((word) => word.speaker !== undefined && word.speaker >= 0);
     }
 
     /**
      * 화자 정보가 없을 때 기본 결과 생성
      */
     private createFallbackResult(words: DiarizedWord[]): DiarizationResult {
-        const text = words.map(w => w.word).join(' ');
-        const totalDuration = words.length > 0 ? 
-            words[words.length - 1].end - words[0].start : 0;
+        const text = words.map((w) => w.word).join(' ');
+        const totalDuration = words.length > 0 ? words[words.length - 1].end - words[0].start : 0;
 
         return {
             formattedText: text,
-            segments: [{
-                id: 0,
-                text,
-                speaker: 0,
-                start: words[0]?.start || 0,
-                end: words[words.length - 1]?.end || 0,
-                confidence: words.reduce((acc, w) => acc + w.confidence, 0) / words.length || 0,
-                wordCount: words.length
-            }],
+            segments: [
+                {
+                    id: 0,
+                    text,
+                    speaker: 0,
+                    start: words[0]?.start || 0,
+                    end: words[words.length - 1]?.end || 0,
+                    confidence: words.reduce((acc, w) => acc + w.confidence, 0) / words.length || 0,
+                    wordCount: words.length,
+                },
+            ],
             speakerCount: 1,
             statistics: {
                 totalSpeakers: 1,
@@ -196,9 +197,10 @@ export class DiarizationFormatter {
                 averageSegmentLength: words.length,
                 speakerDistribution: { 0: 1 },
                 totalDuration,
-                averageConfidence: words.reduce((acc, w) => acc + w.confidence, 0) / words.length || 0
+                averageConfidence:
+                    words.reduce((acc, w) => acc + w.confidence, 0) / words.length || 0,
             },
-            originalWordCount: words.length
+            originalWordCount: words.length,
         };
     }
 
@@ -214,13 +216,20 @@ export class DiarizationFormatter {
 
         for (let i = 0; i < words.length; i++) {
             const word = words[i];
-            
-            if (this.shouldCreateNewSegment(word, currentSegment, config, i > 0 ? words[i-1] : null)) {
+
+            if (
+                this.shouldCreateNewSegment(
+                    word,
+                    currentSegment,
+                    config,
+                    i > 0 ? words[i - 1] : null
+                )
+            ) {
                 // 현재 세그먼트를 완료하고 추가
                 if (currentSegment && this.isValidSegment(currentSegment, config)) {
                     segments.push(this.finalizeSegment(currentSegment, segmentId++));
                 }
-                
+
                 // 새 세그먼트 시작
                 currentSegment = this.initializeSegment(word);
             } else if (currentSegment) {
@@ -273,7 +282,7 @@ export class DiarizationFormatter {
             start: word.start,
             end: word.end,
             confidence: word.confidence,
-            wordCount: 1
+            wordCount: 1,
         };
     }
 
@@ -284,9 +293,10 @@ export class DiarizationFormatter {
         segment.text = (segment.text || '') + ' ' + word.word;
         segment.end = word.end;
         segment.wordCount = (segment.wordCount || 0) + 1;
-        
+
         // 평균 신뢰도 업데이트
-        const totalConfidence = (segment.confidence || 0) * ((segment.wordCount || 1) - 1) + word.confidence;
+        const totalConfidence =
+            (segment.confidence || 0) * ((segment.wordCount || 1) - 1) + word.confidence;
         segment.confidence = totalConfidence / (segment.wordCount || 1);
     }
 
@@ -294,8 +304,10 @@ export class DiarizationFormatter {
      * 세그먼트가 유효한지 확인
      */
     private isValidSegment(segment: Partial<DiarizedSegment>, config: DiarizationConfig): boolean {
-        return (segment.wordCount || 0) >= config.merging.minSegmentLength &&
-               (segment.text?.trim().length || 0) > 0;
+        return (
+            (segment.wordCount || 0) >= config.merging.minSegmentLength &&
+            (segment.text?.trim().length || 0) > 0
+        );
     }
 
     /**
@@ -309,7 +321,7 @@ export class DiarizationFormatter {
             start: segment.start || 0,
             end: segment.end || 0,
             confidence: segment.confidence || 0,
-            wordCount: segment.wordCount || 0
+            wordCount: segment.wordCount || 0,
         };
     }
 
@@ -329,22 +341,24 @@ export class DiarizationFormatter {
                 case 'speaker_prefix':
                     line = `${speakerLabel}: ${segment.text}`;
                     break;
-                
+
                 case 'speaker_block':
                     line = `${speakerLabel}\n${segment.text}`;
                     break;
-                
+
                 case 'custom':
                     line = this.applyCustomFormat(segment, speakerLabel, config);
                     break;
-                
+
                 default:
                     line = `${speakerLabel}: ${segment.text}`;
             }
 
             // 추가 정보 포함
             if (config.output.includeTimestamps) {
-                const timestamp = `[${this.formatTime(segment.start)} - ${this.formatTime(segment.end)}]`;
+                const timestamp = `[${this.formatTime(segment.start)} - ${this.formatTime(
+                    segment.end
+                )}]`;
                 line = `${timestamp} ${line}`;
             }
 
@@ -379,7 +393,7 @@ export class DiarizationFormatter {
                 const letter = String.fromCharCode(65 + (speakerNumber % 26)); // A, B, C...
                 return `${prefix} ${letter}`;
             }
-            
+
             case 'numeric':
             default:
                 return `${prefix} ${speakerNumber + 1}`;
@@ -390,8 +404,8 @@ export class DiarizationFormatter {
      * 사용자 정의 포맷 적용
      */
     private applyCustomFormat(
-        segment: DiarizedSegment, 
-        speakerLabel: string, 
+        segment: DiarizedSegment,
+        speakerLabel: string,
         _config: DiarizationConfig
     ): string {
         // 기본적으로 prefix 형태로 처리 (확장 가능)
@@ -407,12 +421,12 @@ export class DiarizationFormatter {
 
         for (let i = 0; i < lines.length; i++) {
             const currentSpeaker = segments[i].speaker;
-            
+
             // 화자가 변경된 경우 빈 줄 추가
             if (previousSpeaker !== null && previousSpeaker !== currentSpeaker) {
                 result.push('');
             }
-            
+
             result.push(lines[i]);
             previousSpeaker = currentSpeaker;
         }
@@ -432,7 +446,10 @@ export class DiarizationFormatter {
     /**
      * 통계 계산
      */
-    private calculateStatistics(segments: DiarizedSegment[], words: DiarizedWord[]): DiarizationStats {
+    private calculateStatistics(
+        segments: DiarizedSegment[],
+        words: DiarizedWord[]
+    ): DiarizationStats {
         if (segments.length === 0) {
             return {
                 totalSpeakers: 0,
@@ -440,7 +457,7 @@ export class DiarizationFormatter {
                 averageSegmentLength: 0,
                 speakerDistribution: {},
                 totalDuration: 0,
-                averageConfidence: 0
+                averageConfidence: 0,
             };
         }
 
@@ -455,8 +472,7 @@ export class DiarizationFormatter {
             totalWordCount += segment.wordCount;
         }
 
-        const totalDuration = words.length > 0 ? 
-            words[words.length - 1].end - words[0].start : 0;
+        const totalDuration = words.length > 0 ? words[words.length - 1].end - words[0].start : 0;
 
         return {
             totalSpeakers: Object.keys(speakerDistribution).length,
@@ -464,7 +480,7 @@ export class DiarizationFormatter {
             averageSegmentLength: segments.length > 0 ? totalWordCount / segments.length : 0,
             speakerDistribution,
             totalDuration,
-            averageConfidence: segments.length > 0 ? totalConfidence / segments.length : 0
+            averageConfidence: segments.length > 0 ? totalConfidence / segments.length : 0,
         };
     }
 
@@ -488,7 +504,7 @@ export class DiarizationFormatter {
 
         return {
             valid: errors.length === 0,
-            errors
+            errors,
         };
     }
 }

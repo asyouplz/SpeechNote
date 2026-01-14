@@ -1,6 +1,6 @@
 /**
  * MemoryProfiler - Phase 4 Performance Optimization
- * 
+ *
  * 실시간 메모리 모니터링 및 누수 감지
  * - 메모리 사용량 추적
  * - 누수 패턴 감지
@@ -45,7 +45,7 @@ export class MemoryProfiler {
 
     private constructor(snapshotInterval = 5000) {
         this.snapshotInterval = snapshotInterval;
-        
+
         // Performance Memory API 지원 확인
         if (!this.isSupported()) {
             console.warn('Performance Memory API not supported');
@@ -70,7 +70,7 @@ export class MemoryProfiler {
 
         this.isMonitoring = true;
         void this.profileLoop();
-        
+
         if (process.env.NODE_ENV === 'development') {
             console.debug('Memory profiling started');
         }
@@ -83,12 +83,12 @@ export class MemoryProfiler {
         if (!this.isMonitoring) return;
 
         this.isMonitoring = false;
-        
+
         if (this.monitoringInterval) {
             clearTimeout(this.monitoringInterval);
             this.monitoringInterval = undefined;
         }
-        
+
         if (process.env.NODE_ENV === 'development') {
             console.debug('Memory profiling stopped');
         }
@@ -112,26 +112,31 @@ export class MemoryProfiler {
         // 메모리 누수 감지
         if (this.snapshots.length >= 5) {
             const leaks = this.detectMemoryLeaks();
-            
+
             if (leaks.length > 0) {
                 this.handleMemoryLeaks(leaks);
             }
         }
 
         // 다음 스냅샷 스케줄
-        this.monitoringInterval = window.setTimeout(
-            () => {
-                void this.profileLoop();
-            },
-            this.snapshotInterval
-        );
+        this.monitoringInterval = window.setTimeout(() => {
+            void this.profileLoop();
+        }, this.snapshotInterval);
     }
 
     /**
      * 메모리 스냅샷 촬영
      */
     private takeSnapshot(): Promise<MemorySnapshot> {
-        const memory = (performance as Performance & { memory?: { totalJSHeapSize: number; usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+        const memory = (
+            performance as Performance & {
+                memory?: {
+                    totalJSHeapSize: number;
+                    usedJSHeapSize: number;
+                    jsHeapSizeLimit: number;
+                };
+            }
+        ).memory;
 
         return Promise.resolve({
             timestamp: Date.now(),
@@ -140,7 +145,7 @@ export class MemoryProfiler {
             jsHeapSizeLimit: memory?.jsHeapSizeLimit || 0,
             domNodes: document.getElementsByTagName('*').length,
             listeners: this.countEventListeners(),
-            detachedNodes: this.countDetachedNodes()
+            detachedNodes: this.countDetachedNodes(),
         });
     }
 
@@ -150,7 +155,7 @@ export class MemoryProfiler {
     private detectMemoryLeaks(): MemoryLeak[] {
         const leaks: MemoryLeak[] = [];
         const recent = this.snapshots.slice(-10);
-        
+
         if (recent.length < 5) return leaks;
 
         // 1. 급격한 메모리 증가 감지
@@ -189,7 +194,7 @@ export class MemoryProfiler {
                 growthRate,
                 totalGrowth: growth,
                 suspectedCause: this.analyzeCause(snapshots),
-                recommendation: 'Check for memory-intensive operations or infinite loops'
+                recommendation: 'Check for memory-intensive operations or infinite loops',
             };
         }
 
@@ -201,20 +206,22 @@ export class MemoryProfiler {
      */
     private detectSteadyLeak(snapshots: MemorySnapshot[]): MemoryLeak | null {
         // 모든 스냅샷이 이전보다 메모리 증가
-        const isMonotonic = snapshots.every((s, i) => 
-            i === 0 || s.usedJSHeapSize > snapshots[i - 1].usedJSHeapSize
+        const isMonotonic = snapshots.every(
+            (s, i) => i === 0 || s.usedJSHeapSize > snapshots[i - 1].usedJSHeapSize
         );
 
         if (isMonotonic) {
-            const growth = snapshots[snapshots.length - 1].usedJSHeapSize - snapshots[0].usedJSHeapSize;
-            
-            if (growth > 5 * 1024 * 1024) { // 5MB 이상 증가
+            const growth =
+                snapshots[snapshots.length - 1].usedJSHeapSize - snapshots[0].usedJSHeapSize;
+
+            if (growth > 5 * 1024 * 1024) {
+                // 5MB 이상 증가
                 return {
                     type: 'steady-leak',
                     severity: growth > 20 * 1024 * 1024 ? 'high' : 'medium',
                     totalGrowth: growth,
                     suspectedCause: 'Continuous memory allocation without release',
-                    recommendation: 'Review object lifecycle and ensure proper cleanup'
+                    recommendation: 'Review object lifecycle and ensure proper cleanup',
                 };
             }
         }
@@ -236,7 +243,7 @@ export class MemoryProfiler {
                 severity: domGrowth > 5000 ? 'high' : 'medium',
                 totalGrowth: domGrowth,
                 suspectedCause: `DOM nodes increased by ${domGrowth}`,
-                recommendation: 'Check for detached DOM nodes or excessive element creation'
+                recommendation: 'Check for detached DOM nodes or excessive element creation',
             };
         }
 
@@ -247,7 +254,7 @@ export class MemoryProfiler {
                 severity: 'medium',
                 totalGrowth: last.detachedNodes,
                 suspectedCause: `${last.detachedNodes} detached DOM nodes detected`,
-                recommendation: 'Remove references to detached DOM nodes'
+                recommendation: 'Remove references to detached DOM nodes',
             };
         }
 
@@ -268,7 +275,7 @@ export class MemoryProfiler {
                 severity: listenerGrowth > 500 ? 'high' : 'medium',
                 totalGrowth: listenerGrowth,
                 suspectedCause: `Event listeners increased by ${listenerGrowth}`,
-                recommendation: 'Ensure event listeners are properly removed when not needed'
+                recommendation: 'Ensure event listeners are properly removed when not needed',
             };
         }
 
@@ -281,7 +288,7 @@ export class MemoryProfiler {
     private analyzeCause(snapshots: MemorySnapshot[]): string {
         const first = snapshots[0];
         const last = snapshots[snapshots.length - 1];
-        
+
         const domGrowth = last.domNodes - first.domNodes;
         const listenerGrowth = last.listeners - first.listeners;
         const heapGrowth = last.usedJSHeapSize - first.usedJSHeapSize;
@@ -289,11 +296,11 @@ export class MemoryProfiler {
         if (domGrowth > 500) {
             return `DOM nodes increased by ${domGrowth}`;
         }
-        
+
         if (listenerGrowth > 50) {
             return `Event listeners increased by ${listenerGrowth}`;
         }
-        
+
         if (heapGrowth > 10 * 1024 * 1024) {
             return `Heap memory increased by ${(heapGrowth / 1024 / 1024).toFixed(2)} MB`;
         }
@@ -305,12 +312,12 @@ export class MemoryProfiler {
      * 메모리 누수 처리
      */
     private handleMemoryLeaks(leaks: MemoryLeak[]): void {
-        leaks.forEach(leak => {
+        leaks.forEach((leak) => {
             console.warn('Memory leak detected:', leak);
-            
+
             // 콜백 실행
-            this.leakCallbacks.forEach(callback => callback(leak));
-            
+            this.leakCallbacks.forEach((callback) => callback(leak));
+
             // 심각한 누수의 경우 자동 정리 시도
             if (leak.severity === 'critical' || leak.severity === 'high') {
                 this.triggerCleanup();
@@ -340,11 +347,11 @@ export class MemoryProfiler {
     private countEventListeners(): number {
         let count = 0;
         const allElements = document.getElementsByTagName('*');
-        
+
         // getEventListeners는 Chrome DevTools에서만 사용 가능
         // 대안으로 추정치 사용
         count = allElements.length * 2; // 평균적으로 요소당 2개의 리스너 가정
-        
+
         return count;
     }
 
@@ -372,7 +379,7 @@ export class MemoryProfiler {
             trend,
             leaks,
             recommendations,
-            healthScore
+            healthScore,
         };
     }
 
@@ -380,15 +387,23 @@ export class MemoryProfiler {
      * 동기적 스냅샷 촬영
      */
     private takeSnapshotSync(): MemorySnapshot {
-        const memory = (performance as Performance & { memory?: { totalJSHeapSize: number; usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
-        
+        const memory = (
+            performance as Performance & {
+                memory?: {
+                    totalJSHeapSize: number;
+                    usedJSHeapSize: number;
+                    jsHeapSizeLimit: number;
+                };
+            }
+        ).memory;
+
         return {
             timestamp: Date.now(),
             usedJSHeapSize: memory?.usedJSHeapSize || 0,
             totalJSHeapSize: memory?.totalJSHeapSize || 0,
             jsHeapSizeLimit: memory?.jsHeapSizeLimit || 0,
             domNodes: document.getElementsByTagName('*').length,
-            listeners: this.countEventListeners()
+            listeners: this.countEventListeners(),
         };
     }
 
@@ -421,12 +436,20 @@ export class MemoryProfiler {
         else if (usageRatio > 0.4) score -= 5;
 
         // 누수 심각도
-        leaks.forEach(leak => {
+        leaks.forEach((leak) => {
             switch (leak.severity) {
-                case 'critical': score -= 40; break;
-                case 'high': score -= 25; break;
-                case 'medium': score -= 15; break;
-                case 'low': score -= 5; break;
+                case 'critical':
+                    score -= 40;
+                    break;
+                case 'high':
+                    score -= 25;
+                    break;
+                case 'medium':
+                    score -= 15;
+                    break;
+                case 'low':
+                    score -= 5;
+                    break;
             }
         });
 
@@ -447,7 +470,9 @@ export class MemoryProfiler {
         // 메모리 사용률 기반
         const usageRatio = current.usedJSHeapSize / current.jsHeapSizeLimit;
         if (usageRatio > 0.8) {
-            recommendations.push('Critical: Memory usage above 80%. Consider restarting the application.');
+            recommendations.push(
+                'Critical: Memory usage above 80%. Consider restarting the application.'
+            );
         } else if (usageRatio > 0.6) {
             recommendations.push('Warning: Memory usage above 60%. Monitor for potential issues.');
         }
@@ -459,12 +484,12 @@ export class MemoryProfiler {
         }
 
         // 누수 기반
-        if (leaks.some(l => l.type === 'listener-leak')) {
+        if (leaks.some((l) => l.type === 'listener-leak')) {
             recommendations.push('Use event delegation instead of individual listeners.');
             recommendations.push('Ensure all event listeners are removed when components unmount.');
         }
 
-        if (leaks.some(l => l.type === 'dom-leak')) {
+        if (leaks.some((l) => l.type === 'dom-leak')) {
             recommendations.push('Check for detached DOM nodes holding memory.');
             recommendations.push('Clear references to removed DOM elements.');
         }
@@ -502,7 +527,7 @@ export class MemoryProfiler {
         return {
             snapshots: this.snapshots.length,
             monitoring: this.isMonitoring,
-            lastSnapshot: this.snapshots[this.snapshots.length - 1]
+            lastSnapshot: this.snapshots[this.snapshots.length - 1],
         };
     }
 

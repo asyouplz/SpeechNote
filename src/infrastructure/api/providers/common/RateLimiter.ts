@@ -53,12 +53,16 @@ export class RateLimiter {
                 if (this.tokens < 1) {
                     const waitTime = this.getWaitTime();
                     throw new Error(
-                        `${this.name}: Rate limit exceeded. Retry after ${Math.ceil(waitTime / 1000)} seconds`
+                        `${this.name}: Rate limit exceeded. Retry after ${Math.ceil(
+                            waitTime / 1000
+                        )} seconds`
                     );
                 }
 
                 this.tokens--;
-                this.logger.debug(`${this.name}: Token acquired. Remaining: ${Math.floor(this.tokens)}`);
+                this.logger.debug(
+                    `${this.name}: Token acquired. Remaining: ${Math.floor(this.tokens)}`
+                );
                 resolve();
             } catch (error) {
                 reject(error);
@@ -104,7 +108,9 @@ export class RateLimiter {
             if (resolve) {
                 this.tokens--;
                 resolve();
-                this.logger.debug(`${this.name}: Queued request processed. Queue size: ${this.queue.length}`);
+                this.logger.debug(
+                    `${this.name}: Queued request processed. Queue size: ${this.queue.length}`
+                );
             }
         }
 
@@ -151,7 +157,7 @@ export class RateLimiter {
         return {
             availableTokens: Math.floor(this.tokens),
             maxTokens: this.maxTokens,
-            queueSize: this.queue.length
+            queueSize: this.queue.length,
         };
     }
 
@@ -170,6 +176,6 @@ export class RateLimiter {
      * Sleep utility
      */
     private sleep(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }

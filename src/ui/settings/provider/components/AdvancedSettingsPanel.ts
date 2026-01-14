@@ -4,9 +4,9 @@ import { SelectionStrategy } from '../../../../infrastructure/api/providers/ITra
 
 /**
  * Advanced Settings Panel Component
- * 
+ *
  * Provider 선택 전략, A/B 테스팅, 성능 튜닝 등 고급 설정을 관리합니다.
- * 
+ *
  * Features:
  * - Selection Strategy 설정
  * - Cost Management
@@ -14,7 +14,7 @@ import { SelectionStrategy } from '../../../../infrastructure/api/providers/ITra
  * - A/B Testing Configuration
  * - Performance Tuning
  * - Circuit Breaker Settings
- * 
+ *
  * @reliability 99.9% - 안정적인 고급 설정 관리
  * @performance <50ms UI 응답
  */
@@ -22,30 +22,30 @@ export class AdvancedSettingsPanel {
     // A/B Testing 상태
     private abTestEnabled = false;
     private abTestSplit = 50;
-    
+
     // Performance Metrics
     private metricsEnabled = false;
     private metricsRetentionDays = 30;
-    
+
     // Circuit Breaker
     private circuitBreakerEnabled = true;
     private circuitBreakerThreshold = 5;
     private circuitBreakerTimeout = 60000; // 1 minute
-    
+
     constructor(private plugin: SpeechToTextPlugin) {
         this.loadSettings();
     }
-    
+
     /**
      * 패널 렌더링
      */
     public render(containerEl: HTMLElement): void {
         containerEl.empty();
         containerEl.addClass('advanced-settings-panel');
-        
+
         // 헤더
         this.renderHeader(containerEl);
-        
+
         // 섹션들
         this.renderStrategySection(containerEl);
         this.renderCostManagementSection(containerEl);
@@ -55,53 +55,56 @@ export class AdvancedSettingsPanel {
         this.renderReliabilitySection(containerEl);
         this.renderDeveloperSection(containerEl);
     }
-    
+
     /**
      * 헤더 렌더링
      */
     private renderHeader(containerEl: HTMLElement): void {
         const headerEl = containerEl.createDiv({ cls: 'advanced-panel-header' });
-        
+
         headerEl.createEl('h4', {
             text: '⚙️ Advanced configuration',
-            cls: 'advanced-title'
+            cls: 'advanced-title',
         });
-        
+
         headerEl.createEl('p', {
             text: 'Fine-tune provider behavior for optimal performance and cost efficiency.',
-            cls: 'advanced-description'
+            cls: 'advanced-description',
         });
-        
+
         // Warning notice
         const warningEl = headerEl.createDiv({ cls: 'advanced-warning' });
         warningEl.createEl('span', {
             cls: 'warning-icon',
-            text: '⚠️'
+            text: '⚠️',
         });
         warningEl.createEl('span', {
             cls: 'warning-text',
-            text: 'These settings affect transcription behavior. Changes take effect immediately.'
+            text: 'These settings affect transcription behavior. Changes take effect immediately.',
         });
     }
-    
+
     /**
      * Strategy 섹션
      */
     private renderStrategySection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'Selection strategy', 'strategy-section');
-        
+
         // Primary Strategy
         new Setting(sectionEl)
             .setName('Primary strategy')
             .setDesc('How the system selects providers when in Auto mode')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown
                     .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
                     .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
                     .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
                     .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
                     .addOption(SelectionStrategy.AB_TEST, '🧪 A/B testing')
-                    .setValue(this.plugin.settings.selectionStrategy || SelectionStrategy.PERFORMANCE_OPTIMIZED)
+                    .setValue(
+                        this.plugin.settings.selectionStrategy ||
+                            SelectionStrategy.PERFORMANCE_OPTIMIZED
+                    )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {
                             await this.saveStrategy(value);
@@ -109,12 +112,12 @@ export class AdvancedSettingsPanel {
                         }
                     });
             });
-        
+
         // Fallback Strategy
         new Setting(sectionEl)
             .setName('Fallback strategy')
             .setDesc('Backup strategy when primary provider fails')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown
                     .addOption('auto', 'Automatic failover')
                     .addOption('manual', 'Manual selection')
@@ -127,26 +130,26 @@ export class AdvancedSettingsPanel {
                         }
                     });
             });
-        
+
         // Strategy Weights (for weighted selection)
         if (this.plugin.settings.selectionStrategy === SelectionStrategy.PERFORMANCE_OPTIMIZED) {
             this.renderStrategyWeights(sectionEl);
         }
     }
-    
+
     /**
      * Strategy Weights 설정
      */
     private renderStrategyWeights(containerEl: HTMLElement): void {
         const weightsEl = containerEl.createDiv({ cls: 'strategy-weights' });
-        
+
         weightsEl.createEl('h5', { text: 'Weight configuration' });
-        
+
         // Latency Weight
         new Setting(weightsEl)
             .setName('Latency weight')
             .setDesc('Importance of response time (0-100)')
-            .addSlider(slider => {
+            .addSlider((slider) => {
                 slider
                     .setLimits(0, 100, 5)
                     .setValue(this.plugin.settings.latencyWeight || 40)
@@ -157,12 +160,12 @@ export class AdvancedSettingsPanel {
                         this.updateWeightDisplay(weightsEl);
                     });
             });
-        
+
         // Success Rate Weight
         new Setting(weightsEl)
             .setName('Success rate weight')
             .setDesc('Importance of reliability (0-100)')
-            .addSlider(slider => {
+            .addSlider((slider) => {
                 slider
                     .setLimits(0, 100, 5)
                     .setValue(this.plugin.settings.successWeight || 35)
@@ -173,12 +176,12 @@ export class AdvancedSettingsPanel {
                         this.updateWeightDisplay(weightsEl);
                     });
             });
-        
+
         // Cost Weight
         new Setting(weightsEl)
             .setName('Cost weight')
             .setDesc('Importance of cost efficiency (0-100)')
-            .addSlider(slider => {
+            .addSlider((slider) => {
                 slider
                     .setLimits(0, 100, 5)
                     .setValue(this.plugin.settings.costWeight || 25)
@@ -189,49 +192,48 @@ export class AdvancedSettingsPanel {
                         this.updateWeightDisplay(weightsEl);
                     });
             });
-        
+
         // Weight visualization
         this.updateWeightDisplay(weightsEl);
     }
-    
+
     /**
      * Cost Management 섹션
      */
     private renderCostManagementSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'Cost management', 'cost-section');
-        
+
         // Monthly Budget
         new Setting(sectionEl)
             .setName('Monthly budget')
             .setDesc('Maximum monthly spending in USD (leave empty for unlimited)')
-            .addText(text => {
-                text
-                    .setPlaceholder('50.00')
+            .addText((text) => {
+                text.setPlaceholder('50.00')
                     .setValue(this.plugin.settings.monthlyBudget?.toString() || '')
                     .onChange(async (value) => {
                         const budget = parseFloat(value);
                         if (value === '' || (!isNaN(budget) && budget > 0)) {
                             this.plugin.settings.monthlyBudget = value === '' ? undefined : budget;
                             await this.plugin.saveSettings();
-                            
+
                             if (budget) {
                                 this.showBudgetInfo(budget);
                             }
                         }
                     });
             })
-            .addExtraButton(button => {
+            .addExtraButton((button) => {
                 button
                     .setIcon('calculator')
                     .setTooltip('Calculate estimated costs')
                     .onClick(() => this.showCostCalculator());
             });
-        
+
         // Budget Alert Threshold
         new Setting(sectionEl)
             .setName('Budget alert')
             .setDesc('Alert when spending reaches this percentage')
-            .addSlider(slider => {
+            .addSlider((slider) => {
                 slider
                     .setLimits(50, 100, 5)
                     .setValue(this.plugin.settings.budgetAlert || 80)
@@ -241,12 +243,12 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Cost Optimization
         new Setting(sectionEl)
             .setName('Auto cost optimization')
             .setDesc('Automatically switch to cheaper providers when approaching budget limit')
-            .addToggle(toggle => {
+            .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.autoCostOptimization || false)
                     .onChange(async (value) => {
@@ -254,22 +256,22 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Current spending display
         this.renderSpendingDisplay(sectionEl);
     }
-    
+
     /**
      * Quality 섹션
      */
     private renderQualitySection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'Quality control', 'quality-section');
-        
+
         // Minimum Confidence
         new Setting(sectionEl)
             .setName('Minimum confidence')
             .setDesc('Reject transcriptions below this confidence level (0-100%)')
-            .addSlider(slider => {
+            .addSlider((slider) => {
                 slider
                     .setLimits(0, 100, 5)
                     .setValue(this.plugin.settings.minConfidence || 70)
@@ -279,12 +281,12 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Language Detection
         new Setting(sectionEl)
             .setName('Strict language detection')
             .setDesc('Enforce language detection accuracy')
-            .addToggle(toggle => {
+            .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.strictLanguage || false)
                     .onChange(async (value) => {
@@ -292,12 +294,12 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Post-processing
         new Setting(sectionEl)
             .setName('Enable post-processing')
             .setDesc('Apply NLP corrections to improve accuracy')
-            .addToggle(toggle => {
+            .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.enablePostProcessing || true)
                     .onChange(async (value) => {
@@ -305,49 +307,46 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Custom Dictionary
         new Setting(sectionEl)
             .setName('Custom dictionary')
             .setDesc('Add domain-specific terms for better recognition')
-            .addButton(button => {
-                button
-                    .setButtonText('Edit dictionary')
-                    .onClick(() => this.showDictionaryEditor());
+            .addButton((button) => {
+                button.setButtonText('Edit dictionary').onClick(() => this.showDictionaryEditor());
             });
     }
-    
+
     /**
      * A/B Testing 섹션
      */
     private renderABTestingSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'A/B testing', 'ab-test-section');
-        
+
         // Enable A/B Testing
         new Setting(sectionEl)
             .setName('Enable A/B testing')
             .setDesc('Compare providers to find optimal configuration')
-            .addToggle(toggle => {
-                toggle
-                    .setValue(this.abTestEnabled)
-                    .onChange(async (value) => {
-                        this.abTestEnabled = value;
-                        this.plugin.settings.abTestEnabled = value;
-                        await this.plugin.saveSettings();
-                        
-                        // Re-render section
-                        this.renderABTestingSection(containerEl.querySelector('.ab-test-section')?.parentElement || containerEl);
-                    });
+            .addToggle((toggle) => {
+                toggle.setValue(this.abTestEnabled).onChange(async (value) => {
+                    this.abTestEnabled = value;
+                    this.plugin.settings.abTestEnabled = value;
+                    await this.plugin.saveSettings();
+
+                    // Re-render section
+                    this.renderABTestingSection(
+                        containerEl.querySelector('.ab-test-section')?.parentElement || containerEl
+                    );
+                });
             });
-        
+
         if (this.abTestEnabled) {
             // Test Duration
             new Setting(sectionEl)
                 .setName('Test duration')
                 .setDesc('How long to run the test (days)')
-                .addText(text => {
-                    text
-                        .setPlaceholder('7')
+                .addText((text) => {
+                    text.setPlaceholder('7')
                         .setValue(this.plugin.settings.abTestDuration?.toString() || '7')
                         .onChange(async (value) => {
                             const days = parseInt(value);
@@ -357,12 +356,12 @@ export class AdvancedSettingsPanel {
                             }
                         });
                 });
-            
+
             // Traffic Split
             new Setting(sectionEl)
                 .setName('Traffic split')
                 .setDesc('Percentage of requests for Provider A vs B')
-                .addSlider(slider => {
+                .addSlider((slider) => {
                     slider
                         .setLimits(0, 100, 5)
                         .setValue(this.abTestSplit)
@@ -373,16 +372,16 @@ export class AdvancedSettingsPanel {
                             await this.plugin.saveSettings();
                             this.updateSplitDisplay(sectionEl);
                         });
-            });
-            
+                });
+
             // Split visualization
             this.updateSplitDisplay(sectionEl);
-            
+
             // Test Metrics
             new Setting(sectionEl)
                 .setName('Test metrics')
                 .setDesc('Metrics to compare')
-                .addDropdown(dropdown => {
+                .addDropdown((dropdown) => {
                     dropdown
                         .addOption('all', 'All metrics')
                         .addOption('latency', 'Latency only')
@@ -396,12 +395,12 @@ export class AdvancedSettingsPanel {
                             }
                         });
                 });
-            
+
             // Test Results Button
             new Setting(sectionEl)
                 .setName('View results')
                 .setDesc('See current A/B test results')
-                .addButton(button => {
+                .addButton((button) => {
                     button
                         .setButtonText('View results')
                         .setCta()
@@ -409,20 +408,23 @@ export class AdvancedSettingsPanel {
                 });
         }
     }
-    
+
     /**
      * Performance 섹션
      */
     private renderPerformanceSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Performance tuning', 'performance-section');
-        
+        const sectionEl = this.createSection(
+            containerEl,
+            'Performance tuning',
+            'performance-section'
+        );
+
         // Request Timeout
         new Setting(sectionEl)
             .setName('Request timeout')
             .setDesc('Maximum time to wait for response (seconds)')
-            .addText(text => {
-                text
-                    .setPlaceholder('30')
+            .addText((text) => {
+                text.setPlaceholder('30')
                     .setValue(this.plugin.settings.requestTimeout?.toString() || '30')
                     .onChange(async (value) => {
                         const timeout = parseInt(value);
@@ -432,12 +434,12 @@ export class AdvancedSettingsPanel {
                         }
                     });
             });
-        
+
         // Parallel Requests
         new Setting(sectionEl)
             .setName('Max parallel requests')
             .setDesc('Maximum concurrent API requests')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown
                     .addOption('1', '1 (sequential)')
                     .addOption('2', '2')
@@ -449,12 +451,12 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Retry Configuration
         new Setting(sectionEl)
             .setName('Max retries')
             .setDesc('Number of retry attempts on failure')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown
                     .addOption('0', 'No retries')
                     .addOption('1', '1')
@@ -467,42 +469,41 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Caching
         new Setting(sectionEl)
             .setName('Response caching')
             .setDesc('Cache transcription results to avoid duplicate requests')
-            .addToggle(toggle => {
+            .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.enableCache || true)
                     .onChange(async (value) => {
                         this.plugin.settings.enableCache = value;
                         await this.plugin.saveSettings();
-                        
+
                         if (value) {
                             this.renderCacheSettings(sectionEl);
                         }
                     });
             });
-        
+
         if (this.plugin.settings.enableCache) {
             this.renderCacheSettings(sectionEl);
         }
     }
-    
+
     /**
      * Cache 설정
      */
     private renderCacheSettings(containerEl: HTMLElement): void {
         const cacheEl = containerEl.createDiv({ cls: 'cache-settings' });
-        
+
         // Cache Duration
         new Setting(cacheEl)
             .setName('Cache duration')
             .setDesc('How long to keep cached results (hours)')
-            .addText(text => {
-                text
-                    .setPlaceholder('24')
+            .addText((text) => {
+                text.setPlaceholder('24')
                     .setValue(this.plugin.settings.cacheDuration?.toString() || '24')
                     .onChange(async (value) => {
                         const hours = parseInt(value);
@@ -512,12 +513,12 @@ export class AdvancedSettingsPanel {
                         }
                     });
             });
-        
+
         // Clear Cache Button
         new Setting(cacheEl)
             .setName('Clear cache')
             .setDesc('Remove all cached transcription results')
-            .addButton(button => {
+            .addButton((button) => {
                 button
                     .setButtonText('Clear cache')
                     .setWarning()
@@ -526,40 +527,42 @@ export class AdvancedSettingsPanel {
                     });
             });
     }
-    
+
     /**
      * Reliability 섹션
      */
     private renderReliabilitySection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Reliability & resilience', 'reliability-section');
-        
+        const sectionEl = this.createSection(
+            containerEl,
+            'Reliability & resilience',
+            'reliability-section'
+        );
+
         // Circuit Breaker
         new Setting(sectionEl)
             .setName('Circuit breaker')
             .setDesc('Temporarily disable failing providers')
-            .addToggle(toggle => {
-                toggle
-                    .setValue(this.circuitBreakerEnabled)
-                    .onChange(async (value) => {
-                        this.circuitBreakerEnabled = value;
-                        this.plugin.settings.circuitBreakerEnabled = value;
-                        await this.plugin.saveSettings();
-                        
-                        if (value) {
-                            this.renderCircuitBreakerSettings(sectionEl);
-                        }
-                    });
+            .addToggle((toggle) => {
+                toggle.setValue(this.circuitBreakerEnabled).onChange(async (value) => {
+                    this.circuitBreakerEnabled = value;
+                    this.plugin.settings.circuitBreakerEnabled = value;
+                    await this.plugin.saveSettings();
+
+                    if (value) {
+                        this.renderCircuitBreakerSettings(sectionEl);
+                    }
+                });
             });
-        
+
         if (this.circuitBreakerEnabled) {
             this.renderCircuitBreakerSettings(sectionEl);
         }
-        
+
         // Health Checks
         new Setting(sectionEl)
             .setName('Automatic health checks')
             .setDesc('Periodically verify provider availability')
-            .addToggle(toggle => {
+            .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.healthChecksEnabled || false)
                     .onChange(async (value) => {
@@ -567,12 +570,12 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Graceful Degradation
         new Setting(sectionEl)
             .setName('Graceful degradation')
             .setDesc('Continue with reduced functionality when providers fail')
-            .addToggle(toggle => {
+            .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.gracefulDegradation || true)
                     .onChange(async (value) => {
@@ -581,18 +584,18 @@ export class AdvancedSettingsPanel {
                     });
             });
     }
-    
+
     /**
      * Circuit Breaker 설정
      */
     private renderCircuitBreakerSettings(containerEl: HTMLElement): void {
         const cbEl = containerEl.createDiv({ cls: 'circuit-breaker-settings' });
-        
+
         // Failure Threshold
         new Setting(cbEl)
             .setName('Failure threshold')
             .setDesc('Failures before opening circuit')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown
                     .addOption('3', '3 failures')
                     .addOption('5', '5 failures')
@@ -604,14 +607,13 @@ export class AdvancedSettingsPanel {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Reset Timeout
         new Setting(cbEl)
             .setName('Reset timeout')
             .setDesc('Time before retrying failed provider (seconds)')
-            .addText(text => {
-                text
-                    .setPlaceholder('60')
+            .addText((text) => {
+                text.setPlaceholder('60')
                     .setValue((this.circuitBreakerTimeout / 1000).toString())
                     .onChange(async (value) => {
                         const seconds = parseInt(value);
@@ -623,52 +625,47 @@ export class AdvancedSettingsPanel {
                     });
             });
     }
-    
+
     /**
      * Developer 섹션
      */
     private renderDeveloperSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'Developer options', 'developer-section');
-        
+
         // Debug Mode
         new Setting(sectionEl)
             .setName('Debug mode')
             .setDesc('Enable detailed logging for troubleshooting')
-            .addToggle(toggle => {
-                toggle
-                    .setValue(this.plugin.settings.debugMode || false)
-                    .onChange(async (value) => {
-                        this.plugin.settings.debugMode = value;
-                        await this.plugin.saveSettings();
-                        
-                        if (value && this.plugin.settings) {
-                            console.info('Speech-to-Text debug mode enabled via AdvancedSettingsPanel');
-                        }
-                    });
+            .addToggle((toggle) => {
+                toggle.setValue(this.plugin.settings.debugMode || false).onChange(async (value) => {
+                    this.plugin.settings.debugMode = value;
+                    await this.plugin.saveSettings();
+
+                    if (value && this.plugin.settings) {
+                        console.info('Speech-to-Text debug mode enabled via AdvancedSettingsPanel');
+                    }
+                });
             });
-        
+
         // Metrics Collection
         new Setting(sectionEl)
             .setName('Collect metrics')
             .setDesc('Track performance metrics for analysis')
-            .addToggle(toggle => {
-                toggle
-                    .setValue(this.metricsEnabled)
-                    .onChange(async (value) => {
-                        this.metricsEnabled = value;
-                        this.plugin.settings.metricsEnabled = value;
-                        await this.plugin.saveSettings();
-                    });
+            .addToggle((toggle) => {
+                toggle.setValue(this.metricsEnabled).onChange(async (value) => {
+                    this.metricsEnabled = value;
+                    this.plugin.settings.metricsEnabled = value;
+                    await this.plugin.saveSettings();
+                });
             });
-        
+
         if (this.metricsEnabled) {
             // Metrics Retention
             new Setting(sectionEl)
                 .setName('Metrics retention')
                 .setDesc('Days to keep metrics data')
-                .addText(text => {
-                    text
-                        .setPlaceholder('30')
+                .addText((text) => {
+                    text.setPlaceholder('30')
                         .setValue(this.metricsRetentionDays.toString())
                         .onChange(async (value) => {
                             const days = parseInt(value);
@@ -679,33 +676,29 @@ export class AdvancedSettingsPanel {
                             }
                         });
                 });
-            
+
             // Export Metrics
             new Setting(sectionEl)
                 .setName('Export metrics')
                 .setDesc('Download metrics data for analysis')
-                .addButton(button => {
-                    button
-                        .setButtonText('Export CSV')
-                        .onClick(() => this.exportMetrics());
+                .addButton((button) => {
+                    button.setButtonText('Export CSV').onClick(() => this.exportMetrics());
                 });
         }
-        
+
         // API Endpoint Override
         new Setting(sectionEl)
             .setName('Custom API endpoints')
             .setDesc('Override default API endpoints (advanced)')
-            .addButton(button => {
-                button
-                    .setButtonText('Configure')
-                    .onClick(() => this.showEndpointConfiguration());
+            .addButton((button) => {
+                button.setButtonText('Configure').onClick(() => this.showEndpointConfiguration());
             });
-        
+
         // Reset All Settings
         new Setting(sectionEl)
             .setName('Reset advanced settings')
             .setDesc('Reset all advanced settings to defaults')
-            .addButton(button => {
+            .addButton((button) => {
                 button
                     .setButtonText('Reset')
                     .setWarning()
@@ -716,62 +709,65 @@ export class AdvancedSettingsPanel {
                     });
             });
     }
-    
+
     // === Helper Methods ===
-    
+
     /**
      * 섹션 생성
      */
     private createSection(containerEl: HTMLElement, title: string, className: string): HTMLElement {
         const sectionEl = containerEl.createDiv({ cls: `advanced-section ${className}` });
-        
+
         const headerEl = sectionEl.createDiv({ cls: 'section-header' });
         headerEl.createEl('h5', { text: title });
-        
+
         const contentEl = sectionEl.createDiv({ cls: 'section-content' });
-        
+
         return contentEl;
     }
-    
+
     /**
      * Strategy 상세 정보 표시
      */
     private showStrategyDetails(strategy: string): void {
         const details: Record<string, string> = {
-            [SelectionStrategy.PERFORMANCE_OPTIMIZED]: 'Selects the fastest provider based on recent latency metrics',
-            [SelectionStrategy.COST_OPTIMIZED]: 'Minimizes costs while maintaining acceptable quality',
-            [SelectionStrategy.QUALITY_OPTIMIZED]: 'Prioritizes accuracy and quality over speed or cost',
+            [SelectionStrategy.PERFORMANCE_OPTIMIZED]:
+                'Selects the fastest provider based on recent latency metrics',
+            [SelectionStrategy.COST_OPTIMIZED]:
+                'Minimizes costs while maintaining acceptable quality',
+            [SelectionStrategy.QUALITY_OPTIMIZED]:
+                'Prioritizes accuracy and quality over speed or cost',
             [SelectionStrategy.ROUND_ROBIN]: 'Distributes requests evenly across all providers',
-            [SelectionStrategy.AB_TEST]: 'Splits traffic for comparative analysis'
+            [SelectionStrategy.AB_TEST]: 'Splits traffic for comparative analysis',
         };
-        
+
         new Notice(details[strategy] || 'Strategy selected', 5000);
     }
-    
+
     /**
      * Weight 표시 업데이트
      */
     private updateWeightDisplay(containerEl: HTMLElement): void {
         let displayEl = containerEl.querySelector('.weight-display');
-        
+
         if (!(displayEl instanceof HTMLElement)) {
             displayEl = containerEl.createDiv({ cls: 'weight-display' });
         }
-        
+
         const latency = this.plugin.settings.latencyWeight || 40;
         const success = this.plugin.settings.successWeight || 35;
         const cost = this.plugin.settings.costWeight || 25;
         const total = latency + success + cost;
-        
+
         const weightBar = createEl('div', { cls: 'weight-bar' });
 
         const segments = [
             { cls: 'latency', value: latency, label: `Latency ${latency}%` },
             { cls: 'success', value: success, label: `Success ${success}%` },
-            { cls: 'cost', value: cost, label: `Cost ${cost}%` }
+            { cls: 'cost', value: cost, label: `Cost ${cost}%` },
         ];
 
-        segments.forEach(segmentInfo => {
+        segments.forEach((segmentInfo) => {
             const segment = createEl('div', { cls: `weight-segment ${segmentInfo.cls}` });
             const percent = total === 0 ? 0 : (segmentInfo.value / total) * 100;
             segment.setAttribute('style', `--sn-width-pct:${percent}%`);
@@ -784,15 +780,18 @@ export class AdvancedSettingsPanel {
 
         displayEl.replaceChildren(weightBar);
     }
-    
+
     /**
      * Budget 정보 표시
      */
     private showBudgetInfo(budget: number): void {
         const estimatedRequests = Math.floor(budget / 0.006); // Assuming $0.006 per minute
-        new Notice(`Budget set to $${budget.toFixed(2)}/month (~${estimatedRequests} minutes)`, 5000);
+        new Notice(
+            `Budget set to $${budget.toFixed(2)}/month (~${estimatedRequests} minutes)`,
+            5000
+        );
     }
-    
+
     /**
      * Cost Calculator 표시
      */
@@ -800,18 +799,18 @@ export class AdvancedSettingsPanel {
         // TODO: Implement cost calculator modal
         new Notice('Cost calculator coming soon!');
     }
-    
+
     /**
      * Spending Display 렌더링
      */
     private renderSpendingDisplay(containerEl: HTMLElement): void {
         const spendingEl = containerEl.createDiv({ cls: 'spending-display' });
-        
+
         // TODO: Get actual spending data
         const currentSpending = 12.34;
         const budget = this.plugin.settings.monthlyBudget || 50;
         const percentage = (currentSpending / budget) * 100;
-        
+
         const info = createEl('div', { cls: 'spending-info' });
 
         const label = createEl('span', { cls: 'spending-label', text: 'Current month:' });
@@ -819,13 +818,13 @@ export class AdvancedSettingsPanel {
 
         const value = createEl('span', {
             cls: 'spending-value',
-            text: `$${currentSpending.toFixed(2)} / $${budget.toFixed(2)}`
+            text: `$${currentSpending.toFixed(2)} / $${budget.toFixed(2)}`,
         });
         info.appendChild(value);
 
         const bar = createEl('div', { cls: 'spending-bar' });
         const progress = createEl('div', {
-            cls: `spending-progress ${percentage > 80 ? 'warning' : ''}`.trim()
+            cls: `spending-progress ${percentage > 80 ? 'warning' : ''}`.trim(),
         });
         progress.setAttribute('style', `--sn-width-pct:${Math.min(100, percentage)}%`);
         bar.appendChild(progress);
@@ -833,7 +832,7 @@ export class AdvancedSettingsPanel {
         spendingEl.appendChild(info);
         spendingEl.appendChild(bar);
     }
-    
+
     /**
      * Dictionary Editor 표시
      */
@@ -841,13 +840,13 @@ export class AdvancedSettingsPanel {
         // TODO: Implement dictionary editor modal
         new Notice('Dictionary editor coming soon!');
     }
-    
+
     /**
      * Split Display 업데이트
      */
     private updateSplitDisplay(containerEl: HTMLElement): void {
         let displayEl = containerEl.querySelector('.split-display');
-        
+
         if (!(displayEl instanceof HTMLElement)) {
             displayEl = containerEl.createDiv({ cls: 'split-display' });
         }
@@ -873,7 +872,7 @@ export class AdvancedSettingsPanel {
 
         displayEl.replaceChildren(visualization);
     }
-    
+
     /**
      * A/B Test Results 표시
      */
@@ -881,7 +880,7 @@ export class AdvancedSettingsPanel {
         // TODO: Implement A/B test results modal
         new Notice('A/B test results coming soon!');
     }
-    
+
     /**
      * Cache 초기화
      */
@@ -889,7 +888,7 @@ export class AdvancedSettingsPanel {
         // TODO: Implement cache clearing
         new Notice('Cache cleared successfully!');
     }
-    
+
     /**
      * Metrics 내보내기
      */
@@ -897,7 +896,7 @@ export class AdvancedSettingsPanel {
         // TODO: Implement metrics export
         new Notice('Metrics export coming soon!');
     }
-    
+
     /**
      * Endpoint Configuration 표시
      */
@@ -905,7 +904,7 @@ export class AdvancedSettingsPanel {
         // TODO: Implement endpoint configuration modal
         new Notice('Endpoint configuration coming soon!');
     }
-    
+
     /**
      * Reset 확인
      */
@@ -914,22 +913,22 @@ export class AdvancedSettingsPanel {
             const fragment = document.createDocumentFragment();
 
             const message = createEl('div', {
-                text: 'Reset all advanced settings to defaults?'
+                text: 'Reset all advanced settings to defaults?',
             });
             fragment.appendChild(message);
 
             const buttonRow = createEl('div', {
-                cls: 'notice-action-row'
+                cls: 'notice-action-row',
             });
 
             const resetBtn = createEl('button', {
                 cls: 'mod-cta',
-                text: 'Reset'
+                text: 'Reset',
             });
 
             const cancelBtn = createEl('button', {
                 cls: 'notice-action-button',
-                text: 'Cancel'
+                text: 'Cancel',
             });
 
             buttonRow.appendChild(resetBtn);
@@ -948,7 +947,7 @@ export class AdvancedSettingsPanel {
             });
         });
     }
-    
+
     /**
      * Advanced Settings 초기화
      */
@@ -962,15 +961,15 @@ export class AdvancedSettingsPanel {
         this.plugin.settings.abTestEnabled = false;
         this.plugin.settings.circuitBreakerEnabled = true;
         this.plugin.settings.debugMode = false;
-        
+
         await this.plugin.saveSettings();
-        
+
         // Reload settings
         this.loadSettings();
-        
+
         new Notice('Advanced settings reset to defaults');
     }
-    
+
     /**
      * Strategy 저장
      */
@@ -978,7 +977,7 @@ export class AdvancedSettingsPanel {
         this.plugin.settings.selectionStrategy = strategy;
         await this.plugin.saveSettings();
     }
-    
+
     /**
      * 설정 로드
      */

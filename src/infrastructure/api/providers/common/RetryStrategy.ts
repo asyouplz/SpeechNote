@@ -12,7 +12,7 @@ export interface RetryConfig {
 export enum RetryStrategy {
     EXPONENTIAL = 'exponential',
     LINEAR = 'linear',
-    FIXED = 'fixed'
+    FIXED = 'fixed',
 }
 
 /**
@@ -48,48 +48,48 @@ export class RetryHandler {
     /**
      * Execute operation with retry logic
      */
-    async execute<T>(
-        operation: () => Promise<T>,
-        context?: string
-    ): Promise<T> {
+    async execute<T>(operation: () => Promise<T>, context?: string): Promise<T> {
         let lastError: Error | null = null;
-        
+
         for (let attempt = 0; attempt < this.maxRetries; attempt++) {
             try {
-                this.logger.debug(`${this.name}: Attempt ${attempt + 1}/${this.maxRetries}${context ? ` for ${context}` : ''}`);
+                this.logger.debug(
+                    `${this.name}: Attempt ${attempt + 1}/${this.maxRetries}${
+                        context ? ` for ${context}` : ''
+                    }`
+                );
                 return await operation();
             } catch (error) {
                 const normalizedError = this.normalizeError(error);
                 lastError = normalizedError;
-                
+
                 if (!this.shouldRetry(error, attempt)) {
                     throw normalizedError;
                 }
-                
+
                 if (attempt < this.maxRetries - 1) {
                     const delay = this.calculateDelay(attempt);
                     this.logger.debug(
-                        `${this.name}: Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`,
+                        `${this.name}: Retrying after ${delay}ms (attempt ${attempt + 1}/${
+                            this.maxRetries
+                        })`,
                         { error: normalizedError.message }
                     );
                     await this.sleep(delay);
                 }
             }
         }
-        
+
         throw this.wrapError(lastError ?? new Error('Unknown error'), context);
     }
 
     /**
      * Execute with custom retry config
      */
-    executeWithConfig<T>(
-        operation: () => Promise<T>,
-        customConfig: RetryConfig
-    ): Promise<T> {
+    executeWithConfig<T>(operation: () => Promise<T>, customConfig: RetryConfig): Promise<T> {
         const handler = new RetryHandler(this.name, this.logger, this.strategy, {
             ...this.getConfig(),
-            ...customConfig
+            ...customConfig,
         });
         return handler.execute(operation);
     }
@@ -112,29 +112,31 @@ export class RetryHandler {
         if (error instanceof Error && error.message?.toLowerCase().includes('network')) {
             return true;
         }
-        
+
         // Retry on timeout
         if (error instanceof Error && error.message?.toLowerCase().includes('timeout')) {
             return true;
         }
-        
+
         // Retry on specific HTTP status codes
-        const statusCode = typeof error === 'object' && error !== null
-            ? Reflect.get(error, 'statusCode')
-            : undefined;
+        const statusCode =
+            typeof error === 'object' && error !== null
+                ? Reflect.get(error, 'statusCode')
+                : undefined;
         if (typeof statusCode === 'number') {
             const retryableCodes = [408, 429, 500, 502, 503, 504];
             return retryableCodes.includes(statusCode);
         }
-        
+
         // Don't retry on explicit non-retryable errors
-        const isRetryable = typeof error === 'object' && error !== null
-            ? Reflect.get(error, 'isRetryable')
-            : undefined;
+        const isRetryable =
+            typeof error === 'object' && error !== null
+                ? Reflect.get(error, 'isRetryable')
+                : undefined;
         if (isRetryable === false) {
             return false;
         }
-        
+
         return false;
     }
 
@@ -151,18 +153,15 @@ export class RetryHandler {
                     this.maxDelayMs
                 );
                 break;
-            
+
             case RetryStrategy.LINEAR:
-                delay = Math.min(
-                    this.baseDelayMs * (attempt + 1),
-                    this.maxDelayMs
-                );
+                delay = Math.min(this.baseDelayMs * (attempt + 1), this.maxDelayMs);
                 break;
-            
+
             case RetryStrategy.FIXED:
                 delay = this.baseDelayMs;
                 break;
-            
+
             default:
                 delay = this.baseDelayMs;
         }
@@ -180,7 +179,9 @@ export class RetryHandler {
      * Wrap error with retry information
      */
     private wrapError(error: Error, context?: string): Error {
-        const message = `${this.name}: Operation failed after ${this.maxRetries} attempts${context ? ` for ${context}` : ''}: ${error.message}`;
+        const message = `${this.name}: Operation failed after ${this.maxRetries} attempts${
+            context ? ` for ${context}` : ''
+        }: ${error.message}`;
         const wrappedError = new Error(message);
         wrappedError.stack = error.stack;
         Object.assign(wrappedError, { originalError: error, retriesExhausted: true });
@@ -197,7 +198,7 @@ export class RetryHandler {
             maxDelayMs: this.maxDelayMs,
             exponentialBase: this.exponentialBase,
             jitterEnabled: this.jitterEnabled,
-            retryCondition: this.retryCondition
+            retryCondition: this.retryCondition,
         };
     }
 
@@ -205,6 +206,6 @@ export class RetryHandler {
      * Sleep utility
      */
     private sleep(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }

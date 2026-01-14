@@ -69,7 +69,7 @@ export interface TranscriptionHistory {
     success: boolean;
 }
 
-export type TranscriptionStatus = 
+export type TranscriptionStatus =
     | 'idle'
     | 'validating'
     | 'processing'
@@ -138,7 +138,10 @@ export interface ErrorInfo {
 
 // Service Interfaces
 export interface ITranscriptionService {
-    transcribe(file: TFile | File, options?: { signal?: AbortSignal }): Promise<TranscriptionResult>;
+    transcribe(
+        file: TFile | File,
+        options?: { signal?: AbortSignal }
+    ): Promise<TranscriptionResult>;
     cancel(): void;
     getStatus(): TranscriptionStatus;
 }
@@ -201,7 +204,11 @@ export interface ILogger {
     debug<TContext = Record<string, unknown>>(message: string, context?: TContext): void;
     info<TContext = Record<string, unknown>>(message: string, context?: TContext): void;
     warn<TContext = Record<string, unknown>>(message: string, context?: TContext): void;
-    error<TContext = Record<string, unknown>>(message: string, error?: Error, context?: TContext): void;
+    error<TContext = Record<string, unknown>>(
+        message: string,
+        error?: Error,
+        context?: TContext
+    ): void;
 }
 
 export type ObsidianEditor = Editor;

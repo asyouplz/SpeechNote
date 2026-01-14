@@ -23,7 +23,7 @@ export class ResourceManager {
     private listeners = new Map<EventTarget, Map<string, EventListener>>();
     private observers = new Set<MutationObserver | IntersectionObserver | ResizeObserver>();
     private abortControllers = new Set<AbortController>();
-    
+
     /**
      * Disposable 리소스 추가
      */
@@ -55,7 +55,7 @@ export class ResourceManager {
         options?: boolean | AddEventListenerOptions
     ): void {
         target.addEventListener(type, listener, options);
-        
+
         if (!this.listeners.has(target)) {
             this.listeners.set(target, new Map());
         }
@@ -91,7 +91,7 @@ export class ResourceManager {
      */
     dispose(): void {
         // Disposable 리소스 정리
-        this.resources.forEach(resource => {
+        this.resources.forEach((resource) => {
             try {
                 resource.dispose();
             } catch (error) {
@@ -101,13 +101,13 @@ export class ResourceManager {
         this.resources.clear();
 
         // 타이머 정리
-        this.timers.forEach(timerId => {
+        this.timers.forEach((timerId) => {
             clearTimeout(timerId);
         });
         this.timers.clear();
 
         // 인터벌 정리
-        this.intervals.forEach(intervalId => {
+        this.intervals.forEach((intervalId) => {
             clearInterval(intervalId);
         });
         this.intervals.clear();
@@ -125,7 +125,7 @@ export class ResourceManager {
         this.listeners.clear();
 
         // Observer 정리
-        this.observers.forEach(observer => {
+        this.observers.forEach((observer) => {
             try {
                 observer.disconnect();
             } catch (error) {
@@ -135,7 +135,7 @@ export class ResourceManager {
         this.observers.clear();
 
         // AbortController 정리
-        this.abortControllers.forEach(controller => {
+        this.abortControllers.forEach((controller) => {
             try {
                 controller.abort();
             } catch (error) {
@@ -163,7 +163,7 @@ export class WeakCache<K extends object, V> {
     set(key: K, value: V): void {
         this.cache.set(key, {
             value,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -172,7 +172,7 @@ export class WeakCache<K extends object, V> {
      */
     get(key: K): V | undefined {
         const entry = this.cache.get(key);
-        
+
         if (!entry) {
             return undefined;
         }
@@ -258,7 +258,7 @@ export class MemoryMonitor {
      */
     start(intervalMs = 5000): void {
         if (this.monitoring) return;
-        
+
         this.monitoring = true;
         this.interval = window.setInterval(() => {
             void this.check();
@@ -289,7 +289,7 @@ export class MemoryMonitor {
                 usedJSHeapSize: memory.usedJSHeapSize,
                 totalJSHeapSize: memory.totalJSHeapSize,
                 jsHeapSizeLimit: memory.jsHeapSizeLimit,
-                usage: (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100
+                usage: (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100,
             };
 
             // 임계치 초과 시 경고
@@ -298,7 +298,7 @@ export class MemoryMonitor {
             }
 
             // 콜백 실행
-            this.callbacks.forEach(callback => callback(info));
+            this.callbacks.forEach((callback) => callback(info));
         }
     }
 
@@ -343,24 +343,23 @@ export class EventListenerManager {
     ): () => void {
         const entry: EventListenerEntry = { target, type, listener, options };
         const key = this.getKey(target, type);
-        
+
         if (!this.listeners.has(key)) {
             this.listeners.set(key, new Set());
         }
-        
+
         const entries = this.listeners.get(key)!;
-        
+
         // 중복 방지
-        const exists = Array.from(entries).some(e => 
-            e.listener === listener && 
-            JSON.stringify(e.options) === JSON.stringify(options)
+        const exists = Array.from(entries).some(
+            (e) => e.listener === listener && JSON.stringify(e.options) === JSON.stringify(options)
         );
-        
+
         if (!exists) {
             entries.add(entry);
             target.addEventListener(type, listener, options);
         }
-        
+
         // 제거 함수 반환
         return () => this.remove(target, type, listener);
     }
@@ -375,7 +374,7 @@ export class EventListenerManager {
         handler: (event: Event, element: HTMLElement) => void
     ): () => void {
         const key = this.getKey(container, type);
-        
+
         if (!this.delegatedListeners.has(key)) {
             const listener = (event: Event) => {
                 const target = event.target;
@@ -388,11 +387,11 @@ export class EventListenerManager {
                     handler(event, element);
                 }
             };
-            
+
             container.addEventListener(type, listener, true);
             this.delegatedListeners.set(key, { container, type, listener });
         }
-        
+
         return () => this.removeDelegated(container, type);
     }
 
@@ -402,13 +401,13 @@ export class EventListenerManager {
     remove(target: EventTarget, type: string, listener: EventListener): void {
         const key = this.getKey(target, type);
         const entries = this.listeners.get(key);
-        
+
         if (entries) {
-            const entry = Array.from(entries).find(e => e.listener === listener);
+            const entry = Array.from(entries).find((e) => e.listener === listener);
             if (entry) {
                 target.removeEventListener(type, listener, entry.options);
                 entries.delete(entry);
-                
+
                 if (entries.size === 0) {
                     this.listeners.delete(key);
                 }
@@ -422,7 +421,7 @@ export class EventListenerManager {
     removeDelegated(container: HTMLElement, type: string): void {
         const key = this.getKey(container, type);
         const delegated = this.delegatedListeners.get(key);
-        
+
         if (delegated) {
             container.removeEventListener(type, delegated.listener, true);
             this.delegatedListeners.delete(key);
@@ -434,15 +433,15 @@ export class EventListenerManager {
      */
     removeAll(): void {
         // 일반 리스너 제거
-        this.listeners.forEach(entries => {
-            entries.forEach(entry => {
+        this.listeners.forEach((entries) => {
+            entries.forEach((entry) => {
                 entry.target.removeEventListener(entry.type, entry.listener, entry.options);
             });
         });
         this.listeners.clear();
 
         // 위임된 리스너 제거
-        this.delegatedListeners.forEach(delegated => {
+        this.delegatedListeners.forEach((delegated) => {
             delegated.container.removeEventListener(delegated.type, delegated.listener, true);
         });
         this.delegatedListeners.clear();
@@ -485,7 +484,7 @@ export abstract class AutoDisposable implements Disposable {
      */
     dispose(): void {
         if (this.disposed) return;
-        
+
         this.disposed = true;
         this.resourceManager.dispose();
         this.eventManager.removeAll();

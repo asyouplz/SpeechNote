@@ -25,11 +25,11 @@ export interface SilenceCheckResult {
 export class AudioValidator {
     private readonly AUDIO_SIGNATURES = {
         wav: [0x52, 0x49, 0x46, 0x46], // RIFF
-        mp3: [0xFF, 0xFB], // MP3 frame header (일반적인 경우)
+        mp3: [0xff, 0xfb], // MP3 frame header (일반적인 경우)
         m4a: [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70], // M4A container
-        flac: [0x66, 0x4C, 0x61, 0x43], // fLaC
-        ogg: [0x4F, 0x67, 0x67, 0x53], // OggS
-        webm: [0x1A, 0x45, 0xDF, 0xA3], // WebM
+        flac: [0x66, 0x4c, 0x61, 0x43], // fLaC
+        ogg: [0x4f, 0x67, 0x67, 0x53], // OggS
+        webm: [0x1a, 0x45, 0xdf, 0xa3], // WebM
     };
 
     constructor(private logger: ILogger) {}
@@ -64,7 +64,7 @@ export class AudioValidator {
             detectedFormat,
             hasValidHeader,
             errorsCount: errors.length,
-            warningsCount: warnings.length
+            warningsCount: warnings.length,
         });
 
         return {
@@ -75,8 +75,8 @@ export class AudioValidator {
                 format: detectedFormat,
                 fileSize: audioBuffer.byteLength,
                 hasValidHeader,
-                estimatedDuration: this.estimateDuration(audioBuffer, detectedFormat)
-            }
+                estimatedDuration: this.estimateDuration(audioBuffer, detectedFormat),
+            },
         };
     }
 
@@ -89,12 +89,12 @@ export class AudioValidator {
                 return format;
             }
         }
-        
+
         // MP3의 다른 가능한 헤더들 확인
         if (this.isMP3(uint8Array)) {
             return 'mp3';
         }
-        
+
         return 'unknown';
     }
 
@@ -119,17 +119,17 @@ export class AudioValidator {
      */
     private isMP3(data: Uint8Array): boolean {
         if (data.length < 2) return false;
-        
+
         // ID3 태그가 있는 MP3
         if (data[0] === 0x49 && data[1] === 0x44 && data[2] === 0x33) {
             return true;
         }
-        
+
         // 다양한 MP3 프레임 헤더
         const firstByte = data[0];
         const secondByte = data[1];
-        
-        return firstByte === 0xFF && (secondByte & 0xE0) === 0xE0;
+
+        return firstByte === 0xff && (secondByte & 0xe0) === 0xe0;
     }
 
     /**
@@ -138,7 +138,7 @@ export class AudioValidator {
     private estimateDuration(buffer: ArrayBuffer, format: string): number | undefined {
         // 간단한 추정 공식 (실제로는 더 복잡한 계산 필요)
         const fileSizeKB = buffer.byteLength / 1024;
-        
+
         switch (format) {
             case 'mp3':
                 // MP3: 평균 128kbps 가정
@@ -159,15 +159,15 @@ export class AudioValidator {
      */
     checkForSilence(audioBuffer: ArrayBuffer): SilenceCheckResult {
         const uint8Array = new Uint8Array(audioBuffer);
-        
+
         // WAV 헤더 스킵 (일반적으로 44바이트)
         const dataStart = this.findWAVDataStart(uint8Array) || 44;
         const audioData = uint8Array.slice(dataStart);
-        
+
         let sum = 0;
         let peak = 0;
         let sampleCount = 0;
-        
+
         // 16비트 샘플로 가정하고 분석
         for (let i = 0; i < audioData.length - 1; i += 2) {
             const sample = Math.abs((audioData[i + 1] << 8) | audioData[i]);
@@ -175,20 +175,20 @@ export class AudioValidator {
             peak = Math.max(peak, sample);
             sampleCount++;
         }
-        
+
         const averageAmplitude = sampleCount > 0 ? sum / sampleCount : 0;
         const normalizedAverage = averageAmplitude / 32768; // 16비트 최대값으로 정규화
         const normalizedPeak = peak / 32768;
-        
+
         // 무음 판단 임계값
         const silenceThreshold = 0.01; // 1%
         const isSilent = normalizedAverage < silenceThreshold && normalizedPeak < 0.05;
-        
+
         return {
             isSilent,
             averageAmplitude: normalizedAverage,
             peakAmplitude: normalizedPeak,
-            confidenceLevel: isSilent ? 0.9 : 0.1
+            confidenceLevel: isSilent ? 0.9 : 0.1,
         };
     }
 
@@ -198,8 +198,12 @@ export class AudioValidator {
     private findWAVDataStart(data: Uint8Array): number | null {
         // "data" 청크 찾기
         for (let i = 0; i < data.length - 4; i++) {
-            if (data[i] === 0x64 && data[i + 1] === 0x61 && 
-                data[i + 2] === 0x74 && data[i + 3] === 0x61) {
+            if (
+                data[i] === 0x64 &&
+                data[i + 1] === 0x61 &&
+                data[i + 2] === 0x74 &&
+                data[i + 3] === 0x61
+            ) {
                 return i + 8; // "data" + 크기(4바이트) 스킵
             }
         }

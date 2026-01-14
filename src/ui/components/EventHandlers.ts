@@ -33,10 +33,10 @@ export class EventHandlers {
             'progress:error',
             'modal:open',
             'modal:close',
-            'error:occurred'
+            'error:occurred',
         ];
 
-        eventTypes.forEach(type => {
+        eventTypes.forEach((type) => {
             this.eventListeners.set(type, new Set());
         });
     }
@@ -48,9 +48,9 @@ export class EventHandlers {
         if (!this.eventListeners.has(eventType)) {
             this.eventListeners.set(eventType, new Set());
         }
-        
+
         this.eventListeners.get(eventType)!.add(callback);
-        
+
         // 언등록 함수 반환
         return () => {
             this.off(eventType, callback);
@@ -75,7 +75,7 @@ export class EventHandlers {
             callback(...args);
             this.off(eventType, wrapper);
         };
-        
+
         return this.on(eventType, wrapper);
     }
 
@@ -85,18 +85,18 @@ export class EventHandlers {
     emit(eventType: string, data?: any) {
         // 이벤트 기록
         this.recordEvent(eventType, data);
-        
+
         // 리스너 실행
         const listeners = this.eventListeners.get(eventType);
         if (listeners) {
-            listeners.forEach(callback => {
+            listeners.forEach((callback) => {
                 try {
                     callback(data);
                 } catch (error) {
                     console.error(`Error in event handler for ${eventType}:`, error);
                     this.emit('error:occurred', {
                         originalEvent: eventType,
-                        error: error
+                        error: error,
                     });
                 }
             });
@@ -110,9 +110,9 @@ export class EventHandlers {
         this.eventHistory.push({
             type: eventType,
             data: data,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
-        
+
         // 히스토리 크기 제한
         if (this.eventHistory.length > this.MAX_HISTORY_SIZE) {
             this.eventHistory.shift();
@@ -125,7 +125,7 @@ export class EventHandlers {
     handleFileSelection(file: any) {
         this.emit('file:selected', {
             file: file,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -135,7 +135,7 @@ export class EventHandlers {
     handleFileRemoval(file: any) {
         this.emit('file:removed', {
             file: file,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -146,7 +146,7 @@ export class EventHandlers {
         this.emit('file:validated', {
             file: file,
             validation: validation,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -157,7 +157,7 @@ export class EventHandlers {
         this.emit('file:validation-failed', {
             file: file,
             errors: errors,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -169,9 +169,9 @@ export class EventHandlers {
         element.addEventListener('dragenter', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
+
             this.emit('drag:enter', { event: e });
-            
+
             if (handlers.onDragEnter) {
                 handlers.onDragEnter(e);
             }
@@ -181,9 +181,9 @@ export class EventHandlers {
         element.addEventListener('dragleave', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
+
             this.emit('drag:leave', { event: e });
-            
+
             if (handlers.onDragLeave) {
                 handlers.onDragLeave(e);
             }
@@ -193,9 +193,9 @@ export class EventHandlers {
         element.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
+
             this.emit('drag:over', { event: e });
-            
+
             if (handlers.onDragOver) {
                 handlers.onDragOver(e);
             }
@@ -205,14 +205,14 @@ export class EventHandlers {
         element.addEventListener('drop', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const files = this.extractFilesFromDragEvent(e);
-            
-            this.emit('drag:drop', { 
+
+            this.emit('drag:drop', {
                 event: e,
-                files: files 
+                files: files,
             });
-            
+
             if (handlers.onDrop) {
                 handlers.onDrop(e, files);
             }
@@ -224,13 +224,13 @@ export class EventHandlers {
      */
     private extractFilesFromDragEvent(e: DragEvent): File[] {
         const files: File[] = [];
-        
+
         if (e.dataTransfer?.files) {
             for (let i = 0; i < e.dataTransfer.files.length; i++) {
                 files.push(e.dataTransfer.files[i]);
             }
         }
-        
+
         return files;
     }
 
@@ -241,7 +241,7 @@ export class EventHandlers {
         this.emit('progress:update', {
             progress: progress,
             message: message,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -251,7 +251,7 @@ export class EventHandlers {
     startProgress(message?: string) {
         this.emit('progress:start', {
             message: message,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -261,7 +261,7 @@ export class EventHandlers {
     completeProgress(message?: string) {
         this.emit('progress:complete', {
             message: message,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -272,7 +272,7 @@ export class EventHandlers {
         this.emit('progress:error', {
             error: error,
             message: message,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -282,7 +282,7 @@ export class EventHandlers {
     setupKeyboardShortcuts(element: HTMLElement, shortcuts: KeyboardShortcuts) {
         element.addEventListener('keydown', (e) => {
             const key = this.getKeyCombo(e);
-            
+
             if (shortcuts[key]) {
                 e.preventDefault();
                 shortcuts[key](e);
@@ -295,14 +295,14 @@ export class EventHandlers {
      */
     private getKeyCombo(e: KeyboardEvent): string {
         const parts: string[] = [];
-        
+
         if (e.ctrlKey) parts.push('Ctrl');
         if (e.metaKey) parts.push('Cmd');
         if (e.altKey) parts.push('Alt');
         if (e.shiftKey) parts.push('Shift');
-        
+
         parts.push(e.key);
-        
+
         return parts.join('+');
     }
 
@@ -313,7 +313,7 @@ export class EventHandlers {
         if (eventType) {
             this.eventListeners.get(eventType)?.clear();
         } else {
-            this.eventListeners.forEach(listeners => listeners.clear());
+            this.eventListeners.forEach((listeners) => listeners.clear());
         }
     }
 
@@ -322,7 +322,7 @@ export class EventHandlers {
      */
     getEventHistory(eventType?: string): EventHistoryEntry[] {
         if (eventType) {
-            return this.eventHistory.filter(entry => entry.type === eventType);
+            return this.eventHistory.filter((entry) => entry.type === eventType);
         }
         return [...this.eventHistory];
     }
@@ -337,9 +337,12 @@ export class EventHandlers {
     /**
      * 디바운스된 이벤트 핸들러 생성
      */
-    debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
+    debounce<T extends (...args: any[]) => void>(
+        func: T,
+        wait: number
+    ): (...args: Parameters<T>) => void {
         let timeout: NodeJS.Timeout | null = null;
-        
+
         return (...args: Parameters<T>) => {
             if (timeout) {
                 clearTimeout(timeout);
@@ -351,14 +354,17 @@ export class EventHandlers {
     /**
      * 쓰로틀된 이벤트 핸들러 생성
      */
-    throttle<T extends (...args: any[]) => void>(func: T, limit: number): (...args: Parameters<T>) => void {
+    throttle<T extends (...args: any[]) => void>(
+        func: T,
+        limit: number
+    ): (...args: Parameters<T>) => void {
         let inThrottle = false;
-        
+
         return (...args: Parameters<T>) => {
             if (!inThrottle) {
                 func(...args);
                 inThrottle = true;
-                setTimeout(() => inThrottle = false, limit);
+                setTimeout(() => (inThrottle = false), limit);
             }
         };
     }

@@ -14,18 +14,33 @@ const DEFAULT_CONFIG = {
                 profanityFilter: true,
                 redaction: true,
                 utterances: true,
-                summarization: true
+                summarization: true,
             },
-            languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it', 'pl', 'ru', 'zh', 'ja', 'ko', 'ar', 'hi'],
+            languages: [
+                'en',
+                'es',
+                'fr',
+                'de',
+                'pt',
+                'nl',
+                'it',
+                'pl',
+                'ru',
+                'zh',
+                'ja',
+                'ko',
+                'ar',
+                'hi',
+            ],
             performance: {
                 accuracy: 98,
                 speed: 'fast' as const,
-                latency: 'low' as const
+                latency: 'low' as const,
             },
             pricing: {
                 perMinute: 0.0043,
-                currency: 'USD'
-            }
+                currency: 'USD',
+            },
         },
         'nova-2': {
             id: 'nova-2',
@@ -40,20 +55,35 @@ const DEFAULT_CONFIG = {
                 profanityFilter: true,
                 redaction: true,
                 utterances: true,
-                summarization: true
+                summarization: true,
             },
-            languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it', 'pl', 'ru', 'zh', 'ja', 'ko', 'ar', 'hi'],
+            languages: [
+                'en',
+                'es',
+                'fr',
+                'de',
+                'pt',
+                'nl',
+                'it',
+                'pl',
+                'ru',
+                'zh',
+                'ja',
+                'ko',
+                'ar',
+                'hi',
+            ],
             performance: {
                 accuracy: 95,
                 speed: 'fast' as const,
-                latency: 'low' as const
+                latency: 'low' as const,
             },
             pricing: {
                 perMinute: 0.0043,
-                currency: 'USD'
-            }
+                currency: 'USD',
+            },
         },
-        'nova': {
+        nova: {
             id: 'nova',
             name: 'Nova',
             description: 'Balanced model with good accuracy and speed',
@@ -66,20 +96,20 @@ const DEFAULT_CONFIG = {
                 profanityFilter: true,
                 redaction: false,
                 utterances: true,
-                summarization: false
+                summarization: false,
             },
             languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it'],
             performance: {
                 accuracy: 90,
                 speed: 'fast' as const,
-                latency: 'low' as const
+                latency: 'low' as const,
             },
             pricing: {
                 perMinute: 0.0025,
-                currency: 'USD'
-            }
+                currency: 'USD',
+            },
         },
-        'enhanced': {
+        enhanced: {
             id: 'enhanced',
             name: 'Enhanced',
             description: 'Enhanced accuracy for challenging audio',
@@ -92,20 +122,20 @@ const DEFAULT_CONFIG = {
                 profanityFilter: false,
                 redaction: false,
                 utterances: false,
-                summarization: false
+                summarization: false,
             },
             languages: ['en'],
             performance: {
                 accuracy: 85,
                 speed: 'moderate' as const,
-                latency: 'medium' as const
+                latency: 'medium' as const,
             },
             pricing: {
                 perMinute: 0.0145,
-                currency: 'USD'
-            }
+                currency: 'USD',
+            },
         },
-        'base': {
+        base: {
             id: 'base',
             name: 'Base',
             description: 'Cost-effective option for simple transcription',
@@ -118,70 +148,70 @@ const DEFAULT_CONFIG = {
                 profanityFilter: false,
                 redaction: false,
                 utterances: false,
-                summarization: false
+                summarization: false,
             },
             languages: ['en'],
             performance: {
                 accuracy: 80,
                 speed: 'moderate' as const,
-                latency: 'medium' as const
+                latency: 'medium' as const,
             },
             pricing: {
                 perMinute: 0.0125,
-                currency: 'USD'
-            }
-        }
+                currency: 'USD',
+            },
+        },
     },
     features: {
-        'punctuation': {
+        punctuation: {
             name: 'Punctuation',
             description: 'Add punctuation marks to transcript',
             default: true,
-            requiresPremium: false
+            requiresPremium: false,
         },
-        'smartFormat': {
+        smartFormat: {
             name: 'Smart format',
             description: 'Format numbers, dates, and other entities',
             default: true,
-            requiresPremium: false
+            requiresPremium: false,
         },
-        'diarization': {
+        diarization: {
             name: 'Speaker diarization',
             description: 'Identify different speakers',
             default: false,
-            requiresPremium: false
+            requiresPremium: false,
         },
-        'numerals': {
+        numerals: {
             name: 'Numerals',
             description: 'Convert numbers to digits',
             default: false,
-            requiresPremium: false
+            requiresPremium: false,
         },
-        'profanityFilter': {
+        profanityFilter: {
             name: 'Profanity filter',
             description: 'Filter out profanity from transcript',
             default: false,
-            requiresPremium: false
+            requiresPremium: false,
         },
-        'redaction': {
+        redaction: {
             name: 'Redaction',
             description: 'Redact sensitive information',
             default: false,
-            requiresPremium: true
+            requiresPremium: true,
         },
-        'utterances': {
+        utterances: {
             name: 'Utterances',
             description: 'Split transcript into utterances',
             default: false,
-            requiresPremium: false
+            requiresPremium: false,
         },
-        'summarization': {
+        summarization: {
             name: 'Summarization',
             description: 'Generate summary of transcript',
             default: false,
-            requiresPremium: true
-        }
-    }
+            requiresPremium: true,
+        },
+    },
 };
 
 import { DeepgramLogger } from '../ui/settings/helpers/DeepgramLogger';
@@ -247,7 +277,7 @@ export class DeepgramModelRegistry {
         this.models = new Map();
         this.features = new Map();
         this.logger = DeepgramLogger.getInstance();
-        
+
         try {
             this.loadConfiguration();
             this.logger.info('Constructor completed successfully');
@@ -286,10 +316,10 @@ export class DeepgramModelRegistry {
     private loadConfiguration(): void {
         try {
             const config = deepgramModelsConfig || DEFAULT_CONFIG;
-            
+
             this.loadModels(config);
             this.loadFeatures(config);
-            
+
             if (this.models.size === 0 && this.features.size === 0) {
                 this.logger.warn('No data loaded, loading fallback configuration');
                 this.loadFallbackConfiguration();
@@ -308,7 +338,7 @@ export class DeepgramModelRegistry {
             this.logger.warn('No models in configuration');
             return;
         }
-        
+
         Object.entries(config.models).forEach(([key, model]) => {
             try {
                 if (this.isValidModel(model)) {
@@ -320,7 +350,7 @@ export class DeepgramModelRegistry {
                 this.logger.error(`Failed to load model ${key}`, err);
             }
         });
-        
+
         this.logger.info(`Loaded ${this.models.size} models`);
     }
 
@@ -332,7 +362,7 @@ export class DeepgramModelRegistry {
             this.logger.warn('No features in configuration');
             return;
         }
-        
+
         Object.entries(config.features).forEach(([key, feature]) => {
             try {
                 if (this.isValidFeature(feature)) {
@@ -344,7 +374,7 @@ export class DeepgramModelRegistry {
                 this.logger.error(`Failed to load feature ${key}`, err);
             }
         });
-        
+
         this.logger.info(`Loaded ${this.features.size} features`);
     }
 
@@ -458,7 +488,7 @@ export class DeepgramModelRegistry {
      * 언어별 지원 모델 필터링
      */
     public getModelsByLanguage(language: string): DeepgramModel[] {
-        return Array.from(this.models.values()).filter(model => 
+        return Array.from(this.models.values()).filter((model) =>
             model.languages.includes(language)
         );
     }
@@ -467,17 +497,15 @@ export class DeepgramModelRegistry {
      * 티어별 모델 필터링
      */
     public getModelsByTier(tier: 'premium' | 'standard' | 'basic' | 'economy'): DeepgramModel[] {
-        return Array.from(this.models.values()).filter(model => 
-            model.tier === tier
-        );
+        return Array.from(this.models.values()).filter((model) => model.tier === tier);
     }
 
     /**
      * 가격대별 모델 필터링
      */
     public getModelsByPriceRange(maxPricePerMinute: number): DeepgramModel[] {
-        return Array.from(this.models.values()).filter(model => 
-            model.pricing.perMinute <= maxPricePerMinute
+        return Array.from(this.models.values()).filter(
+            (model) => model.pricing.perMinute <= maxPricePerMinute
         );
     }
 
@@ -498,15 +526,15 @@ export class DeepgramModelRegistry {
         if (!model) return 0;
 
         let score = model.performance.accuracy;
-        
+
         // Speed bonus
         if (model.performance.speed === 'fast') score += 5;
         else if (model.performance.speed === 'moderate') score += 2;
-        
+
         // Latency penalty
         if (model.performance.latency === 'high') score -= 5;
         else if (model.performance.latency === 'medium') score -= 2;
-        
+
         return Math.min(100, Math.max(0, score));
     }
 
@@ -524,32 +552,32 @@ export class DeepgramModelRegistry {
 
         // 언어 필터링
         if (language) {
-            candidates = candidates.filter(model => model.languages.includes(language));
+            candidates = candidates.filter((model) => model.languages.includes(language));
         }
 
         // 가격 필터링
         if (maxPrice !== undefined) {
-            candidates = candidates.filter(model => model.pricing.perMinute <= maxPrice);
+            candidates = candidates.filter((model) => model.pricing.perMinute <= maxPrice);
         }
 
         // 정확도 필터링
         if (minAccuracy !== undefined) {
-            candidates = candidates.filter(model => model.performance.accuracy >= minAccuracy);
+            candidates = candidates.filter((model) => model.performance.accuracy >= minAccuracy);
         }
 
         // 필수 기능 필터링
         if (requiredFeatures && requiredFeatures.length > 0) {
-            candidates = candidates.filter(model => 
-                requiredFeatures.every(feature => 
-                    model.features[feature as keyof typeof model.features] === true
+            candidates = candidates.filter((model) =>
+                requiredFeatures.every(
+                    (feature) => model.features[feature as keyof typeof model.features] === true
                 )
             );
         }
 
         // 성능 점수로 정렬하여 최적 모델 반환
         if (candidates.length > 0) {
-            candidates.sort((a, b) => 
-                this.getPerformanceScore(b.id) - this.getPerformanceScore(a.id)
+            candidates.sort(
+                (a, b) => this.getPerformanceScore(b.id) - this.getPerformanceScore(a.id)
             );
             return candidates[0];
         }
@@ -585,7 +613,7 @@ export class DeepgramModelRegistry {
 
         return {
             valid: errors.length === 0,
-            errors
+            errors,
         };
     }
 }

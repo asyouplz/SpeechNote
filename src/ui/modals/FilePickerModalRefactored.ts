@@ -66,10 +66,10 @@ export class FilePickerModalRefactored extends Modal {
 
     // Components
     private components: FilePickerComponents;
-    
+
     // State
     private state: FilePickerState;
-    
+
     // Memory Management
     private disposables: AutoDisposableManager;
     private eventManager: EventListenerManager;
@@ -93,7 +93,7 @@ export class FilePickerModalRefactored extends Modal {
 
         // Initialize components
         this.components = this.initializeComponents();
-        
+
         // Initialize state
         this.state = this.initializeState();
 
@@ -115,11 +115,11 @@ export class FilePickerModalRefactored extends Modal {
             progressIndicator: new ProgressIndicator(),
             eventHandlers: new EventHandlers(),
             dragDropZone: this.options.enableDragDrop ? new DragDropZone() : undefined,
-            recentFiles: this.options.showRecentFiles ? new RecentFiles(this.app) : undefined
+            recentFiles: this.options.showRecentFiles ? new RecentFiles(this.app) : undefined,
         };
 
         // Register disposables
-        Object.values(components).forEach(component => {
+        Object.values(components).forEach((component) => {
             if (component && 'dispose' in component && typeof component.dispose === 'function') {
                 this.disposables.add(component);
             }
@@ -136,7 +136,7 @@ export class FilePickerModalRefactored extends Modal {
             selectedFiles: [],
             validationResults: new Map(),
             isProcessing: false,
-            activeTab: 'browse'
+            activeTab: 'browse',
         };
     }
 
@@ -161,14 +161,14 @@ export class FilePickerModalRefactored extends Modal {
         // Build UI sections
         uiBuilder.buildHeader();
         uiBuilder.buildDragDropSection();
-        
+
         const tabContainer = uiBuilder.buildTabContainer();
         this.setupTabHandlers(tabContainer);
-        
+
         uiBuilder.buildSelectedFilesSection((container) => {
             this.updateSelectedFilesList(container);
         });
-        
+
         uiBuilder.buildProgressSection();
         uiBuilder.buildFooter(
             () => this.handleCancel(),
@@ -216,9 +216,9 @@ export class FilePickerModalRefactored extends Modal {
      */
     private switchTab(tab: 'browse' | 'recent', elements: TabContainer): void {
         const { browseTab, browseContent, recentTab, recentContent } = elements;
-        
+
         // Remove all active classes
-        [browseTab, browseContent, recentTab, recentContent].forEach(el => {
+        [browseTab, browseContent, recentTab, recentContent].forEach((el) => {
             el?.removeClass('active');
         });
 
@@ -283,7 +283,7 @@ export class FilePickerModalRefactored extends Modal {
     private handleFileSelection = debounceAsync(async (file: TFile) => {
         try {
             // Check for duplicates
-            if (this.state.selectedFiles.some(f => f.path === file.path)) {
+            if (this.state.selectedFiles.some((f) => f.path === file.path)) {
                 new Notice('이미 선택된 파일입니다');
                 return;
             }
@@ -310,7 +310,6 @@ export class FilePickerModalRefactored extends Modal {
             // Add file to selection
             this.state.selectedFiles.push(file);
             this.refreshUI();
-
         } catch (error) {
             const normalizedError = this.normalizeError(error);
             this.logger?.error('File selection failed', normalizedError);
@@ -329,11 +328,11 @@ export class FilePickerModalRefactored extends Modal {
 
         try {
             const results = await Promise.allSettled(
-                files.map(file => this.processDroppedFile(file))
+                files.map((file) => this.processDroppedFile(file))
             );
 
-            const successful = results.filter(r => r.status === 'fulfilled').length;
-            const failed = results.filter(r => r.status === 'rejected').length;
+            const successful = results.filter((r) => r.status === 'fulfilled').length;
+            const failed = results.filter((r) => r.status === 'rejected').length;
 
             if (failed > 0) {
                 new Notice(`${failed}개 파일 처리 실패`);
@@ -342,7 +341,6 @@ export class FilePickerModalRefactored extends Modal {
             if (successful > 0) {
                 this.refreshUI();
             }
-
         } finally {
             this.state.isProcessing = false;
             this.components.progressIndicator.hide();
@@ -373,7 +371,9 @@ export class FilePickerModalRefactored extends Modal {
             this.logger?.error('File validation failed', normalizedError);
             return {
                 valid: false,
-                errors: [{ code: 'VALIDATION_ERROR', message: `검증 실패: ${normalizedError.message}` }]
+                errors: [
+                    { code: 'VALIDATION_ERROR', message: `검증 실패: ${normalizedError.message}` },
+                ],
             };
         }
     }
@@ -405,7 +405,7 @@ export class FilePickerModalRefactored extends Modal {
     private renderEmptyState(container: HTMLElement): void {
         container.createEl('p', {
             text: '선택된 파일이 없습니다',
-            cls: 'no-files-message'
+            cls: 'no-files-message',
         });
     }
 
@@ -442,7 +442,7 @@ export class FilePickerModalRefactored extends Modal {
 
         try {
             const results = await this.processSelectedFiles();
-            
+
             if (results.length > 0) {
                 await this.saveRecentFiles(results);
                 this.onChoose(results);
@@ -450,7 +450,6 @@ export class FilePickerModalRefactored extends Modal {
             } else {
                 new Notice('유효한 파일이 없습니다');
             }
-
         } catch (error) {
             const normalizedError = this.normalizeError(error);
             this.logger?.error('Submit failed', normalizedError);
@@ -476,7 +475,7 @@ export class FilePickerModalRefactored extends Modal {
                 results.push({ file, validation });
             }
 
-            this.components.progressIndicator.update((i + 1) / total * 100);
+            this.components.progressIndicator.update(((i + 1) / total) * 100);
         }
 
         return results;
@@ -543,7 +542,7 @@ export class FilePickerModalRefactored extends Modal {
      * Vault 파일 찾기
      */
     private findVaultFile(fileName: string): TFile | null {
-        return this.app.vault.getFiles().find(f => f.name === fileName) || null;
+        return this.app.vault.getFiles().find((f) => f.name === fileName) || null;
     }
 
     /**
@@ -556,7 +555,7 @@ export class FilePickerModalRefactored extends Modal {
             maxFileSize: options.maxFileSize || 25 * 1024 * 1024, // 25MB
             multiple: options.multiple ?? false,
             showRecentFiles: options.showRecentFiles ?? true,
-            enableDragDrop: options.enableDragDrop ?? true
+            enableDragDrop: options.enableDragDrop ?? true,
         };
     }
 
@@ -564,11 +563,11 @@ export class FilePickerModalRefactored extends Modal {
         // Dispose all resources
         this.disposables.dispose();
         this.eventManager.removeAll();
-        
+
         // Clear state
         this.state.selectedFiles = [];
         this.state.validationResults.clear();
-        
+
         // Clear content
         this.contentEl.empty();
     }
@@ -620,22 +619,22 @@ class FilePickerUIBuilder {
     buildHeader(): void {
         const header = this.container.createDiv('file-picker-header');
         header.createEl('h2', { text: this.options.title });
-        
+
         const subtitle = header.createEl('p', { cls: 'file-picker-subtitle' });
         this.buildSubtitle(subtitle);
     }
 
     private buildSubtitle(subtitle: HTMLElement): void {
         const parts: string[] = [];
-        
+
         if (this.options.accept.length > 0) {
-            parts.push(`지원 형식: ${this.options.accept.map(ext => `.${ext}`).join(', ')}`);
+            parts.push(`지원 형식: ${this.options.accept.map((ext) => `.${ext}`).join(', ')}`);
         }
-        
+
         if (this.options.maxFileSize > 0) {
             parts.push(`최대 크기: ${this.formatFileSize(this.options.maxFileSize)}`);
         }
-        
+
         subtitle.setText(parts.join(' | '));
     }
 
@@ -649,7 +648,7 @@ class FilePickerUIBuilder {
     buildTabContainer(): TabContainer {
         const tabContainer = this.container.createDiv('file-picker-tabs');
         const tabHeader = tabContainer.createDiv('tab-header');
-        
+
         const browseTab = this.createTab(tabHeader, 'Browse', true);
         const recentTab = this.options.showRecentFiles
             ? this.createTab(tabHeader, 'Recent', false)
@@ -667,7 +666,7 @@ class FilePickerUIBuilder {
     private createTab(container: HTMLElement, label: string, active: boolean): HTMLElement {
         return container.createDiv({
             cls: `tab-button ${active ? 'active' : ''}`,
-            text: label
+            text: label,
         });
     }
 
@@ -688,7 +687,7 @@ class FilePickerUIBuilder {
     buildSelectedFilesSection(updateCallback: (container: HTMLElement) => void): void {
         const section = this.container.createDiv('selected-files-section');
         section.createEl('h3', { text: '선택된 파일' });
-        
+
         const fileList = section.createDiv('selected-files-list');
         updateCallback(fileList);
     }
@@ -699,16 +698,16 @@ class FilePickerUIBuilder {
 
     buildFooter(onCancel: () => void, onSubmit: () => void, fileCount: number): void {
         const footer = this.container.createDiv('file-picker-footer');
-        
+
         new Setting(footer)
-            .addButton(btn => btn
-                .setButtonText('취소')
-                .onClick(onCancel))
-            .addButton(btn => btn
-                .setButtonText(`선택 (${fileCount})`)
-                .setCta()
-                .setDisabled(fileCount === 0)
-                .onClick(onSubmit));
+            .addButton((btn) => btn.setButtonText('취소').onClick(onCancel))
+            .addButton((btn) =>
+                btn
+                    .setButtonText(`선택 (${fileCount})`)
+                    .setCta()
+                    .setDisabled(fileCount === 0)
+                    .onClick(onSubmit)
+            );
     }
 
     private formatFileSize(bytes: number): string {
@@ -730,12 +729,12 @@ class SelectedFilesListRenderer {
     ) {}
 
     render(): void {
-        this.files.forEach(file => this.renderFileItem(file));
+        this.files.forEach((file) => this.renderFileItem(file));
     }
 
     private renderFileItem(file: TFile): void {
         const fileItem = this.container.createDiv('selected-file-item');
-        
+
         this.renderFileInfo(fileItem, file);
         this.renderValidationStatus(fileItem, file);
         this.renderRemoveButton(fileItem, file);
@@ -746,7 +745,7 @@ class SelectedFilesListRenderer {
         fileInfo.createEl('span', { text: file.name, cls: 'file-name' });
         fileInfo.createEl('span', {
             text: this.formatFileSize(file.stat.size),
-            cls: 'file-size'
+            cls: 'file-size',
         });
     }
 
@@ -755,7 +754,7 @@ class SelectedFilesListRenderer {
         if (!validation) return;
 
         const statusIcon = container.createDiv('validation-status');
-        
+
         if (validation.valid) {
             statusIcon.addClass('valid');
             statusIcon.setText('✓');
@@ -769,9 +768,9 @@ class SelectedFilesListRenderer {
     private renderRemoveButton(container: HTMLElement, file: TFile): void {
         const removeBtn = container.createEl('button', {
             text: '제거',
-            cls: 'remove-file-btn'
+            cls: 'remove-file-btn',
         });
-        
+
         removeBtn.onclick = () => this.onRemove(file);
     }
 
@@ -795,7 +794,7 @@ class AutoDisposableManager {
     }
 
     dispose(): void {
-        this.disposables.forEach(disposable => {
+        this.disposables.forEach((disposable) => {
             try {
                 disposable.dispose();
             } catch (error) {

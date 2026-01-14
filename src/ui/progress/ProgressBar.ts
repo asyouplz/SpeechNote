@@ -56,16 +56,16 @@ export class ProgressBar {
             size: 'medium',
             striped: false,
             indeterminate: false,
-            ...options
+            ...options,
         };
-        
+
         this.currentValue = this.options.value || 0;
         this.eventManager = EventManager.getInstance();
     }
 
     create(container: HTMLElement): HTMLElement {
         this.element = createEl('div', {
-            cls: `progress-bar progress-bar--${this.options.size} progress-bar--${this.options.color}`
+            cls: `progress-bar progress-bar--${this.options.size} progress-bar--${this.options.color}`,
         });
         this.element.setAttribute('role', 'progressbar');
         this.element.setAttribute('aria-valuemin', String(this.options.min));
@@ -80,7 +80,7 @@ export class ProgressBar {
         if (this.options.label) {
             this.labelElement = createEl('div', {
                 cls: 'progress-bar__label',
-                text: this.options.label
+                text: this.options.label,
             });
             this.element.appendChild(this.labelElement);
         }
@@ -90,17 +90,17 @@ export class ProgressBar {
 
         // 진행률 채우기
         this.progressFill = createEl('div', { cls: 'progress-bar__fill' });
-        
+
         if (this.options.striped) {
             this.progressFill.classList.add('progress-bar__fill--striped');
         }
-        
+
         if (this.options.indeterminate) {
             this.progressFill.classList.add('progress-bar__fill--indeterminate');
         } else {
             this.updateProgress(this.currentValue);
         }
-        
+
         barContainer.appendChild(this.progressFill);
         this.element.appendChild(barContainer);
 
@@ -111,7 +111,7 @@ export class ProgressBar {
         if (this.options.showPercentage && !this.options.indeterminate) {
             this.percentageElement = createEl('span', {
                 cls: 'progress-bar__percentage',
-                text: '0%'
+                text: '0%',
             });
             infoContainer.appendChild(this.percentageElement);
         }
@@ -120,17 +120,17 @@ export class ProgressBar {
         if (this.options.showTimeRemaining && !this.options.indeterminate) {
             this.timeRemainingElement = createEl('span', {
                 cls: 'progress-bar__time-remaining',
-                text: '계산 중...'
+                text: '계산 중...',
             });
             infoContainer.appendChild(this.timeRemainingElement);
         }
-        
+
         if (infoContainer.children.length > 0) {
             this.element.appendChild(infoContainer);
         }
-        
+
         container.appendChild(this.element);
-        
+
         return this.element;
     }
 
@@ -139,22 +139,28 @@ export class ProgressBar {
      */
     updateProgress(value: number, animate = true) {
         if (!this.progressFill || this.options.indeterminate) return;
-        
-        const clampedValue = Math.max(this.options.min || 0, Math.min(this.options.max || 100, value));
-        const percentage = ((clampedValue - (this.options.min || 0)) / ((this.options.max || 100) - (this.options.min || 0))) * 100;
-        
+
+        const clampedValue = Math.max(
+            this.options.min || 0,
+            Math.min(this.options.max || 100, value)
+        );
+        const percentage =
+            ((clampedValue - (this.options.min || 0)) /
+                ((this.options.max || 100) - (this.options.min || 0))) *
+            100;
+
         if (animate && this.options.animated) {
             this.animateToValue(clampedValue, percentage);
         } else {
             this.setProgressImmediate(clampedValue, percentage);
         }
-        
+
         // 이벤트 발생
         this.eventManager.emit('progress:update', {
             value: clampedValue,
             percentage,
             min: this.options.min,
-            max: this.options.max
+            max: this.options.max,
         });
     }
 
@@ -163,18 +169,18 @@ export class ProgressBar {
      */
     private setProgressImmediate(value: number, percentage: number) {
         if (!this.progressFill) return;
-        
+
         this.currentValue = value;
         this.progressFill.style.setProperty('--sn-progress-width', `${percentage}%`);
-        
+
         if (this.element) {
             this.element.setAttribute('aria-valuenow', String(value));
         }
-        
+
         if (this.percentageElement) {
             this.percentageElement.textContent = `${Math.round(percentage)}%`;
         }
-        
+
         this.updateTimeRemaining(percentage);
     }
 
@@ -185,30 +191,32 @@ export class ProgressBar {
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
-        
+
         const startValue = this.currentValue;
         const startTime = performance.now();
         const duration = 300; // ms
-        
+
         const animate = (currentTime: number) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
+
             // Easing function (easeInOutQuad)
-            const eased = progress < 0.5
-                ? 2 * progress * progress
-                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-            
+            const eased =
+                progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
             const currentValue = startValue + (targetValue - startValue) * eased;
-            const currentPercentage = ((currentValue - (this.options.min || 0)) / ((this.options.max || 100) - (this.options.min || 0))) * 100;
-            
+            const currentPercentage =
+                ((currentValue - (this.options.min || 0)) /
+                    ((this.options.max || 100) - (this.options.min || 0))) *
+                100;
+
             this.setProgressImmediate(currentValue, currentPercentage);
-            
+
             if (progress < 1) {
                 this.animationFrame = requestAnimationFrame(animate);
             }
         };
-        
+
         this.animationFrame = requestAnimationFrame(animate);
     }
 
@@ -217,17 +225,17 @@ export class ProgressBar {
      */
     private updateTimeRemaining(percentage: number) {
         if (!this.timeRemainingElement || percentage === 0) return;
-        
+
         if (!this.startTime) {
             this.startTime = Date.now();
             this.timeRemainingElement.textContent = '계산 중...';
             return;
         }
-        
+
         const elapsed = Date.now() - this.startTime;
         const estimatedTotal = (elapsed / percentage) * 100;
         const remaining = estimatedTotal - elapsed;
-        
+
         if (remaining > 0) {
             this.timeRemainingElement.textContent = `남은 시간: ${this.formatTime(remaining)}`;
         } else {
@@ -242,7 +250,7 @@ export class ProgressBar {
         const seconds = Math.floor(milliseconds / 1000);
         const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);
-        
+
         if (hours > 0) {
             return `${hours}시간 ${minutes % 60}분`;
         } else if (minutes > 0) {
@@ -258,19 +266,19 @@ export class ProgressBar {
     reset() {
         this.currentValue = this.options.min || 0;
         this.startTime = 0;
-        
+
         if (this.progressFill) {
             this.progressFill.style.setProperty('--sn-progress-width', '0%');
         }
-        
+
         if (this.percentageElement) {
             this.percentageElement.textContent = '0%';
         }
-        
+
         if (this.timeRemainingElement) {
             this.timeRemainingElement.textContent = '';
         }
-        
+
         if (this.element) {
             this.element.setAttribute('aria-valuenow', String(this.options.min || 0));
         }
@@ -281,7 +289,7 @@ export class ProgressBar {
      */
     setColor(color: 'primary' | 'success' | 'warning' | 'error') {
         if (!this.element) return;
-        
+
         // 기존 색상 클래스 제거
         this.element.classList.remove(
             'progress-bar--primary',
@@ -289,7 +297,7 @@ export class ProgressBar {
             'progress-bar--warning',
             'progress-bar--error'
         );
-        
+
         // 새 색상 클래스 추가
         this.element.classList.add(`progress-bar--${color}`);
         this.options.color = color;
@@ -313,13 +321,13 @@ export class ProgressBar {
      */
     setIndeterminate(indeterminate: boolean) {
         this.options.indeterminate = indeterminate;
-        
+
         if (!this.progressFill) return;
-        
+
         if (indeterminate) {
             this.progressFill.classList.add('progress-bar__fill--indeterminate');
             this.progressFill.removeAttribute('style');
-            
+
             if (this.percentageElement) {
                 this.percentageElement.classList.add('sn-hidden');
             }
@@ -329,7 +337,7 @@ export class ProgressBar {
         } else {
             this.progressFill.classList.remove('progress-bar__fill--indeterminate');
             this.updateProgress(this.currentValue);
-            
+
             if (this.percentageElement) {
                 this.percentageElement.classList.remove('sn-hidden');
             }
@@ -346,7 +354,7 @@ export class ProgressBar {
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
-        
+
         this.element?.remove();
         this.element = null;
         this.progressFill = null;
@@ -373,7 +381,7 @@ export class MultiStepProgressBar {
         this.progressBar = new ProgressBar({
             showPercentage: true,
             showTimeRemaining: true,
-            animated: true
+            animated: true,
         });
         this.eventManager = EventManager.getInstance();
     }
@@ -390,12 +398,12 @@ export class MultiStepProgressBar {
 
             const stepNumber = createEl('span', {
                 cls: 'step__number',
-                text: String(index + 1)
+                text: String(index + 1),
             });
 
             const stepLabel = createEl('span', {
                 cls: 'step__label',
-                text: step.label
+                text: step.label,
             });
 
             stepEl.appendChild(stepNumber);
@@ -416,9 +424,9 @@ export class MultiStepProgressBar {
         const progressContainer = createEl('div', { cls: 'multi-step-progress__bar' });
         this.progressBar.create(progressContainer);
         this.element.appendChild(progressContainer);
-        
+
         container.appendChild(this.element);
-        
+
         return this.element;
     }
 
@@ -426,26 +434,26 @@ export class MultiStepProgressBar {
      * 단계 시작
      */
     startStep(stepId: string) {
-        const stepIndex = this.steps.findIndex(s => s.id === stepId);
+        const stepIndex = this.steps.findIndex((s) => s.id === stepId);
         if (stepIndex === -1) return;
-        
+
         this.currentStepIndex = stepIndex;
         const step = this.steps[stepIndex];
-        
+
         // 이전 단계들을 완료로 표시
         for (let i = 0; i < stepIndex; i++) {
             this.updateStepStatus(this.steps[i].id, 'completed');
         }
-        
+
         // 현재 단계를 활성화
         this.updateStepStatus(stepId, 'active');
-        
+
         // 전체 진행률 계산
         this.calculateOverallProgress();
-        
+
         // 라벨 업데이트
         this.progressBar.setLabel(step.label);
-        
+
         // 이벤트 발생
         this.eventManager.emit('step:start', { stepId, step });
     }
@@ -454,18 +462,18 @@ export class MultiStepProgressBar {
      * 단계 완료
      */
     completeStep(stepId: string, progress = 100) {
-        const step = this.steps.find(s => s.id === stepId);
+        const step = this.steps.find((s) => s.id === stepId);
         if (!step) return;
-        
+
         step.status = 'completed';
         this.updateStepStatus(stepId, 'completed');
-        
+
         // 전체 진행률 계산
         this.calculateOverallProgress(progress);
-        
+
         // 이벤트 발생
         this.eventManager.emit('step:complete', { stepId, step });
-        
+
         // 다음 단계 자동 시작
         const nextIndex = this.currentStepIndex + 1;
         if (nextIndex < this.steps.length) {
@@ -479,15 +487,15 @@ export class MultiStepProgressBar {
      * 단계 상태 업데이트
      */
     private updateStepStatus(stepId: string, status: ProgressStep['status']) {
-        const step = this.steps.find(s => s.id === stepId);
+        const step = this.steps.find((s) => s.id === stepId);
         if (!step) return;
-        
+
         step.status = status;
-        
+
         const stepEl = this.stepsContainer?.querySelector(`[data-step-id="${stepId}"]`);
         if (stepEl) {
             stepEl.className = `step step--${status}`;
-            
+
             // ARIA 속성 업데이트
             switch (status) {
                 case 'completed':
@@ -509,7 +517,7 @@ export class MultiStepProgressBar {
      */
     private calculateOverallProgress(currentStepProgress = 0) {
         let totalProgress = 0;
-        
+
         this.steps.forEach((step, index) => {
             if (step.status === 'completed') {
                 totalProgress += step.weight * 100;
@@ -517,7 +525,7 @@ export class MultiStepProgressBar {
                 totalProgress += step.weight * currentStepProgress;
             }
         });
-        
+
         this.overallProgress = totalProgress;
         this.progressBar.updateProgress(this.overallProgress);
     }
@@ -529,7 +537,7 @@ export class MultiStepProgressBar {
         this.updateStepStatus(stepId, 'error');
         this.progressBar.setColor('error');
         this.progressBar.setLabel(`오류: ${error}`);
-        
+
         // 이벤트 발생
         this.eventManager.emit('step:error', { stepId, error });
     }
@@ -540,12 +548,12 @@ export class MultiStepProgressBar {
     reset() {
         this.currentStepIndex = -1;
         this.overallProgress = 0;
-        
-        this.steps.forEach(step => {
+
+        this.steps.forEach((step) => {
             step.status = 'pending';
             this.updateStepStatus(step.id, 'pending');
         });
-        
+
         this.progressBar.reset();
         this.progressBar.setColor('primary');
     }

@@ -1,6 +1,6 @@
 /**
  * Deepgram 모델 기능 매트릭스 자동 관리
- * 
+ *
  * 핵심 기능:
  * - 모델별 지원 기능 매트릭스 관리
  * - 동적 기능 호환성 검증
@@ -68,16 +68,18 @@ export interface ModelRecommendation {
     qualityImpact: number; // percentage change
 }
 
-
 /**
  * 모델 기능 매트릭스 관리 클래스
  */
 export class ModelCapabilityManager {
     private capabilities: Record<string, ModelCapabilities>;
-    
+
     constructor(private logger: ILogger, customCapabilities?: Record<string, ModelCapabilities>) {
         this.capabilities = { ...MODEL_CAPABILITIES_DATA, ...customCapabilities };
-        this.logger.debug('ModelCapabilityManager initialized with models:', Object.keys(this.capabilities));
+        this.logger.debug(
+            'ModelCapabilityManager initialized with models:',
+            Object.keys(this.capabilities)
+        );
     }
 
     /**
@@ -91,8 +93,8 @@ export class ModelCapabilityManager {
      * 모든 사용 가능한 모델 목록을 반환합니다
      */
     getAvailableModels(): string[] {
-        return Object.keys(this.capabilities).filter(modelId => 
-            !this.capabilities[modelId].availability.deprecated
+        return Object.keys(this.capabilities).filter(
+            (modelId) => !this.capabilities[modelId].availability.deprecated
         );
     }
 
@@ -100,9 +102,10 @@ export class ModelCapabilityManager {
      * 특정 기능을 지원하는 모델들을 반환합니다
      */
     getModelsWithFeature(feature: string): string[] {
-        return Object.keys(this.capabilities).filter(modelId => 
-            this.capabilities[modelId].features[feature] === true &&
-            !this.capabilities[modelId].availability.deprecated
+        return Object.keys(this.capabilities).filter(
+            (modelId) =>
+                this.capabilities[modelId].features[feature] === true &&
+                !this.capabilities[modelId].availability.deprecated
         );
     }
 
@@ -117,14 +120,14 @@ export class ModelCapabilityManager {
                 missingFeatures: requirements,
                 degradedFeatures: [],
                 recommendations: ['Model not found. Please check model ID.'],
-                alternativeModels: this.getAvailableModels()
+                alternativeModels: this.getAvailableModels(),
             };
         }
 
         const missingFeatures: string[] = [];
         const degradedFeatures: string[] = [];
 
-        requirements.forEach(feature => {
+        requirements.forEach((feature) => {
             if (!capabilities.features[feature]) {
                 missingFeatures.push(feature);
             }
@@ -132,14 +135,16 @@ export class ModelCapabilityManager {
 
         const compatible = missingFeatures.length === 0;
         const recommendations: string[] = [];
-        
+
         if (!compatible) {
             recommendations.push(`Missing features: ${missingFeatures.join(', ')}`);
-            
+
             // 대안 모델 제안
             const alternativeModels = this.findAlternativeModels(requirements);
             if (alternativeModels.length > 0) {
-                recommendations.push(`Consider upgrading to: ${alternativeModels.slice(0, 3).join(', ')}`);
+                recommendations.push(
+                    `Consider upgrading to: ${alternativeModels.slice(0, 3).join(', ')}`
+                );
             }
         }
 
@@ -148,7 +153,7 @@ export class ModelCapabilityManager {
             missingFeatures,
             degradedFeatures,
             recommendations,
-            alternativeModels: this.findAlternativeModels(requirements)
+            alternativeModels: this.findAlternativeModels(requirements),
         };
     }
 
@@ -156,13 +161,13 @@ export class ModelCapabilityManager {
      * 요구사항에 맞는 최적 모델을 추천합니다
      */
     recommendModel(
-        requirements: string[], 
+        requirements: string[],
         priorities: { cost?: number; quality?: number; speed?: number } = {}
     ): ModelRecommendation[] {
-        const { 
+        const {
             cost = SCORING_WEIGHTS.MODEL_RECOMMENDATION.COST,
-            quality = SCORING_WEIGHTS.MODEL_RECOMMENDATION.QUALITY, 
-            speed = SCORING_WEIGHTS.MODEL_RECOMMENDATION.SPEED 
+            quality = SCORING_WEIGHTS.MODEL_RECOMMENDATION.QUALITY,
+            speed = SCORING_WEIGHTS.MODEL_RECOMMENDATION.SPEED,
         } = priorities;
         const recommendations: ModelRecommendation[] = [];
 
@@ -172,14 +177,14 @@ export class ModelCapabilityManager {
 
             if (compatibility.compatible) {
                 const score = this.calculateModelScore(capabilities, { cost, quality, speed });
-                
+
                 recommendations.push({
                     modelId,
                     score,
                     reasons: this.generateRecommendationReasons(capabilities, requirements),
                     tradeoffs: this.generateTradeoffs(capabilities),
                     costImpact: this.calculateCostImpact(capabilities),
-                    qualityImpact: this.calculateQualityImpact(capabilities)
+                    qualityImpact: this.calculateQualityImpact(capabilities),
                 });
             }
         }
@@ -190,7 +195,10 @@ export class ModelCapabilityManager {
     /**
      * 모델 업그레이드 경로를 제안합니다
      */
-    suggestUpgradePath(currentModel: string, targetFeatures: string[]): {
+    suggestUpgradePath(
+        currentModel: string,
+        targetFeatures: string[]
+    ): {
         path: string[];
         benefits: string[];
         costs: { costIncrease: number; qualityImprovement: number };
@@ -205,7 +213,7 @@ export class ModelCapabilityManager {
             return {
                 path: [currentModel],
                 benefits: ['Current model already supports all required features'],
-                costs: { costIncrease: 0, qualityImprovement: 0 }
+                costs: { costIncrease: 0, qualityImprovement: 0 },
             };
         }
 
@@ -215,21 +223,26 @@ export class ModelCapabilityManager {
             return {
                 path: [],
                 benefits: [],
-                costs: { costIncrease: 0, qualityImprovement: 0 }
+                costs: { costIncrease: 0, qualityImprovement: 0 },
             };
         }
 
         const bestModel = recommendations[0];
         const targetCapabilities = this.capabilities[bestModel.modelId];
-        
+
         return {
             path: [currentModel, bestModel.modelId],
             benefits: bestModel.reasons,
             costs: {
-                costIncrease: ((targetCapabilities.pricing.perMinute - currentCapabilities.pricing.perMinute) 
-                             / currentCapabilities.pricing.perMinute) * 100,
-                qualityImprovement: targetCapabilities.performance.accuracy - currentCapabilities.performance.accuracy
-            }
+                costIncrease:
+                    ((targetCapabilities.pricing.perMinute -
+                        currentCapabilities.pricing.perMinute) /
+                        currentCapabilities.pricing.perMinute) *
+                    100,
+                qualityImprovement:
+                    targetCapabilities.performance.accuracy -
+                    currentCapabilities.performance.accuracy,
+            },
         };
     }
 
@@ -237,10 +250,10 @@ export class ModelCapabilityManager {
      * 언어별 최적 모델을 반환합니다
      */
     getBestModelForLanguage(language: string, features: string[] = []): string | null {
-        const compatibleModels = this.getAvailableModels().filter(modelId => {
+        const compatibleModels = this.getAvailableModels().filter((modelId) => {
             const capabilities = this.capabilities[modelId];
             const hasLanguage = capabilities.languages.includes(language);
-            const hasFeatures = features.every(feature => capabilities.features[feature]);
+            const hasFeatures = features.every((feature) => capabilities.features[feature]);
             return hasLanguage && hasFeatures;
         });
 
@@ -250,7 +263,7 @@ export class ModelCapabilityManager {
         return compatibleModels.reduce((best, current) => {
             const bestCap = this.capabilities[best];
             const currentCap = this.capabilities[current];
-            
+
             if (currentCap.performance.accuracy > bestCap.performance.accuracy) {
                 return current;
             }
@@ -262,7 +275,7 @@ export class ModelCapabilityManager {
      * 대안 모델 찾기
      */
     private findAlternativeModels(requirements: string[]): string[] {
-        return this.getAvailableModels().filter(modelId => {
+        return this.getAvailableModels().filter((modelId) => {
             const compatibility = this.checkCompatibility(modelId, requirements);
             return compatibility.compatible;
         });
@@ -272,41 +285,50 @@ export class ModelCapabilityManager {
      * 모델 점수 계산
      */
     private calculateModelScore(
-        capabilities: ModelCapabilities, 
+        capabilities: ModelCapabilities,
         priorities: { cost: number; quality: number; speed: number }
     ): number {
         // 정규화된 점수 계산 (0-100 스케일)
-        const costScore = Math.max(0, 100 - (capabilities.pricing.perMinute * 10000)); // 비용이 낮을수록 높은 점수
+        const costScore = Math.max(0, 100 - capabilities.pricing.perMinute * 10000); // 비용이 낮을수록 높은 점수
         const qualityScore = capabilities.performance.accuracy;
         const speedScore = this.getSpeedScore(capabilities.performance.speed);
 
-        return (costScore * priorities.cost + 
-                qualityScore * priorities.quality + 
-                speedScore * priorities.speed);
+        return (
+            costScore * priorities.cost +
+            qualityScore * priorities.quality +
+            speedScore * priorities.speed
+        );
     }
 
     /**
      * 속도 점수 변환
      */
     private getSpeedScore(speed: string): number {
-        return SCORING_WEIGHTS.SPEED_SCORES[speed as keyof typeof SCORING_WEIGHTS.SPEED_SCORES] || 
-               SCORING_WEIGHTS.SPEED_SCORES.MODERATE;
+        return (
+            SCORING_WEIGHTS.SPEED_SCORES[speed as keyof typeof SCORING_WEIGHTS.SPEED_SCORES] ||
+            SCORING_WEIGHTS.SPEED_SCORES.MODERATE
+        );
     }
 
     /**
      * 추천 이유 생성
      */
-    private generateRecommendationReasons(capabilities: ModelCapabilities, requirements: string[]): string[] {
+    private generateRecommendationReasons(
+        capabilities: ModelCapabilities,
+        requirements: string[]
+    ): string[] {
         const reasons: string[] = [];
-        
+
         reasons.push(`High accuracy: ${capabilities.performance.accuracy}%`);
-        reasons.push(`Performance: ${capabilities.performance.speed} speed, ${capabilities.performance.latency} latency`);
-        
+        reasons.push(
+            `Performance: ${capabilities.performance.speed} speed, ${capabilities.performance.latency} latency`
+        );
+
         if (capabilities.tier === 'premium') {
             reasons.push('Premium model with advanced features');
         }
-        
-        const supportedFeatures = requirements.filter(req => capabilities.features[req]);
+
+        const supportedFeatures = requirements.filter((req) => capabilities.features[req]);
         if (supportedFeatures.length > 0) {
             reasons.push(`Supports required features: ${supportedFeatures.join(', ')}`);
         }
@@ -319,15 +341,15 @@ export class ModelCapabilityManager {
      */
     private generateTradeoffs(capabilities: ModelCapabilities): string[] {
         const tradeoffs: string[] = [];
-        
+
         if (capabilities.pricing.perMinute > 0.01) {
             tradeoffs.push('Higher cost per minute');
         }
-        
+
         if (capabilities.performance.memoryUsage === 'high') {
             tradeoffs.push('Higher memory usage');
         }
-        
+
         if (capabilities.limits.concurrentRequests < 25) {
             tradeoffs.push('Limited concurrent requests');
         }
@@ -373,7 +395,7 @@ export class ModelCapabilityManager {
         let totalAccuracy = 0;
         const featureCounts: Record<string, number> = {};
 
-        models.forEach(model => {
+        models.forEach((model) => {
             tiers[model.tier] = (tiers[model.tier] || 0) + 1;
             totalAccuracy += model.performance.accuracy;
 
@@ -385,7 +407,7 @@ export class ModelCapabilityManager {
         });
 
         const mostPopularFeatures = Object.entries(featureCounts)
-            .sort(([,a], [,b]) => b - a)
+            .sort(([, a], [, b]) => b - a)
             .slice(0, 5)
             .map(([feature]) => feature);
 
@@ -393,7 +415,7 @@ export class ModelCapabilityManager {
             totalModels: models.length,
             modelsByTier: tiers,
             averageAccuracy: totalAccuracy / models.length,
-            mostPopularFeatures
+            mostPopularFeatures,
         };
     }
 }

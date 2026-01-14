@@ -69,7 +69,7 @@ export class CircuitBreaker {
      */
     private onSuccess(): void {
         this.failureCount = 0;
-        
+
         if (this.state === 'HALF_OPEN') {
             this.successCount++;
             if (this.successCount >= this.successThreshold) {
@@ -84,7 +84,7 @@ export class CircuitBreaker {
      */
     private onFailure(): void {
         this.failureCount++;
-        
+
         if (this.state === 'HALF_OPEN') {
             this.transitionTo('OPEN');
         } else if (this.failureCount >= this.failureThreshold) {
@@ -137,7 +137,7 @@ export class CircuitBreaker {
             state: this.state,
             failureCount: this.failureCount,
             successCount: this.successCount,
-            nextAttemptTime: this.nextAttemptTime
+            nextAttemptTime: this.nextAttemptTime,
         };
     }
 }

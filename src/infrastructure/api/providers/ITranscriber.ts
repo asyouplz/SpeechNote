@@ -22,11 +22,11 @@ export interface TranscriptionOptions {
     // 공통 옵션
     language?: string;
     model?: string;
-    
+
     // Provider별 옵션
     whisper?: WhisperSpecificOptions;
     deepgram?: DeepgramSpecificOptions;
-    
+
     // 메타 옵션
     preferredProvider?: TranscriptionProvider | 'auto';
     fallbackEnabled?: boolean;
@@ -101,32 +101,32 @@ export interface ITranscriber {
      * 오디오를 텍스트로 전사
      */
     transcribe(audio: ArrayBuffer, options?: TranscriptionOptions): Promise<TranscriptionResponse>;
-    
+
     /**
      * API 키 검증
      */
     validateApiKey(key: string): Promise<boolean>;
-    
+
     /**
      * 진행 중인 전사 취소
      */
     cancel(): void;
-    
+
     /**
      * Provider 이름 반환
      */
     getProviderName(): string;
-    
+
     /**
      * Provider 능력 반환
      */
     getCapabilities(): ProviderCapabilities;
-    
+
     /**
      * Provider 상태 확인
      */
     isAvailable(): Promise<boolean>;
-    
+
     /**
      * 현재 설정 반환
      */
@@ -142,12 +142,12 @@ export interface IStreamingTranscriber extends ITranscriber {
         onPartialResult: (text: string) => void,
         options?: TranscriptionOptions
     ): Promise<void>;
-    
+
     /**
      * 오디오 청크 전송
      */
     sendAudioChunk(chunk: ArrayBuffer): Promise<void>;
-    
+
     /**
      * 스트리밍 종료 및 최종 결과 반환
      */
@@ -183,7 +183,7 @@ export enum SelectionStrategy {
     PERFORMANCE_OPTIMIZED = 'performance_optimized',
     QUALITY_OPTIMIZED = 'quality_optimized',
     ROUND_ROBIN = 'round_robin',
-    AB_TEST = 'ab_test'
+    AB_TEST = 'ab_test',
 }
 
 // Factory에서 사용할 Provider 설정
@@ -192,12 +192,12 @@ export interface TranscriptionProviderConfig {
     autoSelect: boolean;
     selectionStrategy?: SelectionStrategy;
     fallbackEnabled: boolean;
-    
+
     whisper?: ProviderConfig;
     deepgram?: ProviderConfig;
-    
+
     abTest?: ABTestConfig;
-    
+
     monitoring?: {
         enabled: boolean;
         metricsEndpoint?: string;
@@ -231,10 +231,7 @@ export class ProviderAuthenticationError extends TranscriptionError {
 }
 
 export class ProviderRateLimitError extends TranscriptionError {
-    constructor(
-        provider: TranscriptionProvider,
-        public readonly retryAfter?: number
-    ) {
+    constructor(provider: TranscriptionProvider, public readonly retryAfter?: number) {
         super('Rate limit exceeded', 'RATE_LIMIT', provider, true, 429);
     }
 }

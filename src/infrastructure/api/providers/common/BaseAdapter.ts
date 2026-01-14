@@ -6,7 +6,7 @@ import {
     TranscriptionResponse,
     TranscriptionSegment,
     ProviderCapabilities,
-    ProviderConfig
+    ProviderConfig,
 } from '../ITranscriber';
 
 /**
@@ -81,7 +81,7 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
     updateConfig(config: Partial<ProviderConfig>): void {
         this.config = {
             ...this.config,
-            ...config
+            ...config,
         };
         this.onConfigUpdate(config);
     }
@@ -120,10 +120,12 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
         const end = Reflect.get(value, 'end');
         const text = Reflect.get(value, 'text');
 
-        return typeof id === 'number' &&
+        return (
+            typeof id === 'number' &&
             typeof start === 'number' &&
             typeof end === 'number' &&
-            typeof text === 'string';
+            typeof text === 'string'
+        );
     }
 
     /**
@@ -145,10 +147,11 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
         const processingTime = this.getElapsedTime();
 
         const segmentCandidates = options?.segments;
-        const segments = Array.isArray(segmentCandidates) &&
-            segmentCandidates.every(segment => this.isTranscriptionSegment(segment))
-            ? segmentCandidates
-            : undefined;
+        const segments =
+            Array.isArray(segmentCandidates) &&
+            segmentCandidates.every((segment) => this.isTranscriptionSegment(segment))
+                ? segmentCandidates
+                : undefined;
 
         return {
             text,
@@ -160,8 +163,8 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
             metadata: {
                 model: options?.model ?? this.config.model,
                 processingTime,
-                wordCount
-            }
+                wordCount,
+            },
         };
     }
 
@@ -169,7 +172,7 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
      * Count words in text
      */
     protected countWords(text: string): number {
-        return text.split(/\s+/).filter(word => word.length > 0).length;
+        return text.split(/\s+/).filter((word) => word.length > 0).length;
     }
 
     /**

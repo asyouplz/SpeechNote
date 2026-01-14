@@ -4,7 +4,7 @@ import { EventManager } from './EventManager';
 
 /**
  * 에디터 서비스 - 옵시디언 에디터 통합 관리
- * 
+ *
  * 주요 기능:
  * - 활성 에디터 감지 및 관리
  * - 커서 위치 추적
@@ -20,7 +20,8 @@ export class EditorService {
     private readonly redoHistory: EditorAction[] = [];
     private readonly maxHistorySize = 50;
     private destroyed = false;
-    private readonly eventRefs: Array<{ event: string; callback: (...args: unknown[]) => void }> = [];
+    private readonly eventRefs: Array<{ event: string; callback: (...args: unknown[]) => void }> =
+        [];
 
     constructor(
         private app: App,
@@ -40,9 +41,11 @@ export class EditorService {
             return false;
         }
 
-        return typeof Reflect.get(value, 'getCursor') === 'function' &&
+        return (
+            typeof Reflect.get(value, 'getCursor') === 'function' &&
             typeof Reflect.get(value, 'replaceRange') === 'function' &&
-            typeof Reflect.get(value, 'setValue') === 'function';
+            typeof Reflect.get(value, 'setValue') === 'function'
+        );
     }
 
     /**
@@ -89,17 +92,17 @@ export class EditorService {
             return;
         }
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-        
+
         if (view) {
             this.activeView = view;
             this.activeEditor = view.editor;
-            this.logger.debug('Active editor updated', { 
-                file: view.file?.path 
+            this.logger.debug('Active editor updated', {
+                file: view.file?.path,
             });
-            
-            this.eventManager.emit('editor:active', { 
-                view, 
-                editor: this.activeEditor 
+
+            this.eventManager.emit('editor:active', {
+                view,
+                editor: this.activeEditor,
             });
         } else {
             this.activeView = null;
@@ -149,7 +152,7 @@ export class EditorService {
     getCursorPosition(): EditorPosition | null {
         const editor = this.getActiveEditor();
         if (!editor) return null;
-        
+
         return editor.getCursor();
     }
 
@@ -159,7 +162,7 @@ export class EditorService {
     getSelection(): string {
         const editor = this.getActiveEditor();
         if (!editor) return '';
-        
+
         return editor.getSelection();
     }
 
@@ -169,10 +172,10 @@ export class EditorService {
     getSelectionRange(): EditorRange | null {
         const editor = this.getActiveEditor();
         if (!editor) return null;
-        
+
         const from = editor.getCursor('from');
         const to = editor.getCursor('to');
-        
+
         return { from, to };
     }
 
@@ -191,35 +194,35 @@ export class EditorService {
 
         try {
             const cursor = editor.getCursor();
-            
+
             if (recordHistory) {
                 this.recordAction({
                     type: 'insert',
                     position: cursor,
                     text,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
                 });
             }
 
             editor.replaceRange(text, cursor);
-            
+
             // 커서를 삽입된 텍스트 끝으로 이동
             const newCursor = {
                 line: cursor.line,
-                ch: cursor.ch + text.length
+                ch: cursor.ch + text.length,
             };
             editor.setCursor(newCursor);
-            
-            this.logger.debug('Text inserted at cursor', { 
-                position: cursor, 
-                textLength: text.length 
+
+            this.logger.debug('Text inserted at cursor', {
+                position: cursor,
+                textLength: text.length,
             });
-            
-            this.eventManager.emit('editor:text-inserted', { 
-                text, 
-                position: cursor 
+
+            this.eventManager.emit('editor:text-inserted', {
+                text,
+                position: cursor,
             });
-            
+
             return true;
         } catch (error) {
             this.logger.error('Failed to insert text at cursor', this.normalizeError(error));
@@ -242,29 +245,29 @@ export class EditorService {
         try {
             const selection = editor.getSelection();
             const range = this.getSelectionRange();
-            
+
             if (recordHistory && range) {
                 this.recordAction({
                     type: 'replace',
                     range,
                     oldText: selection,
                     newText: text,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
                 });
             }
 
             editor.replaceSelection(text);
-            
-            this.logger.debug('Selection replaced', { 
-                oldLength: selection.length, 
-                newLength: text.length 
+
+            this.logger.debug('Selection replaced', {
+                oldLength: selection.length,
+                newLength: text.length,
             });
-            
-            this.eventManager.emit('editor:text-replaced', { 
-                oldText: selection, 
-                newText: text 
+
+            this.eventManager.emit('editor:text-replaced', {
+                oldText: selection,
+                newText: text,
             });
-            
+
             return true;
         } catch (error) {
             this.logger.error('Failed to replace selection', this.normalizeError(error));
@@ -293,8 +296,8 @@ export class EditorService {
      * 특정 위치에 텍스트 삽입
      */
     async insertAtPosition(
-        text: string, 
-        position: EditorPosition, 
+        text: string,
+        position: EditorPosition,
         recordHistory = true
     ): Promise<boolean> {
         const editor = this.getActiveEditor();
@@ -311,17 +314,17 @@ export class EditorService {
                     type: 'insert',
                     position,
                     text,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
                 });
             }
 
             editor.replaceRange(text, position);
-            
-            this.logger.debug('Text inserted at position', { 
-                position, 
-                textLength: text.length 
+
+            this.logger.debug('Text inserted at position', {
+                position,
+                textLength: text.length,
             });
-            
+
             return true;
         } catch (error) {
             this.logger.error('Failed to insert text at position', this.normalizeError(error));
@@ -345,7 +348,7 @@ export class EditorService {
 
             const position: EditorPosition = {
                 line: lineNumber,
-                ch: line.length
+                ch: line.length,
             };
 
             return await this.insertAtPosition(text, position);
@@ -367,7 +370,7 @@ export class EditorService {
             const lastLineText = editor.getLine(lastLine);
             const position: EditorPosition = {
                 line: lastLine,
-                ch: lastLineText.length
+                ch: lastLineText.length,
             };
 
             const textToInsert = addNewLine ? `\n${text}` : text;
@@ -435,18 +438,18 @@ export class EditorService {
 
         try {
             const oldContent = editor.getValue();
-            
+
             this.recordAction({
                 type: 'set-content',
                 oldText: oldContent,
                 newText: content,
-                timestamp: Date.now()
+                timestamp: Date.now(),
             });
 
             editor.setValue(content);
-            
+
             this.logger.debug('Document content updated');
-            
+
             return true;
         } catch (error) {
             this.logger.error('Failed to set document content', this.normalizeError(error));
@@ -459,12 +462,12 @@ export class EditorService {
      */
     private recordAction(action: EditorAction): void {
         this.undoHistory.push(action);
-        
+
         // 히스토리 크기 제한
         if (this.undoHistory.length > this.maxHistorySize) {
             this.undoHistory.shift();
         }
-        
+
         // Redo 히스토리 초기화
         this.redoHistory.length = 0;
     }
@@ -497,19 +500,19 @@ export class EditorService {
                         const from = action.position;
                         const to = {
                             line: from.line,
-                            ch: from.ch + action.text.length
+                            ch: from.ch + action.text.length,
                         };
                         editor.replaceRange('', from, to);
                     }
                     break;
-                    
+
                 case 'replace':
                     // 이전 텍스트로 복원
                     if (action.range && action.oldText !== undefined) {
                         editor.replaceRange(action.oldText, action.range.from, action.range.to);
                     }
                     break;
-                    
+
                 case 'set-content':
                     // 이전 내용으로 복원
                     if (action.oldText !== undefined) {
@@ -517,7 +520,7 @@ export class EditorService {
                     }
                     break;
             }
-            
+
             this.logger.debug('Undo executed', { actionType: action.type });
             return true;
         } catch (error) {
@@ -554,14 +557,14 @@ export class EditorService {
                         editor.replaceRange(action.text, action.position);
                     }
                     break;
-                    
+
                 case 'replace':
                     // 새 텍스트로 다시 대체
                     if (action.range && action.newText !== undefined) {
                         editor.replaceRange(action.newText, action.range.from, action.range.to);
                     }
                     break;
-                    
+
                 case 'set-content':
                     // 새 내용으로 다시 설정
                     if (action.newText !== undefined) {
@@ -569,7 +572,7 @@ export class EditorService {
                     }
                     break;
             }
-            
+
             this.logger.debug('Redo executed', { actionType: action.type });
             return true;
         } catch (error) {
@@ -590,24 +593,20 @@ export class EditorService {
     /**
      * 새 노트 생성 및 열기
      */
-    async createAndOpenNote(
-        fileName: string, 
-        content: string, 
-        folder = ''
-    ): Promise<boolean> {
+    async createAndOpenNote(fileName: string, content: string, folder = ''): Promise<boolean> {
         try {
             const path = folder ? `${folder}/${fileName}` : fileName;
             const file = await this.app.vault.create(path, content);
-            
+
             await this.app.workspace.openLinkText(file.path, '', true);
-            
+
             this.logger.debug('New note created and opened', { path });
-            
-            this.eventManager.emit('editor:note-created', { 
-                file, 
-                content 
+
+            this.eventManager.emit('editor:note-created', {
+                file,
+                content,
             });
-            
+
             return true;
         } catch (error) {
             this.logger.error('Failed to create and open note', this.normalizeError(error));

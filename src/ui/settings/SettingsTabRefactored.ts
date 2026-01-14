@@ -5,9 +5,18 @@ import { ShortcutSettings } from './components/ShortcutSettings';
 import { AdvancedSettings } from './components/AdvancedSettings';
 import { GeneralSettings } from './components/GeneralSettings';
 import { AudioSettings } from './components/AudioSettings';
-import { AutoDisposable, EventListenerManager, ResourceManager } from '../../utils/memory/MemoryManager';
+import {
+    AutoDisposable,
+    EventListenerManager,
+    ResourceManager,
+} from '../../utils/memory/MemoryManager';
 import { CancellablePromise, debounceAsync, withTimeout } from '../../utils/async/AsyncManager';
-import { GlobalErrorManager, ErrorType, ErrorSeverity, tryCatchAsync } from '../../utils/error/ErrorManager';
+import {
+    GlobalErrorManager,
+    ErrorType,
+    ErrorSeverity,
+    tryCatchAsync,
+} from '../../utils/error/ErrorManager';
 
 /**
  * 개선된 설정 탭 UI 컴포넌트
@@ -17,21 +26,18 @@ import { GlobalErrorManager, ErrorType, ErrorSeverity, tryCatchAsync } from '../
  */
 export class SettingsTabRefactored extends PluginSettingTab {
     plugin: SpeechToTextPlugin;
-    
+
     // 컴포넌트 관리
     private components: Map<string, AutoDisposable> = new Map();
     private resourceManager = new ResourceManager();
     private eventManager = new EventListenerManager();
     private errorManager = GlobalErrorManager.getInstance();
-    
+
     // 비동기 작업 관리
     private pendingOperations = new Set<CancellablePromise<any>>();
-    
+
     // 디바운스된 저장 함수
-    private debouncedSave = debounceAsync(
-        () => this.plugin.saveSettings(),
-        500
-    );
+    private debouncedSave = debounceAsync(() => this.plugin.saveSettings(), 500);
 
     constructor(app: App, plugin: SpeechToTextPlugin) {
         super(app, plugin);
@@ -69,7 +75,10 @@ export class SettingsTabRefactored extends PluginSettingTab {
      */
     private setupErrorHandling(): void {
         this.errorManager.onError((error) => {
-            if (error.severity === ErrorSeverity.HIGH || error.severity === ErrorSeverity.CRITICAL) {
+            if (
+                error.severity === ErrorSeverity.HIGH ||
+                error.severity === ErrorSeverity.CRITICAL
+            ) {
                 new Notice(`설정 오류: ${error.userMessage || error.message}`);
             }
         });
@@ -80,17 +89,20 @@ export class SettingsTabRefactored extends PluginSettingTab {
         containerEl.empty();
         containerEl.addClass('speech-to-text-settings');
 
-        void tryCatchAsync(async () => {
-            await this.renderContent(containerEl);
-        }, {
-            onError: (error) => {
-                this.errorManager.handleError(error, {
-                    type: ErrorType.UNKNOWN,
-                    severity: ErrorSeverity.HIGH,
-                    userMessage: '설정 페이지를 불러오는 중 오류가 발생했습니다.'
-                });
+        void tryCatchAsync(
+            async () => {
+                await this.renderContent(containerEl);
+            },
+            {
+                onError: (error) => {
+                    this.errorManager.handleError(error, {
+                        type: ErrorType.UNKNOWN,
+                        severity: ErrorSeverity.HIGH,
+                        userMessage: '설정 페이지를 불러오는 중 오류가 발생했습니다.',
+                    });
+                },
             }
-        });
+        );
     }
 
     /**
@@ -106,9 +118,9 @@ export class SettingsTabRefactored extends PluginSettingTab {
             this.createApiSection(containerEl),
             this.createAudioSection(containerEl),
             this.createAdvancedSection(containerEl),
-            this.createShortcutSection(containerEl)
+            this.createShortcutSection(containerEl),
         ]);
-        
+
         // 푸터
         this.createFooter(containerEl);
     }
@@ -118,15 +130,15 @@ export class SettingsTabRefactored extends PluginSettingTab {
      */
     private createHeader(containerEl: HTMLElement): void {
         const headerEl = containerEl.createDiv({ cls: 'settings-header' });
-        
-        headerEl.createEl('h2', { 
+
+        headerEl.createEl('h2', {
             text: 'Speech to Text 설정',
-            cls: 'settings-title' 
+            cls: 'settings-title',
         });
-        
-        headerEl.createEl('p', { 
+
+        headerEl.createEl('p', {
             text: '음성을 텍스트로 변환하는 플러그인 설정을 구성합니다.',
-            cls: 'settings-description' 
+            cls: 'settings-description',
         });
 
         const statusEl = headerEl.createDiv({ cls: 'settings-status' });
@@ -147,7 +159,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
      */
     private createApiSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'API', 'OpenAI API 설정');
-        
+
         const apiKeySetting = new Setting(sectionEl)
             .setName('API Key')
             .setDesc('OpenAI API 키를 입력하세요. (sk-로 시작)');
@@ -155,7 +167,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
         const inputEl = apiKeySetting.controlEl.createEl('input', {
             type: 'password',
             placeholder: 'sk-...',
-            cls: 'api-key-input'
+            cls: 'api-key-input',
         });
 
         const currentKey = this.plugin.settings.apiKey;
@@ -167,9 +179,9 @@ export class SettingsTabRefactored extends PluginSettingTab {
         // 토글 버튼 - 이벤트 리스너 관리 개선
         const toggleBtn = apiKeySetting.controlEl.createEl('button', {
             text: '👁',
-            cls: 'api-key-toggle'
+            cls: 'api-key-toggle',
         });
-        
+
         let isVisible = false;
         this.eventManager.add(toggleBtn, 'click', () => {
             isVisible = !isVisible;
@@ -187,7 +199,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
         // 검증 버튼 - 비동기 처리 개선
         const validateBtn = apiKeySetting.controlEl.createEl('button', {
             text: '검증',
-            cls: 'mod-cta api-key-validate'
+            cls: 'mod-cta api-key-validate',
         });
 
         this.eventManager.add(validateBtn, 'click', async () => {
@@ -201,33 +213,31 @@ export class SettingsTabRefactored extends PluginSettingTab {
             validateBtn.textContent = '검증 중...';
 
             // 취소 가능한 Promise로 검증
-            const validation = new CancellablePromise<boolean>(
-                async (resolve, reject, signal) => {
-                    try {
-                        const validator = this.getComponent('apiKeyValidator', ApiKeyValidatorWrapper);
-                        if (!validator) {
-                            throw new Error('API 키 검증기를 불러오지 못했습니다');
-                        }
-                        const result = await withTimeout(
-                            validator.validate(value),
-                            10000,
-                            new Error('API 키 검증 시간 초과')
-                        );
-                        
-                        if (!signal.aborted) {
-                            resolve(result);
-                        }
-                    } catch (error) {
-                        reject(error);
+            const validation = new CancellablePromise<boolean>(async (resolve, reject, signal) => {
+                try {
+                    const validator = this.getComponent('apiKeyValidator', ApiKeyValidatorWrapper);
+                    if (!validator) {
+                        throw new Error('API 키 검증기를 불러오지 못했습니다');
                     }
+                    const result = await withTimeout(
+                        validator.validate(value),
+                        10000,
+                        new Error('API 키 검증 시간 초과')
+                    );
+
+                    if (!signal.aborted) {
+                        resolve(result);
+                    }
+                } catch (error) {
+                    reject(error);
                 }
-            );
+            });
 
             this.pendingOperations.add(validation);
 
             try {
                 const isValid = await validation;
-                
+
                 if (isValid) {
                     this.plugin.settings.apiKey = value;
                     await this.debouncedSave();
@@ -241,7 +251,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
                 this.errorManager.handleError(this.normalizeError(error), {
                     type: ErrorType.VALIDATION,
                     severity: ErrorSeverity.MEDIUM,
-                    userMessage: 'API 키 검증 중 오류가 발생했습니다.'
+                    userMessage: 'API 키 검증 중 오류가 발생했습니다.',
                 });
             } finally {
                 this.pendingOperations.delete(validation);
@@ -258,7 +268,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
                     new Notice('API 키는 "sk-"로 시작해야 합니다');
                     return;
                 }
-                
+
                 this.plugin.settings.apiKey = value;
                 await this.debouncedSave();
                 inputEl.setAttribute('data-has-value', 'true');
@@ -300,38 +310,36 @@ export class SettingsTabRefactored extends PluginSettingTab {
      */
     private createFooter(containerEl: HTMLElement): void {
         const footerEl = containerEl.createDiv({ cls: 'settings-footer' });
-        
+
         const exportImportEl = footerEl.createDiv({ cls: 'settings-export-import' });
-        
+
         // 설정 내보내기
-        const exportBtn = new ButtonComponent(exportImportEl)
-            .setButtonText('설정 내보내기');
-        
+        const exportBtn = new ButtonComponent(exportImportEl).setButtonText('설정 내보내기');
+
         this.eventManager.add(exportBtn.buttonEl, 'click', async () => {
             await tryCatchAsync(() => this.exportSettings(), {
                 onError: (error) => {
                     this.errorManager.handleError(error, {
                         type: ErrorType.UNKNOWN,
                         severity: ErrorSeverity.LOW,
-                        userMessage: '설정 내보내기에 실패했습니다.'
+                        userMessage: '설정 내보내기에 실패했습니다.',
                     });
-                }
+                },
             });
         });
 
         // 설정 가져오기
-        const importBtn = new ButtonComponent(exportImportEl)
-            .setButtonText('설정 가져오기');
-        
+        const importBtn = new ButtonComponent(exportImportEl).setButtonText('설정 가져오기');
+
         this.eventManager.add(importBtn.buttonEl, 'click', async () => {
             await tryCatchAsync(() => this.importSettings(), {
                 onError: (error) => {
                     this.errorManager.handleError(error, {
                         type: ErrorType.UNKNOWN,
                         severity: ErrorSeverity.LOW,
-                        userMessage: '설정 가져오기에 실패했습니다.'
+                        userMessage: '설정 가져오기에 실패했습니다.',
                     });
-                }
+                },
             });
         });
 
@@ -339,7 +347,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
         const resetBtn = new ButtonComponent(footerEl)
             .setButtonText('기본값으로 초기화')
             .setWarning();
-        
+
         this.eventManager.add(resetBtn.buttonEl, 'click', async () => {
             const confirmed = await this.confirmReset();
             if (confirmed) {
@@ -349,15 +357,15 @@ export class SettingsTabRefactored extends PluginSettingTab {
 
         // 버전 정보
         const versionEl = footerEl.createDiv({ cls: 'settings-version' });
-        versionEl.createEl('small', { 
+        versionEl.createEl('small', {
             text: `Version ${this.plugin.manifest.version} | `,
-            cls: 'version-text'
+            cls: 'version-text',
         });
-        
-        const linkEl = versionEl.createEl('a', { 
+
+        const linkEl = versionEl.createEl('a', {
             text: '도움말',
             href: 'https://github.com/yourusername/obsidian-speech-to-text',
-            cls: 'help-link'
+            cls: 'help-link',
         });
         linkEl.setAttribute('target', '_blank');
     }
@@ -366,12 +374,14 @@ export class SettingsTabRefactored extends PluginSettingTab {
      * 섹션 생성 헬퍼
      */
     private createSection(containerEl: HTMLElement, title: string, desc: string): HTMLElement {
-        const sectionEl = containerEl.createDiv({ cls: `settings-section settings-section-${title.toLowerCase()}` });
-        
+        const sectionEl = containerEl.createDiv({
+            cls: `settings-section settings-section-${title.toLowerCase()}`,
+        });
+
         const headerEl = sectionEl.createDiv({ cls: 'section-header' });
         headerEl.createEl('h3', { text: title });
         headerEl.createEl('p', { text: desc, cls: 'section-description' });
-        
+
         return sectionEl.createDiv({ cls: 'section-content' });
     }
 
@@ -380,24 +390,23 @@ export class SettingsTabRefactored extends PluginSettingTab {
      */
     private createApiUsageDisplay(containerEl: HTMLElement): void {
         const usageEl = containerEl.createDiv({ cls: 'api-usage-display' });
-        
+
         usageEl.createEl('h4', { text: 'API 사용량' });
-        
+
         const statsEl = usageEl.createDiv({ cls: 'usage-stats' });
-        
-        statsEl.createEl('div', { 
+
+        statsEl.createEl('div', {
             text: '이번 달 사용량: 0 / 무제한',
-            cls: 'usage-item' 
+            cls: 'usage-item',
         });
-        
-        statsEl.createEl('div', { 
+
+        statsEl.createEl('div', {
             text: '예상 비용: $0.00',
-            cls: 'usage-item' 
+            cls: 'usage-item',
         });
-        
-        const refreshBtn = new ButtonComponent(usageEl)
-            .setButtonText('사용량 새로고침');
-        
+
+        const refreshBtn = new ButtonComponent(usageEl).setButtonText('사용량 새로고침');
+
         this.eventManager.add(refreshBtn.buttonEl, 'click', () => {
             new Notice('사용량 정보를 업데이트했습니다');
         });
@@ -408,37 +417,41 @@ export class SettingsTabRefactored extends PluginSettingTab {
      */
     private updateStatus(statusEl: HTMLElement): void {
         statusEl.empty();
-        
+
         const settings = this.plugin.settings;
-        const statusItems: Array<{ label: string; value: string; status: 'success' | 'warning' | 'error' }> = [];
-        
+        const statusItems: Array<{
+            label: string;
+            value: string;
+            status: 'success' | 'warning' | 'error';
+        }> = [];
+
         if (settings.apiKey) {
             statusItems.push({
                 label: 'API 키',
                 value: '구성됨',
-                status: 'success'
+                status: 'success',
             });
         } else {
             statusItems.push({
                 label: 'API 키',
                 value: '미구성',
-                status: 'error'
+                status: 'error',
             });
         }
-        
+
         statusItems.push({
             label: '캐시',
             value: settings.enableCache ? '활성화' : '비활성화',
-            status: settings.enableCache ? 'success' : 'warning'
+            status: settings.enableCache ? 'success' : 'warning',
         });
-        
+
         statusItems.push({
             label: '언어',
             value: this.getLanguageLabel(settings.language),
-            status: 'success'
+            status: 'success',
         });
-        
-        statusItems.forEach(item => {
+
+        statusItems.forEach((item) => {
             const itemEl = statusEl.createDiv({ cls: `status-item status-${item.status}` });
             itemEl.createEl('span', { text: `${item.label}: `, cls: 'status-label' });
             itemEl.createEl('span', { text: item.value, cls: 'status-value' });
@@ -461,14 +474,14 @@ export class SettingsTabRefactored extends PluginSettingTab {
      */
     private getLanguageLabel(code: string): string {
         const languages: Record<string, string> = {
-            'auto': '자동 감지',
-            'en': 'English',
-            'ko': '한국어',
-            'ja': '日本語',
-            'zh': '中文',
-            'es': 'Español',
-            'fr': 'Français',
-            'de': 'Deutsch'
+            auto: '자동 감지',
+            en: 'English',
+            ko: '한국어',
+            ja: '日本語',
+            zh: '中文',
+            es: 'Español',
+            fr: 'Français',
+            de: 'Deutsch',
         };
         return languages[code] || code;
     }
@@ -482,20 +495,18 @@ export class SettingsTabRefactored extends PluginSettingTab {
             encryptedApiKey: _encryptedApiKey,
             ...exportSettings
         } = this.plugin.settings;
-        
+
         const json = JSON.stringify(exportSettings, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
+
         const a = createEl('a');
         a.href = url;
         a.download = `speech-to-text-settings-${Date.now()}.json`;
         a.click();
-        
+
         // 메모리 정리
-        this.resourceManager.addTimer(
-            window.setTimeout(() => URL.revokeObjectURL(url), 100)
-        );
+        this.resourceManager.addTimer(window.setTimeout(() => URL.revokeObjectURL(url), 100));
 
         new Notice('설정을 내보냈습니다');
         return Promise.resolve();
@@ -508,7 +519,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
         const input = createEl('input');
         input.type = 'file';
         input.accept = '.json';
-        
+
         const filePromise = new Promise<File>((resolve, reject) => {
             this.eventManager.add(input, 'change', (e) => {
                 const target = e.target;
@@ -524,22 +535,22 @@ export class SettingsTabRefactored extends PluginSettingTab {
                 }
             });
         });
-        
+
         input.click();
-        
+
         const file = await filePromise;
         const text = await file.text();
         const settings = JSON.parse(text);
-        
+
         const currentApiKey = this.plugin.settings.apiKey;
         Object.assign(this.plugin.settings, settings);
-        
+
         if (currentApiKey) {
             this.plugin.settings.apiKey = currentApiKey;
         }
-        
+
         await this.plugin.saveSettings();
-        
+
         new Notice('설정을 가져왔습니다');
         this.display();
     }
@@ -566,7 +577,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
         const { DEFAULT_SETTINGS } = await import('../../domain/models/Settings');
         this.plugin.settings = { ...DEFAULT_SETTINGS };
         await this.plugin.saveSettings();
-        
+
         new Notice('설정이 초기화되었습니다');
         this.display();
     }
@@ -576,15 +587,15 @@ export class SettingsTabRefactored extends PluginSettingTab {
      */
     hide(): void {
         // 진행 중인 비동기 작업 취소
-        this.pendingOperations.forEach(operation => operation.cancel());
+        this.pendingOperations.forEach((operation) => operation.cancel());
         this.pendingOperations.clear();
-        
+
         // 리소스 정리
         this.resourceManager.dispose();
         this.eventManager.removeAll();
-        
+
         // 컴포넌트 정리
-        this.components.forEach(component => component.dispose());
+        this.components.forEach((component) => component.dispose());
         this.components.clear();
     }
 }
@@ -595,7 +606,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
 class ConfirmModalRefactored extends Modal {
     private resourceManager = new ResourceManager();
     private eventManager = new EventListenerManager();
-    
+
     constructor(
         app: App,
         private title: string,
@@ -607,24 +618,21 @@ class ConfirmModalRefactored extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        
+
         contentEl.createEl('h2', { text: this.title });
         contentEl.createEl('p', { text: this.message });
-        
+
         const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
-        
-        const cancelBtn = new ButtonComponent(buttonContainer)
-            .setButtonText('취소');
-        
+
+        const cancelBtn = new ButtonComponent(buttonContainer).setButtonText('취소');
+
         this.eventManager.add(cancelBtn.buttonEl, 'click', () => {
             this.onConfirm(false);
             this.close();
         });
-            
-        const confirmBtn = new ButtonComponent(buttonContainer)
-            .setButtonText('확인')
-            .setWarning();
-        
+
+        const confirmBtn = new ButtonComponent(buttonContainer).setButtonText('확인').setWarning();
+
         this.eventManager.add(confirmBtn.buttonEl, 'click', () => {
             this.onConfirm(true);
             this.close();
@@ -634,7 +642,7 @@ class ConfirmModalRefactored extends Modal {
     onClose() {
         const { contentEl } = this;
         contentEl.empty();
-        
+
         // 리소스 정리
         this.resourceManager.dispose();
         this.eventManager.removeAll();
@@ -646,16 +654,16 @@ class ConfirmModalRefactored extends Modal {
  */
 class ApiKeyValidatorWrapper extends AutoDisposable {
     private validator: ApiKeyValidator;
-    
+
     constructor(plugin: SpeechToTextPlugin) {
         super();
         this.validator = new ApiKeyValidator(plugin);
     }
-    
+
     validate(key: string): Promise<boolean> {
         return this.validator.validate(key);
     }
-    
+
     protected onDispose(): void {
         // 추가 정리 로직
     }
@@ -663,16 +671,16 @@ class ApiKeyValidatorWrapper extends AutoDisposable {
 
 class GeneralSettingsWrapper extends AutoDisposable {
     private settings: GeneralSettings;
-    
+
     constructor(plugin: SpeechToTextPlugin) {
         super();
         this.settings = new GeneralSettings(plugin);
     }
-    
+
     render(container: HTMLElement): void {
         this.settings.render(container);
     }
-    
+
     protected onDispose(): void {
         // 추가 정리 로직
     }
@@ -680,16 +688,16 @@ class GeneralSettingsWrapper extends AutoDisposable {
 
 class AudioSettingsWrapper extends AutoDisposable {
     private settings: AudioSettings;
-    
+
     constructor(plugin: SpeechToTextPlugin) {
         super();
         this.settings = new AudioSettings(plugin);
     }
-    
+
     render(container: HTMLElement): void {
         this.settings.render(container);
     }
-    
+
     protected onDispose(): void {
         // 추가 정리 로직
     }
@@ -697,16 +705,16 @@ class AudioSettingsWrapper extends AutoDisposable {
 
 class AdvancedSettingsWrapper extends AutoDisposable {
     private settings: AdvancedSettings;
-    
+
     constructor(plugin: SpeechToTextPlugin) {
         super();
         this.settings = new AdvancedSettings(plugin);
     }
-    
+
     render(container: HTMLElement): void {
         this.settings.render(container);
     }
-    
+
     protected onDispose(): void {
         // 추가 정리 로직
     }
@@ -714,16 +722,16 @@ class AdvancedSettingsWrapper extends AutoDisposable {
 
 class ShortcutSettingsWrapper extends AutoDisposable {
     private settings: ShortcutSettings;
-    
+
     constructor(app: App, plugin: SpeechToTextPlugin) {
         super();
         this.settings = new ShortcutSettings(app, plugin);
     }
-    
+
     render(container: HTMLElement): void {
         this.settings.render(container);
     }
-    
+
     protected onDispose(): void {
         // 추가 정리 로직
     }

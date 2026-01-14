@@ -29,29 +29,52 @@ export const MODEL_CAPABILITIES_DATA: Record<string, ModelCapabilities> = {
             languageDetection: true,
             customVocabulary: true,
             sentimentAnalysis: true,
-            topicDetection: true
+            topicDetection: true,
         },
         performance: {
             accuracy: 98,
             speed: 'very_fast',
             latency: 'very_low',
-            memoryUsage: 'medium'
+            memoryUsage: 'medium',
         },
         limits: {
             maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
             maxDuration: 12 * 60 * 60, // 12 hours
-            concurrentRequests: 100
+            concurrentRequests: 100,
         },
         pricing: {
             perMinute: 0.0043,
-            currency: 'USD'
+            currency: 'USD',
         },
-        languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it', 'pl', 'ru', 'zh', 'ja', 'ko', 'ar', 'hi', 'tr', 'sv', 'da', 'no', 'fi', 'cs', 'hu', 'bg'],
+        languages: [
+            'en',
+            'es',
+            'fr',
+            'de',
+            'pt',
+            'nl',
+            'it',
+            'pl',
+            'ru',
+            'zh',
+            'ja',
+            'ko',
+            'ar',
+            'hi',
+            'tr',
+            'sv',
+            'da',
+            'no',
+            'fi',
+            'cs',
+            'hu',
+            'bg',
+        ],
         availability: {
             regions: ['us', 'eu', 'asia'],
             beta: false,
-            deprecated: false
-        }
+            deprecated: false,
+        },
     },
     'nova-2': {
         modelId: 'nova-2',
@@ -73,31 +96,51 @@ export const MODEL_CAPABILITIES_DATA: Record<string, ModelCapabilities> = {
             emotionDetection: false,
             speakerIdentification: false,
             sentimentAnalysis: false,
-            topicDetection: false
+            topicDetection: false,
         },
         performance: {
             accuracy: 95,
             speed: 'fast',
             latency: 'low',
-            memoryUsage: 'medium'
+            memoryUsage: 'medium',
         },
         limits: {
             maxFileSize: 2 * 1024 * 1024 * 1024,
             maxDuration: 12 * 60 * 60,
-            concurrentRequests: 50
+            concurrentRequests: 50,
         },
         pricing: {
             perMinute: 0.0145,
-            currency: 'USD'
+            currency: 'USD',
         },
-        languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it', 'pl', 'ru', 'zh', 'ja', 'ko', 'ar', 'hi', 'tr', 'sv', 'da', 'no', 'fi'],
+        languages: [
+            'en',
+            'es',
+            'fr',
+            'de',
+            'pt',
+            'nl',
+            'it',
+            'pl',
+            'ru',
+            'zh',
+            'ja',
+            'ko',
+            'ar',
+            'hi',
+            'tr',
+            'sv',
+            'da',
+            'no',
+            'fi',
+        ],
         availability: {
             regions: ['us', 'eu', 'asia'],
             beta: false,
-            deprecated: false
-        }
+            deprecated: false,
+        },
     },
-    'nova': {
+    nova: {
         modelId: 'nova',
         tier: 'standard',
         features: {
@@ -117,31 +160,31 @@ export const MODEL_CAPABILITIES_DATA: Record<string, ModelCapabilities> = {
             emotionDetection: false,
             speakerIdentification: false,
             sentimentAnalysis: false,
-            topicDetection: false
+            topicDetection: false,
         },
         performance: {
             accuracy: 90,
             speed: 'fast',
             latency: 'low',
-            memoryUsage: 'low'
+            memoryUsage: 'low',
         },
         limits: {
             maxFileSize: 1024 * 1024 * 1024, // 1GB
             maxDuration: 6 * 60 * 60, // 6 hours
-            concurrentRequests: 25
+            concurrentRequests: 25,
         },
         pricing: {
             perMinute: 0.0125,
-            currency: 'USD'
+            currency: 'USD',
         },
         languages: ['en', 'es', 'fr', 'de', 'pt', 'nl', 'it', 'pl', 'ru', 'zh', 'ja', 'ko'],
         availability: {
             regions: ['us', 'eu'],
             beta: false,
-            deprecated: false
-        }
+            deprecated: false,
+        },
     },
-    'enhanced': {
+    enhanced: {
         modelId: 'enhanced',
         tier: 'basic',
         features: {
@@ -161,31 +204,31 @@ export const MODEL_CAPABILITIES_DATA: Record<string, ModelCapabilities> = {
             emotionDetection: false,
             speakerIdentification: false,
             sentimentAnalysis: false,
-            topicDetection: false
+            topicDetection: false,
         },
         performance: {
             accuracy: 85,
             speed: 'moderate',
             latency: 'medium',
-            memoryUsage: 'low'
+            memoryUsage: 'low',
         },
         limits: {
             maxFileSize: 500 * 1024 * 1024, // 500MB
             maxDuration: 2 * 60 * 60, // 2 hours
-            concurrentRequests: 10
+            concurrentRequests: 10,
         },
         pricing: {
             perMinute: 0.0085,
-            currency: 'USD'
+            currency: 'USD',
         },
         languages: ['en', 'es', 'fr', 'de', 'pt'],
         availability: {
             regions: ['us', 'eu'],
             beta: false,
-            deprecated: false
-        }
+            deprecated: false,
+        },
     },
-    'base': {
+    base: {
         modelId: 'base',
         tier: 'economy',
         features: {
@@ -205,30 +248,30 @@ export const MODEL_CAPABILITIES_DATA: Record<string, ModelCapabilities> = {
             emotionDetection: false,
             speakerIdentification: false,
             sentimentAnalysis: false,
-            topicDetection: false
+            topicDetection: false,
         },
         performance: {
             accuracy: 80,
             speed: 'moderate',
             latency: 'medium',
-            memoryUsage: 'low'
+            memoryUsage: 'low',
         },
         limits: {
             maxFileSize: 100 * 1024 * 1024, // 100MB
             maxDuration: 60 * 60, // 1 hour
-            concurrentRequests: 5
+            concurrentRequests: 5,
         },
         pricing: {
             perMinute: 0.0059,
-            currency: 'USD'
+            currency: 'USD',
         },
         languages: ['en'],
         availability: {
             regions: ['us'],
             beta: false,
-            deprecated: false
-        }
-    }
+            deprecated: false,
+        },
+    },
 };
 
 /**
@@ -237,9 +280,14 @@ export const MODEL_CAPABILITIES_DATA: Record<string, ModelCapabilities> = {
 export const FEATURE_CATEGORIES = {
     BASIC: ['punctuation', 'smartFormat', 'numerals'],
     PREMIUM: ['diarization', 'profanityFilter', 'redaction', 'utterances'],
-    ENTERPRISE: ['summarization', 'advancedDiarization', 'emotionDetection', 'speakerIdentification'],
+    ENTERPRISE: [
+        'summarization',
+        'advancedDiarization',
+        'emotionDetection',
+        'speakerIdentification',
+    ],
     REALTIME: ['realTime', 'streaming'],
-    ADVANCED: ['languageDetection', 'customVocabulary', 'sentimentAnalysis', 'topicDetection']
+    ADVANCED: ['languageDetection', 'customVocabulary', 'sentimentAnalysis', 'topicDetection'],
 } as const;
 
 /**
@@ -250,40 +298,40 @@ export const MODEL_USE_CASES = {
         'High-accuracy professional transcription',
         'Speaker identification needed',
         'Advanced analytics (sentiment, topics)',
-        'Multi-language support required'
+        'Multi-language support required',
     ],
     'nova-2': [
         'Balanced accuracy and cost',
         'Speaker diarization',
         'Professional applications',
-        'Real-time transcription'
+        'Real-time transcription',
     ],
-    'nova': [
+    nova: [
         'Standard accuracy requirements',
         'Cost-conscious applications',
         'Basic speaker diarization',
-        'General purpose transcription'
+        'General purpose transcription',
     ],
-    'enhanced': [
+    enhanced: [
         'Budget-friendly option',
         'Simple transcription needs',
         'No speaker separation required',
-        'Basic formatting'
+        'Basic formatting',
     ],
-    'base': [
+    base: [
         'Minimal cost requirements',
         'Simple text extraction',
         'English-only content',
-        'No advanced features needed'
-    ]
+        'No advanced features needed',
+    ],
 } as const;
 
 /**
  * 모델 업그레이드 경로 매핑
  */
 export const UPGRADE_PATHS = {
-    'base': ['enhanced', 'nova'],
-    'enhanced': ['nova', 'nova-2'],
-    'nova': ['nova-2', 'nova-3'],
-    'nova-2': ['nova-3']
+    base: ['enhanced', 'nova'],
+    enhanced: ['nova', 'nova-2'],
+    nova: ['nova-2', 'nova-3'],
+    'nova-2': ['nova-3'],
 } as const;

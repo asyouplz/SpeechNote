@@ -7,7 +7,7 @@ import {
     ProviderAuthenticationError,
     ProviderRateLimitError,
     ProviderUnavailableError,
-    TranscriptionError
+    TranscriptionError,
 } from '../ITranscriber';
 import { CircuitBreaker } from '../common/CircuitBreaker';
 import { RateLimiter } from '../common/RateLimiter';
@@ -19,7 +19,7 @@ const DEEPGRAM_CONFIG = {
     MAX_FILE_SIZE: 2 * 1024 * 1024 * 1024, // 2GB
     DEFAULT_TIMEOUT: 120000, // 2 minutes base; overall cap handled by outer service
     DEFAULT_MODEL: 'nova-3',
-    WORDS_PER_SEGMENT: 10
+    WORDS_PER_SEGMENT: 10,
 } as const;
 
 // Type definitions
@@ -32,11 +32,14 @@ interface DeepgramAPIResponse {
         duration: number;
         channels: number;
         models: string[];
-        model_info: Record<string, {
-            name: string;
-            version: string;
-            tier: string;
-        }>;
+        model_info: Record<
+            string,
+            {
+                name: string;
+                version: string;
+                tier: string;
+            }
+        >;
     };
     results: {
         channels: Array<{
@@ -94,26 +97,17 @@ export class DeepgramServiceRefactored {
             config.circuitBreakerConfig
         );
 
-        this.retryHandler = new RetryHandler(
-            'Deepgram',
-            config.logger,
-            RetryStrategy.EXPONENTIAL,
-            {
-                ...config.retryConfig,
-                retryCondition: this.isRetryableError
-            }
-        );
+        this.retryHandler = new RetryHandler('Deepgram', config.logger, RetryStrategy.EXPONENTIAL, {
+            ...config.retryConfig,
+            retryCondition: this.isRetryableError,
+        });
 
-        this.rateLimiter = new RateLimiter(
-            'Deepgram',
-            config.logger,
-            {
-                requestsPerWindow: config.requestsPerMinute ?? 100,
-                windowMs: 60000,
-                queueEnabled: true,
-                maxQueueSize: 20
-            }
-        );
+        this.rateLimiter = new RateLimiter('Deepgram', config.logger, {
+            requestsPerWindow: config.requestsPerMinute ?? 100,
+            windowMs: 60000,
+            queueEnabled: true,
+            maxQueueSize: 20,
+        });
     }
 
     /**
@@ -178,8 +172,8 @@ export class DeepgramServiceRefactored {
             metadata: {
                 model: response.metadata.models[0],
                 processingTime: response.metadata.duration,
-                wordCount: this.countWords(alternative.transcript)
-            }
+                wordCount: this.countWords(alternative.transcript),
+            },
         };
     }
 
@@ -206,7 +200,7 @@ export class DeepgramServiceRefactored {
     getStats() {
         return {
             circuitBreaker: this.circuitBreaker.getStats(),
-            rateLimiter: this.rateLimiter.getStats()
+            rateLimiter: this.rateLimiter.getStats(),
         };
     }
 
@@ -310,7 +304,7 @@ export class DeepgramServiceRefactored {
             diarize: options?.diarize,
             utterances: (options as any)?.utterances,
             numerals: options?.numerals,
-            profanity_filter: options?.profanityFilter
+            profanity_filter: options?.profanityFilter,
         };
 
         Object.entries(features).forEach(([key, value]) => {
@@ -334,8 +328,8 @@ export class DeepgramServiceRefactored {
      */
     private buildHeaders(): Record<string, string> {
         return {
-            'Authorization': `Token ${this.config.apiKey}`,
-            'Content-Type': 'audio/wav'
+            Authorization: `Token ${this.config.apiKey}`,
+            'Content-Type': 'audio/wav',
         };
     }
 
@@ -348,17 +342,24 @@ export class DeepgramServiceRefactored {
 
         this.config.logger.error(`Deepgram API Error: ${response.status}`, undefined, {
             status: response.status,
-            errorBody
+            errorBody,
         });
 
         const errorMap: Record<number, () => Error> = {
             400: () => new TranscriptionError(errorMessage, 'BAD_REQUEST', 'deepgram', false, 400),
             401: () => new ProviderAuthenticationError('deepgram'),
-            402: () => new TranscriptionError('Insufficient credits', 'INSUFFICIENT_CREDITS', 'deepgram', false, 402),
+            402: () =>
+                new TranscriptionError(
+                    'Insufficient credits',
+                    'INSUFFICIENT_CREDITS',
+                    'deepgram',
+                    false,
+                    402
+                ),
             429: () => new ProviderRateLimitError('deepgram', response.headers?.['retry-after']),
             500: () => new ProviderUnavailableError('deepgram'),
             502: () => new ProviderUnavailableError('deepgram'),
-            503: () => new ProviderUnavailableError('deepgram')
+            503: () => new ProviderUnavailableError('deepgram'),
         };
 
         const errorFactory = errorMap[response.status];
@@ -400,7 +401,7 @@ export class DeepgramServiceRefactored {
      * Create a single segment from words
      */
     private createSegment(words: any[], id: number): TranscriptionSegment {
-        const text = words.map(w => w.word).join(' ');
+        const text = words.map((w) => w.word).join(' ');
         const totalConfidence = words.reduce((acc, w) => acc + w.confidence, 0);
 
         return {
@@ -409,7 +410,7 @@ export class DeepgramServiceRefactored {
             end: words[words.length - 1].end,
             text,
             confidence: totalConfidence / words.length,
-            speaker: words[0].speaker
+            speaker: words[0].speaker,
         };
     }
 
@@ -424,7 +425,7 @@ export class DeepgramServiceRefactored {
         const retryableMessages = ['network', 'timeout', 'econnreset', 'socket'];
         const message = error.message?.toLowerCase() ?? '';
 
-        return retryableMessages.some(msg => message.includes(msg));
+        return retryableMessages.some((msg) => message.includes(msg));
     };
 
     /**
@@ -454,7 +455,7 @@ export class DeepgramServiceRefactored {
      * Count words in text
      */
     private countWords(text: string): number {
-        return text.split(/\s+/).filter(word => word.length > 0).length;
+        return text.split(/\s+/).filter((word) => word.length > 0).length;
     }
 
     /**
@@ -465,7 +466,7 @@ export class DeepgramServiceRefactored {
         this.config.logger.info('Deepgram request completed', {
             duration,
             fileSize,
-            status
+            status,
         });
     }
 }

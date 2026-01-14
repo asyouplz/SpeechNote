@@ -90,23 +90,23 @@ export interface ModelFeatureSet {
     punctuation: boolean;
     smartFormat: boolean;
     numerals: boolean;
-    
+
     // 프리미엄 기능
     diarization: boolean;
     profanityFilter: boolean;
     redaction: boolean;
     utterances: boolean;
-    
+
     // 엔터프라이즈 기능
     summarization: boolean;
     advancedDiarization: boolean;
     emotionDetection: boolean;
     speakerIdentification: boolean;
-    
+
     // 실시간 기능
     realTime: boolean;
     streaming: boolean;
-    
+
     // 고급 기능
     languageDetection: boolean;
     customVocabulary: boolean;
@@ -205,38 +205,42 @@ export const isValidPerformanceSpeed = (speed: string): speed is PerformanceSpee
 // === 런타임 타입 검증 헬퍼들 ===
 export class TypeValidator {
     static isDeepgramAPIResponse(obj: any): obj is DeepgramAPIResponse {
-        return obj && 
-               typeof obj === 'object' &&
-               obj.metadata && 
-               obj.results && 
-               Array.isArray(obj.results.channels);
+        return (
+            obj &&
+            typeof obj === 'object' &&
+            obj.metadata &&
+            obj.results &&
+            Array.isArray(obj.results.channels)
+        );
     }
 
     static hasValidWord(word: any): word is DeepgramWord {
-        return word &&
-               typeof word.word === 'string' &&
-               typeof word.start === 'number' &&
-               typeof word.end === 'number' &&
-               typeof word.confidence === 'number' &&
-               word.start >= 0 &&
-               word.end >= word.start &&
-               word.confidence >= 0 &&
-               word.confidence <= 1;
+        return (
+            word &&
+            typeof word.word === 'string' &&
+            typeof word.start === 'number' &&
+            typeof word.end === 'number' &&
+            typeof word.confidence === 'number' &&
+            word.start >= 0 &&
+            word.end >= word.start &&
+            word.confidence >= 0 &&
+            word.confidence <= 1
+        );
     }
 
     static hasValidSpeakerInfo(word: any): boolean {
-        return word.speaker !== undefined && 
-               typeof word.speaker === 'number' && 
-               word.speaker >= 0;
+        return word.speaker !== undefined && typeof word.speaker === 'number' && word.speaker >= 0;
     }
 
     static isValidDiarizationConfig(config: any): config is DiarizationConfigComplete {
-        return config &&
-               typeof config === 'object' &&
-               typeof config.enabled === 'boolean' &&
-               config.speakerLabels &&
-               config.merging &&
-               config.output;
+        return (
+            config &&
+            typeof config === 'object' &&
+            typeof config.enabled === 'boolean' &&
+            config.speakerLabels &&
+            config.merging &&
+            config.output
+        );
     }
 }
 

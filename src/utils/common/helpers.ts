@@ -7,7 +7,7 @@
  * 지정된 시간만큼 대기
  */
 export function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -18,12 +18,12 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
     wait: number
 ): (...args: Parameters<T>) => void {
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    
+
     return function debounced(...args: Parameters<T>) {
         if (timeoutId !== null) {
             clearTimeout(timeoutId);
         }
-        
+
         timeoutId = setTimeout(() => {
             func(...args);
             timeoutId = null;
@@ -39,7 +39,7 @@ export function throttle<T extends (...args: unknown[]) => unknown>(
     limit: number
 ): (...args: Parameters<T>) => void {
     let inThrottle = false;
-    
+
     return function throttled(...args: Parameters<T>) {
         if (!inThrottle) {
             func(...args);
@@ -63,43 +63,35 @@ export async function retry<T>(
         onRetry?: (attempt: number, error: Error) => void;
     } = {}
 ): Promise<T> {
-    const {
-        maxAttempts = 3,
-        delay = 1000,
-        backoff = true,
-        onRetry
-    } = options;
-    
+    const { maxAttempts = 3, delay = 1000, backoff = true, onRetry } = options;
+
     let lastError: Error;
-    
+
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
             return await operation();
         } catch (error) {
             lastError = error as Error;
-            
+
             if (attempt < maxAttempts) {
                 const waitTime = backoff ? delay * Math.pow(2, attempt - 1) : delay;
-                
+
                 if (onRetry) {
                     onRetry(attempt, lastError);
                 }
-                
+
                 await sleep(waitTime);
             }
         }
     }
-    
+
     throw lastError!;
 }
 
 /**
  * 안전한 JSON 파싱
  */
-export function safeJsonParse<T = unknown>(
-    jsonString: string,
-    fallback: T
-): T {
+export function safeJsonParse<T = unknown>(jsonString: string, fallback: T): T {
     try {
         return JSON.parse(jsonString);
     } catch {
@@ -114,15 +106,15 @@ export function deepClone<T>(obj: T): T {
     if (obj === null || typeof obj !== 'object') {
         return obj;
     }
-    
+
     if (obj instanceof Date) {
         return new Date(obj.getTime()) as unknown as T;
     }
-    
+
     if (obj instanceof Array) {
-        return obj.map(item => deepClone(item)) as unknown as T;
+        return obj.map((item) => deepClone(item)) as unknown as T;
     }
-    
+
     if (obj instanceof Map) {
         const cloned = new Map();
         obj.forEach((value, key) => {
@@ -130,22 +122,22 @@ export function deepClone<T>(obj: T): T {
         });
         return cloned as unknown as T;
     }
-    
+
     if (obj instanceof Set) {
         const cloned = new Set();
-        obj.forEach(value => {
+        obj.forEach((value) => {
             cloned.add(deepClone(value));
         });
         return cloned as unknown as T;
     }
-    
+
     const cloned = {} as T;
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
             cloned[key] = deepClone(obj[key]);
         }
     }
-    
+
     return cloned;
 }
 
@@ -157,9 +149,9 @@ export function deepMerge<T extends Record<string, unknown>>(
     ...sources: Partial<T>[]
 ): T {
     if (!sources.length) return target;
-    
+
     const source = sources.shift();
-    
+
     if (isObject(target) && isObject(source)) {
         for (const key in source) {
             const sourceValue = source[key];
@@ -176,7 +168,7 @@ export function deepMerge<T extends Record<string, unknown>>(
             }
         }
     }
-    
+
     return deepMerge(target, ...sources);
 }
 
@@ -212,7 +204,7 @@ export function generateId(prefix = ''): string {
  */
 export function chunk<T>(array: T[], size: number): T[][] {
     if (size <= 0) throw new Error('Chunk size must be positive');
-    
+
     const chunks: T[][] = [];
     for (let i = 0; i < array.length; i += size) {
         chunks.push(array.slice(i, i + size));
@@ -227,9 +219,9 @@ export function unique<T>(array: T[], key?: (item: T) => unknown): T[] {
     if (!key) {
         return [...new Set(array)];
     }
-    
+
     const seen = new Set();
-    return array.filter(item => {
+    return array.filter((item) => {
         const k = key(item);
         if (seen.has(k)) {
             return false;
@@ -251,7 +243,7 @@ export function withTimeout<T>(
         promise,
         new Promise<never>((_, reject) => {
             setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
-        })
+        }),
     ]);
 }
 
@@ -260,14 +252,14 @@ export function withTimeout<T>(
  */
 export function ensureError(value: unknown): Error {
     if (value instanceof Error) return value;
-    
+
     let stringified = '[Unable to stringify the thrown value]';
     try {
         stringified = JSON.stringify(value);
     } catch {
         stringified = String(value);
     }
-    
+
     return new Error(stringified);
 }
 
@@ -279,14 +271,14 @@ export function memoize<T extends (...args: unknown[]) => unknown>(
     keyResolver?: (...args: Parameters<T>) => string
 ): T {
     const cache = new Map<string, ReturnType<T>>();
-    
+
     return ((...args: Parameters<T>) => {
         const key = keyResolver ? keyResolver(...args) : JSON.stringify(args);
-        
+
         if (cache.has(key)) {
             return cache.get(key);
         }
-        
+
         const result = fn(...args) as ReturnType<T>;
         cache.set(key, result);
         return result;

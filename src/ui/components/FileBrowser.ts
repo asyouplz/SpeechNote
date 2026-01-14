@@ -42,13 +42,13 @@ export class FileBrowser {
      */
     private render() {
         if (!this.container) return;
-        
+
         this.container.empty();
         this.container.addClass('file-browser');
 
         // 툴바
         this.createToolbar();
-        
+
         // 파일 목록
         this.createFileList();
     }
@@ -60,15 +60,15 @@ export class FileBrowser {
         if (!this.container) return;
 
         const toolbar = this.container.createDiv('file-browser-toolbar');
-        
+
         // 검색 박스
         const searchContainer = toolbar.createDiv('search-container');
         const searchInput = searchContainer.createEl('input', {
             type: 'text',
             placeholder: '파일 검색...',
-            cls: 'search-input'
+            cls: 'search-input',
         });
-        
+
         searchInput.addEventListener('input', (e) => {
             const target = e.target;
             if (target instanceof HTMLInputElement) {
@@ -79,14 +79,14 @@ export class FileBrowser {
 
         // 정렬 옵션
         const sortContainer = toolbar.createDiv('sort-container');
-        
+
         // 정렬 기준 선택
         const sortSelect = sortContainer.createEl('select', { cls: 'sort-select' });
         sortSelect.createEl('option', { value: 'name', text: '이름' });
         sortSelect.createEl('option', { value: 'date', text: '수정일' });
         sortSelect.createEl('option', { value: 'size', text: '크기' });
         sortSelect.value = this.sortBy;
-        
+
         sortSelect.addEventListener('change', (e) => {
             const target = e.target;
             if (target instanceof HTMLSelectElement) {
@@ -101,10 +101,10 @@ export class FileBrowser {
         // 정렬 순서 토글
         const sortOrderBtn = sortContainer.createEl('button', {
             cls: 'sort-order-btn',
-            title: '정렬 순서 변경'
+            title: '정렬 순서 변경',
         });
         sortOrderBtn.setText(this.sortOrder === 'asc' ? '↑' : '↓');
-        
+
         sortOrderBtn.addEventListener('click', () => {
             this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
             sortOrderBtn.setText(this.sortOrder === 'asc' ? '↑' : '↓');
@@ -114,7 +114,7 @@ export class FileBrowser {
         // 새로고침 버튼
         const refreshBtn = toolbar.createEl('button', {
             cls: 'refresh-btn',
-            title: '새로고침'
+            title: '새로고침',
         });
         refreshBtn.appendChild(this.createRefreshIcon());
         refreshBtn.addEventListener('click', () => this.render());
@@ -133,44 +133,44 @@ export class FileBrowser {
         }
 
         const listContainer = this.container.createDiv('file-browser-list');
-        
+
         // 오디오 파일 가져오기
         const audioFiles = this.getAudioFiles();
-        
+
         if (audioFiles.length === 0) {
             listContainer.createDiv({
                 cls: 'empty-state',
-                text: '오디오 파일이 없습니다'
+                text: '오디오 파일이 없습니다',
             });
             return;
         }
 
         // 폴더별로 그룹화
         const filesByFolder = this.groupFilesByFolder(audioFiles);
-        
+
         // 폴더와 파일 렌더링
         filesByFolder.forEach((files, folderPath) => {
             if (files.length === 0) return;
-            
+
             // 폴더 헤더
             const folderHeader = listContainer.createDiv('folder-header');
             folderHeader.createEl('span', {
                 cls: 'folder-icon',
-                text: '📁'
+                text: '📁',
             });
             folderHeader.createEl('span', {
                 cls: 'folder-name',
-                text: folderPath || 'Root'
+                text: folderPath || 'Root',
             });
             folderHeader.createEl('span', {
                 cls: 'folder-count',
-                text: `(${files.length})`
+                text: `(${files.length})`,
             });
 
             // 폴더 토글
             let isExpanded = true;
             const fileList = listContainer.createDiv('folder-files');
-            
+
             folderHeader.addEventListener('click', () => {
                 isExpanded = !isExpanded;
                 if (isExpanded) {
@@ -183,7 +183,7 @@ export class FileBrowser {
             });
 
             // 파일 렌더링
-            files.forEach(file => {
+            files.forEach((file) => {
                 this.createFileItem(fileList, file);
             });
         });
@@ -194,40 +194,40 @@ export class FileBrowser {
      */
     private createFileItem(container: HTMLElement, file: TFile) {
         const fileItem = container.createDiv('file-item');
-        
+
         // 파일 아이콘
         const icon = fileItem.createDiv('file-icon');
         icon.setText(this.getFileIcon(file.extension));
-        
+
         // 파일 정보
         const fileInfo = fileItem.createDiv('file-info');
-        
+
         // 파일명
         const fileName = fileInfo.createDiv('file-name');
         fileName.setText(file.basename);
-        
+
         // 파일 메타데이터
         const fileMeta = fileInfo.createDiv('file-meta');
         fileMeta.createEl('span', {
             cls: 'file-size',
-            text: this.formatFileSize(file.stat.size)
+            text: this.formatFileSize(file.stat.size),
         });
         fileMeta.createEl('span', {
             cls: 'file-date',
-            text: this.formatDate(file.stat.mtime)
+            text: this.formatDate(file.stat.mtime),
         });
         fileMeta.createEl('span', {
             cls: 'file-ext',
-            text: `.${file.extension}`
+            text: `.${file.extension}`,
         });
 
         // 클릭 이벤트
         fileItem.addEventListener('click', () => {
             this.selectFile(file);
             fileItem.addClass('selected');
-            
+
             // 다른 선택 해제
-            container.querySelectorAll('.file-item').forEach(item => {
+            container.querySelectorAll('.file-item').forEach((item) => {
                 if (item !== fileItem) {
                     item.removeClass('selected');
                 }
@@ -249,23 +249,24 @@ export class FileBrowser {
      * 오디오 파일 가져오기
      */
     private getAudioFiles(): TFile[] {
-        let files = this.app.vault.getFiles().filter(file => 
-            this.acceptedFormats.includes(file.extension.toLowerCase())
-        );
+        let files = this.app.vault
+            .getFiles()
+            .filter((file) => this.acceptedFormats.includes(file.extension.toLowerCase()));
 
         // 검색 필터 적용
         if (this.searchQuery) {
             const query = this.searchQuery.toLowerCase();
-            files = files.filter(file => 
-                file.basename.toLowerCase().includes(query) ||
-                file.path.toLowerCase().includes(query)
+            files = files.filter(
+                (file) =>
+                    file.basename.toLowerCase().includes(query) ||
+                    file.path.toLowerCase().includes(query)
             );
         }
 
         // 정렬
         files.sort((a, b) => {
             let comparison = 0;
-            
+
             switch (this.sortBy) {
                 case 'name':
                     comparison = a.basename.localeCompare(b.basename);
@@ -277,7 +278,7 @@ export class FileBrowser {
                     comparison = b.stat.size - a.stat.size;
                     break;
             }
-            
+
             return this.sortOrder === 'asc' ? comparison : -comparison;
         });
 
@@ -289,8 +290,8 @@ export class FileBrowser {
      */
     private groupFilesByFolder(files: TFile[]): Map<string, TFile[]> {
         const grouped = new Map<string, TFile[]>();
-        
-        files.forEach(file => {
+
+        files.forEach((file) => {
             const folderPath = file.parent?.path || '';
             if (!grouped.has(folderPath)) {
                 grouped.set(folderPath, []);
@@ -299,9 +300,7 @@ export class FileBrowser {
         });
 
         // 폴더 경로로 정렬
-        return new Map([...grouped.entries()].sort((a, b) => 
-            a[0].localeCompare(b[0])
-        ));
+        return new Map([...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0])));
     }
 
     /**
@@ -336,7 +335,7 @@ export class FileBrowser {
         const now = new Date();
         const diff = now.getTime() - date.getTime();
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        
+
         if (days === 0) {
             const hours = Math.floor(diff / (1000 * 60 * 60));
             if (hours === 0) {
@@ -367,14 +366,14 @@ export class FileBrowser {
      */
     private getFileIcon(extension: string): string {
         const icons: Record<string, string> = {
-            'm4a': '🎵',
-            'mp3': '🎵',
-            'wav': '🎵',
-            'mp4': '🎬',
-            'webm': '🎬',
-            'ogg': '🎵'
+            m4a: '🎵',
+            mp3: '🎵',
+            wav: '🎵',
+            mp4: '🎬',
+            webm: '🎬',
+            ogg: '🎵',
         };
-        
+
         return icons[extension.toLowerCase()] || '📄';
     }
 

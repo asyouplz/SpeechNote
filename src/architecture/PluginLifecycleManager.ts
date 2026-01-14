@@ -11,7 +11,7 @@ export enum LifecyclePhase {
     UI_READY = 'ui_ready',
     READY = 'ready',
     SHUTTING_DOWN = 'shutting_down',
-    SHUTDOWN = 'shutdown'
+    SHUTDOWN = 'shutdown',
 }
 
 /**
@@ -37,10 +37,7 @@ export class PluginLifecycleManager {
     private logger: Logger;
     private cleanupHandlers: Array<() => Promise<void>> = [];
 
-    constructor(
-        private app: App,
-        private plugin: Plugin
-    ) {
+    constructor(private app: App, private plugin: Plugin) {
         this.logger = new Logger('LifecycleManager');
     }
 
@@ -86,7 +83,6 @@ export class PluginLifecycleManager {
                     await this.initializeUI();
                 });
             }
-
         } catch (error) {
             this.logger.error('Initialization failed', error instanceof Error ? error : undefined);
             await this.rollback();
@@ -103,7 +99,10 @@ export class PluginLifecycleManager {
             this.currentPhase = LifecyclePhase.READY;
             this.logger.info('Plugin initialization completed');
         } catch (error) {
-            this.logger.error('UI initialization failed', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'UI initialization failed',
+                error instanceof Error ? error : undefined
+            );
             // UI 실패는 전체 롤백하지 않고 graceful degradation
             this.handleUIInitializationError(error);
         }
@@ -114,7 +113,7 @@ export class PluginLifecycleManager {
      */
     private async executePhase(phase: LifecyclePhase): Promise<void> {
         const phaseTasks = Array.from(this.tasks.values())
-            .filter(task => task.phase === phase)
+            .filter((task) => task.phase === phase)
             .sort((a, b) => a.priority - b.priority);
 
         for (const task of phaseTasks) {
@@ -141,7 +140,10 @@ export class PluginLifecycleManager {
             this.completedTasks.add(task.name);
             this.logger.debug(`Completed task: ${task.name}`);
         } catch (error) {
-            this.logger.error(`Task ${task.name} failed`, error instanceof Error ? error : undefined);
+            this.logger.error(
+                `Task ${task.name} failed`,
+                error instanceof Error ? error : undefined
+            );
             throw new TaskExecutionError(task.name, error);
         }
     }
@@ -160,11 +162,11 @@ export class PluginLifecycleManager {
      */
     private async rollback(): Promise<void> {
         this.logger.info('Rolling back initialization');
-        
+
         const completedTasksList = Array.from(this.completedTasks)
             .reverse()
-            .map(name => this.tasks.get(name))
-            .filter(task => task && task.rollback);
+            .map((name) => this.tasks.get(name))
+            .filter((task) => task && task.rollback);
 
         for (const task of completedTasksList) {
             if (task?.rollback) {
@@ -172,7 +174,10 @@ export class PluginLifecycleManager {
                     await task.rollback();
                     this.logger.debug(`Rolled back task: ${task.name}`);
                 } catch (error) {
-                    this.logger.error(`Failed to rollback task ${task.name}`, error instanceof Error ? error : undefined);
+                    this.logger.error(
+                        `Failed to rollback task ${task.name}`,
+                        error instanceof Error ? error : undefined
+                    );
                 }
             }
         }
@@ -193,13 +198,16 @@ export class PluginLifecycleManager {
             try {
                 await handler();
             } catch (error) {
-                this.logger.error('Cleanup handler failed', error instanceof Error ? error : undefined);
+                this.logger.error(
+                    'Cleanup handler failed',
+                    error instanceof Error ? error : undefined
+                );
             }
         }
 
         // 초기화된 작업들 롤백
         await this.rollback();
-        
+
         this.currentPhase = LifecyclePhase.SHUTDOWN;
         this.logger.info('Plugin shutdown completed');
     }
@@ -213,7 +221,7 @@ export class PluginLifecycleManager {
 
         // 의존성 확인
         if (task.dependencies) {
-            return task.dependencies.every(dep => this.completedTasks.has(dep));
+            return task.dependencies.every((dep) => this.completedTasks.has(dep));
         }
 
         return true;
@@ -228,7 +236,7 @@ export class PluginLifecycleManager {
             LifecyclePhase.INITIALIZING,
             LifecyclePhase.SERVICES_READY,
             LifecyclePhase.UI_READY,
-            LifecyclePhase.READY
+            LifecyclePhase.READY,
         ];
 
         const currentIndex = phaseOrder.indexOf(this.currentPhase);
@@ -242,13 +250,9 @@ export class PluginLifecycleManager {
  * 작업 실행 에러
  */
 export class TaskExecutionError extends Error {
-    constructor(
-        public taskName: string,
-        public originalError: unknown
-    ) {
-        const originalMessage = originalError instanceof Error
-            ? originalError.message
-            : String(originalError);
+    constructor(public taskName: string, public originalError: unknown) {
+        const originalMessage =
+            originalError instanceof Error ? originalError.message : String(originalError);
         super(`Task ${taskName} failed: ${originalMessage}`);
         this.name = 'TaskExecutionError';
     }

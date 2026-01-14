@@ -2,7 +2,11 @@
  * ProgressTracker 시스템 테스트
  */
 
-import { ProgressTracker, ProgressTrackingSystem, ProgressReporter } from '../../ui/progress/ProgressTracker';
+import {
+    ProgressTracker,
+    ProgressTrackingSystem,
+    ProgressReporter,
+} from '../../ui/progress/ProgressTracker';
 
 describe('ProgressTracker', () => {
     let tracker: ProgressTracker;
@@ -73,7 +77,7 @@ describe('ProgressTracker', () => {
 
         it('단계 실패를 처리할 수 있어야 함', (done) => {
             const error = new Error('Step failed');
-            
+
             tracker.on('error', (err) => {
                 expect(err).toBe(error);
                 expect(tracker['status']).toBe('failed');
@@ -97,7 +101,7 @@ describe('ProgressTracker', () => {
 
         it('작업을 재개할 수 있어야 함', (done) => {
             tracker.pause();
-            
+
             tracker.on('resume', () => {
                 expect(tracker['status']).toBe('running');
                 expect(tracker['isPaused']).toBe(false);
@@ -109,11 +113,11 @@ describe('ProgressTracker', () => {
 
         it('일시정지 시간을 추적해야 함', (done) => {
             tracker.pause();
-            
+
             setTimeout(() => {
                 tracker.resume();
                 const elapsed = tracker.getElapsedTime();
-                
+
                 // 일시정지 시간(100ms)을 제외한 실제 작업 시간
                 expect(elapsed).toBeLessThan(50);
                 done();
@@ -146,14 +150,14 @@ describe('ProgressTracker', () => {
             const interval = setInterval(() => {
                 progress += 10;
                 tracker.update(progress);
-                
+
                 if (progress === 50) {
                     const eta = tracker.getETA();
                     const remaining = tracker.getRemainingTime();
-                    
+
                     expect(eta).toBeGreaterThan(Date.now());
                     expect(remaining).toBeGreaterThan(0);
-                    
+
                     clearInterval(interval);
                     done();
                 }
@@ -164,7 +168,7 @@ describe('ProgressTracker', () => {
             setTimeout(() => {
                 tracker.update(50);
                 const speed = tracker.getSpeed();
-                
+
                 expect(speed).toBeGreaterThan(0);
                 done();
             }, 100);
@@ -186,7 +190,7 @@ describe('ProgressTrackingSystem', () => {
     describe('작업 관리', () => {
         it('새 작업을 시작할 수 있어야 함', () => {
             const tracker = system.startTask('task1', 100);
-            
+
             expect(tracker).toBeDefined();
             expect(system.getTask('task1')).toBe(tracker);
         });
@@ -194,9 +198,9 @@ describe('ProgressTrackingSystem', () => {
         it('동일한 ID의 작업 시작 시 기존 작업을 취소해야 함', () => {
             const tracker1 = system.startTask('task1', 100);
             const cancelSpy = jest.spyOn(tracker1, 'cancel');
-            
+
             const tracker2 = system.startTask('task1', 100);
-            
+
             expect(cancelSpy).toHaveBeenCalled();
             expect(system.getTask('task1')).toBe(tracker2);
         });
@@ -205,7 +209,7 @@ describe('ProgressTrackingSystem', () => {
             system.startTask('task1', 100);
             system.startTask('task2', 100);
             system.startTask('task3', 100);
-            
+
             const tasks = system.getAllTasks();
             expect(tasks).toHaveLength(3);
         });
@@ -213,12 +217,12 @@ describe('ProgressTrackingSystem', () => {
         it('모든 작업을 취소할 수 있어야 함', () => {
             const tracker1 = system.startTask('task1', 100);
             const tracker2 = system.startTask('task2', 100);
-            
+
             const cancelSpy1 = jest.spyOn(tracker1, 'cancel');
             const cancelSpy2 = jest.spyOn(tracker2, 'cancel');
-            
+
             system.cancelAll();
-            
+
             expect(cancelSpy1).toHaveBeenCalled();
             expect(cancelSpy2).toHaveBeenCalled();
             expect(system.getAllTasks()).toHaveLength(0);
@@ -228,40 +232,40 @@ describe('ProgressTrackingSystem', () => {
     describe('이벤트 처리', () => {
         it('작업 완료 시 정리되어야 함', (done) => {
             const tracker = system.startTask('task1', 100);
-            
+
             tracker.on('complete', () => {
                 setTimeout(() => {
                     expect(system.getTask('task1')).toBeUndefined();
                     done();
                 }, 10);
             });
-            
+
             tracker.update(100);
         });
 
         it('작업 오류 시 정리되어야 함', (done) => {
             const tracker = system.startTask('task1', 100);
-            
+
             tracker.on('error', () => {
                 setTimeout(() => {
                     expect(system.getTask('task1')).toBeUndefined();
                     done();
                 }, 10);
             });
-            
+
             tracker.failStep('step1', new Error('Test error'));
         });
 
         it('작업 취소 시 정리되어야 함', (done) => {
             const tracker = system.startTask('task1', 100);
-            
+
             tracker.on('cancel', () => {
                 setTimeout(() => {
                     expect(system.getTask('task1')).toBeUndefined();
                     done();
                 }, 10);
             });
-            
+
             tracker.cancel();
         });
     });
@@ -289,9 +293,9 @@ describe('ProgressReporter', () => {
     it('단계별 진행률을 보고할 수 있어야 함', () => {
         tracker.addStep('step1', 'Step 1');
         const updateSpy = jest.spyOn(tracker, 'updateStep');
-        
+
         reporter.reportStep('step1', 75);
-        
+
         expect(updateSpy).toHaveBeenCalledWith('step1', 75);
     });
 });

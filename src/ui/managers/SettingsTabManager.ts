@@ -13,10 +13,7 @@ export class SettingsTabManager implements IDisposable {
     private logger: Logger;
     private isDisposed = false;
 
-    constructor(
-        private app: App,
-        private plugin: SpeechToTextPlugin
-    ) {
+    constructor(private app: App, private plugin: SpeechToTextPlugin) {
         this.logger = new Logger('SettingsTabManager');
     }
 
@@ -42,7 +39,10 @@ export class SettingsTabManager implements IDisposable {
 
             this.logger.info('SettingsTab initialized successfully');
         } catch (error) {
-            this.logger.error('Failed to initialize SettingsTab', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Failed to initialize SettingsTab',
+                error instanceof Error ? error : undefined
+            );
             // SettingsTab 실패는 치명적이지 않으므로 에러를 던지지 않음
             this.handleInitializationError(error);
         }
@@ -80,7 +80,7 @@ export class SettingsTabManager implements IDisposable {
         try {
             // SettingsTab 인스턴스 생성 (에러 처리 래핑)
             const settingsTab = this.createSafeSettingsTab();
-            
+
             if (!settingsTab) {
                 this.logger.warn('Failed to create SettingsTab instance');
                 return;
@@ -88,11 +88,14 @@ export class SettingsTabManager implements IDisposable {
 
             // Plugin에 등록
             this.registerSettingsTab(settingsTab);
-            
+
             this.settingsTab = settingsTab;
             this.logger.debug('SettingsTab created and registered successfully');
         } catch (error) {
-            this.logger.error('Error creating SettingsTab', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Error creating SettingsTab',
+                error instanceof Error ? error : undefined
+            );
             this.settingsTab = null;
         }
     }
@@ -110,7 +113,7 @@ export class SettingsTabManager implements IDisposable {
 
             // 타입 체크를 통한 안전한 생성
             const tab = new SettingsTab(this.app, this.plugin);
-            
+
             // 생성된 객체 검증
             if (!tab || typeof tab.display !== 'function') {
                 this.logger.error('Invalid SettingsTab instance created');
@@ -119,7 +122,10 @@ export class SettingsTabManager implements IDisposable {
 
             return tab;
         } catch (error) {
-            this.logger.error('Failed to instantiate SettingsTab', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Failed to instantiate SettingsTab',
+                error instanceof Error ? error : undefined
+            );
             return null;
         }
     }
@@ -132,7 +138,10 @@ export class SettingsTabManager implements IDisposable {
             this.plugin.addSettingTab(settingsTab);
             this.logger.debug('SettingsTab registered with plugin');
         } catch (error) {
-            this.logger.error('Failed to register SettingsTab', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Failed to register SettingsTab',
+                error instanceof Error ? error : undefined
+            );
             throw error;
         }
     }
@@ -143,7 +152,9 @@ export class SettingsTabManager implements IDisposable {
     private handleInitializationError(error: any): void {
         // 에러 타입에 따른 처리
         if (error?.message?.includes('toLowerCase')) {
-            this.logger.error('String method error detected, possibly due to incorrect parameter types');
+            this.logger.error(
+                'String method error detected, possibly due to incorrect parameter types'
+            );
         } else if (error?.message?.includes('undefined')) {
             this.logger.error('Undefined reference error, checking dependencies');
         }
@@ -163,7 +174,10 @@ export class SettingsTabManager implements IDisposable {
             this.settingsTab = fallbackTab;
             this.logger.info('Fallback SettingsTab created');
         } catch (error) {
-            this.logger.error('Failed to create fallback SettingsTab', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Failed to create fallback SettingsTab',
+                error instanceof Error ? error : undefined
+            );
         }
     }
 
@@ -181,7 +195,10 @@ export class SettingsTabManager implements IDisposable {
                 this.logger.debug('SettingsTab refreshed');
             }
         } catch (error) {
-            this.logger.error('Failed to refresh SettingsTab', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Failed to refresh SettingsTab',
+                error instanceof Error ? error : undefined
+            );
         }
     }
 
@@ -225,11 +242,11 @@ class MinimalSettingsTab extends PluginSettingTab {
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
-        
+
         containerEl.createEl('h2', { text: 'Speech to text settings' });
-        containerEl.createEl('p', { 
+        containerEl.createEl('p', {
             text: 'Settings are temporarily unavailable. Please restart Obsidian if this persists.',
-            cls: 'settings-error-message'
+            cls: 'settings-error-message',
         });
     }
 }

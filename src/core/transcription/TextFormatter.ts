@@ -1,8 +1,4 @@
-import type {
-    ITextFormatter,
-    FormatOptions,
-    TranscriptionSegment,
-} from '../../types';
+import type { ITextFormatter, FormatOptions, TranscriptionSegment } from '../../types';
 import type { SpeechToTextSettings } from '../../domain/models/Settings';
 
 export class TextFormatter implements ITextFormatter {
@@ -29,7 +25,7 @@ export class TextFormatter implements ITextFormatter {
 
         segments.forEach((segment) => {
             const timestamp = this.formatTimestamp(segment.start);
-            
+
             switch (this.settings.timestampFormat) {
                 case 'inline':
                     result.push(`[${timestamp}] ${segment.text}`);
@@ -85,7 +81,7 @@ export class TextFormatter implements ITextFormatter {
         finalizeSentence();
 
         const formatted = sentences.join('\n\n');
-        const hasEmphasisPunctuation = sentences.some(sentence => /[!?]/.test(sentence));
+        const hasEmphasisPunctuation = sentences.some((sentence) => /[!?]/.test(sentence));
         const needsTrailingBreak =
             hasEmphasisPunctuation &&
             sentences.length > 1 &&
@@ -103,8 +99,6 @@ export class TextFormatter implements ITextFormatter {
                 .toString()
                 .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
-        return `${minutes.toString().padStart(2, '0')}:${secs
-            .toString()
-            .padStart(2, '0')}`;
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 }

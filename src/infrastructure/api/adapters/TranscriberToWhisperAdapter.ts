@@ -6,19 +6,19 @@ import type { ITranscriber, TranscriptionOptions } from '../providers/ITranscrib
  * This allows TranscriptionService to work with any transcription provider
  */
 export class TranscriberToWhisperAdapter implements IWhisperService {
-    constructor(
-        private transcriber: ITranscriber,
-        private logger?: ILogger
-    ) {}
+    constructor(private transcriber: ITranscriber, private logger?: ILogger) {}
 
-    async transcribe(audio: ArrayBuffer | Blob, options?: WhisperOptions): Promise<WhisperResponse> {
+    async transcribe(
+        audio: ArrayBuffer | Blob,
+        options?: WhisperOptions
+    ): Promise<WhisperResponse> {
         const buffer = await this.resolveAudioBuffer(audio);
         this.logger?.debug('=== TranscriberToWhisperAdapter.transcribe START ===', {
             audioSize: buffer.byteLength,
             provider: this.transcriber.getProviderName(),
-            options
+            options,
         });
-        
+
         // Convert WhisperOptions to TranscriptionOptions
         const transcriptionOptions: TranscriptionOptions = {
             language: options?.language,
@@ -26,19 +26,19 @@ export class TranscriberToWhisperAdapter implements IWhisperService {
             whisper: {
                 temperature: options?.temperature,
                 prompt: options?.prompt,
-                responseFormat: options?.responseFormat
-            }
+                responseFormat: options?.responseFormat,
+            },
         };
 
         // Call the underlying transcriber
         const response = await this.transcriber.transcribe(buffer, transcriptionOptions);
-        
+
         this.logger?.debug('Transcriber response received:', {
             hasText: !!response?.text,
             textLength: response?.text?.length || 0,
             textPreview: response?.text?.substring(0, 100),
             language: response?.language,
-            segmentsCount: response?.segments?.length || 0
+            segmentsCount: response?.segments?.length || 0,
         });
 
         // Convert TranscriptionResponse to WhisperResponse
@@ -46,7 +46,7 @@ export class TranscriberToWhisperAdapter implements IWhisperService {
             text: response.text || '',
             language: response.language,
             duration: response.duration,
-            segments: response.segments?.map(segment => ({
+            segments: response.segments?.map((segment) => ({
                 id: segment.id,
                 seek: 0, // Not available in generic response
                 start: segment.start,
@@ -56,15 +56,15 @@ export class TranscriberToWhisperAdapter implements IWhisperService {
                 temperature: 0,
                 avg_logprob: 0,
                 compression_ratio: 0,
-                no_speech_prob: 0
-            }))
+                no_speech_prob: 0,
+            })),
         };
-        
+
         this.logger?.info('=== TranscriberToWhisperAdapter.transcribe COMPLETE ===', {
             textLength: whisperResponse.text?.length || 0,
-            language: whisperResponse.language
+            language: whisperResponse.language,
         });
-        
+
         return whisperResponse;
     }
 

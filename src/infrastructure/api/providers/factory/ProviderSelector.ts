@@ -1,9 +1,5 @@
 import type { ILogger } from '../../../../types';
-import { 
-    ITranscriber, 
-    TranscriptionProvider, 
-    SelectionStrategy 
-} from '../ITranscriber';
+import { ITranscriber, TranscriptionProvider, SelectionStrategy } from '../ITranscriber';
 import { MetricsTracker } from './MetricsTracker';
 
 /**
@@ -13,10 +9,7 @@ export class ProviderSelector {
     private roundRobinIndex = 0;
     private readonly strategies: Map<SelectionStrategy, SelectionFunction>;
 
-    constructor(
-        private readonly logger: ILogger,
-        private readonly metricsTracker: MetricsTracker
-    ) {
+    constructor(private readonly logger: ILogger, private readonly metricsTracker: MetricsTracker) {
         this.strategies = this.initializeStrategies();
     }
 
@@ -29,7 +22,7 @@ export class ProviderSelector {
         context?: SelectionContext
     ): ITranscriber {
         const availableProviders = this.getAvailableProviders(providers);
-        
+
         if (availableProviders.length === 0) {
             throw new Error('No transcription providers available');
         }
@@ -48,7 +41,7 @@ export class ProviderSelector {
             [SelectionStrategy.QUALITY_OPTIMIZED, this.selectByQuality.bind(this)],
             [SelectionStrategy.ROUND_ROBIN, this.selectRoundRobin.bind(this)],
             [SelectionStrategy.AB_TEST, this.selectForABTest.bind(this)],
-            [SelectionStrategy.MANUAL, this.defaultStrategy.bind(this)]
+            [SelectionStrategy.MANUAL, this.defaultStrategy.bind(this)],
         ]);
     }
 
@@ -58,8 +51,9 @@ export class ProviderSelector {
     private getAvailableProviders(
         providers: Map<TranscriptionProvider, ITranscriber>
     ): Array<[TranscriptionProvider, ITranscriber]> {
-        return Array.from(providers.entries())
-            .filter(([_, provider]) => provider.getConfig().enabled);
+        return Array.from(providers.entries()).filter(
+            ([_, provider]) => provider.getConfig().enabled
+        );
     }
 
     /**
@@ -85,14 +79,16 @@ export class ProviderSelector {
         for (const [name, provider] of providers) {
             const metrics = this.metricsTracker.getMetrics(name);
             const cost = metrics?.averageCost ?? this.getDefaultCost(name);
-            
+
             if (cost < lowestCost) {
                 lowestCost = cost;
                 bestProvider = [name, provider];
             }
         }
 
-        this.logger.debug(`Cost-optimized selection: ${bestProvider[0]} (cost: $${lowestCost.toFixed(4)})`);
+        this.logger.debug(
+            `Cost-optimized selection: ${bestProvider[0]} (cost: $${lowestCost.toFixed(4)})`
+        );
         return bestProvider[1];
     }
 
@@ -108,14 +104,16 @@ export class ProviderSelector {
 
         for (const [name, provider] of providers) {
             const score = this.calculatePerformanceScore(name);
-            
+
             if (score > bestScore) {
                 bestScore = score;
                 bestProvider = [name, provider];
             }
         }
 
-        this.logger.debug(`Performance-optimized selection: ${bestProvider[0]} (score: ${bestScore.toFixed(2)})`);
+        this.logger.debug(
+            `Performance-optimized selection: ${bestProvider[0]} (score: ${bestScore.toFixed(2)})`
+        );
         return bestProvider[1];
     }
 
@@ -131,14 +129,18 @@ export class ProviderSelector {
 
         for (const [name, provider] of providers) {
             const quality = this.calculateQualityScore(name);
-            
+
             if (quality > bestQuality) {
                 bestQuality = quality;
                 bestProvider = [name, provider];
             }
         }
 
-        this.logger.debug(`Quality-optimized selection: ${bestProvider[0]} (quality: ${(bestQuality * 100).toFixed(2)}%)`);
+        this.logger.debug(
+            `Quality-optimized selection: ${bestProvider[0]} (quality: ${(
+                bestQuality * 100
+            ).toFixed(2)}%)`
+        );
         return bestProvider[1];
     }
 
@@ -151,8 +153,10 @@ export class ProviderSelector {
     ): ITranscriber {
         const provider = providers[this.roundRobinIndex % providers.length];
         this.roundRobinIndex++;
-        
-        this.logger.debug(`Round-robin selection: ${provider[0]} (index: ${this.roundRobinIndex - 1})`);
+
+        this.logger.debug(
+            `Round-robin selection: ${provider[0]} (index: ${this.roundRobinIndex - 1})`
+        );
         return provider[1];
     }
 
@@ -169,13 +173,13 @@ export class ProviderSelector {
 
         const hash = this.hashUserId(context.userId);
         const threshold = context.abTestSplit ?? 0.5;
-        
+
         // Find specific providers
         const whisperProvider = providers.find(([name]) => name === 'whisper');
         const deepgramProvider = providers.find(([name]) => name === 'deepgram');
-        
+
         let selected: [TranscriptionProvider, ITranscriber];
-        
+
         if (hash < threshold && whisperProvider) {
             selected = whisperProvider;
         } else if (deepgramProvider) {
@@ -184,7 +188,9 @@ export class ProviderSelector {
             selected = providers[0];
         }
 
-        this.logger.debug(`A/B test selection: ${selected[0]} (user: ${context.userId}, hash: ${hash.toFixed(3)})`);
+        this.logger.debug(
+            `A/B test selection: ${selected[0]} (user: ${context.userId}, hash: ${hash.toFixed(3)})`
+        );
         return selected[1];
     }
 
@@ -193,17 +199,17 @@ export class ProviderSelector {
      */
     private calculatePerformanceScore(provider: TranscriptionProvider): number {
         const stats = this.metricsTracker.getPerformanceStats(provider);
-        
+
         // Weighted score based on multiple factors
         const weights = {
-            latency: -0.4,  // Lower is better
+            latency: -0.4, // Lower is better
             successRate: 0.4,
-            availability: 0.2
+            availability: 0.2,
         };
-        
+
         // Normalize latency (assume 5000ms is worst case)
         const normalizedLatency = Math.min(stats.averageLatency / 5000, 1);
-        
+
         return (
             weights.latency * normalizedLatency +
             weights.successRate * stats.successRate +
@@ -216,7 +222,7 @@ export class ProviderSelector {
      */
     private calculateQualityScore(provider: TranscriptionProvider): number {
         const stats = this.metricsTracker.getPerformanceStats(provider);
-        
+
         // Quality is primarily based on success rate and availability
         return stats.successRate * 0.7 + stats.availability * 0.3;
     }
@@ -226,10 +232,10 @@ export class ProviderSelector {
      */
     private getDefaultCost(provider: TranscriptionProvider): number {
         const defaultCosts: Record<TranscriptionProvider, number> = {
-            whisper: 0.006,  // $0.006 per minute
-            deepgram: 0.0043 // $0.0043 per minute
+            whisper: 0.006, // $0.006 per minute
+            deepgram: 0.0043, // $0.0043 per minute
         };
-        
+
         return defaultCosts[provider] ?? 0.01;
     }
 
@@ -239,7 +245,7 @@ export class ProviderSelector {
     private hashUserId(userId: string): number {
         let hash = 0;
         for (let i = 0; i < userId.length; i++) {
-            hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+            hash = (hash << 5) - hash + userId.charCodeAt(i);
             hash = hash & hash; // Convert to 32-bit integer
         }
         return Math.abs(hash) / 2147483647; // Normalize to 0-1
@@ -254,7 +260,7 @@ export class ProviderSelector {
     } {
         return {
             roundRobinIndex: this.roundRobinIndex,
-            strategiesAvailable: Array.from(this.strategies.keys())
+            strategiesAvailable: Array.from(this.strategies.keys()),
         };
     }
 

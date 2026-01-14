@@ -78,7 +78,7 @@ export class StatisticsStore {
      * 레코드 업데이트
      */
     static updateRecord(id: string, updates: Partial<TranscriptionRecord>) {
-        const index = this.records.findIndex(r => r.id === id);
+        const index = this.records.findIndex((r) => r.id === id);
         if (index !== -1) {
             this.records[index] = { ...this.records[index], ...updates };
             this.saveToStorage();
@@ -103,7 +103,7 @@ export class StatisticsStore {
         startDate?: number;
         endDate?: number;
     }): TranscriptionRecord[] {
-        return this.records.filter(record => {
+        return this.records.filter((record) => {
             if (filter.status && record.status !== filter.status) {
                 return false;
             }
@@ -126,29 +126,27 @@ export class StatisticsStore {
         const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
         const monthAgo = now - 30 * 24 * 60 * 60 * 1000;
 
-        const completedRecords = this.records.filter(r => r.status === 'completed');
-        const failedRecords = this.records.filter(r => r.status === 'failed');
-        const cancelledRecords = this.records.filter(r => r.status === 'cancelled');
+        const completedRecords = this.records.filter((r) => r.status === 'completed');
+        const failedRecords = this.records.filter((r) => r.status === 'failed');
+        const cancelledRecords = this.records.filter((r) => r.status === 'cancelled');
 
         const processingTimes = completedRecords
-            .filter(r => r.endTime)
-            .map(r => (r.endTime! - r.startTime) / 1000); // 초 단위
+            .filter((r) => r.endTime)
+            .map((r) => (r.endTime! - r.startTime) / 1000); // 초 단위
 
         const totalProcessingTime = processingTimes.reduce((sum, time) => sum + time, 0);
-        const averageProcessingTime = processingTimes.length > 0
-            ? totalProcessingTime / processingTimes.length
-            : 0;
+        const averageProcessingTime =
+            processingTimes.length > 0 ? totalProcessingTime / processingTimes.length : 0;
 
         const totalDataProcessed = this.records.reduce((sum, r) => sum + r.fileSize, 0);
         const totalApiCost = this.records.reduce((sum, r) => sum + (r.apiCost || 0), 0);
 
-        const successRate = this.records.length > 0
-            ? (completedRecords.length / this.records.length) * 100
-            : 0;
+        const successRate =
+            this.records.length > 0 ? (completedRecords.length / this.records.length) * 100 : 0;
 
-        const todayCount = this.records.filter(r => r.startTime >= dayAgo).length;
-        const weekCount = this.records.filter(r => r.startTime >= weekAgo).length;
-        const monthCount = this.records.filter(r => r.startTime >= monthAgo).length;
+        const todayCount = this.records.filter((r) => r.startTime >= dayAgo).length;
+        const weekCount = this.records.filter((r) => r.startTime >= weekAgo).length;
+        const monthCount = this.records.filter((r) => r.startTime >= monthAgo).length;
 
         return {
             totalTranscriptions: this.records.length,
@@ -162,7 +160,7 @@ export class StatisticsStore {
             successRate,
             todayCount,
             weekCount,
-            monthCount
+            monthCount,
         };
     }
 
@@ -310,12 +308,12 @@ export class StatisticsDashboard {
             { id: 'avg-time', label: '평균 처리 시간', value: '0초', icon: '⏱️' },
             { id: 'data', label: '처리된 데이터', value: '0 MB', icon: '💾' },
             { id: 'today', label: '오늘', value: '0', icon: '📅' },
-            { id: 'api-cost', label: 'API 비용', value: '$0.00', icon: '💰' }
+            { id: 'api-cost', label: 'API 비용', value: '$0.00', icon: '💰' },
         ];
 
-        cards.forEach(card => {
+        cards.forEach((card) => {
             const cardEl = createEl('div', {
-                cls: card.color ? ['stats-card', `stats-card--${card.color}`] : 'stats-card'
+                cls: card.color ? ['stats-card', `stats-card--${card.color}`] : 'stats-card',
             });
             cardEl.setAttribute('data-stat-id', card.id);
 
@@ -389,10 +387,10 @@ export class StatisticsDashboard {
             { value: 'completed', label: '성공' },
             { value: 'failed', label: '실패' },
             { value: 'processing', label: '처리 중' },
-            { value: 'cancelled', label: '취소됨' }
+            { value: 'cancelled', label: '취소됨' },
         ];
 
-        filterOptions.forEach(optionInfo => {
+        filterOptions.forEach((optionInfo) => {
             const optionEl = createEl('option', { text: optionInfo.label });
             optionEl.value = optionInfo.value;
             filter.appendChild(optionEl);
@@ -407,7 +405,7 @@ export class StatisticsDashboard {
 
         const thead = createEl('thead');
         const headerRow = createEl('tr');
-        ['시간', '파일명', '크기', '처리 시간', '상태', '단어 수', '작업'].forEach(text => {
+        ['시간', '파일명', '크기', '처리 시간', '상태', '단어 수', '작업'].forEach((text) => {
             const th = createEl('th', { text });
             headerRow.appendChild(th);
         });
@@ -439,14 +437,14 @@ export class StatisticsDashboard {
         if (!this.stats || !this.element) return;
 
         const updates = {
-            'total': String(this.stats.totalTranscriptions),
-            'success': String(this.stats.successCount),
-            'failure': String(this.stats.failureCount),
-            'rate': `${this.stats.successRate.toFixed(1)}%`,
+            total: String(this.stats.totalTranscriptions),
+            success: String(this.stats.successCount),
+            failure: String(this.stats.failureCount),
+            rate: `${this.stats.successRate.toFixed(1)}%`,
             'avg-time': this.formatTime(this.stats.averageProcessingTime * 1000),
-            'data': this.formatBytes(this.stats.totalDataProcessed),
-            'today': String(this.stats.todayCount),
-            'api-cost': `$${this.stats.totalApiCost.toFixed(2)}`
+            data: this.formatBytes(this.stats.totalDataProcessed),
+            today: String(this.stats.todayCount),
+            'api-cost': `$${this.stats.totalApiCost.toFixed(2)}`,
         };
 
         Object.entries(updates).forEach(([id, value]) => {
@@ -478,7 +476,7 @@ export class StatisticsDashboard {
         const records = StatisticsStore.getAllRecords();
         const hourCounts = new Array(24).fill(0);
 
-        records.forEach(record => {
+        records.forEach((record) => {
             const hour = new Date(record.startTime).getHours();
             hourCounts[hour]++;
         });
@@ -516,7 +514,7 @@ export class StatisticsDashboard {
         const records = StatisticsStore.getAllRecords();
         const dailyStats: { [date: string]: { success: number; total: number } } = {};
 
-        records.forEach(record => {
+        records.forEach((record) => {
             const date = new Date(record.startTime).toLocaleDateString();
             if (!dailyStats[date]) {
                 dailyStats[date] = { success: 0, total: 0 };
@@ -532,16 +530,22 @@ export class StatisticsDashboard {
         chartEl.replaceChildren();
         const lineChart = createEl('div', { cls: 'line-chart' });
 
-        dates.forEach(date => {
+        dates.forEach((date) => {
             const stat = dailyStats[date];
             const rate = stat.total > 0 ? (stat.success / stat.total) * 100 : 0;
 
             const point = createEl('div', { cls: 'line-chart__point' });
 
-            const valueLabel = createEl('span', { cls: 'line-chart__value', text: `${rate.toFixed(0)}%` });
+            const valueLabel = createEl('span', {
+                cls: 'line-chart__value',
+                text: `${rate.toFixed(0)}%`,
+            });
             point.appendChild(valueLabel);
 
-            const dateLabel = createEl('span', { cls: 'line-chart__label', text: date.split('/').slice(0, 2).join('/') });
+            const dateLabel = createEl('span', {
+                cls: 'line-chart__label',
+                text: date.split('/').slice(0, 2).join('/'),
+            });
             point.appendChild(dateLabel);
 
             lineChart.appendChild(point);
@@ -561,7 +565,7 @@ export class StatisticsDashboard {
 
         // 필터링
         if (filter !== 'all') {
-            records = records.filter(r => r.status === filter);
+            records = records.filter((r) => r.status === filter);
         }
 
         // 최근 순으로 정렬
@@ -573,10 +577,12 @@ export class StatisticsDashboard {
         // 테이블 렌더링
         tbody.replaceChildren();
 
-        records.forEach(record => {
+        records.forEach((record) => {
             const row = createEl('tr');
 
-            const startTimeCell = createEl('td', { text: new Date(record.startTime).toLocaleString() });
+            const startTimeCell = createEl('td', {
+                text: new Date(record.startTime).toLocaleString(),
+            });
             row.appendChild(startTimeCell);
 
             const nameCell = createEl('td', { text: record.fileName });
@@ -595,12 +601,14 @@ export class StatisticsDashboard {
             const statusCell = createEl('td');
             const statusBadge = createEl('span', {
                 cls: ['status', `status--${record.status}`],
-                text: this.getStatusText(record.status)
+                text: this.getStatusText(record.status),
             });
             statusCell.appendChild(statusBadge);
             row.appendChild(statusCell);
 
-            const wordCountCell = createEl('td', { text: record.wordCount ? String(record.wordCount) : '-' });
+            const wordCountCell = createEl('td', {
+                text: record.wordCount ? String(record.wordCount) : '-',
+            });
             row.appendChild(wordCountCell);
 
             const actionCell = createEl('td');
@@ -629,7 +637,7 @@ export class StatisticsDashboard {
      */
     private viewRecord(recordId: string) {
         const records = StatisticsStore.getAllRecords();
-        const record = records.find(r => r.id === recordId);
+        const record = records.find((r) => r.id === recordId);
 
         if (record) {
             // 상세 정보 모달 표시 (NotificationSystem 활용)
@@ -646,7 +654,7 @@ export class StatisticsDashboard {
             processing: '처리 중',
             completed: '완료',
             failed: '실패',
-            cancelled: '취소됨'
+            cancelled: '취소됨',
         };
         return texts[status] || status;
     }
@@ -697,21 +705,26 @@ export class StatisticsDashboard {
     private exportToCSV() {
         const records = StatisticsStore.getAllRecords();
 
-        const headers = ['시간', '파일명', '크기(bytes)', '처리시간(ms)', '상태', '단어수', 'API비용'];
-        const rows = records.map(r => [
+        const headers = [
+            '시간',
+            '파일명',
+            '크기(bytes)',
+            '처리시간(ms)',
+            '상태',
+            '단어수',
+            'API비용',
+        ];
+        const rows = records.map((r) => [
             new Date(r.startTime).toISOString(),
             r.fileName,
             r.fileSize,
             r.endTime ? r.endTime - r.startTime : '',
             r.status,
             r.wordCount || '',
-            r.apiCost || ''
+            r.apiCost || '',
         ]);
 
-        const csv = [
-            headers.join(','),
-            ...rows.map(row => row.join(','))
-        ].join('\n');
+        const csv = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
 
         // 다운로드
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

@@ -6,9 +6,9 @@
 import type { App } from 'obsidian';
 
 export interface EncryptedData {
-    data: string;      // Base64 encoded encrypted data
-    iv: string;        // Base64 encoded initialization vector
-    salt: string;      // Base64 encoded salt
+    data: string; // Base64 encoded encrypted data
+    iv: string; // Base64 encoded initialization vector
+    salt: string; // Base64 encoded salt
 }
 
 export interface IEncryptor {
@@ -46,12 +46,12 @@ export class Encryptor implements IEncryptor {
                 name: 'PBKDF2',
                 salt,
                 iterations: this.iterations,
-                hash: 'SHA-256'
+                hash: 'SHA-256',
             },
             keyMaterial,
             {
                 name: this.algorithm,
-                length: this.keyLength
+                length: this.keyLength,
             },
             false,
             ['encrypt', 'decrypt']
@@ -74,7 +74,7 @@ export class Encryptor implements IEncryptor {
             // 타임존
             Intl.DateTimeFormat().resolvedOptions().timeZone,
             // 고정 시드
-            'ObsidianSpeechToText2024'
+            'ObsidianSpeechToText2024',
         ];
 
         return factors.join('|');
@@ -97,7 +97,7 @@ export class Encryptor implements IEncryptor {
             const encryptedBuffer = await crypto.subtle.encrypt(
                 {
                     name: this.algorithm,
-                    iv
+                    iv,
                 },
                 key,
                 encodedText
@@ -107,7 +107,7 @@ export class Encryptor implements IEncryptor {
             return {
                 data: this.bufferToBase64(encryptedBuffer),
                 iv: this.bufferToBase64(iv),
-                salt: this.bufferToBase64(salt)
+                salt: this.bufferToBase64(salt),
             };
         } catch (error) {
             console.error('Encryption failed:', error);
@@ -132,7 +132,7 @@ export class Encryptor implements IEncryptor {
             const decryptedBuffer = await crypto.subtle.decrypt(
                 {
                     name: this.algorithm,
-                    iv
+                    iv,
                 },
                 key,
                 encryptedBuffer
@@ -150,10 +150,8 @@ export class Encryptor implements IEncryptor {
      * ArrayBuffer를 Base64로 변환
      */
     private bufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
-        const bytes = buffer instanceof ArrayBuffer 
-            ? new Uint8Array(buffer) 
-            : buffer;
-        
+        const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer;
+
         let binary = '';
         for (let i = 0; i < bytes.byteLength; i++) {
             binary += String.fromCharCode(bytes[i]);
@@ -167,11 +165,11 @@ export class Encryptor implements IEncryptor {
     private base64ToBuffer(base64: string): Uint8Array {
         const binary = atob(base64);
         const bytes = new Uint8Array(binary.length);
-        
+
         for (let i = 0; i < binary.length; i++) {
             bytes[i] = binary.charCodeAt(i);
         }
-        
+
         return bytes;
     }
 }
@@ -258,7 +256,7 @@ export class SecureApiKeyManager {
         if (apiKey.startsWith('sk-')) {
             return apiKey.length > 20; // 최소 길이 검증
         }
-        
+
         // Azure 또는 커스텀 키 형식
         return apiKey.length >= 32;
     }
@@ -280,8 +278,11 @@ export class SecureApiKeyManager {
         }
 
         const masked = '*'.repeat(apiKey.length - totalVisible);
-        return apiKey.substring(0, visibleStart) + masked + 
-               apiKey.substring(apiKey.length - visibleEnd);
+        return (
+            apiKey.substring(0, visibleStart) +
+            masked +
+            apiKey.substring(apiKey.length - visibleEnd)
+        );
     }
 }
 

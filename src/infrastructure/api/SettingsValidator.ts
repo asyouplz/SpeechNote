@@ -2,11 +2,11 @@
  * 설정 검증 시스템
  */
 
-import type { 
-    SettingsSchema, 
-    ValidationResult, 
-    ValidationError, 
-    ValidationWarning 
+import type {
+    SettingsSchema,
+    ValidationResult,
+    ValidationError,
+    ValidationWarning,
 } from '../../types/phase3-api';
 import { isPlainRecord } from '../../types/guards';
 
@@ -42,25 +42,30 @@ export class SettingsValidator {
         return {
             valid: errors.length === 0,
             errors: errors.length > 0 ? errors : undefined,
-            warnings: warnings.length > 0 ? warnings : undefined
+            warnings: warnings.length > 0 ? warnings : undefined,
         };
     }
 
     /**
      * 개별 필드 검증
      */
-    validateField<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): ValidationResult;
+    validateField<K extends keyof SettingsSchema>(
+        key: K,
+        value: SettingsSchema[K]
+    ): ValidationResult;
     validateField(key: string, value: unknown): ValidationResult {
         const validator = this.validators.get(key);
         if (!validator) {
             // 알 수 없는 필드는 경고
             return {
                 valid: true,
-                warnings: [{
-                    field: key,
-                    message: `Unknown setting field: ${key}`,
-                    suggestion: 'This field may be deprecated or invalid'
-                }]
+                warnings: [
+                    {
+                        field: key,
+                        message: `Unknown setting field: ${key}`,
+                        suggestion: 'This field may be deprecated or invalid',
+                    },
+                ],
             };
         }
 
@@ -81,7 +86,7 @@ export class SettingsValidator {
                 errors.push({
                     field: 'general',
                     message: 'General settings must be an object',
-                    code: 'INVALID_TYPE'
+                    code: 'INVALID_TYPE',
                 });
                 return { valid: false, errors };
             }
@@ -93,7 +98,7 @@ export class SettingsValidator {
                     errors.push({
                         field: 'general.language',
                         message: `Invalid language code: ${general.language}`,
-                        code: 'INVALID_LANGUAGE'
+                        code: 'INVALID_LANGUAGE',
                     });
                 }
             }
@@ -105,7 +110,7 @@ export class SettingsValidator {
                     errors.push({
                         field: 'general.theme',
                         message: `Invalid theme: ${general.theme}`,
-                        code: 'INVALID_THEME'
+                        code: 'INVALID_THEME',
                     });
                 }
             }
@@ -116,13 +121,13 @@ export class SettingsValidator {
                     errors.push({
                         field: 'general.saveInterval',
                         message: 'Save interval must be at least 1000ms',
-                        code: 'INVALID_INTERVAL'
+                        code: 'INVALID_INTERVAL',
                     });
                 } else if (general.saveInterval < 10000) {
                     warnings.push({
                         field: 'general.saveInterval',
                         message: 'Save interval is very short',
-                        suggestion: 'Consider using at least 10000ms to reduce disk I/O'
+                        suggestion: 'Consider using at least 10000ms to reduce disk I/O',
                     });
                 }
             }
@@ -130,7 +135,7 @@ export class SettingsValidator {
             return {
                 valid: errors.length === 0,
                 errors: errors.length > 0 ? errors : undefined,
-                warnings: warnings.length > 0 ? warnings : undefined
+                warnings: warnings.length > 0 ? warnings : undefined,
             };
         });
 
@@ -144,7 +149,7 @@ export class SettingsValidator {
                 errors.push({
                     field: 'api',
                     message: 'API settings must be an object',
-                    code: 'INVALID_TYPE'
+                    code: 'INVALID_TYPE',
                 });
                 return { valid: false, errors };
             }
@@ -156,7 +161,7 @@ export class SettingsValidator {
                     errors.push({
                         field: 'api.provider',
                         message: `Invalid provider: ${api.provider}`,
-                        code: 'INVALID_PROVIDER'
+                        code: 'INVALID_PROVIDER',
                     });
                 }
             }
@@ -166,7 +171,7 @@ export class SettingsValidator {
                 errors.push({
                     field: 'api.endpoint',
                     message: 'Custom provider requires an endpoint URL',
-                    code: 'MISSING_ENDPOINT'
+                    code: 'MISSING_ENDPOINT',
                 });
             } else if (typeof api.endpoint === 'string') {
                 try {
@@ -175,7 +180,7 @@ export class SettingsValidator {
                     errors.push({
                         field: 'api.endpoint',
                         message: 'Invalid endpoint URL',
-                        code: 'INVALID_URL'
+                        code: 'INVALID_URL',
                     });
                 }
             }
@@ -187,7 +192,7 @@ export class SettingsValidator {
                     warnings.push({
                         field: 'api.model',
                         message: `Unknown OpenAI model: ${api.model}`,
-                        suggestion: 'Consider using "whisper-1"'
+                        suggestion: 'Consider using "whisper-1"',
                     });
                 }
             }
@@ -198,25 +203,28 @@ export class SettingsValidator {
                     errors.push({
                         field: 'api.maxTokens',
                         message: 'Max tokens must be a positive number',
-                        code: 'INVALID_TOKENS'
+                        code: 'INVALID_TOKENS',
                     });
                 } else if (api.maxTokens > 32768) {
                     warnings.push({
                         field: 'api.maxTokens',
                         message: 'Max tokens is very high',
-                        suggestion: 'Consider using 4096 or less for better performance'
+                        suggestion: 'Consider using 4096 or less for better performance',
                     });
                 }
             }
 
             // Temperature 검증
             if (api.temperature !== undefined) {
-                if (typeof api.temperature !== 'number' || 
-                    api.temperature < 0 || api.temperature > 2) {
+                if (
+                    typeof api.temperature !== 'number' ||
+                    api.temperature < 0 ||
+                    api.temperature > 2
+                ) {
                     errors.push({
                         field: 'api.temperature',
                         message: 'Temperature must be between 0 and 2',
-                        code: 'INVALID_TEMPERATURE'
+                        code: 'INVALID_TEMPERATURE',
                     });
                 }
             }
@@ -224,7 +232,7 @@ export class SettingsValidator {
             return {
                 valid: errors.length === 0,
                 errors: errors.length > 0 ? errors : undefined,
-                warnings: warnings.length > 0 ? warnings : undefined
+                warnings: warnings.length > 0 ? warnings : undefined,
             };
         });
 
@@ -238,7 +246,7 @@ export class SettingsValidator {
                 errors.push({
                     field: 'audio',
                     message: 'Audio settings must be an object',
-                    code: 'INVALID_TYPE'
+                    code: 'INVALID_TYPE',
                 });
                 return { valid: false, errors };
             }
@@ -250,7 +258,7 @@ export class SettingsValidator {
                     errors.push({
                         field: 'audio.format',
                         message: `Invalid audio format: ${audio.format}`,
-                        code: 'INVALID_FORMAT'
+                        code: 'INVALID_FORMAT',
                     });
                 }
             }
@@ -262,7 +270,7 @@ export class SettingsValidator {
                     errors.push({
                         field: 'audio.quality',
                         message: `Invalid audio quality: ${audio.quality}`,
-                        code: 'INVALID_QUALITY'
+                        code: 'INVALID_QUALITY',
                     });
                 }
             }
@@ -270,11 +278,14 @@ export class SettingsValidator {
             // 샘플 레이트 검증
             if (audio.sampleRate !== undefined) {
                 const validRates = [8000, 16000, 22050, 44100, 48000];
-                if (typeof audio.sampleRate !== 'number' || !validRates.includes(audio.sampleRate)) {
+                if (
+                    typeof audio.sampleRate !== 'number' ||
+                    !validRates.includes(audio.sampleRate)
+                ) {
                     errors.push({
                         field: 'audio.sampleRate',
                         message: `Invalid sample rate: ${audio.sampleRate}`,
-                        code: 'INVALID_SAMPLE_RATE'
+                        code: 'INVALID_SAMPLE_RATE',
                     });
                 }
             }
@@ -285,7 +296,7 @@ export class SettingsValidator {
                     errors.push({
                         field: 'audio.channels',
                         message: 'Channels must be 1 (mono) or 2 (stereo)',
-                        code: 'INVALID_CHANNELS'
+                        code: 'INVALID_CHANNELS',
                     });
                 }
             }
@@ -293,7 +304,7 @@ export class SettingsValidator {
             return {
                 valid: errors.length === 0,
                 errors: errors.length > 0 ? errors : undefined,
-                warnings: warnings.length > 0 ? warnings : undefined
+                warnings: warnings.length > 0 ? warnings : undefined,
             };
         });
 
@@ -307,7 +318,7 @@ export class SettingsValidator {
                 errors.push({
                     field: 'advanced',
                     message: 'Advanced settings must be an object',
-                    code: 'INVALID_TYPE'
+                    code: 'INVALID_TYPE',
                 });
                 return { valid: false, errors };
             }
@@ -319,13 +330,13 @@ export class SettingsValidator {
                         errors.push({
                             field: 'advanced.cache.maxSize',
                             message: 'Cache max size must be a positive number',
-                            code: 'INVALID_CACHE_SIZE'
+                            code: 'INVALID_CACHE_SIZE',
                         });
                     } else if (advanced.cache.maxSize > 500 * 1024 * 1024) {
                         warnings.push({
                             field: 'advanced.cache.maxSize',
                             message: 'Cache size is very large (>500MB)',
-                            suggestion: 'Consider using 100MB or less'
+                            suggestion: 'Consider using 100MB or less',
                         });
                     }
                 }
@@ -335,7 +346,7 @@ export class SettingsValidator {
                         errors.push({
                             field: 'advanced.cache.ttl',
                             message: 'Cache TTL must be a positive number',
-                            code: 'INVALID_TTL'
+                            code: 'INVALID_TTL',
                         });
                     }
                 }
@@ -344,30 +355,34 @@ export class SettingsValidator {
             // 성능 설정 검증
             if (isPlainRecord(advanced.performance)) {
                 if (advanced.performance.maxConcurrency !== undefined) {
-                    if (typeof advanced.performance.maxConcurrency !== 'number' || 
-                        advanced.performance.maxConcurrency < 1 || 
-                        advanced.performance.maxConcurrency > 10) {
+                    if (
+                        typeof advanced.performance.maxConcurrency !== 'number' ||
+                        advanced.performance.maxConcurrency < 1 ||
+                        advanced.performance.maxConcurrency > 10
+                    ) {
                         errors.push({
                             field: 'advanced.performance.maxConcurrency',
                             message: 'Max concurrency must be between 1 and 10',
-                            code: 'INVALID_CONCURRENCY'
+                            code: 'INVALID_CONCURRENCY',
                         });
                     }
                 }
 
                 if (advanced.performance.timeout !== undefined) {
-                    if (typeof advanced.performance.timeout !== 'number' || 
-                        advanced.performance.timeout < 1000) {
+                    if (
+                        typeof advanced.performance.timeout !== 'number' ||
+                        advanced.performance.timeout < 1000
+                    ) {
                         errors.push({
                             field: 'advanced.performance.timeout',
                             message: 'Timeout must be at least 1000ms',
-                            code: 'INVALID_TIMEOUT'
+                            code: 'INVALID_TIMEOUT',
                         });
                     } else if (advanced.performance.timeout > 300000) {
                         warnings.push({
                             field: 'advanced.performance.timeout',
                             message: 'Timeout is very long (>5 minutes)',
-                            suggestion: 'Consider using 30000ms or less'
+                            suggestion: 'Consider using 30000ms or less',
                         });
                     }
                 }
@@ -381,7 +396,7 @@ export class SettingsValidator {
                         errors.push({
                             field: 'advanced.debug.logLevel',
                             message: `Invalid log level: ${advanced.debug.logLevel}`,
-                            code: 'INVALID_LOG_LEVEL'
+                            code: 'INVALID_LOG_LEVEL',
                         });
                     }
                 }
@@ -390,7 +405,7 @@ export class SettingsValidator {
             return {
                 valid: errors.length === 0,
                 errors: errors.length > 0 ? errors : undefined,
-                warnings: warnings.length > 0 ? warnings : undefined
+                warnings: warnings.length > 0 ? warnings : undefined,
             };
         });
 
@@ -404,7 +419,7 @@ export class SettingsValidator {
                 errors.push({
                     field: 'shortcuts',
                     message: 'Shortcut settings must be an object',
-                    code: 'INVALID_TYPE'
+                    code: 'INVALID_TYPE',
                 });
                 return { valid: false, errors };
             }
@@ -417,7 +432,7 @@ export class SettingsValidator {
                     errors.push({
                         field: `shortcuts.${field}`,
                         message: `Invalid shortcut format: ${shortcut}`,
-                        code: 'INVALID_SHORTCUT'
+                        code: 'INVALID_SHORTCUT',
                     });
                 }
             };
@@ -430,20 +445,22 @@ export class SettingsValidator {
             }
 
             // 중복 단축키 확인
-            const shortcutValues = Object.values(shortcuts).filter(v => typeof v === 'string');
-            const duplicates = shortcutValues.filter((item, index) => shortcutValues.indexOf(item) !== index);
+            const shortcutValues = Object.values(shortcuts).filter((v) => typeof v === 'string');
+            const duplicates = shortcutValues.filter(
+                (item, index) => shortcutValues.indexOf(item) !== index
+            );
             if (duplicates.length > 0) {
                 warnings.push({
                     field: 'shortcuts',
                     message: `Duplicate shortcuts detected: ${duplicates.join(', ')}`,
-                    suggestion: 'Each action should have a unique shortcut'
+                    suggestion: 'Each action should have a unique shortcut',
                 });
             }
 
             return {
                 valid: errors.length === 0,
                 errors: errors.length > 0 ? errors : undefined,
-                warnings: warnings.length > 0 ? warnings : undefined
+                warnings: warnings.length > 0 ? warnings : undefined,
             };
         });
     }
@@ -459,7 +476,7 @@ export class SettingsValidator {
             errors.push({
                 field: 'apiKey',
                 message: 'API key is required',
-                code: 'MISSING_API_KEY'
+                code: 'MISSING_API_KEY',
             });
         } else if (apiKey.startsWith('sk-')) {
             // OpenAI 키 형식
@@ -467,7 +484,7 @@ export class SettingsValidator {
                 errors.push({
                     field: 'apiKey',
                     message: 'OpenAI API key appears to be too short',
-                    code: 'INVALID_API_KEY_LENGTH'
+                    code: 'INVALID_API_KEY_LENGTH',
                 });
             }
         } else if (apiKey.length < 32) {
@@ -475,14 +492,14 @@ export class SettingsValidator {
             warnings.push({
                 field: 'apiKey',
                 message: 'API key seems short',
-                suggestion: 'Ensure you have copied the complete API key'
+                suggestion: 'Ensure you have copied the complete API key',
             });
         }
 
         return {
             valid: errors.length === 0,
             errors: errors.length > 0 ? errors : undefined,
-            warnings: warnings.length > 0 ? warnings : undefined
+            warnings: warnings.length > 0 ? warnings : undefined,
         };
     }
 }
