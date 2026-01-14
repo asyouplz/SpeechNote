@@ -35,7 +35,7 @@ export class RateLimiter {
     /**
      * Acquire permission to make a request
      */
-    async acquire(): Promise<void> {
+    acquire(): Promise<void> {
         if (this.config.queueEnabled) {
             return this.acquireWithQueue();
         }
@@ -45,24 +45,31 @@ export class RateLimiter {
     /**
      * Immediate acquisition (throws if rate limited)
      */
-    private async acquireImmediate(): Promise<void> {
-        this.refillTokens();
+    private acquireImmediate(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            try {
+                this.refillTokens();
 
-        if (this.tokens < 1) {
-            const waitTime = this.getWaitTime();
-            throw new Error(
-                `${this.name}: Rate limit exceeded. Retry after ${Math.ceil(waitTime / 1000)} seconds`
-            );
-        }
+                if (this.tokens < 1) {
+                    const waitTime = this.getWaitTime();
+                    throw new Error(
+                        `${this.name}: Rate limit exceeded. Retry after ${Math.ceil(waitTime / 1000)} seconds`
+                    );
+                }
 
-        this.tokens--;
-        this.logger.debug(`${this.name}: Token acquired. Remaining: ${Math.floor(this.tokens)}`);
+                this.tokens--;
+                this.logger.debug(`${this.name}: Token acquired. Remaining: ${Math.floor(this.tokens)}`);
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     /**
      * Queued acquisition (waits if rate limited)
      */
-    private async acquireWithQueue(): Promise<void> {
+    private acquireWithQueue(): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             if (this.config.maxQueueSize && this.queue.length >= this.config.maxQueueSize) {
                 reject(new Error(`${this.name}: Rate limiter queue is full`));

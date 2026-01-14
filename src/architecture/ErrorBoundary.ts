@@ -143,7 +143,7 @@ export class ErrorBoundary {
         try {
             return await fn();
         } catch (error) {
-            await this.handleError(error as Error, context);
+            await this.handleError(this.normalizeError(error), context);
             return undefined;
         }
     }
@@ -158,9 +158,16 @@ export class ErrorBoundary {
         try {
             return fn();
         } catch (error) {
-            void this.handleError(error as Error, context);
+            void this.handleError(this.normalizeError(error), context);
             return undefined;
         }
+    }
+
+    /**
+     * 에러 정규화
+     */
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error(String(error));
     }
 
     /**

@@ -332,8 +332,8 @@ export class DeepgramSettings {
      */
     private disableIfNoApiKey(setting: Setting): void {
         if (!this.plugin.settings.deepgramApiKey) {
-            const selectElement = setting.settingEl.querySelector('select') as HTMLSelectElement;
-            if (selectElement) {
+            const selectElement = setting.settingEl.querySelector('select');
+            if (selectElement instanceof HTMLSelectElement) {
                 selectElement.disabled = true;
             }
             setting.setDesc(UI_CONSTANTS.MESSAGES.API_KEY_REQUIRED);
@@ -409,7 +409,7 @@ export class DeepgramSettings {
      * 기능 값 가져오기
      */
     private getFeatureValue(key: string, defaultValue: boolean): boolean {
-        const features = this.plugin.settings.transcription?.deepgram?.features as DeepgramFeatures | undefined;
+        const features = this.plugin.settings.transcription?.deepgram?.features;
         return features?.[key] ?? defaultValue;
     }
 
@@ -418,12 +418,14 @@ export class DeepgramSettings {
      */
     private async saveFeatureSetting(key: string, value: boolean): Promise<void> {
         this.ensureTranscriptionSettings();
-        
-        if (!this.plugin.settings.transcription!.deepgram!.features) {
-            this.plugin.settings.transcription!.deepgram!.features = {};
+
+        const deepgram = this.plugin.settings.transcription?.deepgram;
+        if (!deepgram) {
+            return;
         }
-        
-        const features = this.plugin.settings.transcription!.deepgram!.features as DeepgramFeatures;
+
+        const features: DeepgramFeatures = deepgram.features ?? {};
+        deepgram.features = features;
         features[key] = value;
         await this.plugin.saveSettings();
     }
@@ -553,8 +555,8 @@ export class DeepgramSettings {
                         await this.plugin.saveSettings();
                         
                         // Show/hide chunk size setting based on toggle
-                        const chunkSizeSetting = container.querySelector('.chunk-size-setting') as HTMLElement;
-                        if (chunkSizeSetting) {
+                        const chunkSizeSetting = container.querySelector('.chunk-size-setting');
+                        if (chunkSizeSetting instanceof HTMLElement) {
                             chunkSizeSetting.classList.toggle('sn-hidden', !value);
                         }
                     });
@@ -562,7 +564,7 @@ export class DeepgramSettings {
 
         // Maximum chunk size
         const chunkSizeSetting = new Setting(container)
-            .setName('Maximum Chunk Size')
+            .setName('Maximum chunk size')
             .setDesc('Maximum size per chunk in MB (recommended: 50MB)')
             .addSlider(slider => {
                 slider
@@ -587,7 +589,7 @@ export class DeepgramSettings {
         const noteEl = container.createDiv();
         noteEl.addClass('setting-item-description');
         noteEl.addClass('deepgram-note');
-        noteEl.createEl('strong', { text: 'Note on Large Files:' });
+        noteEl.createEl('strong', { text: 'Note on large files:' });
 
         const primaryList = noteEl.createEl('ul');
         ['Files larger than 50MB may experience timeout errors',
@@ -730,15 +732,17 @@ export class DeepgramSettings {
         const hasApiKey = !!this.plugin.settings.deepgramApiKey;
         
         // 모델 선택 드롭다운 활성화/비활성화
-        const modelDropdown = this.containerEl.querySelector('select') as HTMLSelectElement;
-        if (modelDropdown) {
+        const modelDropdown = this.containerEl.querySelector('select');
+        if (modelDropdown instanceof HTMLSelectElement) {
             modelDropdown.disabled = !hasApiKey;
         }
         
         // 기능 토글 활성화/비활성화
         const toggles = this.containerEl.querySelectorAll('.checkbox-container input');
         toggles.forEach((toggle: Element) => {
-            (toggle as HTMLInputElement).disabled = !hasApiKey || !this.selectedModel;
+            if (toggle instanceof HTMLInputElement) {
+                toggle.disabled = !hasApiKey || !this.selectedModel;
+            }
         });
     }
 
@@ -780,9 +784,11 @@ export class DeepgramSettings {
     private updateFeatureToggleState(featureKey: string): void {
         const toggle = this.containerEl.querySelector(
             `[data-feature="${featureKey}"]`
-        ) as HTMLInputElement;
+        );
         
-        if (!toggle || !this.selectedModel || !this.registry) return;
+        if (!(toggle instanceof HTMLInputElement) || !this.selectedModel || !this.registry) {
+            return;
+        }
         
         const isSupported = this.registry.isFeatureSupported(
             this.selectedModel.id, 

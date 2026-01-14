@@ -138,9 +138,9 @@ export class ThreadSafeSingleton<T> {
     
     constructor(private factory: () => T | Promise<T>) {}
     
-    async getInstance(): Promise<T> {
+    getInstance(): Promise<T> {
         if (this.instance) {
-            return this.instance;
+            return Promise.resolve(this.instance);
         }
         
         if (!this.initPromise) {

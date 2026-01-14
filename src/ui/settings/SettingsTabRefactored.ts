@@ -40,6 +40,18 @@ export class SettingsTabRefactored extends PluginSettingTab {
         this.setupErrorHandling();
     }
 
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error(String(error));
+    }
+
+    private getComponent<T extends AutoDisposable>(
+        key: string,
+        ctor: new (...args: never[]) => T
+    ): T | null {
+        const component = this.components.get(key);
+        return component instanceof ctor ? component : null;
+    }
+
     /**
      * 컴포넌트 초기화
      */
@@ -124,16 +136,16 @@ export class SettingsTabRefactored extends PluginSettingTab {
     /**
      * 일반 설정 섹션
      */
-    private async createGeneralSection(containerEl: HTMLElement): Promise<void> {
+    private createGeneralSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'General', '기본 동작 설정');
-        const component = this.components.get('generalSettings') as GeneralSettingsWrapper;
-        component.render(sectionEl);
+        const component = this.getComponent('generalSettings', GeneralSettingsWrapper);
+        component?.render(sectionEl);
     }
 
     /**
      * API 설정 섹션 (개선된 버전)
      */
-    private async createApiSection(containerEl: HTMLElement): Promise<void> {
+    private createApiSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'API', 'OpenAI API 설정');
         
         const apiKeySetting = new Setting(sectionEl)
@@ -192,7 +204,10 @@ export class SettingsTabRefactored extends PluginSettingTab {
             const validation = new CancellablePromise<boolean>(
                 async (resolve, reject, signal) => {
                     try {
-                        const validator = this.components.get('apiKeyValidator') as ApiKeyValidatorWrapper;
+                        const validator = this.getComponent('apiKeyValidator', ApiKeyValidatorWrapper);
+                        if (!validator) {
+                            throw new Error('API 키 검증기를 불러오지 못했습니다');
+                        }
                         const result = await withTimeout(
                             validator.validate(value),
                             10000,
@@ -223,7 +238,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
                     inputEl.setAttribute('data-valid', 'false');
                 }
             } catch (error) {
-                this.errorManager.handleError(error as Error, {
+                this.errorManager.handleError(this.normalizeError(error), {
                     type: ErrorType.VALIDATION,
                     severity: ErrorSeverity.MEDIUM,
                     userMessage: 'API 키 검증 중 오류가 발생했습니다.'
@@ -256,28 +271,28 @@ export class SettingsTabRefactored extends PluginSettingTab {
     /**
      * 오디오 설정 섹션
      */
-    private async createAudioSection(containerEl: HTMLElement): Promise<void> {
+    private createAudioSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'Audio', '음성 변환 설정');
-        const component = this.components.get('audioSettings') as AudioSettingsWrapper;
-        component.render(sectionEl);
+        const component = this.getComponent('audioSettings', AudioSettingsWrapper);
+        component?.render(sectionEl);
     }
 
     /**
      * 고급 설정 섹션
      */
-    private async createAdvancedSection(containerEl: HTMLElement): Promise<void> {
+    private createAdvancedSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'Advanced', '고급 설정');
-        const component = this.components.get('advancedSettings') as AdvancedSettingsWrapper;
-        component.render(sectionEl);
+        const component = this.getComponent('advancedSettings', AdvancedSettingsWrapper);
+        component?.render(sectionEl);
     }
 
     /**
      * 단축키 설정 섹션
      */
-    private async createShortcutSection(containerEl: HTMLElement): Promise<void> {
+    private createShortcutSection(containerEl: HTMLElement): void {
         const sectionEl = this.createSection(containerEl, 'Shortcuts', '단축키 설정');
-        const component = this.components.get('shortcutSettings') as ShortcutSettingsWrapper;
-        component.render(sectionEl);
+        const component = this.getComponent('shortcutSettings', ShortcutSettingsWrapper);
+        component?.render(sectionEl);
     }
 
     /**
@@ -383,7 +398,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
         const refreshBtn = new ButtonComponent(usageEl)
             .setButtonText('사용량 새로고침');
         
-        this.eventManager.add(refreshBtn.buttonEl, 'click', async () => {
+        this.eventManager.add(refreshBtn.buttonEl, 'click', () => {
             new Notice('사용량 정보를 업데이트했습니다');
         });
     }
@@ -461,16 +476,18 @@ export class SettingsTabRefactored extends PluginSettingTab {
     /**
      * 설정 내보내기
      */
-    private async exportSettings(): Promise<void> {
-        const settings = { ...this.plugin.settings };
-        delete (settings as any).apiKey;
-        delete (settings as any).encryptedApiKey;
+    private exportSettings(): Promise<void> {
+        const {
+            apiKey: _apiKey,
+            encryptedApiKey: _encryptedApiKey,
+            ...exportSettings
+        } = this.plugin.settings;
         
-        const json = JSON.stringify(settings, null, 2);
+        const json = JSON.stringify(exportSettings, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         
-        const a = document.createElement('a');
+        const a = createEl('a');
         a.href = url;
         a.download = `speech-to-text-settings-${Date.now()}.json`;
         a.click();
@@ -479,21 +496,27 @@ export class SettingsTabRefactored extends PluginSettingTab {
         this.resourceManager.addTimer(
             window.setTimeout(() => URL.revokeObjectURL(url), 100)
         );
-        
+
         new Notice('설정을 내보냈습니다');
+        return Promise.resolve();
     }
 
     /**
      * 설정 가져오기
      */
     private async importSettings(): Promise<void> {
-        const input = document.createElement('input');
+        const input = createEl('input');
         input.type = 'file';
         input.accept = '.json';
         
         const filePromise = new Promise<File>((resolve, reject) => {
             this.eventManager.add(input, 'change', (e) => {
-                const file = (e.target as HTMLInputElement).files?.[0];
+                const target = e.target;
+                if (!(target instanceof HTMLInputElement)) {
+                    reject(new Error('파일 입력을 읽지 못했습니다'));
+                    return;
+                }
+                const file = target.files?.[0];
                 if (file) {
                     resolve(file);
                 } else {
@@ -524,7 +547,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
     /**
      * 설정 초기화 확인
      */
-    private async confirmReset(): Promise<boolean> {
+    private confirmReset(): Promise<boolean> {
         return new Promise((resolve) => {
             const modal = new ConfirmModalRefactored(
                 this.app,
@@ -629,7 +652,7 @@ class ApiKeyValidatorWrapper extends AutoDisposable {
         this.validator = new ApiKeyValidator(plugin);
     }
     
-    async validate(key: string): Promise<boolean> {
+    validate(key: string): Promise<boolean> {
         return this.validator.validate(key);
     }
     

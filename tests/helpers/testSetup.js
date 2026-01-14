@@ -8,6 +8,31 @@ const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+if (typeof globalThis.createEl !== 'function') {
+    globalThis.createEl = (tag, options = {}) => {
+        const el = document.createElement(tag);
+        const cls = options.cls;
+        if (cls) {
+            if (Array.isArray(cls)) {
+                el.classList.add(...cls.filter(Boolean));
+            } else if (typeof cls === 'string') {
+                el.className = cls;
+            }
+        }
+        if (options.text !== undefined && options.text !== null) {
+            el.textContent = String(options.text);
+        }
+        if (options.attr) {
+            Object.entries(options.attr).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    el.setAttribute(key, String(value));
+                }
+            });
+        }
+        return el;
+    };
+}
+
 // AudioContext 모킹
 global.AudioContext = jest.fn().mockImplementation(() => ({
     decodeAudioData: jest.fn().mockResolvedValue({
@@ -94,6 +119,28 @@ global.File = jest.fn().mockImplementation(function (parts, name, options) {
         webkitRelativePath: ''
     };
 });
+
+// DataTransfer 모킹
+global.DataTransfer = jest.fn().mockImplementation(function () {
+    const files = [];
+    const items = {
+        add: (file) => {
+            files.push(file);
+        }
+    };
+    return {
+        files,
+        items
+    };
+});
+
+// DragEvent 모킹
+global.DragEvent = class DragEvent extends Event {
+    constructor(type, init = {}) {
+        super(type, init);
+        this.dataTransfer = init.dataTransfer;
+    }
+};
 
 // AbortController 모킹
 global.AbortController = jest.fn().mockImplementation(() => ({

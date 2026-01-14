@@ -31,6 +31,14 @@ export class DependencyContainer {
         this.logger = new Logger('DependencyContainer');
     }
 
+    private hasDispose(instance: unknown): instance is { dispose: () => void } {
+        if (!instance || typeof instance !== 'object') {
+            return false;
+        }
+
+        return typeof Reflect.get(instance, 'dispose') === 'function';
+    }
+
     /**
      * 서비스 등록
      */
@@ -83,11 +91,11 @@ export class DependencyContainer {
      * 서비스 해결
      */
     public resolve<T>(token: string | symbol): T {
-        const registration = this.services.get(token) as ServiceRegistration<T> | undefined;
+        const registration = this.services.get(token);
         if (!registration) {
             throw new Error(`Service ${String(token)} not registered`);
         }
-
+        
         switch (registration.lifetime) {
             case ServiceLifetime.SINGLETON:
                 return this.resolveSingleton<T>(token, registration);
@@ -124,25 +132,25 @@ export class DependencyContainer {
     /**
      * 싱글톤 해결
      */
-    private resolveSingleton<T>(token: string | symbol, registration: ServiceRegistration<T>): T {
+    private resolveSingleton<T>(token: string | symbol, registration: ServiceRegistration<unknown>): T {
         if (!registration.instance) {
             registration.instance = registration.factory(this);
             this.logger.debug(`Created singleton instance: ${String(token)}`);
         }
-        return registration.instance;
+        return registration.instance as T;
     }
 
     /**
      * Transient 해결
      */
-    private resolveTransient<T>(registration: ServiceRegistration<T>): T {
-        return registration.factory(this);
+    private resolveTransient<T>(registration: ServiceRegistration<unknown>): T {
+        return registration.factory(this) as T;
     }
 
     /**
      * Scoped 해결
      */
-    private resolveScoped<T>(token: string | symbol, registration: ServiceRegistration<T>): T {
+    private resolveScoped<T>(token: string | symbol, registration: ServiceRegistration<unknown>): T {
         if (!this.scopedInstances.has(token)) {
             const instance = registration.factory(this);
             this.scopedInstances.set(token, instance);
@@ -179,8 +187,8 @@ export class DependencyContainer {
     public dispose(): void {
         // Disposable 인터페이스를 구현한 서비스들 정리
         this.services.forEach((registration, token) => {
-            const instance = registration.instance as { dispose?: () => void } | undefined;
-            if (instance?.dispose) {
+            const instance = registration.instance;
+            if (this.hasDispose(instance)) {
                 try {
                     instance.dispose();
                     this.logger.debug(`Disposed service: ${String(token)}`);

@@ -13,6 +13,10 @@ export interface LoadingIndicatorOptions {
     color?: string;
     message?: string;
     ariaLabel?: string;
+    lines?: number;
+    lineHeight?: string;
+    spacing?: string;
+    animated?: boolean;
 }
 
 /**
@@ -31,7 +35,7 @@ export class SpinnerLoader {
     }
 
     create(): HTMLElement {
-        this.element = document.createElement('div');
+        this.element = createEl('div');
         this.element.className = `loading-spinner loading-spinner--${this.options.size}`;
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
@@ -39,14 +43,14 @@ export class SpinnerLoader {
         this.element.appendChild(this.createSpinnerSvg());
         
         if (this.options.message) {
-            const messageEl = document.createElement('span');
+            const messageEl = createEl('span');
             messageEl.className = 'loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
         }
         
         // 스크린 리더용 라이브 영역
-        const srOnly = document.createElement('span');
+        const srOnly = createEl('span');
         srOnly.className = 'sr-only';
         srOnly.setAttribute('aria-live', 'polite');
         srOnly.textContent = this.options.message || '데이터를 불러오는 중입니다';
@@ -130,20 +134,20 @@ export class PulseLoader {
     }
 
     create(): HTMLElement {
-        this.element = document.createElement('div');
+        this.element = createEl('div');
         this.element.className = `loading-pulse loading-pulse--${this.options.size}`;
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
         
         // 펄스 요소들
         for (let i = 0; i < 3; i++) {
-            const pulse = document.createElement('div');
+            const pulse = createEl('div');
             pulse.className = `pulse-dot pulse-dot--${i + 1}`;
             this.element.appendChild(pulse);
         }
         
         if (this.options.message) {
-            const messageEl = document.createElement('span');
+            const messageEl = createEl('span');
             messageEl.className = 'loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
@@ -186,7 +190,7 @@ export class SkeletonLoader {
     }
 
     create(): HTMLElement {
-        this.element = document.createElement('div');
+        this.element = createEl('div');
         this.element.className = 'loading-skeleton';
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', '콘텐츠를 불러오는 중');
@@ -203,7 +207,7 @@ export class SkeletonLoader {
         }
 
         for (let i = 0; i < lineCount; i++) {
-            const line = document.createElement('div');
+            const line = createEl('div');
             const classes = ['skeleton-line'];
             if (this.options.animated !== false) {
                 classes.push('skeleton-animated');
@@ -291,16 +295,16 @@ export class DotsLoader {
     }
 
     create(): HTMLElement {
-        this.element = document.createElement('div');
+        this.element = createEl('div');
         this.element.className = `loading-dots loading-dots--${this.options.size}`;
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
         
-        const dotsContainer = document.createElement('div');
+        const dotsContainer = createEl('div');
         dotsContainer.className = 'dots-container';
         
         for (let i = 0; i < 3; i++) {
-            const dot = document.createElement('span');
+            const dot = createEl('span');
             dot.className = 'dot';
             dotsContainer.appendChild(dot);
         }
@@ -308,7 +312,7 @@ export class DotsLoader {
         this.element.appendChild(dotsContainer);
         
         if (this.options.message) {
-            const messageEl = document.createElement('span');
+            const messageEl = createEl('span');
             messageEl.className = 'loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
@@ -337,19 +341,19 @@ export class StatusIcon {
     }
 
     create(): HTMLElement {
-        this.element = document.createElement('div');
+        this.element = createEl('div');
         this.element.className = `status-icon status-icon--${this.type}`;
         this.element.setAttribute('role', 'status');
         
         const icon = this.getIcon();
-        const iconEl = document.createElement('div');
+        const iconEl = createEl('div');
         iconEl.className = 'status-icon__icon';
         iconEl.appendChild(icon);
         
         this.element.appendChild(iconEl);
         
         if (this.message) {
-            const messageEl = document.createElement('span');
+            const messageEl = createEl('span');
             messageEl.className = 'status-icon__message';
             messageEl.textContent = this.message;
             this.element.appendChild(messageEl);
@@ -453,7 +457,7 @@ export class StatusIcon {
         if (messageEl) {
             messageEl.textContent = message;
         } else {
-            const newMessageEl = document.createElement('span');
+            const newMessageEl = createEl('span');
             newMessageEl.className = 'status-icon__message';
             newMessageEl.textContent = message;
             this.element.appendChild(newMessageEl);
@@ -479,7 +483,7 @@ export class LoadingIndicatorFactory {
             case 'pulse':
                 return new PulseLoader(options).create();
             case 'skeleton':
-                return new SkeletonLoader(options as any).create();
+                return new SkeletonLoader(options).create();
             case 'dots':
                 return new DotsLoader(options).create();
             default:

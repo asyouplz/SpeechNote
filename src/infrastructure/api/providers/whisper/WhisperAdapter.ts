@@ -15,6 +15,10 @@ import { WhisperService } from '../../WhisperService';
  */
 export class WhisperAdapter implements ITranscriber {
     private config: ProviderConfig;
+
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error('Unknown error');
+    }
     
     constructor(
         private whisperService: WhisperService,
@@ -52,8 +56,9 @@ export class WhisperAdapter implements ITranscriber {
             // 응답 변환
             return this.convertResponse(response, processingTime);
         } catch (error) {
-            this.logger.error('WhisperAdapter: Transcription failed', error as Error);
-            throw error;
+            const normalizedError = this.normalizeError(error);
+            this.logger.error('WhisperAdapter: Transcription failed', normalizedError);
+            throw normalizedError;
         }
     }
     
@@ -104,14 +109,14 @@ export class WhisperAdapter implements ITranscriber {
             text: response.text,
             language: response.language,
             duration: response.duration,
-            segments: response.segments?.map(segment => ({
-                id: segment.id,
+            segments: response.segments?.map((segment, index) => ({
+                id: segment.id ?? index,
                 start: segment.start,
                 end: segment.end,
                 text: segment.text,
                 confidence: segment.no_speech_prob ? 1 - segment.no_speech_prob : undefined
             })),
-            provider: 'whisper' as TranscriptionProvider,
+            provider: 'whisper',
             metadata: {
                 model: 'whisper-1',
                 processingTime,
@@ -123,7 +128,7 @@ export class WhisperAdapter implements ITranscriber {
     /**
      * API 키 검증
      */
-    async validateApiKey(key: string): Promise<boolean> {
+    validateApiKey(key: string): Promise<boolean> {
         return this.whisperService.validateApiKey(key);
     }
     
@@ -185,7 +190,7 @@ export class WhisperAdapter implements ITranscriber {
             });
             return true;
         } catch (error) {
-            const errorMessage = (error as Error).message.toLowerCase();
+            const errorMessage = this.normalizeError(error).message.toLowerCase();
             
             // Circuit Breaker가 열려있거나 일시적인 문제인 경우
             if (errorMessage.includes('circuit') || 
