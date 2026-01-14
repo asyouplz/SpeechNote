@@ -259,7 +259,7 @@ jobs:
     
     steps:
       - name: Send Discord notification
-        if: ${{ success() }}
+        if: ${{ success() && secrets.DISCORD_WEBHOOK != '' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
@@ -270,7 +270,7 @@ jobs:
             $DISCORD_WEBHOOK
             
       - name: Send failure notification
-        if: ${{ failure() }}
+        if: ${{ failure() && secrets.DISCORD_WEBHOOK != '' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
