@@ -190,15 +190,29 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare-release, create-release]
     if: ${{ !contains(needs.prepare-release.outputs.version, '-') }}
+    env:
+      COMMUNITY_PLUGIN_TOKEN: ${{ secrets.COMMUNITY_PLUGIN_TOKEN }}
     
     steps:
+      - name: Check community plugin token
+        id: community-token
+        run: |
+          if [ -n "${COMMUNITY_PLUGIN_TOKEN}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "COMMUNITY_PLUGIN_TOKEN is not set. Skipping community update."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout community plugins repo
+        if: steps.community-token.outputs.available == 'true'
         uses: actions/checkout@v4
         with:
           repository: obsidianmd/obsidian-releases
-          token: ${{ secrets.COMMUNITY_PLUGIN_TOKEN }}
+          token: ${{ env.COMMUNITY_PLUGIN_TOKEN }}
           
       - name: Update plugin manifest
+        if: steps.community-token.outputs.available == 'true'
         run: |
           VERSION="${{ needs.prepare-release.outputs.version }}"
           VERSION_NUMBER="${VERSION#v}"
@@ -208,9 +222,10 @@ jobs:
           mv tmp.json community-plugins.json
           
       - name: Create Pull Request
+        if: steps.community-token.outputs.available == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.COMMUNITY_PLUGIN_TOKEN }}
+          token: ${{ env.COMMUNITY_PLUGIN_TOKEN }}
           commit-message: "Update Speech to Text plugin to ${{ needs.prepare-release.outputs.version }}"
           title: "Update Speech to Text plugin to ${{ needs.prepare-release.outputs.version }}"
           body: |
