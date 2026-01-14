@@ -256,13 +256,13 @@ export class FileValidator {
     /**
      * 매직 바이트 검증
      */
-    private async validateMagicBytes(
+    private validateMagicBytes(
         extension: string, 
         buffer: ArrayBuffer
     ): Promise<{ valid: boolean; error?: ValidationError }> {
         const format = this.SUPPORTED_FORMATS.get(extension.toLowerCase());
         if (!format || !format.magicBytes) {
-            return { valid: true }; // 매직 바이트 정보가 없으면 통과
+            return Promise.resolve({ valid: true }); // 매직 바이트 정보가 없으면 통과
         }
 
         const bytes = new Uint8Array(buffer);
@@ -270,14 +270,14 @@ export class FileValidator {
         
         // 버퍼가 너무 작은 경우
         if (bytes.length < offset + format.magicBytes.length) {
-            return {
+            return Promise.resolve({
                 valid: false,
                 error: {
                     code: 'INVALID_FILE_STRUCTURE',
                     message: '파일 구조가 올바르지 않습니다',
                     field: 'format'
                 }
-            };
+            });
         }
 
         // 매직 바이트 확인
@@ -294,17 +294,17 @@ export class FileValidator {
         }
 
         if (!magicMatch && !alternativeMatch) {
-            return {
+            return Promise.resolve({
                 valid: false,
                 error: {
                     code: 'INVALID_FORMAT',
                     message: `파일 내용이 예상된 ${extension.toUpperCase()} 형식과 일치하지 않습니다`,
                     field: 'format'
                 }
-            };
+            });
         }
 
-        return { valid: true };
+        return Promise.resolve({ valid: true });
     }
 
     /**
@@ -338,7 +338,7 @@ export class FileValidator {
     /**
      * 오디오 길이 추정 (간단한 구현)
      */
-    private async estimateAudioDuration(extension: string, buffer: ArrayBuffer): Promise<number | undefined> {
+    private estimateAudioDuration(extension: string, buffer: ArrayBuffer): Promise<number | undefined> {
         // 실제 구현에서는 오디오 메타데이터 파서를 사용해야 함
         // 여기서는 대략적인 추정만 제공
         
@@ -355,10 +355,10 @@ export class FileValidator {
         const bitrate = avgBitrates[extension.toLowerCase()];
         if (bitrate) {
             // duration in seconds = (file size in KB * 8) / bitrate
-            return Math.round((fileSizeKB * 8) / bitrate);
+            return Promise.resolve(Math.round((fileSizeKB * 8) / bitrate));
         }
 
-        return undefined;
+        return Promise.resolve(undefined);
     }
 
     /**
@@ -373,14 +373,14 @@ export class FileValidator {
     /**
      * 빠른 검증 (버퍼 없이)
      */
-    async quickValidate(file: TFile): Promise<ValidationResult> {
+    quickValidate(file: TFile): Promise<ValidationResult> {
         return this.validate(file);
     }
 
     /**
      * 전체 검증 (버퍼 포함)
      */
-    async fullValidate(file: TFile, buffer: ArrayBuffer): Promise<ValidationResult> {
+    fullValidate(file: TFile, buffer: ArrayBuffer): Promise<ValidationResult> {
         return this.validate(file, buffer);
     }
 

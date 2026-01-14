@@ -130,10 +130,10 @@ export class MemoryProfiler {
     /**
      * 메모리 스냅샷 촬영
      */
-    private async takeSnapshot(): Promise<MemorySnapshot> {
+    private takeSnapshot(): Promise<MemorySnapshot> {
         const memory = (performance as Performance & { memory?: { totalJSHeapSize: number; usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
-        
-        return {
+
+        return Promise.resolve({
             timestamp: Date.now(),
             usedJSHeapSize: memory?.usedJSHeapSize || 0,
             totalJSHeapSize: memory?.totalJSHeapSize || 0,
@@ -141,7 +141,7 @@ export class MemoryProfiler {
             domNodes: document.getElementsByTagName('*').length,
             listeners: this.countEventListeners(),
             detachedNodes: this.countDetachedNodes()
-        };
+        });
     }
 
     /**

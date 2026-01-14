@@ -226,7 +226,7 @@ export function validateRequiredFields<T extends Record<string, unknown>>(
     if (missingFields.length > 0) {
         return {
             valid: false,
-            missingFields: missingFields as string[]
+            missingFields: missingFields.map(String)
         };
     }
     

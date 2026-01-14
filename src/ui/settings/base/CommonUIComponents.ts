@@ -231,7 +231,9 @@ export class UIComponentFactory {
                 tabPanels.querySelectorAll('.tab-panel').forEach(panel => {
                     panel.classList.remove('active');
                     panel.setAttribute('hidden', 'true');
-                    (panel as HTMLElement).empty();
+                    if (panel instanceof HTMLElement) {
+                        panel.empty();
+                    }
                 });
                 
                 // 선택된 탭 활성화
@@ -263,9 +265,11 @@ export class UIComponentFactory {
                 }
                 
                 e.preventDefault();
-                const newTab = tabList.querySelectorAll('.tab-button')[newIndex] as HTMLElement;
-                newTab.click();
-                newTab.focus();
+                const newTab = tabList.querySelectorAll('.tab-button')[newIndex];
+                if (newTab instanceof HTMLElement) {
+                    newTab.click();
+                    newTab.focus();
+                }
             };
         });
         
@@ -337,52 +341,42 @@ export class UIComponentFactory {
     /**
      * 확인 다이얼로그
      */
-    static async showConfirmDialog(
+    static showConfirmDialog(
         title: string,
         message: string,
         confirmText = '확인',
         cancelText = '취소'
     ): Promise<boolean> {
         return new Promise((resolve) => {
-            const modal = document.createElement('div');
-            modal.className = 'modal-container';
+            const modal = createEl('div', { cls: 'modal-container' });
 
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-bg';
+            const backdrop = createEl('div', { cls: 'modal-bg' });
             modal.appendChild(backdrop);
 
-            const dialog = document.createElement('div');
-            dialog.className = 'modal';
+            const dialog = createEl('div', { cls: 'modal' });
             modal.appendChild(dialog);
 
-            const closeBtn = document.createElement('div');
-            closeBtn.className = 'modal-close-button';
-            closeBtn.setAttribute('aria-label', 'Close');
-            closeBtn.textContent = '×';
+            const closeBtn = createEl('div', {
+                cls: 'modal-close-button',
+                text: '×',
+                attr: { 'aria-label': 'Close' }
+            });
             dialog.appendChild(closeBtn);
 
-            const titleEl = document.createElement('div');
-            titleEl.className = 'modal-title';
-            titleEl.textContent = title;
+            const titleEl = createEl('div', { cls: 'modal-title', text: title });
             dialog.appendChild(titleEl);
 
-            const content = document.createElement('div');
-            content.className = 'modal-content';
-            const messageEl = document.createElement('p');
-            messageEl.textContent = message;
+            const content = createEl('div', { cls: 'modal-content' });
+            const messageEl = createEl('p', { text: message });
             content.appendChild(messageEl);
             dialog.appendChild(content);
 
-            const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'modal-button-container';
+            const buttonContainer = createEl('div', { cls: 'modal-button-container' });
 
-            const confirmBtn = document.createElement('button');
-            confirmBtn.className = 'mod-cta';
-            confirmBtn.textContent = confirmText;
+            const confirmBtn = createEl('button', { cls: 'mod-cta', text: confirmText });
             buttonContainer.appendChild(confirmBtn);
 
-            const cancelBtn = document.createElement('button');
-            cancelBtn.textContent = cancelText;
+            const cancelBtn = createEl('button', { text: cancelText });
             buttonContainer.appendChild(cancelBtn);
 
             dialog.appendChild(buttonContainer);

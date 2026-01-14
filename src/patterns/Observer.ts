@@ -13,6 +13,8 @@ export type EventMap = Record<string, unknown>;
  */
 export type EventListener<T = unknown> = (data: T) => void | Promise<void>;
 
+type AnyEventListener = (data: unknown) => void | Promise<void>;
+
 /**
  * 구독 해제 함수
  */
@@ -38,15 +40,15 @@ export interface IObservable<T> {
  * 강화된 EventEmitter 클래스
  */
 export class EventEmitter<T extends EventMap = EventMap> {
-    private events = new Map<keyof T, Set<EventListener<unknown>>>();
-    private onceEvents = new Map<keyof T, Set<EventListener<unknown>>>();
+    private events = new Map<keyof T, Set<AnyEventListener>>();
+    private onceEvents = new Map<keyof T, Set<AnyEventListener>>();
     
     /**
      * 이벤트 리스너 등록
      */
     on<K extends keyof T>(event: K, listener: EventListener<T[K]>): Unsubscribe {
-        const listeners = this.events.get(event) ?? new Set<EventListener<unknown>>();
-        listeners.add(listener as EventListener<unknown>);
+        const listeners = this.events.get(event) ?? new Set<AnyEventListener>();
+        listeners.add(listener as AnyEventListener);
         this.events.set(event, listeners);
         
         return () => this.off(event, listener);
@@ -56,8 +58,8 @@ export class EventEmitter<T extends EventMap = EventMap> {
      * 일회성 이벤트 리스너 등록
      */
     once<K extends keyof T>(event: K, listener: EventListener<T[K]>): Unsubscribe {
-        const listeners = this.onceEvents.get(event) ?? new Set<EventListener<unknown>>();
-        listeners.add(listener as EventListener<unknown>);
+        const listeners = this.onceEvents.get(event) ?? new Set<AnyEventListener>();
+        listeners.add(listener as AnyEventListener);
         this.onceEvents.set(event, listeners);
         
         return () => this.off(event, listener);
@@ -67,8 +69,8 @@ export class EventEmitter<T extends EventMap = EventMap> {
      * 이벤트 리스너 제거
      */
     off<K extends keyof T>(event: K, listener: EventListener<T[K]>): void {
-        this.events.get(event)?.delete(listener as EventListener<unknown>);
-        this.onceEvents.get(event)?.delete(listener as EventListener<unknown>);
+        this.events.get(event)?.delete(listener as AnyEventListener);
+        this.onceEvents.get(event)?.delete(listener as AnyEventListener);
     }
     
     /**
@@ -76,7 +78,7 @@ export class EventEmitter<T extends EventMap = EventMap> {
      */
     emit<K extends keyof T>(event: K, data: T[K]): void {
         // 일반 리스너 실행
-        (this.events.get(event) as Set<EventListener<T[K]>> | undefined)?.forEach(listener => {
+        this.events.get(event)?.forEach(listener => {
             try {
                 void listener(data);
             } catch (error) {
@@ -85,7 +87,7 @@ export class EventEmitter<T extends EventMap = EventMap> {
         });
         
         // 일회성 리스너 실행 및 제거
-        const onceListeners = this.onceEvents.get(event) as Set<EventListener<T[K]>> | undefined;
+        const onceListeners = this.onceEvents.get(event);
         if (onceListeners) {
             onceListeners.forEach(listener => {
                 try {

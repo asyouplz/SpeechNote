@@ -279,7 +279,7 @@ export class MemoryMonitor {
     /**
      * 메모리 체크
      */
-    private async check(): Promise<void> {
+    private check(): void {
         if ('memory' in performance) {
             const memory = (performance as Performance & { memory?: MemoryInfo }).memory;
             if (!memory) {
@@ -378,10 +378,13 @@ export class EventListenerManager {
         
         if (!this.delegatedListeners.has(key)) {
             const listener = (event: Event) => {
-                const target = event.target as HTMLElement;
-                const element = target.closest(selector) as HTMLElement;
-                
-                if (element && container.contains(element)) {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const element = target.closest(selector);
+                if (element instanceof HTMLElement && container.contains(element)) {
                     handler(event, element);
                 }
             };
