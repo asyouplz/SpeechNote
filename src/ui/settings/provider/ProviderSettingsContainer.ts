@@ -4,7 +4,6 @@ import { TranscriptionProvider, SelectionStrategy } from '../../../infrastructur
 import { APIKeyManager } from './components/APIKeyManager';
 import { AdvancedSettingsPanel } from './components/AdvancedSettingsPanel';
 // import { ProviderMetricsDisplay } from './components/ProviderMetricsDisplay';
-import { isPlainRecord } from '../../../types/guards';
 
 /**
  * Provider Settings Container
@@ -96,7 +95,7 @@ export class ProviderSettingsContainer {
         // 타이틀
         const titleEl = headerEl.createDiv({ cls: 'provider-title' });
         titleEl.createEl('h3', { 
-            text: '🎯 Transcription provider configuration',
+            text: '🎯 Transcription Provider Configuration',
             cls: 'provider-title-text'
         });
         
@@ -143,11 +142,10 @@ export class ProviderSettingsContainer {
         // Provider별 상태
         const providersEl = dashboardEl.createDiv({ cls: 'providers-status-grid' });
         
-        const providers: TranscriptionProvider[] = ['whisper', 'deepgram'];
-        providers.forEach((provider) => {
+        ['whisper', 'deepgram'].forEach((provider: string) => {
             const providerEl = providersEl.createDiv({ cls: 'provider-status-item' });
-            const isConnected = this.connectionStatus.get(provider) || false;
-            const hasKey = this.hasApiKey(provider);
+            const isConnected = this.connectionStatus.get(provider as TranscriptionProvider) || false;
+            const hasKey = this.hasApiKey(provider as TranscriptionProvider);
             
             providerEl.createDiv({
                 cls: 'provider-name',
@@ -172,10 +170,10 @@ export class ProviderSettingsContainer {
                 cls: 'indicator performance-status',
                 attr: { title: 'Performance score' }
             });
-            performanceStatus.setText(this.getPerformanceIndicator(provider));
+            performanceStatus.setText(this.getPerformanceIndicator(provider as TranscriptionProvider));
             
             // 클릭시 상세 정보
-            providerEl.onclick = () => this.showProviderDetails(provider);
+            providerEl.onclick = () => this.showProviderDetails(provider as TranscriptionProvider);
         });
         
         // 실시간 업데이트 타이머
@@ -193,25 +191,23 @@ export class ProviderSettingsContainer {
         const selectionEl = containerEl.createDiv({ cls: 'provider-selection-section' });
         
         new Setting(selectionEl)
-            .setName('Provider mode')
+            .setName('Provider Mode')
             .setDesc('Select how to choose the transcription provider')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('auto', '🤖 Automatic (recommended)')
-                    .addOption('whisper', '🎯 OpenAI Whisper only')
-                    .addOption('deepgram', '🚀 Deepgram only')
+                    .addOption('auto', '🤖 Automatic (Recommended)')
+                    .addOption('whisper', '🎯 OpenAI Whisper Only')
+                    .addOption('deepgram', '🚀 Deepgram Only')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
-                        if (this.isProviderSelection(value)) {
-                            this.currentProvider = value;
-                            await this.saveProviderSelection(value);
-                            
-                            // UI 업데이트
-                            this.updateProviderVisibility(containerEl);
-                            
-                            // 즉각적인 피드백
-                            this.showProviderNotice(value);
-                        }
+                        this.currentProvider = value as TranscriptionProvider | 'auto';
+                        await this.saveProviderSelection(value);
+                        
+                        // UI 업데이트
+                        this.updateProviderVisibility(containerEl);
+                        
+                        // 즉각적인 피드백
+                        this.showProviderNotice(value);
                     });
             })
             .addExtraButton(button => {
@@ -232,7 +228,7 @@ export class ProviderSettingsContainer {
      */
     private renderStrategySelection(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Selection strategy')
+            .setName('Selection Strategy')
             .setDesc('How should the system choose between providers?')
             .addDropdown(dropdown => {
                 dropdown
@@ -242,9 +238,7 @@ export class ProviderSettingsContainer {
                     .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round Robin')
                     .setValue(this.plugin.settings.selectionStrategy || SelectionStrategy.PERFORMANCE_OPTIMIZED)
                     .onChange(async (value) => {
-                        if (this.isSelectionStrategy(value)) {
-                            await this.saveStrategy(value);
-                        }
+                        await this.saveStrategy(value as SelectionStrategy);
                     });
             });
     }
@@ -387,7 +381,7 @@ export class ProviderSettingsContainer {
     /**
      * Provider 상세 정보 표시
      */
-    private showProviderDetails(provider: TranscriptionProvider): void {
+    private async showProviderDetails(provider: TranscriptionProvider): Promise<void> {
         const modal = new ProviderDetailsModal(this.app, provider, this.plugin);
         modal.open();
     }
@@ -485,7 +479,7 @@ export class ProviderSettingsContainer {
     /**
      * Provider 연결 확인
      */
-    private checkProviderConnection(provider: TranscriptionProvider): boolean {
+    private async checkProviderConnection(provider: TranscriptionProvider): Promise<boolean> {
         try {
             // TODO: 실제 연결 테스트 구현
             return true; // 임시
@@ -531,31 +525,19 @@ export class ProviderSettingsContainer {
     /**
      * API 키 가져오기
      */
-    private importApiKeys(): void {
+    private async importApiKeys(): Promise<void> {
         // 파일 선택 다이얼로그
-        const input = createEl('input');
+        const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
         
         input.onchange = async (e) => {
-            const target = e.target;
-            if (!(target instanceof HTMLInputElement)) {
-                return;
-            }
-            const file = target.files?.[0];
+            const file = (e.target as HTMLInputElement).files?.[0];
             if (!file) return;
             
             try {
                 const content = await file.text();
-                const parsed = JSON.parse(content);
-                const keys: Record<string, string> = {};
-                if (isPlainRecord(parsed)) {
-                    Object.entries(parsed).forEach(([key, value]) => {
-                        if (typeof value === 'string') {
-                            keys[key] = value;
-                        }
-                    });
-                }
+                const keys = JSON.parse(content);
                 
                 await this.apiKeyManager.importKeys(keys);
                 new Notice('API keys imported successfully');
@@ -596,7 +578,7 @@ export class ProviderSettingsContainer {
     /**
      * 설정 내보내기
      */
-    private exportConfiguration(): void {
+    private async exportConfiguration(): Promise<void> {
         try {
             const config = {
                 provider: this.currentProvider,
@@ -615,7 +597,7 @@ export class ProviderSettingsContainer {
             });
             const url = URL.createObjectURL(blob);
             
-            const a = createEl('a');
+            const a = document.createElement('a');
             a.href = url;
             a.download = `provider-config-${Date.now()}.json`;
             a.click();
@@ -631,7 +613,7 @@ export class ProviderSettingsContainer {
     /**
      * 초기화 확인
      */
-    private confirmReset(): Promise<boolean> {
+    private async confirmReset(): Promise<boolean> {
         return new Promise((resolve) => {
             const modal = new Modal(this.app);
             modal.titleEl.setText('Reset Provider Settings?');
@@ -702,8 +684,8 @@ export class ProviderSettingsContainer {
     
     // === Save Methods ===
     
-    private async saveProviderSelection(provider: TranscriptionProvider | 'auto'): Promise<void> {
-        this.plugin.settings.provider = provider;
+    private async saveProviderSelection(provider: string): Promise<void> {
+        this.plugin.settings.provider = provider as 'auto' | 'whisper' | 'deepgram';
         await this.plugin.saveSettings();
     }
     
@@ -712,25 +694,10 @@ export class ProviderSettingsContainer {
         await this.plugin.saveSettings();
     }
     
-    private loadSettings(): void {
+    private async loadSettings(): Promise<void> {
         this.currentProvider = this.plugin.settings.provider || 'auto';
     }
-
-    private isProviderSelection(value: string): value is TranscriptionProvider | 'auto' {
-        return value === 'auto' || value === 'whisper' || value === 'deepgram';
-    }
-
-    private isSelectionStrategy(value: string): value is SelectionStrategy {
-        return (
-            value === SelectionStrategy.MANUAL ||
-            value === SelectionStrategy.COST_OPTIMIZED ||
-            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
-            value === SelectionStrategy.QUALITY_OPTIMIZED ||
-            value === SelectionStrategy.ROUND_ROBIN ||
-            value === SelectionStrategy.AB_TEST
-        );
-    }
-
+    
     /**
      * 정리
      */
@@ -809,7 +776,7 @@ class ProviderDetailsModal extends Modal {
     }
     
     private renderStatistics(containerEl: HTMLElement): void {
-        containerEl.createEl('h4', { text: 'Statistics (last 30 days)' });
+        containerEl.createEl('h4', { text: 'Statistics (Last 30 days)' });
         
         // TODO: 실제 통계 가져오기
         const stats = [
@@ -866,7 +833,7 @@ class ProviderMetricsDisplay {
     constructor(private plugin: SpeechToTextPlugin) {}
     
     render(containerEl: HTMLElement): void {
-        containerEl.createEl('h4', { text: '📊 Performance metrics' });
+        containerEl.createEl('h4', { text: '📊 Performance Metrics' });
         
         // TODO: 실제 메트릭 구현
         const metricsEl = containerEl.createDiv({ cls: 'metrics-display' });

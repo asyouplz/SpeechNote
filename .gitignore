@@ -17,7 +17,6 @@ out/
 !tests/**/*.ts
 !test/**/*.js
 !test/**/*.ts
-!scripts/*.js
 
 # Testing
 coverage/

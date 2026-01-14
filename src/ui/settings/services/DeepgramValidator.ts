@@ -26,10 +26,9 @@ export class DeepgramValidator {
         try {
             this.logger.info('Validating API key via Obsidian requestUrl...');
 
-            const method: RequestUrlParam['method'] = API_CONSTANTS.METHODS.GET;
             const req: RequestUrlParam = {
                 url: API_CONSTANTS.ENDPOINTS.VALIDATION,
-                method,
+                method: API_CONSTANTS.METHODS.GET as any,
                 headers: {
                     'Authorization': `${API_CONSTANTS.HEADERS.AUTHORIZATION_PREFIX} ${apiKey}`,
                     'Content-Type': API_CONSTANTS.HEADERS.CONTENT_TYPE

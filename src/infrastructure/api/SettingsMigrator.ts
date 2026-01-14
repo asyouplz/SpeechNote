@@ -2,7 +2,6 @@
  * 설정 마이그레이션 시스템
  */
 
-import type { App } from 'obsidian';
 import type { SettingsSchema, LanguageCode } from '../../types/phase3-api';
 
 type Migration = (settings: SettingsSchema) => Promise<SettingsSchema>;
@@ -12,10 +11,8 @@ type Migration = (settings: SettingsSchema) => Promise<SettingsSchema>;
  */
 export class SettingsMigrator {
     private migrations: Map<string, Migration> = new Map();
-    private app: App;
 
-    constructor(app: App) {
-        this.app = app;
+    constructor() {
         this.registerMigrations();
     }
 
@@ -32,22 +29,6 @@ export class SettingsMigrator {
         if (!language) return 'auto';
         const mapped = this.legacyLanguageMap[language.toLowerCase()];
         return mapped || language;
-    }
-
-    private toLanguageCode(value: string): LanguageCode {
-        switch (value) {
-            case 'auto':
-            case 'en':
-            case 'ko':
-            case 'ja':
-            case 'zh':
-            case 'es':
-            case 'fr':
-            case 'de':
-                return value;
-            default:
-                return 'auto';
-        }
     }
 
     /**
@@ -149,58 +130,55 @@ export class SettingsMigrator {
      * 마이그레이션 등록
      */
     private registerMigrations(): void {
-        const getBool = (val: unknown, fallback: boolean): boolean =>
-            typeof val === 'boolean' ? val : fallback;
-        const getNum = (val: unknown, fallback: number): number =>
-            typeof val === 'number' ? val : fallback;
-        const getString = (val: unknown): string | undefined =>
-            typeof val === 'string' ? val : undefined;
-        const normalizeLanguage = (val: unknown): LanguageCode =>
-            this.toLanguageCode(this.normalizeLegacyLanguage(getString(val)));
-        const isAudioFormat = (val: unknown): val is SettingsSchema['audio']['format'] =>
-            val === 'mp3' || val === 'm4a' || val === 'wav' || val === 'webm';
-        const isAudioQuality = (val: unknown): val is SettingsSchema['audio']['quality'] =>
-            val === 'low' || val === 'medium' || val === 'high' || val === 'lossless';
-        const isSampleRate = (val: unknown): val is SettingsSchema['audio']['sampleRate'] =>
-            val === 8000 || val === 16000 || val === 22050 || val === 44100 || val === 48000;
-
         // 1.0.0 -> 1.1.0
-        this.migrations.set('1.0.0->1.1.0', (settings) => {
-            return Promise.resolve({
+        this.migrations.set('1.0.0->1.1.0', async (settings) => {
+            return {
                 ...settings,
                 // autoSave 추가
-                autoSave: getBool(settings.autoSave, true),
+                autoSave: (settings as Record<string, unknown>).autoSave ?? true,
                 // 캐시 설정 추가
-                enableCache: getBool(settings.enableCache, true)
-            });
+                enableCache: (settings as Record<string, unknown>).enableCache ?? true
+            };
         });
 
         // 1.1.0 -> 1.2.0
-        this.migrations.set('1.1.0->1.2.0', (settings) => {
-            return Promise.resolve({
+        this.migrations.set('1.1.0->1.2.0', async (settings) => {
+            return {
                 ...settings,
                 // 언어 설정 마이그레이션
-                language: normalizeLanguage(settings.language),
+                language: this.normalizeLegacyLanguage(settings.language as string | undefined) as LanguageCode,
                 // 청크 크기 추가
                 chunkSize: settings.chunkSize ?? 1024 * 1024
-            });
+            };
         });
 
         // 1.2.0 -> 2.0.0 (메이저 업데이트)
-        this.migrations.set('1.2.0->2.0.0', (settings) => {
-            const pickFormat = (val: unknown): SettingsSchema['audio']['format'] =>
-                isAudioFormat(val) ? val : 'webm';
-            const pickQuality = (val: unknown): SettingsSchema['audio']['quality'] =>
-                isAudioQuality(val) ? val : 'high';
-            const pickSampleRate = (val: unknown): SettingsSchema['audio']['sampleRate'] =>
-                isSampleRate(val) ? val : 16000;
+        this.migrations.set('1.2.0->2.0.0', async (settings) => {
+            const getBool = (val: unknown, fallback: boolean) =>
+                typeof val === 'boolean' ? val : fallback;
+            const getNum = (val: unknown, fallback: number) =>
+                typeof val === 'number' ? val : fallback;
+            const pickFormat = (val: unknown): SettingsSchema['audio']['format'] => {
+                const allowed: SettingsSchema['audio']['format'][] = ['mp3', 'm4a', 'wav', 'webm'];
+                return allowed.includes(val as SettingsSchema['audio']['format']) ? (val as SettingsSchema['audio']['format']) : 'webm';
+            };
+            const pickQuality = (val: unknown): SettingsSchema['audio']['quality'] => {
+                const allowed: SettingsSchema['audio']['quality'][] = ['low', 'medium', 'high', 'lossless'];
+                return allowed.includes(val as SettingsSchema['audio']['quality']) ? (val as SettingsSchema['audio']['quality']) : 'high';
+            };
+            const pickSampleRate = (val: unknown): SettingsSchema['audio']['sampleRate'] => {
+                const allowed: SettingsSchema['audio']['sampleRate'][] = [8000, 16000, 22050, 44100, 48000];
+                return allowed.includes(val as SettingsSchema['audio']['sampleRate'])
+                    ? (val as SettingsSchema['audio']['sampleRate'])
+                    : 16000;
+            };
 
             const migrated: SettingsSchema = {
                 version: '2.0.0',
                 general: {
-                    language: normalizeLanguage(settings.language),
-                    autoSave: getBool(settings.autoSave, true),
-                    saveInterval: getNum(settings.saveInterval, 30000),
+                    language: this.normalizeLegacyLanguage(settings.language as string | undefined) as LanguageCode,
+                    autoSave: getBool((settings as Record<string, unknown>).autoSave, true),
+                    saveInterval: getNum((settings as Record<string, unknown>).saveInterval, 30000),
                     theme: 'auto',
                     notifications: {
                         enabled: true,
@@ -210,28 +188,28 @@ export class SettingsMigrator {
                 },
                 api: {
                     provider: 'openai',
-                    apiKey: getString(settings.apiKey),
-                    model: getString(settings.model) || 'whisper-1',
-                    maxTokens: getNum(settings.maxTokens, 4096),
+                    apiKey: (settings as Record<string, unknown>).apiKey as string | undefined,
+                    model: ((settings as Record<string, unknown>).model as string) || 'whisper-1',
+                    maxTokens: getNum((settings as Record<string, unknown>).maxTokens, 4096),
                     temperature: 0.5
                 },
                 audio: {
-                    format: pickFormat(settings.audioFormat),
-                    quality: pickQuality(settings.audioQuality),
-                    sampleRate: pickSampleRate(settings.sampleRate),
+                    format: pickFormat((settings as Record<string, unknown>).audioFormat),
+                    quality: pickQuality((settings as Record<string, unknown>).audioQuality),
+                    sampleRate: pickSampleRate((settings as Record<string, unknown>).sampleRate),
                     channels: 1,
-                    language: this.normalizeLegacyLanguage(getString(settings.language)),
+                    language: this.normalizeLegacyLanguage(settings.language as string | undefined),
                     enhanceAudio: false
                 },
                 advanced: {
                     cache: {
-                        enabled: getBool(settings.enableCache, true),
-                        maxSize: getNum(settings.cacheSize, 100 * 1024 * 1024),
+                        enabled: getBool((settings as Record<string, unknown>).enableCache, true),
+                        maxSize: getNum((settings as Record<string, unknown>).cacheSize, 100 * 1024 * 1024),
                         ttl: 60_000
                     },
                     performance: {
-                        chunkSize: getNum(settings.chunkSize, 1024 * 1024),
-                        maxConcurrency: getNum(settings.maxConcurrency, 3),
+                        chunkSize: getNum((settings as Record<string, unknown>).chunkSize, 1024 * 1024),
+                        maxConcurrency: getNum((settings as Record<string, unknown>).maxConcurrency, 3),
                         timeout: 30_000,
                         useWebWorkers: false
                     },
@@ -250,12 +228,12 @@ export class SettingsMigrator {
                 }
             };
 
-            return Promise.resolve(migrated);
+            return migrated;
         });
 
         // 2.0.0 -> 2.1.0
-        this.migrations.set('2.0.0->2.1.0', (settings) => {
-            return Promise.resolve({
+        this.migrations.set('2.0.0->2.1.0', async (settings) => {
+            return {
                 ...settings,
                 version: '2.1.0',
                 // 테마 설정 추가
@@ -274,12 +252,12 @@ export class SettingsMigrator {
                     channels: settings.audio?.channels ?? 1,
                     enhanceAudio: settings.audio?.enhanceAudio ?? false
                 }
-            });
+            };
         });
 
         // 2.1.0 -> 2.2.0
-        this.migrations.set('2.1.0->2.2.0', (settings) => {
-            return Promise.resolve({
+        this.migrations.set('2.1.0->2.2.0', async (settings) => {
+            return {
                 ...settings,
                 version: '2.2.0',
                 // 알림 설정 추가
@@ -304,23 +282,21 @@ export class SettingsMigrator {
                         timeout: 30000
                     }
                 }
-            });
+            };
         });
 
         // 2.2.0 -> 3.0.0 (메이저 업데이트)
-        this.migrations.set('2.2.0->3.0.0', (settings) => {
+        this.migrations.set('2.2.0->3.0.0', async (settings) => {
             // API 키 분리 및 암호화 준비
             const apiKey = settings.api?.apiKey;
-            const legacyGeneralLanguage = settings.general?.language ?? settings.language;
-            const legacyAudioLanguage = getString(settings.audio?.language ?? settings.language);
             const newSettings: SettingsSchema = {
                 version: '3.0.0',
                 general: {
                     ...settings.general,
-                    language: normalizeLanguage(legacyGeneralLanguage),
+                    language: this.normalizeLegacyLanguage(settings.general?.language || (settings as Record<string, unknown>).language) as LanguageCode,
                     theme: settings.general?.theme || 'auto',
                     autoSave: settings.general?.autoSave ?? true,
-                    saveInterval: getNum(settings.general?.saveInterval, 30000),
+                    saveInterval: typeof settings.general?.saveInterval === 'number' ? settings.general.saveInterval : 30000,
                     notifications: settings.general?.notifications || {
                         enabled: true,
                         sound: false,
@@ -340,9 +316,13 @@ export class SettingsMigrator {
                     quality: settings.audio?.quality || 'high',
                     sampleRate: typeof settings.audio?.sampleRate === 'number' ? settings.audio.sampleRate : 16000,
                     channels: settings.audio?.channels ?? 1,
-                    language: this.normalizeLegacyLanguage(legacyAudioLanguage),
-                    enhanceAudio: settings.audio?.enhanceAudio ?? true
-                },
+                language: this.normalizeLegacyLanguage(
+                    typeof (settings.audio?.language ?? (settings as Record<string, unknown>).language) === 'string'
+                        ? (settings.audio?.language ?? (settings as Record<string, unknown>).language) as string
+                        : undefined
+                ) as LanguageCode,
+                enhanceAudio: settings.audio?.enhanceAudio ?? true
+            },
                 advanced: {
                     cache: {
                         enabled: settings.advanced?.cache?.enabled ?? true,
@@ -370,73 +350,55 @@ export class SettingsMigrator {
                 }
             };
 
-            return Promise.resolve(newSettings);
+            return newSettings;
         });
     }
 
     /**
      * 백업 생성
      */
-    createBackup(settings: SettingsSchema): Promise<string> {
-        const timestamp = Date.now();
+    async createBackup(settings: SettingsSchema): Promise<string> {
         const backup = {
-            timestamp: new Date(timestamp).toISOString(),
+            timestamp: new Date().toISOString(),
             version: settings.version || 'unknown',
             settings: JSON.parse(JSON.stringify(settings)) // Deep clone
         };
 
-        const key = `settings_backup_${timestamp}`;
-        this.app.saveLocalStorage(key, JSON.stringify(backup));
-
-        // 백업 목록에 추가
-        this.addBackupToList(key, timestamp);
-
+        const key = `settings_backup_${Date.now()}`;
+        localStorage.setItem(key, JSON.stringify(backup));
+        
         // 오래된 백업 정리 (최대 5개 유지)
         this.cleanupOldBackups();
-
-        return Promise.resolve(key);
+        
+        return key;
     }
 
     /**
      * 백업 복원
      */
-    restoreBackup(backupKey: string): Promise<SettingsSchema> {
-        const backupData = this.app.loadLocalStorage(backupKey);
+    async restoreBackup(backupKey: string): Promise<SettingsSchema> {
+        const backupData = localStorage.getItem(backupKey);
         if (!backupData) {
             throw new Error('Backup not found');
         }
 
         const backup = JSON.parse(backupData);
-        return Promise.resolve(backup.settings);
+        return backup.settings;
     }
 
     /**
      * 오래된 백업 정리
-     * 참고: Obsidian API는 localStorage.length나 localStorage.key()를 지원하지 않으므로,
-     * 백업 키 목록을 별도로 관리합니다.
      */
     private cleanupOldBackups(): void {
-        const backupListKey = 'settings_backup_list';
-        const backupListData = this.app.loadLocalStorage(backupListKey);
-        let backupKeys: Array<{ key: string; timestamp: number }> = [];
-
-        if (backupListData) {
-            try {
-                backupKeys = JSON.parse(backupListData);
-            } catch {
-                backupKeys = [];
+        const backupKeys: Array<{ key: string; timestamp: number }> = [];
+        
+        // 백업 키 수집
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith('settings_backup_')) {
+                const timestamp = parseInt(key.replace('settings_backup_', ''));
+                backupKeys.push({ key, timestamp });
             }
-        }
-
-        // 현재 백업 키 추가 (이미 createBackup에서 저장된 경우)
-        const latestBackupKey = `settings_backup_${Date.now()}`;
-        const existingIndex = backupKeys.findIndex(b => b.key === latestBackupKey);
-        if (existingIndex === -1) {
-            // 가장 최근 백업을 목록에 추가
-            const recentBackups = backupKeys.filter(b =>
-                this.app.loadLocalStorage(b.key) !== null
-            );
-            backupKeys = recentBackups;
         }
 
         // 시간순 정렬
@@ -444,31 +406,7 @@ export class SettingsMigrator {
 
         // 최신 5개만 유지
         const toDelete = backupKeys.slice(5);
-        toDelete.forEach(({ key }) => this.app.saveLocalStorage(key, null));
-
-        // 백업 목록 업데이트
-        const remainingKeys = backupKeys.slice(0, 5);
-        this.app.saveLocalStorage(backupListKey, JSON.stringify(remainingKeys));
-    }
-
-    /**
-     * 백업 키 목록에 추가
-     */
-    addBackupToList(key: string, timestamp: number): void {
-        const backupListKey = 'settings_backup_list';
-        const backupListData = this.app.loadLocalStorage(backupListKey);
-        let backupKeys: Array<{ key: string; timestamp: number }> = [];
-
-        if (backupListData) {
-            try {
-                backupKeys = JSON.parse(backupListData);
-            } catch {
-                backupKeys = [];
-            }
-        }
-
-        backupKeys.push({ key, timestamp });
-        this.app.saveLocalStorage(backupListKey, JSON.stringify(backupKeys));
+        toDelete.forEach(({ key }) => localStorage.removeItem(key));
     }
 
     /**

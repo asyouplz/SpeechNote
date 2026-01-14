@@ -111,7 +111,7 @@ export class DeepgramErrorHandler {
     /**
      * API 응답 에러를 적절한 예외로 변환
      */
-    handleAPIError(response: any): never {
+    async handleAPIError(response: any): Promise<never> {
         const errorBody = response.json;
         const errorMessage = errorBody?.message || errorBody?.error || 'Unknown error';
         const strategy = this.errorStrategies.get(response.status);
@@ -300,7 +300,7 @@ export class DeepgramErrorHandler {
     /**
      * Graceful Degradation 전략 적용
      */
-    applyDegradation(
+    async applyDegradation(
         originalOptions: any,
         degradationOptions: DegradationOptions,
         error: Error
@@ -333,7 +333,7 @@ export class DeepgramErrorHandler {
             this.logger.debug('Reduced quality options');
         }
 
-        return Promise.resolve(degradedOptions);
+        return degradedOptions;
     }
 
     /**

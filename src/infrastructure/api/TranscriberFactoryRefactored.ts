@@ -424,7 +424,7 @@ export class TranscriberFactoryRefactored {
     /**
      * Send metrics to monitoring endpoint
      */
-    private sendMetricsToEndpoint(provider: TranscriptionProvider): void {
+    private async sendMetricsToEndpoint(provider: TranscriptionProvider): Promise<void> {
         const metrics = this.metricsTracker.getMetrics(provider);
         const stats = this.metricsTracker.getPerformanceStats(provider);
 
@@ -476,16 +476,15 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
         return changed;
     }
 
-    load(): Promise<Record<string, unknown>> {
-        return Promise.resolve({ transcription: this.transcriptionConfig });
+    async load(): Promise<Record<string, unknown>> {
+        return { transcription: this.transcriptionConfig };
     }
 
-    save(settings: Record<string, unknown>): Promise<void> {
+    async save(settings: Record<string, unknown>): Promise<void> {
         if (settings?.transcription) {
             this.transcriptionConfig = settings.transcription as TranscriptionProviderConfig;
             this.signature = this.computeSignature(this.transcriptionConfig);
         }
-        return Promise.resolve();
     }
 
     get(key: string): TranscriptionProviderConfig | undefined {
@@ -495,12 +494,11 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
         return undefined;
     }
 
-    set(key: string, value: TranscriptionProviderConfig): Promise<void> {
+    async set(key: string, value: TranscriptionProviderConfig): Promise<void> {
         if (key === 'transcription') {
             this.transcriptionConfig = value;
             this.signature = this.computeSignature(this.transcriptionConfig);
         }
-        return Promise.resolve();
     }
 
     private buildConfig(): TranscriptionProviderConfig {

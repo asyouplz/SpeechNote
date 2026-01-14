@@ -8,7 +8,6 @@ import type {
     ValidationError, 
     ValidationWarning 
 } from '../../types/phase3-api';
-import { isPlainRecord } from '../../types/guards';
 
 /**
  * 설정 검증기
@@ -30,7 +29,7 @@ export class SettingsValidator {
 
         // 각 필드 검증
         for (const [key, value] of Object.entries(settings)) {
-            const result = this.validateField(key, value);
+            const result = this.validateField(key as keyof SettingsSchema, value);
             if (result.errors) {
                 errors.push(...result.errors);
             }
@@ -49,16 +48,16 @@ export class SettingsValidator {
     /**
      * 개별 필드 검증
      */
-    validateField<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): ValidationResult;
-    validateField(key: string, value: unknown): ValidationResult {
-        const validator = this.validators.get(key);
+    validateField<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): ValidationResult {
+        const fieldKey = String(key);
+        const validator = this.validators.get(fieldKey);
         if (!validator) {
             // 알 수 없는 필드는 경고
             return {
                 valid: true,
                 warnings: [{
-                    field: key,
-                    message: `Unknown setting field: ${key}`,
+                    field: fieldKey,
+                    message: `Unknown setting field: ${fieldKey}`,
                     suggestion: 'This field may be deprecated or invalid'
                 }]
             };
@@ -73,11 +72,11 @@ export class SettingsValidator {
     private initializeValidators(): void {
         // General 설정 검증
         this.validators.set('general', (value: unknown) => {
-            const general = isPlainRecord(value) ? value : null;
+            const general = value as Partial<SettingsSchema['general']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!general) {
+            if (!general || typeof general !== 'object') {
                 errors.push({
                     field: 'general',
                     message: 'General settings must be an object',
@@ -87,7 +86,7 @@ export class SettingsValidator {
             }
 
             // 언어 코드 검증
-            if (typeof general.language === 'string') {
+            if (general.language) {
                 const validLanguages = ['auto', 'en', 'ko', 'ja', 'zh', 'es', 'fr', 'de'];
                 if (!validLanguages.includes(general.language)) {
                     errors.push({
@@ -99,7 +98,7 @@ export class SettingsValidator {
             }
 
             // 테마 검증
-            if (typeof general.theme === 'string') {
+            if (general.theme) {
                 const validThemes = ['light', 'dark', 'auto'];
                 if (!validThemes.includes(general.theme)) {
                     errors.push({
@@ -136,11 +135,11 @@ export class SettingsValidator {
 
         // API 설정 검증
         this.validators.set('api', (value: unknown) => {
-            const api = isPlainRecord(value) ? value : null;
+            const api = value as Partial<SettingsSchema['api']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!api) {
+            if (!api || typeof api !== 'object') {
                 errors.push({
                     field: 'api',
                     message: 'API settings must be an object',
@@ -150,7 +149,7 @@ export class SettingsValidator {
             }
 
             // 프로바이더 검증
-            if (typeof api.provider === 'string') {
+            if (api.provider) {
                 const validProviders = ['openai', 'azure', 'custom'];
                 if (!validProviders.includes(api.provider)) {
                     errors.push({
@@ -168,7 +167,7 @@ export class SettingsValidator {
                     message: 'Custom provider requires an endpoint URL',
                     code: 'MISSING_ENDPOINT'
                 });
-            } else if (typeof api.endpoint === 'string') {
+            } else if (api.endpoint) {
                 try {
                     new URL(api.endpoint);
                 } catch {
@@ -181,7 +180,7 @@ export class SettingsValidator {
             }
 
             // 모델 검증
-            if (typeof api.model === 'string' && api.provider === 'openai') {
+            if (api.model && api.provider === 'openai') {
                 const validModels = ['whisper-1'];
                 if (!validModels.includes(api.model)) {
                     warnings.push({
@@ -230,11 +229,11 @@ export class SettingsValidator {
 
         // Audio 설정 검증
         this.validators.set('audio', (value: unknown) => {
-            const audio = isPlainRecord(value) ? value : null;
+            const audio = value as Partial<SettingsSchema['audio']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!audio) {
+            if (!audio || typeof audio !== 'object') {
                 errors.push({
                     field: 'audio',
                     message: 'Audio settings must be an object',
@@ -244,7 +243,7 @@ export class SettingsValidator {
             }
 
             // 포맷 검증
-            if (typeof audio.format === 'string') {
+            if (audio.format) {
                 const validFormats = ['mp3', 'm4a', 'wav', 'webm'];
                 if (!validFormats.includes(audio.format)) {
                     errors.push({
@@ -256,7 +255,7 @@ export class SettingsValidator {
             }
 
             // 품질 검증
-            if (typeof audio.quality === 'string') {
+            if (audio.quality) {
                 const validQualities = ['low', 'medium', 'high', 'lossless'];
                 if (!validQualities.includes(audio.quality)) {
                     errors.push({
@@ -270,7 +269,7 @@ export class SettingsValidator {
             // 샘플 레이트 검증
             if (audio.sampleRate !== undefined) {
                 const validRates = [8000, 16000, 22050, 44100, 48000];
-                if (typeof audio.sampleRate !== 'number' || !validRates.includes(audio.sampleRate)) {
+                if (!validRates.includes(audio.sampleRate as number)) {
                     errors.push({
                         field: 'audio.sampleRate',
                         message: `Invalid sample rate: ${audio.sampleRate}`,
@@ -299,11 +298,11 @@ export class SettingsValidator {
 
         // Advanced 설정 검증
         this.validators.set('advanced', (value: unknown) => {
-            const advanced = isPlainRecord(value) ? value : null;
+            const advanced = value as Partial<SettingsSchema['advanced']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!advanced) {
+            if (!advanced || typeof advanced !== 'object') {
                 errors.push({
                     field: 'advanced',
                     message: 'Advanced settings must be an object',
@@ -313,7 +312,7 @@ export class SettingsValidator {
             }
 
             // 캐시 설정 검증
-            if (isPlainRecord(advanced.cache)) {
+            if (advanced.cache) {
                 if (advanced.cache.maxSize !== undefined) {
                     if (typeof advanced.cache.maxSize !== 'number' || advanced.cache.maxSize < 0) {
                         errors.push({
@@ -342,7 +341,7 @@ export class SettingsValidator {
             }
 
             // 성능 설정 검증
-            if (isPlainRecord(advanced.performance)) {
+            if (advanced.performance) {
                 if (advanced.performance.maxConcurrency !== undefined) {
                     if (typeof advanced.performance.maxConcurrency !== 'number' || 
                         advanced.performance.maxConcurrency < 1 || 
@@ -374,8 +373,8 @@ export class SettingsValidator {
             }
 
             // 디버그 설정 검증
-            if (isPlainRecord(advanced.debug)) {
-                if (typeof advanced.debug.logLevel === 'string') {
+            if (advanced.debug) {
+                if (advanced.debug.logLevel) {
                     const validLevels = ['error', 'warn', 'info', 'debug'];
                     if (!validLevels.includes(advanced.debug.logLevel)) {
                         errors.push({
@@ -396,11 +395,11 @@ export class SettingsValidator {
 
         // Shortcuts 설정 검증
         this.validators.set('shortcuts', (value: unknown) => {
-            const shortcuts = isPlainRecord(value) ? value : null;
+            const shortcuts = value as Partial<SettingsSchema['shortcuts']>;
             const errors: ValidationError[] = [];
             const warnings: ValidationWarning[] = [];
 
-            if (!shortcuts) {
+            if (!shortcuts || typeof shortcuts !== 'object') {
                 errors.push({
                     field: 'shortcuts',
                     message: 'Shortcut settings must be an object',

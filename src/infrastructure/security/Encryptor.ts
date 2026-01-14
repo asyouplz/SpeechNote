@@ -3,7 +3,6 @@
  * Web Crypto API를 사용한 안전한 데이터 암호화/복호화
  */
 
-import type { App } from 'obsidian';
 
 export interface EncryptedData {
     data: string;      // Base64 encoded encrypted data
@@ -182,14 +181,9 @@ export class Encryptor implements IEncryptor {
 export class SecureApiKeyManager {
     private encryptor: IEncryptor;
     private storageKey = 'encrypted_api_key';
-    private app: App;
 
-    constructor(encryptor?: IEncryptor, app?: App) {
+    constructor(encryptor?: IEncryptor) {
         this.encryptor = encryptor || new Encryptor();
-        if (!app) {
-            throw new Error('App instance is required for SecureApiKeyManager');
-        }
-        this.app = app;
     }
 
     /**
@@ -204,10 +198,10 @@ export class SecureApiKeyManager {
         try {
             // 암호화
             const encrypted = await this.encryptor.encrypt(apiKey);
-
-            // Obsidian API를 통해 저장
-            this.app.saveLocalStorage(this.storageKey, JSON.stringify(encrypted));
-
+            
+            // localStorage에 저장
+            localStorage.setItem(this.storageKey, JSON.stringify(encrypted));
+            
             // 메모리에서 원본 제거 (가비지 컬렉션 대상)
             apiKey = '';
         } catch (error) {
@@ -221,7 +215,7 @@ export class SecureApiKeyManager {
      */
     async getApiKey(): Promise<string | null> {
         try {
-            const storedData = this.app.loadLocalStorage(this.storageKey);
+            const storedData = localStorage.getItem(this.storageKey);
             if (!storedData) {
                 return null;
             }
@@ -240,14 +234,14 @@ export class SecureApiKeyManager {
      * API 키 존재 여부 확인
      */
     hasApiKey(): boolean {
-        return this.app.loadLocalStorage(this.storageKey) !== null;
+        return localStorage.getItem(this.storageKey) !== null;
     }
 
     /**
      * API 키 제거
      */
     clearApiKey(): void {
-        this.app.saveLocalStorage(this.storageKey, null);
+        localStorage.removeItem(this.storageKey);
     }
 
     /**

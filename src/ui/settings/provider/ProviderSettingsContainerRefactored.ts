@@ -145,7 +145,8 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 개요 탭 생성
      */
     private createOverviewTab(): HTMLElement {
-        const container = createEl('div', { cls: 'overview-tab' });
+        const container = document.createElement('div');
+        container.className = 'overview-tab';
         
         // 전체 상태 대시보드
         this.renderStatusDashboard(container);
@@ -163,7 +164,8 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * Provider 탭 생성
      */
     private createProvidersTab(): HTMLElement {
-        const container = createEl('div', { cls: 'providers-tab' });
+        const container = document.createElement('div');
+        container.className = 'providers-tab';
         
         // Provider 선택
         this.renderProviderSelection(container);
@@ -179,7 +181,8 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 고급 설정 탭 생성
      */
     private createAdvancedTab(): HTMLElement {
-        const container = createEl('div', { cls: 'advanced-tab' });
+        const container = document.createElement('div');
+        container.className = 'advanced-tab';
         
         this.advancedPanel.render(container);
         
@@ -190,7 +193,8 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 메트릭 탭 생성
      */
     private createMetricsTab(): HTMLElement {
-        const container = createEl('div', { cls: 'metrics-tab' });
+        const container = document.createElement('div');
+        container.className = 'metrics-tab';
         
         this.renderMetricsDisplay(container);
         
@@ -209,7 +213,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         // 전체 상태 표시
         UIComponentFactory.createStatusIndicator(
             dashboardEl,
-            overallStatus.level,
+            overallStatus.level as any,
             overallStatus.text,
             overallStatus.icon
         );
@@ -277,7 +281,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
                         .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 비용 최적화')
                         .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ 품질 우선')
                         .setValue(this.plugin.settings.selectionStrategy || SelectionStrategy.PERFORMANCE_OPTIMIZED)
-                        .onChange(value => this.handleStrategyChange(value));
+                        .onChange(value => this.handleStrategyChange(value as SelectionStrategy));
                 });
         }
     }
@@ -386,15 +390,12 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      */
     private handleProviderChange(value: string): void {
         this.debounce('provider-change', async () => {
-            if (!this.isProviderSelection(value)) {
-                return;
-            }
             this.state.set(prev => ({ 
                 ...prev, 
-                currentProvider: value 
+                currentProvider: value as TranscriptionProvider | 'auto' 
             }));
             
-            this.plugin.settings.provider = value;
+            this.plugin.settings.provider = value as 'auto' | 'whisper' | 'deepgram';
             await this.saveSettings();
             
             // 캐시 무효화
@@ -410,20 +411,18 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * 전략 변경 처리
      */
-    private handleStrategyChange(strategy: string): void {
+    private handleStrategyChange(strategy: SelectionStrategy): void {
         this.debounce('strategy-change', async () => {
-            if (this.isSelectionStrategy(strategy)) {
-                this.plugin.settings.selectionStrategy = strategy;
-                await this.saveSettings();
-                this.showNotice(`전략이 ${strategy}로 변경되었습니다`);
-            }
+            this.plugin.settings.selectionStrategy = strategy;
+            await this.saveSettings();
+            this.showNotice(`전략이 ${strategy}로 변경되었습니다`);
         });
     }
     
     /**
      * 전체 상태 계산
      */
-    private calculateOverallStatus(): { level: 'success' | 'warning' | 'error'; icon: string; text: string } {
+    private calculateOverallStatus(): { level: string; icon: string; text: string } {
         const state = this.state.get();
         const hasAnyKey = this.hasApiKey('whisper') || this.hasApiKey('deepgram');
         const hasAnyConnection = Array.from(state.connectionStatus.values()).some(v => v);
@@ -475,7 +474,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * Provider 연결 확인
      */
-    private checkProviderConnection(_provider: TranscriptionProvider): boolean {
+    private async checkProviderConnection(_provider: TranscriptionProvider): Promise<boolean> {
         // 실제 연결 테스트 로직
         return true; // 임시
     }
@@ -545,7 +544,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * Provider 상세 정보 표시
      */
-    private showProviderDetails(provider: TranscriptionProvider): void {
+    private async showProviderDetails(provider: TranscriptionProvider): Promise<void> {
         // Modal로 상세 정보 표시
         const modal = new ProviderDetailsModal(this.app!, provider, this.plugin);
         modal.open();
@@ -597,7 +596,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 설정 내보내기
      */
     private async exportConfiguration(): Promise<void> {
-        await this.withErrorHandling(() => {
+        await this.withErrorHandling(async () => {
             const config = {
                 provider: this.state.get().currentProvider,
                 strategy: this.plugin.settings.selectionStrategy,
@@ -615,14 +614,13 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
             });
             const url = URL.createObjectURL(blob);
             
-            const a = createEl('a');
+            const a = document.createElement('a');
             a.href = url;
             a.download = `provider-config-${Date.now()}.json`;
             a.click();
             
             URL.revokeObjectURL(url);
             this.showNotice('설정을 내보냈습니다');
-            return Promise.resolve();
         });
     }
     
@@ -694,7 +692,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * 설정 로드
      */
-    private loadSettings(): void {
+    private async loadSettings(): Promise<void> {
         this.state.set(prev => ({
             ...prev,
             currentProvider: this.plugin.settings.provider || 'auto'
@@ -719,23 +717,8 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         this.memoCache.clear();
         
         // 하위 컴포넌트 정리
-        this.apiKeyManager.destroy();
-        this.advancedPanel.destroy();
-    }
-
-    private isProviderSelection(value: string): value is TranscriptionProvider | 'auto' {
-        return value === 'auto' || value === 'whisper' || value === 'deepgram';
-    }
-
-    private isSelectionStrategy(value: string): value is SelectionStrategy {
-        return (
-            value === SelectionStrategy.MANUAL ||
-            value === SelectionStrategy.COST_OPTIMIZED ||
-            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
-            value === SelectionStrategy.QUALITY_OPTIMIZED ||
-            value === SelectionStrategy.ROUND_ROBIN ||
-            value === SelectionStrategy.AB_TEST
-        );
+        (this.apiKeyManager as any).destroy?.();
+        (this.advancedPanel as any).destroy?.();
     }
 }
 
@@ -783,19 +766,19 @@ class ProviderDetailsModal extends Modal {
     }
     
     private createStatusContent(): HTMLElement {
-        const container = createEl('div');
+        const container = document.createElement('div');
         // 상태 정보 렌더링
         return container;
     }
     
     private createStatsContent(): HTMLElement {
-        const container = createEl('div');
+        const container = document.createElement('div');
         // 통계 정보 렌더링
         return container;
     }
     
     private createConfigContent(): HTMLElement {
-        const container = createEl('div');
+        const container = document.createElement('div');
         // 설정 정보 렌더링
         return container;
     }

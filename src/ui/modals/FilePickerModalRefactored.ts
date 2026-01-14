@@ -101,10 +101,6 @@ export class FilePickerModalRefactored extends Modal {
         this.setupModal();
     }
 
-    private normalizeError(error: unknown): Error {
-        return error instanceof Error ? error : new Error('Unknown error');
-    }
-
     /**
      * 컴포넌트 초기화 - 단일 책임
      */
@@ -262,25 +258,24 @@ export class FilePickerModalRefactored extends Modal {
      * 키보드 내비게이션 설정
      */
     private setupKeyboardNavigation(): void {
-        const handler = (event: Event) => {
-            if (!(event instanceof KeyboardEvent)) return;
-
-            if (event.key === 'Escape') {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
                 this.handleCancel();
-            } else if (event.key === 'Enter' && !this.state.isProcessing) {
+            } else if (e.key === 'Enter' && !this.state.isProcessing) {
                 if (this.state.selectedFiles.length > 0) {
                     void this.handleSubmit();
                 }
             }
         };
 
-        this.eventManager.add(this.modalEl, 'keydown', handler);
+        this.eventManager.add(this.modalEl, 'keydown', handler as EventListener);
     }
 
     /**
      * 파일 선택 처리 - 디바운스 적용
      */
-    private handleFileSelection = debounceAsync(async (file: TFile) => {
+    private handleFileSelection = debounceAsync(async (...args: unknown[]) => {
+        const file = args[0] as TFile;
         try {
             // Check for duplicates
             if (this.state.selectedFiles.some(f => f.path === file.path)) {
@@ -312,9 +307,8 @@ export class FilePickerModalRefactored extends Modal {
             this.refreshUI();
 
         } catch (error) {
-            const normalizedError = this.normalizeError(error);
-            this.logger?.error('File selection failed', normalizedError);
-            new Notice(`파일 선택 실패: ${normalizedError.message}`);
+            this.logger?.error('File selection failed', error as Error);
+            new Notice(`파일 선택 실패: ${(error as Error).message}`);
         }
     }, 300);
 
@@ -369,11 +363,10 @@ export class FilePickerModalRefactored extends Modal {
             const buffer = await this.app.vault.readBinary(file);
             return await this.components.validator.validate(file, buffer);
         } catch (error) {
-            const normalizedError = this.normalizeError(error);
-            this.logger?.error('File validation failed', normalizedError);
+            this.logger?.error('File validation failed', error as Error);
             return {
                 valid: false,
-                errors: [{ code: 'VALIDATION_ERROR', message: `검증 실패: ${normalizedError.message}` }]
+                errors: [{ code: 'VALIDATION_ERROR', message: `검증 실패: ${(error as Error).message}` }]
             };
         }
     }
@@ -452,9 +445,8 @@ export class FilePickerModalRefactored extends Modal {
             }
 
         } catch (error) {
-            const normalizedError = this.normalizeError(error);
-            this.logger?.error('Submit failed', normalizedError);
-            new Notice(`처리 실패: ${normalizedError.message}`);
+            this.logger?.error('Submit failed', error as Error);
+            new Notice(`처리 실패: ${(error as Error).message}`);
         } finally {
             this.state.isProcessing = false;
             this.components.progressIndicator.hide();
@@ -464,7 +456,7 @@ export class FilePickerModalRefactored extends Modal {
     /**
      * 선택된 파일 처리
      */
-    private processSelectedFiles(): FilePickerResult[] {
+    private async processSelectedFiles(): Promise<FilePickerResult[]> {
         const results: FilePickerResult[] = [];
         const total = this.state.selectedFiles.length;
 
@@ -485,7 +477,7 @@ export class FilePickerModalRefactored extends Modal {
     /**
      * 최근 파일 저장
      */
-    private saveRecentFiles(results: FilePickerResult[]): void {
+    private async saveRecentFiles(results: FilePickerResult[]): Promise<void> {
         if (this.components.recentFiles) {
             for (const result of results) {
                 this.components.recentFiles.addRecentFile(result.file);
@@ -508,13 +500,13 @@ export class FilePickerModalRefactored extends Modal {
         requestAnimationFrame(() => {
             // Update selected files list
             const listContainer = this.modalEl.querySelector('.selected-files-list');
-            if (listContainer instanceof HTMLElement) {
-                this.updateSelectedFilesList(listContainer);
+            if (listContainer) {
+                this.updateSelectedFilesList(listContainer as HTMLElement);
             }
 
             // Update submit button
-            const submitBtn = this.modalEl.querySelector('.mod-cta');
-            if (submitBtn instanceof HTMLButtonElement) {
+            const submitBtn = this.modalEl.querySelector('.mod-cta') as HTMLButtonElement;
+            if (submitBtn) {
                 submitBtn.disabled = this.state.selectedFiles.length === 0;
                 submitBtn.setText(`선택 (${this.state.selectedFiles.length})`);
             }

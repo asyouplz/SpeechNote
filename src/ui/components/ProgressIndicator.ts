@@ -95,40 +95,30 @@ export class ProgressIndicator {
         
         // 메시지 설정
         if (message) {
-            const messageEl = this.progressElement.querySelector('.progress-message');
-            if (messageEl instanceof HTMLElement) {
+            const messageEl = this.progressElement.querySelector('.progress-message') as HTMLElement;
+            if (messageEl) {
                 messageEl.setText(message);
             }
         }
         
         // 진행률 바 표시/숨김
-        const barContainer = this.progressElement.querySelector('.progress-bar-container');
-        const spinner = this.progressElement.querySelector('.progress-spinner');
+        const barContainer = this.progressElement.querySelector('.progress-bar-container') as HTMLElement;
+        const spinner = this.progressElement.querySelector('.progress-spinner') as HTMLElement;
         
         if (showProgressBar) {
-            if (barContainer instanceof HTMLElement) {
-                barContainer.removeClass('sn-hidden');
-            }
-            if (spinner instanceof HTMLElement) {
-                spinner.addClass('sn-hidden');
-                spinner.removeClass('is-spinning');
-            }
+            barContainer.removeClass('sn-hidden');
+            spinner.addClass('sn-hidden');
+            spinner.removeClass('is-spinning');
             this.update(0);
         } else {
-            if (barContainer instanceof HTMLElement) {
-                barContainer.addClass('sn-hidden');
-            }
-            if (spinner instanceof HTMLElement) {
-                spinner.removeClass('sn-hidden');
-            }
+            barContainer.addClass('sn-hidden');
+            spinner.removeClass('sn-hidden');
             this.startSpinnerAnimation();
         }
         
         // 취소 버튼 표시/숨김
-        const cancelBtn = this.progressElement.querySelector('.progress-cancel-btn');
-        if (cancelBtn instanceof HTMLElement) {
-            cancelBtn.toggleClass('sn-hidden', !cancellable);
-        }
+        const cancelBtn = this.progressElement.querySelector('.progress-cancel-btn') as HTMLElement;
+        cancelBtn.toggleClass('sn-hidden', !cancellable);
         
         // 페이드인 애니메이션
         this.fadeIn();
@@ -161,10 +151,10 @@ export class ProgressIndicator {
         this.currentProgress = Math.min(100, Math.max(0, progress));
         
         // 진행률 바 업데이트
-        const progressFill = this.progressElement.querySelector('.progress-fill');
-        const progressText = this.progressElement.querySelector('.progress-text');
+        const progressFill = this.progressElement.querySelector('.progress-fill') as HTMLElement;
+        const progressText = this.progressElement.querySelector('.progress-text') as HTMLElement;
         
-        if (progressFill instanceof HTMLElement && progressText instanceof HTMLElement) {
+        if (progressFill && progressText) {
             progressFill.setAttribute('style', `--sn-progress-width:${this.currentProgress}%`);
             progressText.setText(`${Math.round(this.currentProgress)}%`);
             
@@ -182,8 +172,8 @@ export class ProgressIndicator {
         
         // 메시지 업데이트
         if (message) {
-            const messageEl = this.progressElement.querySelector('.progress-message');
-            if (messageEl instanceof HTMLElement) {
+            const messageEl = this.progressElement.querySelector('.progress-message') as HTMLElement;
+            if (messageEl) {
                 messageEl.setText(message);
             }
         }
@@ -224,8 +214,8 @@ export class ProgressIndicator {
     setMessage(message: string) {
         if (!this.progressElement) return;
         
-        const messageEl = this.progressElement.querySelector('.progress-message');
-        if (messageEl instanceof HTMLElement) {
+        const messageEl = this.progressElement.querySelector('.progress-message') as HTMLElement;
+        if (messageEl) {
             messageEl.setText(message);
         }
     }
@@ -238,13 +228,13 @@ export class ProgressIndicator {
         
         this.show(message, false, false);
         
-        const content = this.progressElement.querySelector('.progress-content');
-        if (content instanceof HTMLElement) {
+        const content = this.progressElement.querySelector('.progress-content') as HTMLElement;
+        if (content) {
             content.addClass('error');
             
             // 스피너를 에러 아이콘으로 변경
-            const spinner = content.querySelector('.progress-spinner');
-            if (spinner instanceof HTMLElement) {
+            const spinner = content.querySelector('.progress-spinner') as HTMLElement;
+            if (spinner) {
                 spinner.replaceChildren(this.getErrorIcon());
             }
         }
@@ -261,13 +251,13 @@ export class ProgressIndicator {
         
         this.show(message, false, false);
         
-        const content = this.progressElement.querySelector('.progress-content');
-        if (content instanceof HTMLElement) {
+        const content = this.progressElement.querySelector('.progress-content') as HTMLElement;
+        if (content) {
             content.addClass('success');
             
             // 스피너를 성공 아이콘으로 변경
-            const spinner = content.querySelector('.progress-spinner');
-            if (spinner instanceof HTMLElement) {
+            const spinner = content.querySelector('.progress-spinner') as HTMLElement;
+            if (spinner) {
                 spinner.replaceChildren(this.getSuccessIcon());
             }
         }
@@ -287,8 +277,8 @@ export class ProgressIndicator {
      * 스피너 애니메이션 시작
      */
     private startSpinnerAnimation() {
-        const spinner = this.progressElement?.querySelector('.progress-spinner');
-        if (spinner instanceof HTMLElement) {
+        const spinner = this.progressElement?.querySelector('.progress-spinner') as HTMLElement;
+        if (spinner) {
             spinner.addClass('is-spinning');
         }
     }
@@ -297,8 +287,8 @@ export class ProgressIndicator {
      * 스피너 애니메이션 중지
      */
     private stopSpinnerAnimation() {
-        const spinner = this.progressElement?.querySelector('.progress-spinner');
-        if (spinner instanceof HTMLElement) {
+        const spinner = this.progressElement?.querySelector('.progress-spinner') as HTMLElement;
+        if (spinner) {
             spinner.removeClass('is-spinning');
         }
     }

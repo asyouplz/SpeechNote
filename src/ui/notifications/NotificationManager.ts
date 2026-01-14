@@ -4,11 +4,11 @@
  * Toast, Modal, StatusBar, Sound 알림을 통합 관리합니다.
  */
 
-import {
-    INotificationAPI,
-    NotificationOptions,
-    NotificationConfig,
-    NotificationPosition,
+import { 
+    INotificationAPI, 
+    NotificationOptions, 
+    NotificationConfig, 
+    NotificationPosition, 
     NotificationType,
     ConfirmOptions,
     PromptOptions,
@@ -31,32 +31,8 @@ interface NotificationChannel {
 const DOM_AVAILABLE = typeof document !== 'undefined' && typeof document.createElement === 'function';
 const AUDIO_AVAILABLE = typeof Audio !== 'undefined';
 
-const createEl = (
-    tag: string,
-    options?: { cls?: string; text?: string; attr?: Record<string, string> }
-): HTMLElement => {
-    const globalCreateEl = (globalThis as { createEl?: typeof createEl }).createEl;
-    if (typeof globalCreateEl === 'function') {
-        return globalCreateEl(tag, options);
-    }
-
-    const element = document.createElement(tag);
-    if (options?.cls) {
-        element.className = options.cls;
-    }
-    if (options?.text) {
-        element.textContent = options.text;
-    }
-    if (options?.attr) {
-        Object.entries(options.attr).forEach(([key, value]) => {
-            element.setAttribute(key, value);
-        });
-    }
-    return element;
-};
-
 class NoopChannel implements NotificationChannel {
-    send(): Promise<void> {
+    async send(): Promise<void> {
         return Promise.resolve();
     }
 
@@ -214,12 +190,12 @@ class ToastChannel implements NotificationChannel {
     }
 
     private createContainer(): void {
-        const container = createEl('div', { cls: 'toast-container' });
-        container.setAttribute('aria-live', 'polite');
-        container.setAttribute('aria-atomic', 'true');
-        this.container = container;
+        this.container = document.createElement('div');
+        this.container.className = 'toast-container';
+        this.container.setAttribute('aria-live', 'polite');
+        this.container.setAttribute('aria-atomic', 'true');
         this.setPosition(this.position);
-        document.body.appendChild(container);
+        document.body.appendChild(this.container);
     }
 
     setPosition(position: NotificationPosition): void {
@@ -229,17 +205,17 @@ class ToastChannel implements NotificationChannel {
         }
     }
 
-    send(notification: NotificationOptions): Promise<void> {
+    async send(notification: NotificationOptions): Promise<void> {
         if (!DOM_AVAILABLE) {
-            return Promise.resolve();
+            return;
         }
 
         if (!this.container) this.createContainer();
-        if (!this.container) return Promise.resolve();
+        if (!this.container) return;
         
         const id = this.generateId();
         const toast = this.createToast(notification, id);
-        if (!toast) return Promise.resolve();
+        if (!toast) return;
         
         this.notifications.set(id, toast);
         this.container.appendChild(toast);
@@ -256,7 +232,6 @@ class ToastChannel implements NotificationChannel {
             const duration = notification.duration || 5000;
             setTimeout(() => this.dismiss(id), duration);
         }
-        return Promise.resolve();
     }
 
     private createToast(notification: NotificationOptions, id: string): HTMLElement | null {
@@ -264,50 +239,59 @@ class ToastChannel implements NotificationChannel {
             return null;
         }
 
-        const toast = createEl('div', { cls: `toast toast--${notification.type}` });
+        const toast = document.createElement('div');
+        toast.className = `toast toast--${notification.type}`;
         toast.setAttribute('role', 'alert');
         toast.setAttribute('data-notification-id', id);
-
+        
         // 아이콘
         if (notification.icon !== false) {
-            const icon = createEl('div', { cls: 'toast__icon' });
+            const icon = document.createElement('div');
+            icon.className = 'toast__icon';
             const iconSvg = this.getIcon(notification.type);
             if (iconSvg) {
                 icon.appendChild(iconSvg);
             }
             toast.appendChild(icon);
         }
-
+        
         // 내용
-        const content = createEl('div', { cls: 'toast__content' });
-
+        const content = document.createElement('div');
+        content.className = 'toast__content';
+        
         if (notification.title) {
-            const title = createEl('div', { cls: 'toast__title', text: notification.title });
+            const title = document.createElement('div');
+            title.className = 'toast__title';
+            title.textContent = notification.title;
             content.appendChild(title);
         }
-
-        const message = createEl('div', { cls: 'toast__message', text: notification.message });
+        
+        const message = document.createElement('div');
+        message.className = 'toast__message';
+        message.textContent = notification.message;
         content.appendChild(message);
-
+        
         toast.appendChild(content);
-
+        
         // 닫기 버튼
         if (notification.closable !== false) {
-            const closeBtn = createEl('button', { cls: 'toast__close', text: '×' });
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'toast__close';
+            closeBtn.textContent = '×';
             closeBtn.setAttribute('aria-label', '닫기');
             closeBtn.onclick = () => this.dismiss(id);
             toast.appendChild(closeBtn);
         }
-
+        
         // 액션 버튼
         if (notification.actions && notification.actions.length > 0) {
-            const actions = createEl('div', { cls: 'toast__actions' });
-
+            const actions = document.createElement('div');
+            actions.className = 'toast__actions';
+            
             notification.actions.forEach(action => {
-                const btn = createEl('button', {
-                    cls: `toast__action toast__action--${action.style || 'secondary'}`,
-                    text: action.label
-                });
+                const btn = document.createElement('button');
+                btn.className = `toast__action toast__action--${action.style || 'secondary'}`;
+                btn.textContent = action.label;
                 btn.onclick = async () => {
                     await action.callback();
                     if (action.closeOnClick !== false) {
@@ -316,19 +300,21 @@ class ToastChannel implements NotificationChannel {
                 };
                 actions.appendChild(btn);
             });
-
+            
             toast.appendChild(actions);
         }
-
+        
         // 진행률 바
         if (notification.progress !== undefined) {
-            const progressBar = createEl('div', { cls: 'toast__progress' });
-            const fill = createEl('div', { cls: 'toast__progress-fill' });
+            const progressBar = document.createElement('div');
+            progressBar.className = 'toast__progress';
+            const fill = document.createElement('div');
+            fill.className = 'toast__progress-fill';
             fill.setAttribute('style', `--sn-progress-width:${notification.progress}%`);
             progressBar.appendChild(fill);
             toast.appendChild(progressBar);
         }
-
+        
         return toast;
     }
 
@@ -393,7 +379,7 @@ class ToastChannel implements NotificationChannel {
 class ModalChannel implements NotificationChannel {
     private activeModals: Map<string, HTMLElement> = new Map();
 
-    send(notification: NotificationOptions): Promise<void> {
+    async send(notification: NotificationOptions): Promise<void> {
         const id = this.generateId();
         const modal = this.createModal(notification, id);
         
@@ -411,50 +397,55 @@ class ModalChannel implements NotificationChannel {
             }
         };
         document.addEventListener('keydown', handleEsc);
-        return Promise.resolve();
     }
 
     private createModal(notification: NotificationOptions, id: string): HTMLElement {
-        const overlay = createEl('div', { cls: 'modal-overlay' });
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
         overlay.setAttribute('data-notification-id', id);
-
-        const modal = createEl('div', { cls: `modal modal--${notification.type}` });
+        
+        const modal = document.createElement('div');
+        modal.className = `modal modal--${notification.type}`;
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
         modal.setAttribute('aria-labelledby', `modal-title-${id}`);
-
+        
         // 헤더
-        const header = createEl('div', { cls: 'modal__header' });
-
-        const title = createEl('h2', {
-            cls: 'modal__title',
-            text: notification.title || this.getDefaultTitle(notification.type)
-        });
+        const header = document.createElement('div');
+        header.className = 'modal__header';
+        
+        const title = document.createElement('h2');
         title.id = `modal-title-${id}`;
+        title.className = 'modal__title';
+        title.textContent = notification.title || this.getDefaultTitle(notification.type);
         header.appendChild(title);
-
+        
         if (notification.closable !== false) {
-            const closeBtn = createEl('button', { cls: 'modal__close', text: '×' });
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'modal__close';
+            closeBtn.textContent = '×';
             closeBtn.setAttribute('aria-label', '닫기');
             closeBtn.onclick = () => this.dismiss(id);
             header.appendChild(closeBtn);
         }
-
+        
         modal.appendChild(header);
-
+        
         // 내용
-        const content = createEl('div', { cls: 'modal__content', text: notification.message });
+        const content = document.createElement('div');
+        content.className = 'modal__content';
+        content.textContent = notification.message;
         modal.appendChild(content);
-
+        
         // 액션
         if (notification.actions && notification.actions.length > 0) {
-            const footer = createEl('div', { cls: 'modal__footer' });
-
+            const footer = document.createElement('div');
+            footer.className = 'modal__footer';
+            
             notification.actions.forEach(action => {
-                const btn = createEl('button', {
-                    cls: `modal__action modal__action--${action.style || 'secondary'}`,
-                    text: action.label
-                });
+                const btn = document.createElement('button');
+                btn.className = `modal__action modal__action--${action.style || 'secondary'}`;
+                btn.textContent = action.label;
                 btn.onclick = async () => {
                     await action.callback();
                     if (action.closeOnClick !== false) {
@@ -463,19 +454,19 @@ class ModalChannel implements NotificationChannel {
                 };
                 footer.appendChild(btn);
             });
-
+            
             modal.appendChild(footer);
         }
-
+        
         overlay.appendChild(modal);
-
+        
         // 오버레이 클릭으로 닫기
-        overlay.onclick = (e: MouseEvent) => {
+        overlay.onclick = (e) => {
             if (e.target === overlay && notification.closable !== false) {
                 this.dismiss(id);
             }
         };
-
+        
         return overlay;
     }
 
@@ -490,18 +481,14 @@ class ModalChannel implements NotificationChannel {
     }
 
     private trapFocus(modal: HTMLElement): void {
-        const focusableElements = Array.from(modal.querySelectorAll(
+        const focusableElements = modal.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )).filter((el): el is HTMLElement => el instanceof HTMLElement);
+        );
         
-        if (focusableElements.length === 0) {
-            return;
-        }
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
         
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-        
-        firstElement.focus();
+        firstElement?.focus();
         
         modal.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
@@ -552,13 +539,13 @@ class StatusBarChannel implements NotificationChannel {
     private createStatusBar(): void {
         this.statusBar = document.querySelector('.status-bar');
         if (!this.statusBar) {
-            const statusBar = createEl('div', { cls: 'status-bar' });
-            document.body.appendChild(statusBar);
-            this.statusBar = statusBar;
+            this.statusBar = document.createElement('div');
+            this.statusBar.className = 'status-bar';
+            document.body.appendChild(this.statusBar);
         }
     }
 
-    send(notification: NotificationOptions): Promise<void> {
+    async send(notification: NotificationOptions): Promise<void> {
         if (!this.statusBar) this.createStatusBar();
         
         const id = this.generateId();
@@ -576,7 +563,6 @@ class StatusBarChannel implements NotificationChannel {
             const duration = notification.duration || 3000;
             this.timeout = setTimeout(() => this.dismiss(id), duration);
         }
-        return Promise.resolve();
     }
 
     dismiss(notificationId: string): void {
@@ -652,16 +638,16 @@ class SoundChannel implements NotificationChannel {
         }
     }
 
-    private getAudio(url: string): Promise<HTMLAudioElement> {
+    private async getAudio(url: string): Promise<HTMLAudioElement> {
         if (this.audioCache.has(url)) {
-            return Promise.resolve(this.audioCache.get(url)!);
+            return this.audioCache.get(url)!;
         }
         
         const audio = new Audio(url);
         audio.volume = 0.5;
         this.audioCache.set(url, audio);
         
-        return Promise.resolve(audio);
+        return audio;
     }
 
     dismiss(_notificationId: string): void {
@@ -702,7 +688,7 @@ class ProgressNotification implements IProgressNotification {
     }
 
     private async init(): Promise<void> {
-        await this.channel.send(this.options);
+        await this.channel.send(this.options as NotificationOptions);
         
         if (this.options.updateInterval) {
             this.updateInterval = setInterval(() => {
@@ -766,8 +752,8 @@ class ProgressNotification implements IProgressNotification {
         }
         
         // 진행률 바 업데이트
-        const progressFill = element.querySelector('.toast__progress-fill');
-        if (progressFill instanceof HTMLElement) {
+        const progressFill = element.querySelector('.toast__progress-fill') as HTMLElement;
+        if (progressFill) {
             progressFill.setAttribute('style', `--sn-progress-width:${this.options.progress}%`);
         }
         
@@ -804,7 +790,7 @@ export class NotificationManager implements INotificationAPI {
         
         this.rateLimiter = new RateLimiter(
             this.config.rateLimit?.maxPerMinute,
-            this.buildRateLimitMap(this.config.rateLimit?.maxPerType)
+            this.config.rateLimit?.maxPerType as any
         );
         
         this.eventManager = EventManager.getInstance();
@@ -986,7 +972,7 @@ export class NotificationManager implements INotificationAPI {
     /**
      * 확인 대화상자
      */
-    confirm(message: string, options?: ConfirmOptions): Promise<boolean> {
+    async confirm(message: string, options?: ConfirmOptions): Promise<boolean> {
         return new Promise((resolve) => {
             const modal = new ModalChannel();
             const id = this.generateNotificationId();
@@ -1021,7 +1007,7 @@ export class NotificationManager implements INotificationAPI {
     /**
      * 입력 대화상자
      */
-    prompt(_message: string, _options?: PromptOptions): Promise<string | null> {
+    async prompt(_message: string, _options?: PromptOptions): Promise<string | null> {
         return new Promise((resolve) => {
             // 구현 예정
             resolve(null);
@@ -1031,7 +1017,7 @@ export class NotificationManager implements INotificationAPI {
     /**
      * 알림 대화상자
      */
-    alert(message: string, title?: string): Promise<void> {
+    async alert(message: string, title?: string): Promise<void> {
         return new Promise((resolve) => {
             const modal = new ModalChannel();
             const id = this.generateNotificationId();
@@ -1073,7 +1059,7 @@ export class NotificationManager implements INotificationAPI {
         if (config.rateLimit) {
             this.rateLimiter = new RateLimiter(
                 config.rateLimit.maxPerMinute,
-                this.buildRateLimitMap(config.rateLimit.maxPerType)
+                config.rateLimit.maxPerType as any
             );
         }
     }
@@ -1194,43 +1180,13 @@ export class NotificationManager implements INotificationAPI {
      * 우선순위 계산
      */
     private getPriority(priority?: string): number {
-        const priorities: Record<'urgent' | 'high' | 'normal' | 'low', number> = {
+        const priorities = {
             urgent: 4,
             high: 3,
             normal: 2,
             low: 1
         };
-        if (priority && this.isPriorityKey(priority, priorities)) {
-            return priorities[priority];
-        }
-        return 2;
-    }
-
-    private buildRateLimitMap(
-        maxPerType?: Record<NotificationType, number>
-    ): Map<NotificationType, number> | undefined {
-        if (!maxPerType) {
-            return undefined;
-        }
-        const map = new Map<NotificationType, number>();
-        Object.entries(maxPerType).forEach(([key, value]) => {
-            if (this.isNotificationType(key) && typeof value === 'number') {
-                map.set(key, value);
-            }
-        });
-
-        return map;
-    }
-
-    private isPriorityKey<K extends string>(
-        value: string,
-        priorities: Record<K, number>
-    ): value is K {
-        return value in priorities;
-    }
-
-    private isNotificationType(value: string): value is NotificationType {
-        return value === 'success' || value === 'error' || value === 'warning' || value === 'info';
+        return priorities[priority as keyof typeof priorities] || 2;
     }
 
     /**

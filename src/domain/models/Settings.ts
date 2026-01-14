@@ -1,5 +1,4 @@
 import { SelectionStrategy } from '../../infrastructure/api/providers/ITranscriber';
-import type { DeepgramFeatures } from '../../types/DeepgramTypes';
 
 export interface SpeechToTextSettings {
     apiKey: string;
@@ -101,7 +100,12 @@ export interface SpeechToTextSettings {
             apiKey?: string;
             model?: string;
             tier?: 'nova-3' | 'nova-2' | 'enhanced' | 'base';
-            features?: DeepgramFeatures;
+            features?: {
+                punctuation?: boolean;
+                smartFormat?: boolean;
+                diarization?: boolean;
+                numerals?: boolean;
+            };
         };
         
         abTest?: {

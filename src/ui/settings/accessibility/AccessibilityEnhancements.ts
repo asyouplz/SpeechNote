@@ -131,14 +131,11 @@ export class ScreenReaderAnnouncer {
     createLiveRegion(): void {
         if (this.liveRegion) return;
         
-        this.liveRegion = createEl('div', {
-            cls: 'sr-only',
-            attr: {
-                'aria-live': 'polite',
-                'aria-atomic': 'true',
-                'role': 'status'
-            }
-        });
+        this.liveRegion = document.createElement('div');
+        this.liveRegion.className = 'sr-only';
+        this.liveRegion.setAttribute('aria-live', 'polite');
+        this.liveRegion.setAttribute('aria-atomic', 'true');
+        this.liveRegion.setAttribute('role', 'status');
         
         this.container.appendChild(this.liveRegion);
     }
@@ -283,8 +280,7 @@ export class KeyboardNavigationManager {
     private handleTabNavigation(e: KeyboardEvent): void {
         if (this.focusableElements.length === 0) return;
         
-        const currentElement = document.activeElement;
-        if (!(currentElement instanceof HTMLElement)) return;
+        const currentElement = document.activeElement as HTMLElement;
         const currentIndex = this.focusableElements.indexOf(currentElement);
         
         if (currentIndex === -1) return;
@@ -310,8 +306,7 @@ export class KeyboardNavigationManager {
      * 화살표 키 네비게이션 처리
      */
     private handleArrowNavigation(e: KeyboardEvent): void {
-        const currentElement = document.activeElement;
-        if (!(currentElement instanceof HTMLElement)) return;
+        const currentElement = document.activeElement as HTMLElement;
         
         // 라디오 버튼 그룹
         if (currentElement.getAttribute('role') === 'radio') {
@@ -352,9 +347,7 @@ export class KeyboardNavigationManager {
      * 라디오 그룹 네비게이션
      */
     private handleRadioGroupNavigation(e: KeyboardEvent): void {
-        const currentRadio = document.activeElement;
-        if (!(currentRadio instanceof HTMLInputElement)) return;
-        if (!currentRadio.name) return;
+        const currentRadio = document.activeElement as HTMLInputElement;
         const radioGroup = this.container.querySelectorAll<HTMLInputElement>(
             `input[type="radio"][name="${currentRadio.name}"]`
         );
@@ -386,8 +379,7 @@ export class KeyboardNavigationManager {
      * 탭 리스트 네비게이션
      */
     private handleTabListNavigation(e: KeyboardEvent): void {
-        const currentTab = document.activeElement;
-        if (!(currentTab instanceof HTMLElement)) return;
+        const currentTab = document.activeElement as HTMLElement;
         const tabList = currentTab.closest('[role="tablist"]');
         if (!tabList) return;
         
@@ -570,11 +562,10 @@ export class AriaHelper {
             const errorId = `error-${Date.now()}`;
             element.setAttribute('aria-describedby', errorId);
             
-            const errorEl = createEl('div', {
-                cls: 'sr-only',
-                text: errorMessage,
-                attr: { id: errorId }
-            });
+            const errorEl = document.createElement('div');
+            errorEl.id = errorId;
+            errorEl.className = 'sr-only';
+            errorEl.textContent = errorMessage;
             element.parentElement?.appendChild(errorEl);
         }
     }

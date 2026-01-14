@@ -4,7 +4,6 @@ import { TranscriptionService } from './core/transcription/TranscriptionService'
 import { WhisperService } from './infrastructure/api/WhisperService';
 import { TranscriberFactory } from './infrastructure/api/TranscriberFactory';
 import { TranscriberToWhisperAdapter } from './infrastructure/api/adapters/TranscriberToWhisperAdapter';
-import type { TranscriptionProvider } from './infrastructure/api/providers/ITranscriber';
 import { AudioProcessor } from './core/transcription/AudioProcessor';
 import { TextFormatter } from './core/transcription/TextFormatter';
 import { SettingsManager } from './infrastructure/storage/SettingsManager';
@@ -13,12 +12,10 @@ import { ErrorHandler } from './utils/ErrorHandler';
 import { StateManager } from './application/StateManager';
 import { EventManager } from './application/EventManager';
 import { EditorService } from './application/EditorService';
-import { TextInsertionHandler, type InsertionOptions, type InsertionMode } from './application/TextInsertionHandler';
-import { FormatOptionsModal, type TextFormat } from './ui/formatting/FormatOptions';
+import { TextInsertionHandler } from './application/TextInsertionHandler';
+import { FormatOptionsModal } from './ui/formatting/FormatOptions';
 import { SettingsTab } from './ui/settings/SettingsTab';
 import { assertTFile } from './utils/fs/typeGuards';
-import type { IWhisperService } from './types';
-import { isPlainRecord } from './types/guards';
 // import { SimpleSettingsTab } from './ui/settings/SimpleSettingsTab';
 
 export default class SpeechToTextPlugin extends Plugin {
@@ -82,49 +79,6 @@ export default class SpeechToTextPlugin extends Plugin {
         }
     }
 
-    private normalizeError(error: unknown): Error {
-        return error instanceof Error ? error : new Error(String(error));
-    }
-
-    private resolveProvider(
-        preference?: SpeechToTextSettings['provider']
-    ): TranscriptionProvider | 'auto' {
-        if (preference === 'auto') {
-            return 'auto';
-        }
-        if (preference === 'deepgram') {
-            return 'deepgram';
-        }
-        return 'whisper';
-    }
-
-    private resolveInsertionMode(position: SpeechToTextSettings['insertPosition']): InsertionMode {
-        switch (position) {
-            case 'end':
-                return 'append';
-            case 'beginning':
-                return 'prepend';
-            case 'cursor':
-            default:
-                return 'cursor';
-        }
-    }
-
-    private resolveTextFormat(format?: SpeechToTextSettings['textFormat']): TextFormat {
-        switch (format) {
-            case 'markdown':
-            case 'quote':
-            case 'bullet':
-            case 'heading':
-            case 'code':
-            case 'callout':
-            case 'plain':
-                return format;
-            default:
-                return 'plain';
-        }
-    }
-
     private async initializeServices() {
         // Load settings
         await this.loadSettings();
@@ -157,18 +111,14 @@ export default class SpeechToTextPlugin extends Plugin {
     }
     
     private initializeTranscriberFactory() {
-        const getString = (value: unknown): string | undefined =>
-            typeof value === 'string' ? value : undefined;
         // Create settings manager wrapper for TranscriberFactory
         const factorySettingsManager = {
             load: async () => {
                 await this.loadSettings();
                 return this.settings;
             },
-            save: async (settings: unknown) => {
-                if (settings && typeof settings === 'object') {
-                    Object.assign(this.settings, settings);
-                }
+            save: async (settings: any) => {
+                this.settings = settings;
                 await this.saveSettings();
             },
             get: (key: string) => {
@@ -204,28 +154,22 @@ export default class SpeechToTextPlugin extends Plugin {
                 if (key === 'apiKey') {
                     return this.settings.apiKey;
                 }
-                return this.settings[key];
+                return (this.settings as any)[key];
             },
-            set: async (key: string, value: unknown) => {
+            set: async (key: string, value: any) => {
                 if (key === 'transcription') {
                     // Map back to settings
-                    if (isPlainRecord(value)) {
-                        if (value.defaultProvider === 'whisper' || value.defaultProvider === 'deepgram') {
-                            this.settings.provider = value.defaultProvider;
-                        }
-                        const whisper = isPlainRecord(value.whisper) ? value.whisper : undefined;
-                        const deepgram = isPlainRecord(value.deepgram) ? value.deepgram : undefined;
-                        const whisperApiKey = getString(whisper?.apiKey);
-                        const deepgramApiKey = getString(deepgram?.apiKey);
-                        if (whisperApiKey !== undefined) {
-                            this.settings.whisperApiKey = whisperApiKey;
-                        }
-                        if (deepgramApiKey !== undefined) {
-                            this.settings.deepgramApiKey = deepgramApiKey;
-                        }
+                    if (value.defaultProvider) {
+                        this.settings.provider = value.defaultProvider;
+                    }
+                    if (value.whisper?.apiKey) {
+                        this.settings.whisperApiKey = value.whisper.apiKey;
+                    }
+                    if (value.deepgram?.apiKey) {
+                        this.settings.deepgramApiKey = value.deepgram.apiKey;
                     }
                 } else {
-                    this.settings[key] = value;
+                    (this.settings as any)[key] = value;
                 }
                 await this.saveSettings();
             }
@@ -239,23 +183,22 @@ export default class SpeechToTextPlugin extends Plugin {
     
     private initializeTranscriptionService() {
         // Get the appropriate transcriber based on settings
-        const provider = this.resolveProvider(this.settings.provider);
+        const provider = this.settings.provider || 'whisper';
         
-        let whisperCompatibleService: IWhisperService | null = null;
+        let whisperCompatibleService: any;
         
         try {
             // Always try to use TranscriberFactory first for better provider support
-            const transcriber = this.transcriberFactory.getProvider(provider);
+            const transcriber = this.transcriberFactory.getProvider(
+                provider === 'auto' ? 'auto' : provider as any
+            );
             
             // Wrap the ITranscriber in an adapter to make it IWhisperService compatible
             whisperCompatibleService = new TranscriberToWhisperAdapter(transcriber, this.logger);
             
             this.logger.info(`Initialized transcription service with provider: ${transcriber.getProviderName()}`);
         } catch (error) {
-            this.logger.warn(
-                'Failed to initialize transcriber from factory, using fallback',
-                this.normalizeError(error)
-            );
+            this.logger.warn('Failed to initialize transcriber from factory, using fallback', error as Error);
             
             // Fallback to direct WhisperService if factory fails
             const apiKey = this.settings.whisperApiKey || this.settings.apiKey;
@@ -277,7 +220,9 @@ export default class SpeechToTextPlugin extends Plugin {
             
             // Set provider-specific capabilities for file size limits
             try {
-                const transcriber = this.transcriberFactory.getProvider(provider);
+                const transcriber = this.transcriberFactory.getProvider(
+                    provider === 'auto' ? 'auto' : provider as any
+                );
                 const capabilities = transcriber.getCapabilities();
                 audioProcessor.setProviderCapabilities({ maxFileSize: capabilities.maxFileSize });
                 this.logger.info(`AudioProcessor configured with provider capabilities`, {
@@ -285,10 +230,7 @@ export default class SpeechToTextPlugin extends Plugin {
                     maxFileSize: capabilities.maxFileSize / 1024 / 1024 + 'MB'
                 });
             } catch (error) {
-                this.logger.warn(
-                    'Failed to get provider capabilities, using default limits',
-                    this.normalizeError(error)
-                );
+                this.logger.warn('Failed to get provider capabilities, using default limits', error as Error);
             }
             
             const textFormatter = new TextFormatter(this.settings);
@@ -344,7 +286,7 @@ export default class SpeechToTextPlugin extends Plugin {
         this.addCommand({
             id: 'transcribe-from-clipboard',
             name: 'Transcribe audio from clipboard',
-            callback: () => {
+            callback: async () => {
                 new Notice('Clipboard transcription not yet implemented');
             }
         });
@@ -552,7 +494,7 @@ export default class SpeechToTextPlugin extends Plugin {
         }
     }
 
-    private showAudioFilePicker() {
+    private async showAudioFilePicker() {
         // Get all audio files in vault
         const audioFiles = this.app.vault.getFiles().filter(file => 
             file.extension === 'm4a' || 
@@ -648,9 +590,11 @@ export default class SpeechToTextPlugin extends Plugin {
         });
         
         // Use TextInsertionHandler with current settings
-        const options: InsertionOptions = {
-            mode: this.resolveInsertionMode(this.settings.insertPosition),
-            format: this.resolveTextFormat(this.settings.textFormat),
+        const options = {
+            mode: this.settings.insertPosition === 'cursor' ? 'cursor' as const :
+                  this.settings.insertPosition === 'end' ? 'append' as const :
+                  this.settings.insertPosition === 'beginning' ? 'prepend' as const : 'cursor' as const,
+            format: this.settings.textFormat || 'plain' as const,
             addTimestamp: this.settings.addTimestamp || false,
             timestampFormat: this.settings.timestampFormat,
             language: this.settings.language,

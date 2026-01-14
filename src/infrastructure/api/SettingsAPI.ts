@@ -3,12 +3,11 @@
  */
 
 import { EventEmitter } from 'events';
-import type { App } from 'obsidian';
-import type {
-    ISettingsAPI,
-    SettingsSchema,
-    ValidationResult,
-    ExportOptions,
+import type { 
+    ISettingsAPI, 
+    SettingsSchema, 
+    ValidationResult, 
+    ExportOptions, 
     ImportOptions,
     ImportResult,
     ResetScope
@@ -30,13 +29,11 @@ export class SettingsAPI implements ISettingsAPI {
     private validator: SettingsValidator;
     private storageKey = 'speech-to-text-settings';
     private defaultSettings: SettingsSchema;
-    private app: App;
 
-    constructor(app: App) {
-        this.app = app;
-        this.apiKeyManager = new SecureApiKeyManager(undefined, app);
+    constructor() {
+        this.apiKeyManager = new SecureApiKeyManager();
         this.encryptor = new SettingsEncryptor();
-        this.migrator = new SettingsMigrator(app);
+        this.migrator = new SettingsMigrator();
         this.validator = new SettingsValidator();
         this.defaultSettings = this.getDefaultSettings();
         this.settings = { ...this.defaultSettings };
@@ -47,8 +44,8 @@ export class SettingsAPI implements ISettingsAPI {
      */
     async initialize(): Promise<void> {
         try {
-            // Obsidian API를 통해 설정 로드
-            const stored = this.app.loadLocalStorage(this.storageKey);
+            // localStorage에서 설정 로드
+            const stored = localStorage.getItem(this.storageKey);
             if (stored) {
                 const parsed = JSON.parse(stored);
                 
@@ -78,20 +75,20 @@ export class SettingsAPI implements ISettingsAPI {
     /**
      * 설정 조회
      */
-    get<K extends keyof SettingsSchema>(key: K): Promise<SettingsSchema[K]> {
-        return Promise.resolve(this.settings[key]);
+    async get<K extends keyof SettingsSchema>(key: K): Promise<SettingsSchema[K]> {
+        return this.settings[key];
     }
 
     /**
      * 전체 설정 조회
      */
-    getAll(): Promise<SettingsSchema> {
+    async getAll(): Promise<SettingsSchema> {
         // API 키는 마스킹하여 반환
         const settings = { ...this.settings };
         if (settings.api.apiKey) {
             settings.api.apiKey = SecureApiKeyManager.maskApiKey(settings.api.apiKey);
         }
-        return Promise.resolve(settings);
+        return settings;
     }
 
     /**
@@ -178,7 +175,7 @@ export class SettingsAPI implements ISettingsAPI {
      * 마이그레이션 필요 여부
      */
     needsMigration(): boolean {
-        const stored = this.app.loadLocalStorage(this.storageKey);
+        const stored = localStorage.getItem(this.storageKey);
         if (!stored) return false;
 
         try {
@@ -328,17 +325,16 @@ export class SettingsAPI implements ISettingsAPI {
     /**
      * 설정 저장
      */
-    private save(): Promise<void> {
+    private async save(): Promise<void> {
         try {
             // API 키는 별도 저장
             const toSave = { ...this.settings };
             delete toSave.api.apiKey;
 
-            this.app.saveLocalStorage(this.storageKey, JSON.stringify(toSave));
-            return Promise.resolve();
+            localStorage.setItem(this.storageKey, JSON.stringify(toSave));
         } catch (error) {
             console.error('Failed to save settings:', error);
-            return Promise.reject(new Error('Failed to save settings'));
+            throw new Error('Failed to save settings');
         }
     }
 

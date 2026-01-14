@@ -23,33 +23,31 @@ export class SimpleSettingsTab extends PluginSettingTab {
         containerEl.empty();
         
         // 제목
-        containerEl.createEl('h2', { text: 'Speech to text settings' });
+        containerEl.createEl('h2', { text: 'Speech to Text Settings' });
         
         // Provider 선택 드롭다운 - 가장 중요한 기능
-        containerEl.createEl('h3', { text: 'API configuration' });
+        containerEl.createEl('h3', { text: 'API Configuration' });
         
         try {
             this.debug('Creating provider dropdown...');
             
             // Provider 선택
             new Setting(containerEl)
-                .setName('Transcription provider')
+                .setName('Transcription Provider')
                 .setDesc('Select the speech-to-text provider')
                 .addDropdown(dropdown => {
                     this.debug('Adding options to dropdown...');
                     dropdown
-                        .addOption('auto', 'Auto (intelligent selection)')
+                        .addOption('auto', 'Auto (Intelligent Selection)')
                         .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
                             this.debug('Provider changed to:', value);
-                            if (this.isProviderValue(value)) {
-                                this.plugin.settings.provider = value;
-                                await this.plugin.saveSettings();
-                                // UI 새로고침
-                                this.display();
-                            }
+                            this.plugin.settings.provider = value as 'auto' | 'whisper' | 'deepgram';
+                            await this.plugin.saveSettings();
+                            // UI 새로고침
+                            this.display();
                         });
                     this.debug('Dropdown created successfully');
                 });
@@ -61,7 +59,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             // Auto 모드일 때는 양쪽 API 키 모두 표시
             if (provider === 'auto' || provider === 'whisper') {
                 new Setting(containerEl)
-                    .setName('OpenAI API key')
+                    .setName('OpenAI API Key')
                     .setDesc('Enter your OpenAI API key for Whisper')
                     .addText(text => text
                         .setPlaceholder('sk-...')
@@ -75,7 +73,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             
             if (provider === 'auto' || provider === 'deepgram') {
                 new Setting(containerEl)
-                    .setName('Deepgram API key')
+                    .setName('Deepgram API Key')
                     .setDesc('Enter your Deepgram API key')
                     .addText(text => text
                         .setPlaceholder('Enter Deepgram API key...')
@@ -88,13 +86,13 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 // Deepgram 모델 선택
                 if (provider === 'deepgram') {
                     new Setting(containerEl)
-                        .setName('Deepgram model')
+                        .setName('Deepgram Model')
                         .setDesc('Select the Deepgram model to use')
                         .addDropdown(dropdown => dropdown
-                            .addOption('nova-2', 'Nova 2 (premium)')
-                            .addOption('nova', 'Nova (standard)')
+                            .addOption('nova-2', 'Nova 2 (Premium)')
+                            .addOption('nova', 'Nova (Standard)')
                             .addOption('enhanced', 'Enhanced')
-                            .addOption('base', 'Base (economy)')
+                            .addOption('base', 'Base (Economy)')
                             .setValue(this.plugin.settings.transcription?.deepgram?.model || 'nova-2')
                             .onChange(async (value) => {
                                 if (!this.plugin.settings.transcription) {
@@ -110,7 +108,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             }
             
             // 기본 설정들
-            containerEl.createEl('h3', { text: 'General settings' });
+            containerEl.createEl('h3', { text: 'General Settings' });
             
             new Setting(containerEl)
                 .setName('Language')
@@ -138,7 +136,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     }));
                     
             // 디버그 정보
-            containerEl.createEl('h3', { text: 'Debug information' });
+            containerEl.createEl('h3', { text: 'Debug Information' });
             
             const debugInfo = {
                 provider: this.plugin.settings.provider,
@@ -169,9 +167,5 @@ export class SimpleSettingsTab extends PluginSettingTab {
         if (this.plugin.settings?.debugMode) {
             console.debug('[SimpleSettingsTab]', ...args);
         }
-    }
-
-    private isProviderValue(value: string): value is 'auto' | 'whisper' | 'deepgram' {
-        return value === 'auto' || value === 'whisper' || value === 'deepgram';
     }
 }

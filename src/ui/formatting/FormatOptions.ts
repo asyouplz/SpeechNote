@@ -57,7 +57,7 @@ export class FormatOptionsModal extends Modal {
         contentEl.addClass('format-options-modal');
 
         // 제목
-        contentEl.createEl('h2', { text: 'Text formatting options' });
+        contentEl.createEl('h2', { text: 'Text Formatting Options' });
 
         // 탭 컨테이너
         const tabContainer = contentEl.createDiv('format-tabs');
@@ -125,51 +125,47 @@ export class FormatOptionsModal extends Modal {
     private createBasicTab(container: HTMLElement): void {
         // 삽입 모드 선택
         new Setting(container)
-            .setName('Insertion mode')
+            .setName('Insertion Mode')
             .setDesc('Where to insert the text')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('cursor', 'At cursor')
-                    .addOption('replace', 'Replace selection')
-                    .addOption('append', 'End of document')
-                    .addOption('prepend', 'Beginning of document')
-                    .addOption('line-end', 'End of current line')
-                    .addOption('new-line', 'New line below')
+                    .addOption('cursor', 'At Cursor')
+                    .addOption('replace', 'Replace Selection')
+                    .addOption('append', 'End of Document')
+                    .addOption('prepend', 'Beginning of Document')
+                    .addOption('line-end', 'End of Current Line')
+                    .addOption('new-line', 'New Line Below')
                     .setValue(this.options.mode)
                     .onChange(value => {
-                        if (this.isInsertionMode(value)) {
-                            this.options.mode = value;
-                            this.updatePreview();
-                        }
+                        this.options.mode = value as InsertionMode;
+                        this.updatePreview();
                     });
             });
 
         // 텍스트 포맷 선택
         new Setting(container)
-            .setName('Text format')
+            .setName('Text Format')
             .setDesc('How to format the inserted text')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('plain', 'Plain text')
+                    .addOption('plain', 'Plain Text')
                     .addOption('markdown', 'Markdown')
-                    .addOption('quote', 'Quote block')
-                    .addOption('bullet', 'Bullet list')
+                    .addOption('quote', 'Quote Block')
+                    .addOption('bullet', 'Bullet List')
                     .addOption('heading', 'Heading')
-                    .addOption('code', 'Code block')
-                    .addOption('callout', 'Callout block')
+                    .addOption('code', 'Code Block')
+                    .addOption('callout', 'Callout Block')
                     .setValue(this.options.format)
                     .onChange(value => {
-                        if (this.isTextFormat(value)) {
-                            this.options.format = value;
-                            this.updateFormatSpecificOptions();
-                            this.updatePreview();
-                        }
+                        this.options.format = value as TextFormat;
+                        this.updateFormatSpecificOptions();
+                        this.updatePreview();
                     });
             });
 
         // 타임스탬프 추가
         new Setting(container)
-            .setName('Add timestamp')
+            .setName('Add Timestamp')
             .setDesc('Add timestamp before the text')
             .addToggle(toggle => {
                 toggle
@@ -183,7 +179,7 @@ export class FormatOptionsModal extends Modal {
         // 타임스탬프 포맷
         if (this.options.addTimestamp) {
             new Setting(container)
-                .setName('Timestamp format')
+                .setName('Timestamp Format')
                 .setDesc('Format for the timestamp (YYYY-MM-DD HH:mm:ss)')
                 .addText(text => {
                     text
@@ -209,17 +205,15 @@ export class FormatOptionsModal extends Modal {
      * 포맷별 특수 옵션 업데이트
      */
     private updateFormatSpecificOptions(container?: HTMLElement): void {
-        const targetContainer = container || document.querySelector('.format-specific-options');
-        if (!(targetContainer instanceof HTMLElement)) {
-            return;
-        }
+        const targetContainer = container || document.querySelector('.format-specific-options') as HTMLElement;
+        if (!targetContainer) return;
 
         targetContainer.empty();
 
         switch (this.options.format) {
             case 'quote':
                 new Setting(targetContainer)
-                    .setName('Quote author')
+                    .setName('Quote Author')
                     .setDesc('Author attribution for the quote')
                     .addText(text => {
                         text
@@ -234,7 +228,7 @@ export class FormatOptionsModal extends Modal {
 
             case 'bullet':
                 new Setting(targetContainer)
-                    .setName('Bullet character')
+                    .setName('Bullet Character')
                     .setDesc('Character to use for bullets')
                     .addDropdown(dropdown => {
                         dropdown
@@ -252,7 +246,7 @@ export class FormatOptionsModal extends Modal {
 
             case 'heading':
                 new Setting(targetContainer)
-                    .setName('Heading level')
+                    .setName('Heading Level')
                     .setDesc('Level of the heading (1-6)')
                     .addDropdown(dropdown => {
                         for (let i = 1; i <= 6; i++) {
@@ -284,7 +278,7 @@ export class FormatOptionsModal extends Modal {
 
             case 'callout':
                 new Setting(targetContainer)
-                    .setName('Callout type')
+                    .setName('Callout Type')
                     .setDesc('Type of callout block')
                     .addDropdown(dropdown => {
                         dropdown
@@ -307,7 +301,7 @@ export class FormatOptionsModal extends Modal {
                     });
 
                 new Setting(targetContainer)
-                    .setName('Callout title')
+                    .setName('Callout Title')
                     .setDesc('Title for the callout')
                     .addText(text => {
                         text
@@ -344,7 +338,7 @@ export class FormatOptionsModal extends Modal {
             .setDesc('Language for special processing')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('', 'Auto detect')
+                    .addOption('', 'Auto Detect')
                     .addOption('en', 'English')
                     .addOption('ko', 'Korean')
                     .addOption('ja', 'Japanese')
@@ -361,7 +355,7 @@ export class FormatOptionsModal extends Modal {
 
         // 문단 구분
         new Setting(container)
-            .setName('Paragraph breaks')
+            .setName('Paragraph Breaks')
             .setDesc('Add paragraph breaks between sentences')
             .addToggle(toggle => {
                 toggle
@@ -374,7 +368,7 @@ export class FormatOptionsModal extends Modal {
 
         // 새 노트 생성
         new Setting(container)
-            .setName('Create new note')
+            .setName('Create New Note')
             .setDesc('Create a new note for the text')
             .addToggle(toggle => {
                 toggle
@@ -388,7 +382,7 @@ export class FormatOptionsModal extends Modal {
         // 새 노트 옵션
         if (this.options.createNewNote) {
             new Setting(container)
-                .setName('Note title')
+                .setName('Note Title')
                 .setDesc('Title for the new note')
                 .addText(text => {
                     text
@@ -400,7 +394,7 @@ export class FormatOptionsModal extends Modal {
                 });
 
             new Setting(container)
-                .setName('Note folder')
+                .setName('Note Folder')
                 .setDesc('Folder for the new note')
                 .addText(text => {
                     text
@@ -414,7 +408,7 @@ export class FormatOptionsModal extends Modal {
 
         // 프리뷰 모드
         new Setting(container)
-            .setName('Preview before insert')
+            .setName('Preview Before Insert')
             .setDesc('Show preview before inserting text')
             .addToggle(toggle => {
                 toggle
@@ -454,7 +448,7 @@ export class FormatOptionsModal extends Modal {
 
         // 커스텀 템플릿
         new Setting(container)
-            .setName('Custom template')
+            .setName('Custom Template')
             .setDesc('Use {{content}} for the text placeholder')
             .addTextArea(text => {
                 text
@@ -471,7 +465,7 @@ export class FormatOptionsModal extends Modal {
 
         // 템플릿 변수 도움말
         const helpContainer = container.createDiv('template-help');
-        helpContainer.createEl('h4', { text: 'Available variables:' });
+        helpContainer.createEl('h4', { text: 'Available Variables:' });
         const helpList = helpContainer.createEl('ul');
         
         const variables = [
@@ -510,7 +504,7 @@ export class FormatOptionsModal extends Modal {
 
         // 기본값 복원 버튼
         const resetButton = buttonContainer.createEl('button', {
-            text: 'Reset to defaults',
+            text: 'Reset to Defaults',
             cls: 'mod-cta-secondary'
         });
         resetButton.onclick = () => {
@@ -643,32 +637,9 @@ export class FormatOptionsModal extends Modal {
     private updateNewNoteOptions(): void {
         // Advanced 탭 재렌더링
         const advancedTab = document.querySelectorAll('.format-tab-content')[2];
-        if (advancedTab instanceof HTMLElement) {
-            this.createAdvancedTab(advancedTab);
+        if (advancedTab) {
+            this.createAdvancedTab(advancedTab as HTMLElement);
         }
-    }
-
-    private isInsertionMode(value: string): value is InsertionMode {
-        return (
-            value === 'cursor' ||
-            value === 'replace' ||
-            value === 'append' ||
-            value === 'prepend' ||
-            value === 'line-end' ||
-            value === 'new-line'
-        );
-    }
-
-    private isTextFormat(value: string): value is TextFormat {
-        return (
-            value === 'plain' ||
-            value === 'markdown' ||
-            value === 'quote' ||
-            value === 'bullet' ||
-            value === 'heading' ||
-            value === 'code' ||
-            value === 'callout'
-        );
     }
 
     /**
@@ -693,13 +664,13 @@ export class FormatOptionsModal extends Modal {
         this.templates = [
             {
                 id: 'meeting',
-                name: 'Meeting notes',
+                name: 'Meeting Notes',
                 format: 'markdown',
                 content: '## Meeting Notes - {{date}}\n\n### Attendees\n- \n\n### Agenda\n- \n\n### Discussion\n{{content}}\n\n### Action Items\n- \n\n---\n*Transcribed at {{datetime}}*'
             },
             {
                 id: 'daily',
-                name: 'Daily note',
+                name: 'Daily Note',
                 format: 'markdown',
                 content: '## {{date}}\n\n### Transcription\n{{content}}\n\n### Thoughts\n\n\n### Tasks\n- [ ] \n\n---\n*Created at {{time}}*'
             },
@@ -711,7 +682,7 @@ export class FormatOptionsModal extends Modal {
             },
             {
                 id: 'lecture',
-                name: 'Lecture notes',
+                name: 'Lecture Notes',
                 format: 'markdown',
                 content: '# Lecture Notes\n**Date:** {{date}}\n**Topic:** \n\n## Main Content\n{{content}}\n\n## Key Concepts\n1. \n2. \n3. \n\n## Questions\n- \n\n## References\n- \n\n---\n*Transcribed at {{datetime}}*'
             }

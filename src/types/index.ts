@@ -95,16 +95,16 @@ export interface WhisperResponse {
     language?: string;
     duration?: number;
     segments?: Array<{
-        id?: number;
-        seek?: number;
+        id: number;
+        seek: number;
         start: number;
         end: number;
         text: string;
-        tokens?: number[];
-        temperature?: number;
-        avg_logprob?: number;
-        compression_ratio?: number;
-        no_speech_prob?: number;
+        tokens: number[];
+        temperature: number;
+        avg_logprob: number;
+        compression_ratio: number;
+        no_speech_prob: number;
     }>;
 }
 
@@ -138,13 +138,13 @@ export interface ErrorInfo {
 
 // Service Interfaces
 export interface ITranscriptionService {
-    transcribe(file: TFile | File, options?: { signal?: AbortSignal }): Promise<TranscriptionResult>;
+    transcribe(file: TFile): Promise<TranscriptionResult>;
     cancel(): void;
     getStatus(): TranscriptionStatus;
 }
 
 export interface IWhisperService {
-    transcribe(audio: ArrayBuffer | Blob, options?: WhisperOptions): Promise<WhisperResponse>;
+    transcribe(audio: ArrayBuffer, options?: WhisperOptions): Promise<WhisperResponse>;
     validateApiKey(key: string): Promise<boolean>;
     cancel(): void;
 }

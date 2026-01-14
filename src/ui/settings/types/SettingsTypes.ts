@@ -5,7 +5,6 @@
  */
 
 import { TranscriptionProvider, SelectionStrategy } from '../../../infrastructure/api/providers/ITranscriber';
-import { isDate, isPlainRecord, isRecord } from '../../../types/guards';
 
 // === 기본 타입 정의 ===
 
@@ -99,8 +98,6 @@ export type UIState = 'idle' | 'loading' | 'saving' | 'error' | 'success';
 
 // === Type Guards ===
 
-const selectionStrategyValues = new Set<string>(Object.values(SelectionStrategy));
-
 /**
  * TranscriptionProvider 타입 가드
  */
@@ -114,37 +111,39 @@ export function isTranscriptionProvider(value: unknown): value is TranscriptionP
  */
 export function isSelectionStrategy(value: unknown): value is SelectionStrategy {
     return typeof value === 'string' && 
-           selectionStrategyValues.has(value);
+           Object.values(SelectionStrategy).includes(value as SelectionStrategy);
 }
 
 /**
  * ApiKeyInfo 타입 가드
  */
 export function isApiKeyInfo(value: unknown): value is ApiKeyInfo {
-    if (!isRecord(value)) return false;
+    if (!value || typeof value !== 'object') return false;
     
-    return isTranscriptionProvider(value.provider) &&
-           typeof value.key === 'string' &&
-           typeof value.encrypted === 'boolean' &&
-           typeof value.isValid === 'boolean';
+    const obj = value as Record<string, unknown>;
+    return isTranscriptionProvider(obj.provider) &&
+           typeof obj.key === 'string' &&
+           typeof obj.encrypted === 'boolean' &&
+           typeof obj.isValid === 'boolean';
 }
 
 /**
  * ValidationResult 타입 가드
  */
 export function isValidationResult(value: unknown): value is ValidationResult {
-    if (!isRecord(value)) return false;
+    if (!value || typeof value !== 'object') return false;
     
-    return typeof value.isValid === 'boolean' &&
-           Array.isArray(value.errors) &&
-           Array.isArray(value.warnings);
+    const obj = value as Record<string, unknown>;
+    return typeof obj.isValid === 'boolean' &&
+           Array.isArray(obj.errors) &&
+           Array.isArray(obj.warnings);
 }
 
 /**
  * Date 타입 가드
  */
 export function isValidDate(value: unknown): value is Date {
-    return isDate(value);
+    return value instanceof Date && !isNaN(value.getTime());
 }
 
 /**
@@ -325,7 +324,7 @@ export class SettingsChangeTracker<T extends Record<string, unknown>> {
  * 설정 검증기
  */
 export class SettingsValidator<T extends Record<string, unknown>> {
-    private rules = new Map<string, Array<(value: unknown) => ValidationResult>>();
+    private rules = new Map<keyof T, Array<(value: any) => ValidationResult>>();
     
     /**
      * 검증 규칙 추가
@@ -334,18 +333,17 @@ export class SettingsValidator<T extends Record<string, unknown>> {
         key: K,
         validator: (value: T[K]) => ValidationResult
     ): this {
-        const fieldKey = String(key);
-        if (!this.rules.has(fieldKey)) {
-            this.rules.set(fieldKey, []);
+        if (!this.rules.has(key)) {
+            this.rules.set(key, []);
         }
-        this.rules.get(fieldKey)!.push((value: unknown) => validator(value as T[K]));
+        this.rules.get(key)!.push(validator);
         return this;
     }
     
     /**
      * 단일 필드 검증
      */
-    validateField(key: string, value: unknown): ValidationResult {
+    validateField<K extends keyof T>(key: K, value: T[K]): ValidationResult {
         const validators = this.rules.get(key) || [];
         const errors: string[] = [];
         const warnings: string[] = [];
@@ -372,7 +370,7 @@ export class SettingsValidator<T extends Record<string, unknown>> {
         let isValid = true;
         
         for (const [key, value] of Object.entries(settings)) {
-            const result = this.validateField(key, value);
+            const result = this.validateField(key as keyof T, value as T[keyof T]);
             errors.push(...result.errors);
             warnings.push(...result.warnings);
             
@@ -405,13 +403,11 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Part
     const result = { ...target };
     
     for (const key in source) {
-        const sourceValue = source[key];
-        if (sourceValue !== undefined) {
-            const targetValue = target[key];
-            if (isPlainRecord(sourceValue) && isPlainRecord(targetValue)) {
-                result[key] = deepMerge(targetValue as T[typeof key], sourceValue as T[typeof key]);
+        if (source[key] !== undefined) {
+            if (typeof source[key] === 'object' && !Array.isArray(source[key]) && source[key] !== null) {
+                result[key] = deepMerge(target[key] || {} as T[Extract<keyof T, string>], source[key] as any);
             } else {
-                result[key] = sourceValue as T[typeof key];
+                result[key] = source[key] as T[typeof key];
             }
         }
     }
@@ -431,8 +427,6 @@ export function deepEqual(a: unknown, b: unknown): boolean {
     
     if (typeof a !== 'object') return false;
     
-    if (!isRecord(a) || !isRecord(b)) return false;
-    
     const keysA = Object.keys(a);
     const keysB = Object.keys(b);
     
@@ -440,7 +434,7 @@ export function deepEqual(a: unknown, b: unknown): boolean {
     
     for (const key of keysA) {
         if (!keysB.includes(key)) return false;
-        if (!deepEqual(a[key], b[key])) return false;
+        if (!deepEqual((a as any)[key], (b as any)[key])) return false;
     }
     
     return true;
@@ -471,11 +465,11 @@ export function createDebouncedSave<T>(
  * 설정 마이그레이션 헬퍼
  */
 export function migrateSettings<T extends { version: number }>(
-    settings: T,
-    migrations: Array<(settings: T) => T>,
+    settings: unknown,
+    migrations: Array<(settings: any) => any>,
     currentVersion: number
 ): T {
-    let migrated = settings;
+    let migrated = settings as any;
     const startVersion = migrated?.version || 0;
     
     for (let i = startVersion; i < currentVersion; i++) {
@@ -485,5 +479,5 @@ export function migrateSettings<T extends { version: number }>(
     }
     
     migrated.version = currentVersion;
-    return migrated;
+    return migrated as T;
 }

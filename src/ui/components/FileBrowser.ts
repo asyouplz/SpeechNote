@@ -70,11 +70,8 @@ export class FileBrowser {
         });
         
         searchInput.addEventListener('input', (e) => {
-            const target = e.target;
-            if (target instanceof HTMLInputElement) {
-                this.searchQuery = target.value;
-                this.createFileList();
-            }
+            this.searchQuery = (e.target as HTMLInputElement).value;
+            this.createFileList();
         });
 
         // 정렬 옵션
@@ -88,14 +85,8 @@ export class FileBrowser {
         sortSelect.value = this.sortBy;
         
         sortSelect.addEventListener('change', (e) => {
-            const target = e.target;
-            if (target instanceof HTMLSelectElement) {
-                const value = target.value;
-                if (value === 'name' || value === 'date' || value === 'size') {
-                    this.sortBy = value;
-                    this.createFileList();
-                }
-            }
+            this.sortBy = (e.target as HTMLSelectElement).value as 'name' | 'date' | 'size';
+            this.createFileList();
         });
 
         // 정렬 순서 토글

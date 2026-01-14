@@ -73,14 +73,10 @@ export class BatchRequestManager {
         this.priorityQueuing = options.priorityQueuing ?? true;
     }
 
-    private normalizeError(error: unknown): Error {
-        return error instanceof Error ? error : new Error('Unknown error');
-    }
-
     /**
      * 요청을 배치 큐에 추가
      */
-    addRequest<T>(
+    async addRequest<T>(
         endpoint: string,
         method: 'GET' | 'POST' | 'PUT' | 'DELETE',
         params?: unknown,
@@ -189,7 +185,7 @@ export class BatchRequestManager {
             this.processBatchResponses(batch, responses);
         } catch (error) {
             // 배치 실패 시 재시도 또는 개별 처리
-            this.handleBatchError(batch, this.normalizeError(error));
+            this.handleBatchError(batch, error as Error);
         }
     }
 
@@ -382,7 +378,7 @@ export const batchManager = new BatchRequestManager({
 /**
  * 배치 요청 헬퍼 함수
  */
-export function batchRequest<T>(
+export async function batchRequest<T>(
     endpoint: string,
     options: {
         method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
