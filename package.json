@@ -71,5 +71,8 @@
     "ts-jest": "^29.1.0",
     "tslib": "^2.4.0",
     "typescript": "^4.9.5"
+  },
+  "overrides": {
+    "npm": "11.7.0"
   }
 }
