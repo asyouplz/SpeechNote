@@ -44,8 +44,7 @@ export class CircularProgress {
     }
 
     create(container: HTMLElement): HTMLElement {
-        this.element = document.createElement('div');
-        this.element.className = 'circular-progress';
+        this.element = createEl('div', { cls: 'circular-progress' });
         this.element.style.setProperty('--cp-size', `${this.options.size}px`);
         this.element.style.setProperty('--cp-animation-duration', `${this.options.animationDuration}ms`);
         
@@ -258,8 +257,7 @@ export class CircularProgress {
  */
 export class SemiCircularProgress extends CircularProgress {
     create(container: HTMLElement): HTMLElement {
-        this.element = document.createElement('div');
-        this.element.className = 'semi-circular-progress';
+        this.element = createEl('div', { cls: 'semi-circular-progress' });
         this.element.style.setProperty('--cp-size', `${this.options.size}px`);
         this.element.style.setProperty('--cp-animation-duration', `${this.options.animationDuration}ms`);
         

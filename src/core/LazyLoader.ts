@@ -21,6 +21,10 @@ export interface LoadingState {
     module?: unknown;
 }
 
+function normalizeError(error: unknown): Error {
+    return error instanceof Error ? error : new Error('Unknown error');
+}
+
 export class LazyLoader {
     private static loadedModules = new Map<string, unknown>();
     private static loadingPromises = new Map<string, Promise<unknown>>();
@@ -63,7 +67,7 @@ export class LazyLoader {
 
         try {
             const module = await promise;
-            this.loadedModules.set(modulePath, module as T);
+            this.loadedModules.set(modulePath, module);
             this.updateLoadingState(modulePath, { 
                 isLoading: false, 
                 module 
@@ -77,11 +81,11 @@ export class LazyLoader {
         } catch (error) {
             this.updateLoadingState(modulePath, { 
                 isLoading: false, 
-                error: error as Error 
+                error: normalizeError(error)
             });
             
             if (options.onError) {
-                options.onError(error as Error);
+                options.onError(normalizeError(error));
             }
 
             if (options.fallback !== undefined) {
@@ -115,7 +119,7 @@ export class LazyLoader {
     /**
      * 동적 import 래퍼 (컴포넌트별 최적화)
      */
-    private static async dynamicImport(modulePath: string): Promise<unknown> {
+    private static dynamicImport(modulePath: string): Promise<unknown> {
         // UI 컴포넌트 매핑
         const moduleMap: Record<string, () => Promise<unknown>> = {
             // Dashboard components (낮은 우선순위)
@@ -181,13 +185,14 @@ export class LazyLoader {
      * 리소스 프리로딩 (link prefetch)
      */
     static preloadResources(resources: string[]): void {
+        if (typeof fetch !== 'function') {
+            return;
+        }
+
         resources.forEach(resource => {
-            const link = document.createElement('link');
-            link.rel = 'prefetch';
-            link.href = resource;
-            link.as = resource.endsWith('.js') ? 'script' : 
-                      resource.endsWith('.css') ? 'style' : 'fetch';
-            document.head.appendChild(link);
+            void fetch(resource, { cache: 'force-cache', mode: 'no-cors' }).catch(error => {
+                console.warn(`Failed to preload resource: ${resource}`, error);
+            });
         });
     }
 

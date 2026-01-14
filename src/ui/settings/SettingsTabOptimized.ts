@@ -8,6 +8,7 @@ import { AudioSettings } from './components/AudioSettings';
 import { EventListenerManager } from '../../utils/memory/MemoryManager';
 import { debounceAsync } from '../../utils/async/AsyncManager';
 import { GlobalErrorManager, ErrorType, ErrorSeverity } from '../../utils/error/ErrorManager';
+import { DEFAULT_SETTINGS } from '../../domain/models/Settings';
 
 /**
  * 최적화된 설정 탭 컴포넌트
@@ -55,6 +56,10 @@ export class SettingsTabOptimized extends PluginSettingTab {
         this.setupAutoSave();
     }
 
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error(String(error));
+    }
+
     /**
      * 컴포넌트 초기화 - 에러 경계 포함
      */
@@ -69,7 +74,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
                 sectionRenderers: new Map()
             };
         } catch (error) {
-            this.errorManager.handleError(error as Error, {
+            this.errorManager.handleError(this.normalizeError(error), {
                 type: ErrorType.RESOURCE,
                 severity: ErrorSeverity.HIGH,
                 context: { component: 'SettingsTab' }
@@ -101,7 +106,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
                 this.state.isDirty = false;
                 this.updateSaveStatus('saved');
             } catch (error) {
-                this.errorManager.handleError(error as Error, {
+                this.errorManager.handleError(this.normalizeError(error), {
                     type: ErrorType.RESOURCE,
                     severity: ErrorSeverity.MEDIUM,
                     userMessage: '설정 저장 실패'
@@ -112,7 +117,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
             }
         };
         
-        this.saveSettings = debounceAsync(saveFunction, 1000) as unknown as () => Promise<void>;
+        this.saveSettings = debounceAsync(saveFunction, 1000);
     }
 
     display(): void {
@@ -308,10 +313,12 @@ export class SettingsTabOptimized extends PluginSettingTab {
         const inputs = section.querySelectorAll('input, select, textarea');
         
         inputs.forEach(input => {
-            this.eventManager.add(input as HTMLElement, 'change', () => {
-                this.state.isDirty = true;
-                void this.saveSettings();
-            });
+            if (input instanceof HTMLElement) {
+                this.eventManager.add(input, 'change', () => {
+                    this.state.isDirty = true;
+                    void this.saveSettings();
+                });
+            }
         });
     }
 
@@ -606,7 +613,7 @@ class SecureApiKeyInput {
         }
     }
     
-    private async validate(): Promise<void> {
+    private validate(): void {
         const value = this.inputEl.value;
         
         if (!value || value === this.maskApiKey(this.initialValue)) {
@@ -678,7 +685,7 @@ class SettingsFooter extends SectionRenderer {
                 }));
     }
     
-    private async exportSettings(): Promise<void> {
+    private exportSettings(): void {
         try {
             const settings = this.plugin.settings;
             const blob = new Blob([JSON.stringify(settings, null, 2)], {
@@ -686,7 +693,7 @@ class SettingsFooter extends SectionRenderer {
             });
             
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            const a = createEl('a');
             a.href = url;
             a.download = 'speech-to-text-settings.json';
             a.click();
@@ -698,13 +705,17 @@ class SettingsFooter extends SectionRenderer {
         }
     }
     
-    private async importSettings(): Promise<void> {
-        const input = document.createElement('input');
+    private importSettings(): void {
+        const input = createEl('input');
         input.type = 'file';
         input.accept = '.json';
         
         input.onchange = async (e) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
+            const target = e.target;
+            if (!(target instanceof HTMLInputElement)) {
+                return;
+            }
+            const file = target.files?.[0];
             if (!file) return;
             
             try {
@@ -734,7 +745,7 @@ class SettingsFooter extends SectionRenderer {
         
         try {
             // Reset to defaults
-            this.plugin.settings = (this.plugin as any).getDefaultSettings?.() || this.plugin.settings;
+            this.plugin.settings = { ...DEFAULT_SETTINGS };
             await this.plugin.saveSettings();
             
             new Notice('설정을 재설정했습니다');

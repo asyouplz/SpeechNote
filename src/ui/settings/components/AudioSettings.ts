@@ -41,8 +41,10 @@ export class AudioSettings {
                 .addOption('whisper-1', 'Whisper-1 (기본)')
                 .setValue(this.plugin.settings.model)
                 .onChange(async (value: string) => {
-                    this.plugin.settings.model = value as 'whisper-1';
-                    await this.plugin.saveSettings();
+                    if (value === 'whisper-1') {
+                        this.plugin.settings.model = value;
+                        await this.plugin.saveSettings();
+                    }
                 }))
             .setDisabled(true); // 현재는 whisper-1만 지원
 
@@ -56,9 +58,13 @@ export class AudioSettings {
                 .addOption('verbose_json', 'Verbose JSON (상세 정보)')
                 .addOption('srt', 'SRT (자막 형식)')
                 .addOption('vtt', 'VTT (WebVTT 형식)')
-                .setValue((this.plugin.settings as any).responseFormat || 'json')
+                .setValue(
+                    typeof this.plugin.settings['responseFormat'] === 'string'
+                        ? this.plugin.settings['responseFormat']
+                        : 'json'
+                )
                 .onChange(async (value) => {
-                    (this.plugin.settings as any).responseFormat = value;
+                    this.plugin.settings['responseFormat'] = value;
                     await this.plugin.saveSettings();
                 }));
 

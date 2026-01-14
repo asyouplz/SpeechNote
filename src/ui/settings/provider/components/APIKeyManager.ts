@@ -56,7 +56,7 @@ export class APIKeyManager {
         const headerEl = containerEl.createDiv({ cls: 'api-key-header' });
         
         headerEl.createEl('h4', { 
-            text: '🔐 API Key Management',
+            text: '🔐 API key management',
             cls: 'api-key-title'
         });
         
@@ -77,7 +77,7 @@ export class APIKeyManager {
             this.renderSingleKeyInput(
                 inputsEl,
                 'whisper',
-                'OpenAI API Key',
+                'OpenAI API key',
                 'Your OpenAI API key for Whisper',
                 'sk-...',
                 /^sk-[A-Za-z0-9]{48,}$/
@@ -89,7 +89,7 @@ export class APIKeyManager {
             this.renderSingleKeyInput(
                 inputsEl,
                 'deepgram',
-                'Deepgram API Key',
+                'Deepgram API key',
                 'Your Deepgram API key',
                 'Enter your Deepgram key',
                 /^[a-f0-9]{32,}$/
@@ -376,17 +376,19 @@ export class APIKeyManager {
                 await this.deleteApiKey(provider);
                 
                 // UI 업데이트
-                const input = containerEl.querySelector(`input[data-provider="${provider}"]`) as HTMLInputElement;
-                if (input) {
+                const input = containerEl.querySelector(`input[data-provider="${provider}"]`);
+                if (input instanceof HTMLInputElement) {
                     input.value = '';
                     input.removeClass('has-value');
                 }
                 
                 // 상태 업데이트
-                this.updateStatusIndicator(
-                    containerEl.closest('.api-key-input-container')?.querySelector('.key-status-indicator') as HTMLElement,
-                    provider
-                );
+                const statusEl = containerEl
+                    .closest('.api-key-input-container')
+                    ?.querySelector('.key-status-indicator');
+                if (statusEl instanceof HTMLElement) {
+                    this.updateStatusIndicator(statusEl, provider);
+                }
                 
                 new Notice(`${this.getProviderName(provider)} API key deleted`);
             }
@@ -440,7 +442,7 @@ export class APIKeyManager {
         });
         
         // Enter 키로 검증
-        inputEl.addEventListener('keypress', async (e) => {
+        inputEl.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !validateBtn.disabled) {
                 validateBtn.click();
             }
@@ -469,7 +471,7 @@ export class APIKeyManager {
         securityNotice.createEl('span', { cls: 'security-icon', text: '🔒' });
 
         const securityText = securityNotice.createDiv('security-text');
-        securityText.createEl('strong', { text: 'Security Notice:' });
+        securityText.createEl('strong', { text: 'Security notice:' });
 
         const list = securityText.createEl('ul');
         const items = [
@@ -485,7 +487,7 @@ export class APIKeyManager {
         
         // 보안 설정 버튼
         new ButtonComponent(securityEl)
-            .setButtonText('Security Settings')
+            .setButtonText('Security settings')
             .setIcon('shield')
             .onClick(() => this.showSecuritySettings());
     }
@@ -616,11 +618,12 @@ export class APIKeyManager {
         const containers = document.querySelectorAll('.api-key-input-container');
         
         containers.forEach((container) => {
-            const el = container as HTMLElement;
-            const provider = el.classList.contains('whisper') ? 'whisper' : 'deepgram';
-            
-            const shouldShow = currentProvider === 'auto' || currentProvider === provider;
-            el.classList.toggle('sn-hidden', !shouldShow);
+            if (container instanceof HTMLElement) {
+                const provider = container.classList.contains('whisper') ? 'whisper' : 'deepgram';
+                
+                const shouldShow = currentProvider === 'auto' || currentProvider === provider;
+                container.classList.toggle('sn-hidden', !shouldShow);
+            }
         });
     }
     
@@ -629,10 +632,14 @@ export class APIKeyManager {
      */
     public async importKeys(keys: Record<string, string>): Promise<void> {
         for (const [provider, key] of Object.entries(keys)) {
-            if (provider === 'whisper' || provider === 'deepgram') {
-                await this.saveApiKey(provider as TranscriptionProvider, key);
+            if (this.isProvider(provider)) {
+                await this.saveApiKey(provider, key);
             }
         }
+    }
+
+    private isProvider(value: string): value is TranscriptionProvider {
+        return value === 'whisper' || value === 'deepgram';
     }
     
     // === Helper Methods ===
@@ -679,10 +686,10 @@ export class APIKeyManager {
     /**
      * 삭제 확인
      */
-    private async confirmDelete(provider: TranscriptionProvider): Promise<boolean> {
+    private confirmDelete(provider: TranscriptionProvider): Promise<boolean> {
         return new Promise((resolve) => {
             const modal = new Modal(this.plugin.app);
-            modal.titleEl.setText('Delete API Key?');
+            modal.titleEl.setText('Delete API key?');
             
             modal.contentEl.createEl('p', {
                 text: `Are you sure you want to delete the ${this.getProviderName(provider)} API key?`
@@ -714,7 +721,7 @@ export class APIKeyManager {
      */
     private showSecuritySettings(): void {
         const modal = new Modal(this.plugin.app);
-        modal.titleEl.setText('API Key Security Settings');
+        modal.titleEl.setText('API key security settings');
         
         const contentEl = modal.contentEl;
         
@@ -766,7 +773,7 @@ export class APIKeyManager {
      */
     private showEnvVarInstructions(): void {
         const modal = new Modal(this.plugin.app);
-        modal.titleEl.setText('Environment Variable Setup');
+        modal.titleEl.setText('Environment variable setup');
         
         const contentEl = modal.contentEl;
         const instructions = contentEl.createDiv('env-var-instructions');
@@ -897,6 +904,13 @@ export class APIKeyManager {
                 }
             }
         }
+    }
+
+    public destroy(): void {
+        this.validationCache.clear();
+        this.validationStatus.clear();
+        this.keyVisibility.clear();
+        this.apiKeys.clear();
     }
 }
 

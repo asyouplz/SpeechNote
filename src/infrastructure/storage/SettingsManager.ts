@@ -128,6 +128,10 @@ export class SettingsManager implements ISettingsManager {
         this.logger = logger;
     }
 
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error('Unknown error');
+    }
+
     async load(): Promise<PluginSettings> {
         try {
             const loadedData = await this.plugin.loadData();
@@ -150,7 +154,7 @@ export class SettingsManager implements ISettingsManager {
             this.logger?.debug('Settings loaded successfully');
             return this.settings;
         } catch (error) {
-            this.logger?.error('Failed to load settings', error as Error);
+            this.logger?.error('Failed to load settings', this.normalizeError(error));
             return this.settings;
         }
     }
@@ -163,8 +167,7 @@ export class SettingsManager implements ISettingsManager {
             if (settings.apiKey) {
                 settings.encryptedApiKey = this.encryption.encrypt(settings.apiKey);
                 // 원본 API 키는 저장하지 않음
-                const saveData = { ...settings };
-                delete (saveData as any).apiKey;
+                const { apiKey: _apiKey, ...saveData } = settings;
                 await this.plugin.saveData(saveData);
             } else {
                 await this.plugin.saveData(settings);
@@ -172,17 +175,22 @@ export class SettingsManager implements ISettingsManager {
             
             this.logger?.debug('Settings saved successfully');
         } catch (error) {
-            this.logger?.error('Failed to save settings', error as Error);
+            this.logger?.error('Failed to save settings', this.normalizeError(error));
             throw error;
         }
     }
 
-    get<K extends string>(key: K): any {
-        return (this.settings as any)[key];
+    get<K extends string>(key: K): unknown;
+    get<K extends keyof PluginSettings>(key: K): PluginSettings[K];
+    get(key: string): unknown {
+        return this.settings[key as keyof PluginSettings];
     }
 
-    async set<K extends string>(key: K, value: any): Promise<void> {
-        (this.settings as any)[key] = value;
+    async set<K extends string>(key: K, value: unknown): Promise<void>;
+    async set<K extends keyof PluginSettings>(key: K, value: PluginSettings[K]): Promise<void>;
+    async set(key: string, value: unknown): Promise<void> {
+        const mutableSettings = this.settings as unknown as Record<string, unknown>;
+        mutableSettings[key] = value;
         
         // API 키가 변경되면 특별 처리
         if (key === 'apiKey' && typeof value === 'string') {
@@ -219,8 +227,7 @@ export class SettingsManager implements ISettingsManager {
         this.settings.encryptedApiKey = this.encryption.encrypt(apiKey);
         
         // 저장 시 API 키는 제외
-        const saveData = { ...this.settings };
-        delete (saveData as any).apiKey;
+        const { apiKey: _apiKey, ...saveData } = this.settings;
         
         await this.plugin.saveData(saveData);
         this.logger?.debug('API key encrypted and saved', { 
@@ -237,19 +244,16 @@ export class SettingsManager implements ISettingsManager {
 
     // 설정 내보내기 (민감한 정보 제외)
     exportSettings(): Partial<PluginSettings> {
-        const exported = { ...this.settings };
-        delete (exported as any).apiKey;
-        delete exported.encryptedApiKey;
+        const { apiKey: _apiKey, encryptedApiKey: _encryptedApiKey, ...exported } = this.settings;
         return exported;
     }
 
     // 설정 가져오기
     async importSettings(imported: Partial<PluginSettings>): Promise<void> {
         // API 키는 가져오지 않음
-        delete imported.apiKey;
-        delete imported.encryptedApiKey;
+        const { apiKey: _apiKey, encryptedApiKey: _encryptedApiKey, ...safeImported } = imported;
         
-        this.settings = { ...this.settings, ...imported };
+        this.settings = { ...this.settings, ...safeImported };
         await this.save(this.settings);
         this.logger?.info('Settings imported successfully');
     }

@@ -3,6 +3,7 @@ import type { IWhisperService, WhisperOptions, WhisperResponse, ILogger } from '
 import { sleep } from '../../utils/common/helpers';
 import { validateRange } from '../../utils/common/validators';
 import { truncateText } from '../../utils/common/formatters';
+import { isPlainRecord } from '../../types/guards';
 
 // 커스텀 에러 클래스
 export class WhisperAPIError extends Error {
@@ -31,7 +32,12 @@ export class RateLimitError extends WhisperAPIError {
 
 export class FileTooLargeError extends WhisperAPIError {
     constructor() {
-        super('File size exceeds API limit (25MB)', 'FILE_TOO_LARGE', 413, false);
+        super(
+            'File size exceeds API limit (25MB). file size limit enforced.',
+            'FILE_TOO_LARGE',
+            413,
+            false
+        );
     }
 }
 
@@ -54,6 +60,10 @@ class ExponentialBackoffRetry implements RetryStrategy {
 
     constructor(private logger: ILogger) {}
 
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error('Unknown error');
+    }
+
     async execute<T>(operation: () => Promise<T>): Promise<T> {
         let lastError: Error | undefined;
         
@@ -61,10 +71,10 @@ class ExponentialBackoffRetry implements RetryStrategy {
             try {
                 return await operation();
             } catch (error) {
-                lastError = error as Error;
+                lastError = this.normalizeError(error);
                 
                 if (!this.isRetryable(error)) {
-                    throw error;
+                    throw lastError;
                 }
                 
                 if (attempt < this.maxRetries - 1) {
@@ -92,7 +102,7 @@ class ExponentialBackoffRetry implements RetryStrategy {
             return error.isRetryable;
         }
 
-        const message = ((error as Error).message || '').toLowerCase();
+        const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
         return (
             message.includes('network') ||
             message.includes('temporary') ||
@@ -211,7 +221,11 @@ class CircuitBreaker {
 export class WhisperService implements IWhisperService {
     private readonly API_ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions';
     private readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
-    private readonly TIMEOUT = 30000; // 30 seconds
+    private timeoutMs = 30000; // 30 seconds
+    private useFetch = false;
+
+    private apiKey: string;
+    private logger: ILogger;
     
     private abortController?: AbortController;
     private retryStrategy: RetryStrategy;
@@ -220,9 +234,141 @@ export class WhisperService implements IWhisperService {
     private pendingRequests: Array<() => Promise<void>> = [];
     private isProcessingQueue = false;
 
-    constructor(private apiKey: string, private logger: ILogger) {
-        this.retryStrategy = new ExponentialBackoffRetry(logger);
-        this.circuitBreaker = new CircuitBreaker(logger);
+    constructor(apiKeyOrConfig: string | Record<string, unknown>, logger?: ILogger) {
+        if (typeof apiKeyOrConfig === 'string') {
+            this.apiKey = apiKeyOrConfig;
+            this.logger = logger ?? this.createNoopLogger();
+        } else {
+            const config = apiKeyOrConfig ?? {};
+            const whisperApiKey = typeof config.whisperApiKey === 'string' ? config.whisperApiKey : undefined;
+            const apiKey = typeof config.apiKey === 'string' ? config.apiKey : undefined;
+            this.apiKey = whisperApiKey ?? apiKey ?? '';
+            this.logger = logger ?? this.createNoopLogger();
+            if (typeof config.timeout === 'number' && Number.isFinite(config.timeout)) {
+                this.timeoutMs = config.timeout;
+            }
+            this.useFetch = true;
+        }
+        this.retryStrategy = new ExponentialBackoffRetry(this.logger);
+        this.circuitBreaker = new CircuitBreaker(this.logger);
+    }
+
+    private createNoopLogger(): ILogger {
+        return {
+            debug: () => undefined,
+            info: () => undefined,
+            warn: () => undefined,
+            error: () => undefined
+        };
+    }
+
+    private async resolveAudioBuffer(audio: ArrayBuffer | Blob): Promise<ArrayBuffer> {
+        if (audio instanceof ArrayBuffer) {
+            return audio;
+        }
+
+        if (typeof audio.arrayBuffer === 'function') {
+            const buffer = await audio.arrayBuffer();
+            if (buffer instanceof ArrayBuffer) {
+                return buffer;
+            }
+        }
+
+        const size = typeof audio.size === 'number' ? audio.size : 0;
+        return new ArrayBuffer(size);
+    }
+
+    private async performFetchRequest(
+        formData: FormData
+    ): Promise<{ status: number; headers?: Record<string, string>; json?: unknown; text?: string }> {
+        if (typeof fetch !== 'function') {
+            throw new Error('Fetch API is not available');
+        }
+
+        const response = await fetch(this.API_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${this.apiKey}`
+            },
+            body: formData
+        });
+
+        const status = typeof response.status === 'number'
+            ? response.status
+            : response.ok
+                ? 200
+                : 500;
+        const headers: Record<string, string> = {};
+        if (response.headers && typeof response.headers.forEach === 'function') {
+            response.headers.forEach((value, key) => {
+                headers[key.toLowerCase()] = value;
+            });
+        }
+
+        let json: unknown = undefined;
+        let text: string | undefined = undefined;
+        const hasJson = typeof response.json === 'function';
+        const hasText = typeof response.text === 'function';
+        if (response.ok) {
+            if (hasText) {
+                text = await response.text();
+            } else if (hasJson) {
+                json = await response.json();
+            }
+        } else if (hasJson) {
+            json = await response.json();
+        } else if (hasText) {
+            text = await response.text();
+        }
+
+        return {
+            status,
+            headers: Object.keys(headers).length > 0 ? headers : undefined,
+            json,
+            text
+        };
+    }
+
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error('Unknown error');
+    }
+
+    private isSegment(value: unknown): value is NonNullable<WhisperResponse['segments']>[number] {
+        if (!isPlainRecord(value)) {
+            return false;
+        }
+
+        const id = Reflect.get(value, 'id');
+        const seek = Reflect.get(value, 'seek');
+        const start = Reflect.get(value, 'start');
+        const end = Reflect.get(value, 'end');
+        const text = Reflect.get(value, 'text');
+        const tokens = Reflect.get(value, 'tokens');
+        const temperature = Reflect.get(value, 'temperature');
+        const avgLogprob = Reflect.get(value, 'avg_logprob');
+        const compressionRatio = Reflect.get(value, 'compression_ratio');
+        const noSpeechProb = Reflect.get(value, 'no_speech_prob');
+
+        return (id === undefined || typeof id === 'number') &&
+            (seek === undefined || typeof seek === 'number') &&
+            typeof start === 'number' &&
+            typeof end === 'number' &&
+            typeof text === 'string' &&
+            (tokens === undefined ||
+                (Array.isArray(tokens) && tokens.every(token => typeof token === 'number'))) &&
+            (temperature === undefined || typeof temperature === 'number') &&
+            (avgLogprob === undefined || typeof avgLogprob === 'number') &&
+            (compressionRatio === undefined || typeof compressionRatio === 'number') &&
+            (noSpeechProb === undefined || typeof noSpeechProb === 'number');
+    }
+
+    private extractSegments(value: unknown): WhisperResponse['segments'] | undefined {
+        if (!Array.isArray(value)) {
+            return undefined;
+        }
+
+        const segments = value.filter(segment => this.isSegment(segment));
+        return segments.length > 0 ? segments : undefined;
     }
 
     /**
@@ -251,12 +397,28 @@ export class WhisperService implements IWhisperService {
      * }
      * ```
      */
-    async transcribe(audio: ArrayBuffer, options?: WhisperOptions): Promise<WhisperResponse> {
+    transcribe(audio: ArrayBuffer | Blob, options?: WhisperOptions): Promise<WhisperResponse> {
+        const task = async () => {
+            if (audio instanceof ArrayBuffer) {
+                return this.executeTranscription(audio, options);
+            }
+            const buffer = await this.resolveAudioBuffer(audio);
+            return this.executeTranscription(buffer, options);
+        };
+
+        if (!this.isProcessingQueue && this.pendingRequests.length === 0) {
+            this.isProcessingQueue = true;
+            return task().finally(() => {
+                this.isProcessingQueue = false;
+                void this.processQueue();
+            });
+        }
+
         // 큐에 추가하여 순차 처리
-        return this.queueRequest(() => this.executeTranscription(audio, options));
+        return this.queueRequest(task);
     }
 
-    private async executeTranscription(
+    private executeTranscription(
         audio: ArrayBuffer, 
         options?: WhisperOptions
     ): Promise<WhisperResponse> {
@@ -291,7 +453,9 @@ export class WhisperService implements IWhisperService {
                 })
             );
 
-            const response = await requestUrl(requestParams);
+            const response = this.useFetch
+                ? await this.performFetchRequest(formData)
+                : await requestUrl(requestParams);
             const processingTime = Date.now() - startTime;
 
             this.logger.info(`Transcription completed in ${processingTime}ms`, {
@@ -299,17 +463,18 @@ export class WhisperService implements IWhisperService {
             });
 
             if (response.status === 200) {
-                return this.parseResponse(response.json as WhisperResponse, processingTime);
-            } else {
-                throw await this.handleAPIError(response);
+                const payload = response.json !== undefined ? response.json : response.text;
+                return this.parseResponse(payload, processingTime);
             }
+            this.handleAPIError(response);
         } catch (error) {
-            if ((error as Error).name === 'AbortError') {
+            const normalizedError = this.normalizeError(error);
+            if (normalizedError.name === 'AbortError') {
                 this.logger.debug('Transcription cancelled by user');
                 throw new WhisperAPIError('Transcription cancelled', 'CANCELLED', undefined, false);
             }
-            this.logger.error('Transcription request failed', error as Error);
-            throw error;
+            this.logger.error('Transcription request failed', normalizedError);
+            throw normalizedError;
         } finally {
             this.abortController = undefined;
         }
@@ -356,16 +521,17 @@ export class WhisperService implements IWhisperService {
     }
 
     private buildRequestParams(formData: FormData): RequestUrlParam {
-        return {
+        const requestParams = {
             url: this.API_ENDPOINT,
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${this.apiKey}`
             },
-            body: formData as unknown as string | ArrayBuffer,
-            timeout: this.TIMEOUT,
+            body: formData as unknown as RequestUrlParam['body'],
+            timeout: this.timeoutMs,
             throw: false
-        } as RequestUrlParam;
+        } as RequestUrlParam & { timeout: number };
+        return requestParams;
     }
 
     private parseResponse(json: unknown, processingTime: number): WhisperResponse {
@@ -388,7 +554,7 @@ export class WhisperService implements IWhisperService {
 
         // JSON 형식 응답
         const fallbackDuration = Math.max(processingTime / 1000, 0.001);
-        const safe = json as Partial<WhisperResponse>;
+        const safe = isPlainRecord(json) ? json : {};
         const response: WhisperResponse = {
             text: typeof safe.text === 'string' ? safe.text : '',
             language: typeof safe.language === 'string' ? safe.language : undefined,
@@ -396,16 +562,15 @@ export class WhisperService implements IWhisperService {
         };
         
         // verbose_json 형식인 경우 segments 포함
-        if (Array.isArray((safe as { segments?: unknown }).segments)) {
-            response.segments = (safe as { segments: unknown[] }).segments as WhisperResponse['segments'];
-        }
+        response.segments = this.extractSegments(safe.segments);
         
         return response;
     }
 
-    private async handleAPIError(response: { status: number; headers?: Record<string, string>; json?: unknown; text?: string }): Promise<never> {
-        const errorBody = response.json as { error?: { message?: string } } | undefined;
-        const errorMessage = errorBody?.error?.message || 'Unknown error';
+    private handleAPIError(response: { status: number; headers?: Record<string, string>; json?: unknown; text?: string }): never {
+        const errorBody = isPlainRecord(response.json) ? response.json : undefined;
+        const errorDetails = errorBody && isPlainRecord(errorBody.error) ? errorBody.error : undefined;
+        const errorMessage = typeof errorDetails?.message === 'string' ? errorDetails.message : 'Unknown error';
         
         this.logger.error(`API Error: ${response.status} - ${errorMessage}`, undefined,
             this.sanitizeForLogging({
@@ -469,8 +634,16 @@ export class WhisperService implements IWhisperService {
                 }
             };
 
-            this.pendingRequests.push(task);
-            void this.processQueue();
+            if (this.isProcessingQueue) {
+                this.pendingRequests.push(task);
+                return;
+            }
+
+            this.isProcessingQueue = true;
+            void task().finally(() => {
+                this.isProcessingQueue = false;
+                void this.processQueue();
+            });
         });
     }
 
@@ -551,7 +724,7 @@ export class WhisperService implements IWhisperService {
     /**
      * Sanitize data for logging by removing sensitive information
      */
-    private sanitizeForLogging<T>(data: T): T {
+    private sanitizeForLogging(data: unknown): unknown {
         const redactKeys = ['apikey', 'api_key', 'token', 'authorization', 'secret'];
 
         const scrub = (value: unknown): unknown => {
@@ -572,7 +745,11 @@ export class WhisperService implements IWhisperService {
             }
 
             const clone: Record<string, unknown> = {};
-            for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+            if (!isPlainRecord(value)) {
+                return value;
+            }
+
+            for (const [key, val] of Object.entries(value)) {
                 const lowered = key.toLowerCase();
                 if (redactKeys.some((needle) => lowered.includes(needle))) {
                     clone[key] = '***';
@@ -584,7 +761,7 @@ export class WhisperService implements IWhisperService {
             return clone;
         };
 
-        return scrub(data) as T;
+        return scrub(data);
     }
 
     /**

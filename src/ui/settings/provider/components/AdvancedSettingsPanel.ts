@@ -63,7 +63,7 @@ export class AdvancedSettingsPanel {
         const headerEl = containerEl.createDiv({ cls: 'advanced-panel-header' });
         
         headerEl.createEl('h4', {
-            text: '⚙️ Advanced Configuration',
+            text: '⚙️ Advanced configuration',
             cls: 'advanced-title'
         });
         
@@ -88,39 +88,43 @@ export class AdvancedSettingsPanel {
      * Strategy 섹션
      */
     private renderStrategySection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Selection Strategy', 'strategy-section');
+        const sectionEl = this.createSection(containerEl, 'Selection strategy', 'strategy-section');
         
         // Primary Strategy
         new Setting(sectionEl)
-            .setName('Primary Strategy')
+            .setName('Primary strategy')
             .setDesc('How the system selects providers when in Auto mode')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance First')
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost Optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality First')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round Robin')
-                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B Testing')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
+                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B testing')
                     .setValue(this.plugin.settings.selectionStrategy || SelectionStrategy.PERFORMANCE_OPTIMIZED)
                     .onChange(async (value) => {
-                        await this.saveStrategy(value as SelectionStrategy);
-                        this.showStrategyDetails(value);
+                        if (this.isSelectionStrategy(value)) {
+                            await this.saveStrategy(value);
+                            this.showStrategyDetails(value);
+                        }
                     });
             });
         
         // Fallback Strategy
         new Setting(sectionEl)
-            .setName('Fallback Strategy')
+            .setName('Fallback strategy')
             .setDesc('Backup strategy when primary provider fails')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('auto', 'Automatic Failover')
-                    .addOption('manual', 'Manual Selection')
-                    .addOption('none', 'No Fallback')
+                    .addOption('auto', 'Automatic failover')
+                    .addOption('manual', 'Manual selection')
+                    .addOption('none', 'No fallback')
                     .setValue(this.plugin.settings.fallbackStrategy || 'auto')
                     .onChange(async (value) => {
-                        this.plugin.settings.fallbackStrategy = value as 'auto' | 'none' | 'manual';
-                        await this.plugin.saveSettings();
+                        if (this.isFallbackStrategy(value)) {
+                            this.plugin.settings.fallbackStrategy = value;
+                            await this.plugin.saveSettings();
+                        }
                     });
             });
         
@@ -136,11 +140,11 @@ export class AdvancedSettingsPanel {
     private renderStrategyWeights(containerEl: HTMLElement): void {
         const weightsEl = containerEl.createDiv({ cls: 'strategy-weights' });
         
-        weightsEl.createEl('h5', { text: 'Weight Configuration' });
+        weightsEl.createEl('h5', { text: 'Weight configuration' });
         
         // Latency Weight
         new Setting(weightsEl)
-            .setName('Latency Weight')
+            .setName('Latency weight')
             .setDesc('Importance of response time (0-100)')
             .addSlider(slider => {
                 slider
@@ -156,7 +160,7 @@ export class AdvancedSettingsPanel {
         
         // Success Rate Weight
         new Setting(weightsEl)
-            .setName('Success Rate Weight')
+            .setName('Success rate weight')
             .setDesc('Importance of reliability (0-100)')
             .addSlider(slider => {
                 slider
@@ -172,7 +176,7 @@ export class AdvancedSettingsPanel {
         
         // Cost Weight
         new Setting(weightsEl)
-            .setName('Cost Weight')
+            .setName('Cost weight')
             .setDesc('Importance of cost efficiency (0-100)')
             .addSlider(slider => {
                 slider
@@ -194,11 +198,11 @@ export class AdvancedSettingsPanel {
      * Cost Management 섹션
      */
     private renderCostManagementSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Cost Management', 'cost-section');
+        const sectionEl = this.createSection(containerEl, 'Cost management', 'cost-section');
         
         // Monthly Budget
         new Setting(sectionEl)
-            .setName('Monthly Budget')
+            .setName('Monthly budget')
             .setDesc('Maximum monthly spending in USD (leave empty for unlimited)')
             .addText(text => {
                 text
@@ -225,7 +229,7 @@ export class AdvancedSettingsPanel {
         
         // Budget Alert Threshold
         new Setting(sectionEl)
-            .setName('Budget Alert')
+            .setName('Budget alert')
             .setDesc('Alert when spending reaches this percentage')
             .addSlider(slider => {
                 slider
@@ -240,7 +244,7 @@ export class AdvancedSettingsPanel {
         
         // Cost Optimization
         new Setting(sectionEl)
-            .setName('Auto Cost Optimization')
+            .setName('Auto cost optimization')
             .setDesc('Automatically switch to cheaper providers when approaching budget limit')
             .addToggle(toggle => {
                 toggle
@@ -259,11 +263,11 @@ export class AdvancedSettingsPanel {
      * Quality 섹션
      */
     private renderQualitySection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Quality Control', 'quality-section');
+        const sectionEl = this.createSection(containerEl, 'Quality control', 'quality-section');
         
         // Minimum Confidence
         new Setting(sectionEl)
-            .setName('Minimum Confidence')
+            .setName('Minimum confidence')
             .setDesc('Reject transcriptions below this confidence level (0-100%)')
             .addSlider(slider => {
                 slider
@@ -278,7 +282,7 @@ export class AdvancedSettingsPanel {
         
         // Language Detection
         new Setting(sectionEl)
-            .setName('Strict Language Detection')
+            .setName('Strict language detection')
             .setDesc('Enforce language detection accuracy')
             .addToggle(toggle => {
                 toggle
@@ -291,7 +295,7 @@ export class AdvancedSettingsPanel {
         
         // Post-processing
         new Setting(sectionEl)
-            .setName('Enable Post-processing')
+            .setName('Enable post-processing')
             .setDesc('Apply NLP corrections to improve accuracy')
             .addToggle(toggle => {
                 toggle
@@ -304,11 +308,11 @@ export class AdvancedSettingsPanel {
         
         // Custom Dictionary
         new Setting(sectionEl)
-            .setName('Custom Dictionary')
+            .setName('Custom dictionary')
             .setDesc('Add domain-specific terms for better recognition')
             .addButton(button => {
                 button
-                    .setButtonText('Edit Dictionary')
+                    .setButtonText('Edit dictionary')
                     .onClick(() => this.showDictionaryEditor());
             });
     }
@@ -317,11 +321,11 @@ export class AdvancedSettingsPanel {
      * A/B Testing 섹션
      */
     private renderABTestingSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'A/B Testing', 'ab-test-section');
+        const sectionEl = this.createSection(containerEl, 'A/B testing', 'ab-test-section');
         
         // Enable A/B Testing
         new Setting(sectionEl)
-            .setName('Enable A/B Testing')
+            .setName('Enable A/B testing')
             .setDesc('Compare providers to find optimal configuration')
             .addToggle(toggle => {
                 toggle
@@ -339,7 +343,7 @@ export class AdvancedSettingsPanel {
         if (this.abTestEnabled) {
             // Test Duration
             new Setting(sectionEl)
-                .setName('Test Duration')
+                .setName('Test duration')
                 .setDesc('How long to run the test (days)')
                 .addText(text => {
                     text
@@ -356,7 +360,7 @@ export class AdvancedSettingsPanel {
             
             // Traffic Split
             new Setting(sectionEl)
-                .setName('Traffic Split')
+                .setName('Traffic split')
                 .setDesc('Percentage of requests for Provider A vs B')
                 .addSlider(slider => {
                     slider
@@ -376,28 +380,30 @@ export class AdvancedSettingsPanel {
             
             // Test Metrics
             new Setting(sectionEl)
-                .setName('Test Metrics')
+                .setName('Test metrics')
                 .setDesc('Metrics to compare')
                 .addDropdown(dropdown => {
                     dropdown
-                        .addOption('all', 'All Metrics')
-                        .addOption('latency', 'Latency Only')
-                        .addOption('accuracy', 'Accuracy Only')
-                        .addOption('cost', 'Cost Only')
+                        .addOption('all', 'All metrics')
+                        .addOption('latency', 'Latency only')
+                        .addOption('accuracy', 'Accuracy only')
+                        .addOption('cost', 'Cost only')
                         .setValue(this.plugin.settings.abTestMetrics || 'all')
                         .onChange(async (value) => {
-                            this.plugin.settings.abTestMetrics = value as 'all' | 'latency' | 'accuracy' | 'cost';
-                            await this.plugin.saveSettings();
+                            if (this.isAbTestMetric(value)) {
+                                this.plugin.settings.abTestMetrics = value;
+                                await this.plugin.saveSettings();
+                            }
                         });
                 });
             
             // Test Results Button
             new Setting(sectionEl)
-                .setName('View Results')
+                .setName('View results')
                 .setDesc('See current A/B test results')
                 .addButton(button => {
                     button
-                        .setButtonText('View Results')
+                        .setButtonText('View results')
                         .setCta()
                         .onClick(() => this.showABTestResults());
                 });
@@ -408,11 +414,11 @@ export class AdvancedSettingsPanel {
      * Performance 섹션
      */
     private renderPerformanceSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Performance Tuning', 'performance-section');
+        const sectionEl = this.createSection(containerEl, 'Performance tuning', 'performance-section');
         
         // Request Timeout
         new Setting(sectionEl)
-            .setName('Request Timeout')
+            .setName('Request timeout')
             .setDesc('Maximum time to wait for response (seconds)')
             .addText(text => {
                 text
@@ -429,11 +435,11 @@ export class AdvancedSettingsPanel {
         
         // Parallel Requests
         new Setting(sectionEl)
-            .setName('Max Parallel Requests')
+            .setName('Max parallel requests')
             .setDesc('Maximum concurrent API requests')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('1', '1 (Sequential)')
+                    .addOption('1', '1 (sequential)')
                     .addOption('2', '2')
                     .addOption('3', '3')
                     .addOption('5', '5')
@@ -446,14 +452,14 @@ export class AdvancedSettingsPanel {
         
         // Retry Configuration
         new Setting(sectionEl)
-            .setName('Max Retries')
+            .setName('Max retries')
             .setDesc('Number of retry attempts on failure')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('0', 'No Retries')
+                    .addOption('0', 'No retries')
                     .addOption('1', '1')
                     .addOption('2', '2')
-                    .addOption('3', '3 (Recommended)')
+                    .addOption('3', '3 (recommended)')
                     .addOption('5', '5')
                     .setValue(this.plugin.settings.maxRetries?.toString() || '3')
                     .onChange(async (value) => {
@@ -464,7 +470,7 @@ export class AdvancedSettingsPanel {
         
         // Caching
         new Setting(sectionEl)
-            .setName('Response Caching')
+            .setName('Response caching')
             .setDesc('Cache transcription results to avoid duplicate requests')
             .addToggle(toggle => {
                 toggle
@@ -492,7 +498,7 @@ export class AdvancedSettingsPanel {
         
         // Cache Duration
         new Setting(cacheEl)
-            .setName('Cache Duration')
+            .setName('Cache duration')
             .setDesc('How long to keep cached results (hours)')
             .addText(text => {
                 text
@@ -509,11 +515,11 @@ export class AdvancedSettingsPanel {
         
         // Clear Cache Button
         new Setting(cacheEl)
-            .setName('Clear Cache')
+            .setName('Clear cache')
             .setDesc('Remove all cached transcription results')
             .addButton(button => {
                 button
-                    .setButtonText('Clear Cache')
+                    .setButtonText('Clear cache')
                     .setWarning()
                     .onClick(async () => {
                         await this.clearCache();
@@ -525,11 +531,11 @@ export class AdvancedSettingsPanel {
      * Reliability 섹션
      */
     private renderReliabilitySection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Reliability & Resilience', 'reliability-section');
+        const sectionEl = this.createSection(containerEl, 'Reliability & resilience', 'reliability-section');
         
         // Circuit Breaker
         new Setting(sectionEl)
-            .setName('Circuit Breaker')
+            .setName('Circuit breaker')
             .setDesc('Temporarily disable failing providers')
             .addToggle(toggle => {
                 toggle
@@ -551,7 +557,7 @@ export class AdvancedSettingsPanel {
         
         // Health Checks
         new Setting(sectionEl)
-            .setName('Automatic Health Checks')
+            .setName('Automatic health checks')
             .setDesc('Periodically verify provider availability')
             .addToggle(toggle => {
                 toggle
@@ -564,7 +570,7 @@ export class AdvancedSettingsPanel {
         
         // Graceful Degradation
         new Setting(sectionEl)
-            .setName('Graceful Degradation')
+            .setName('Graceful degradation')
             .setDesc('Continue with reduced functionality when providers fail')
             .addToggle(toggle => {
                 toggle
@@ -584,7 +590,7 @@ export class AdvancedSettingsPanel {
         
         // Failure Threshold
         new Setting(cbEl)
-            .setName('Failure Threshold')
+            .setName('Failure threshold')
             .setDesc('Failures before opening circuit')
             .addDropdown(dropdown => {
                 dropdown
@@ -601,7 +607,7 @@ export class AdvancedSettingsPanel {
         
         // Reset Timeout
         new Setting(cbEl)
-            .setName('Reset Timeout')
+            .setName('Reset timeout')
             .setDesc('Time before retrying failed provider (seconds)')
             .addText(text => {
                 text
@@ -622,11 +628,11 @@ export class AdvancedSettingsPanel {
      * Developer 섹션
      */
     private renderDeveloperSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'Developer Options', 'developer-section');
+        const sectionEl = this.createSection(containerEl, 'Developer options', 'developer-section');
         
         // Debug Mode
         new Setting(sectionEl)
-            .setName('Debug Mode')
+            .setName('Debug mode')
             .setDesc('Enable detailed logging for troubleshooting')
             .addToggle(toggle => {
                 toggle
@@ -643,7 +649,7 @@ export class AdvancedSettingsPanel {
         
         // Metrics Collection
         new Setting(sectionEl)
-            .setName('Collect Metrics')
+            .setName('Collect metrics')
             .setDesc('Track performance metrics for analysis')
             .addToggle(toggle => {
                 toggle
@@ -658,7 +664,7 @@ export class AdvancedSettingsPanel {
         if (this.metricsEnabled) {
             // Metrics Retention
             new Setting(sectionEl)
-                .setName('Metrics Retention')
+                .setName('Metrics retention')
                 .setDesc('Days to keep metrics data')
                 .addText(text => {
                     text
@@ -676,7 +682,7 @@ export class AdvancedSettingsPanel {
             
             // Export Metrics
             new Setting(sectionEl)
-                .setName('Export Metrics')
+                .setName('Export metrics')
                 .setDesc('Download metrics data for analysis')
                 .addButton(button => {
                     button
@@ -687,7 +693,7 @@ export class AdvancedSettingsPanel {
         
         // API Endpoint Override
         new Setting(sectionEl)
-            .setName('Custom API Endpoints')
+            .setName('Custom API endpoints')
             .setDesc('Override default API endpoints (advanced)')
             .addButton(button => {
                 button
@@ -697,7 +703,7 @@ export class AdvancedSettingsPanel {
         
         // Reset All Settings
         new Setting(sectionEl)
-            .setName('Reset Advanced Settings')
+            .setName('Reset advanced settings')
             .setDesc('Reset all advanced settings to defaults')
             .addButton(button => {
                 button
@@ -746,9 +752,9 @@ export class AdvancedSettingsPanel {
      * Weight 표시 업데이트
      */
     private updateWeightDisplay(containerEl: HTMLElement): void {
-        let displayEl = containerEl.querySelector('.weight-display') as HTMLElement;
+        let displayEl = containerEl.querySelector('.weight-display');
         
-        if (!displayEl) {
+        if (!(displayEl instanceof HTMLElement)) {
             displayEl = containerEl.createDiv({ cls: 'weight-display' });
         }
         
@@ -757,8 +763,7 @@ export class AdvancedSettingsPanel {
         const cost = this.plugin.settings.costWeight || 25;
         const total = latency + success + cost;
         
-        const weightBar = document.createElement('div');
-        weightBar.className = 'weight-bar';
+        const weightBar = createEl('div', { cls: 'weight-bar' });
 
         const segments = [
             { cls: 'latency', value: latency, label: `Latency ${latency}%` },
@@ -767,13 +772,11 @@ export class AdvancedSettingsPanel {
         ];
 
         segments.forEach(segmentInfo => {
-            const segment = document.createElement('div');
-            segment.className = `weight-segment ${segmentInfo.cls}`;
+            const segment = createEl('div', { cls: `weight-segment ${segmentInfo.cls}` });
             const percent = total === 0 ? 0 : (segmentInfo.value / total) * 100;
             segment.setAttribute('style', `--sn-width-pct:${percent}%`);
 
-            const label = document.createElement('span');
-            label.textContent = segmentInfo.label;
+            const label = createEl('span', { text: segmentInfo.label });
             segment.appendChild(label);
 
             weightBar.appendChild(segment);
@@ -809,23 +812,21 @@ export class AdvancedSettingsPanel {
         const budget = this.plugin.settings.monthlyBudget || 50;
         const percentage = (currentSpending / budget) * 100;
         
-        const info = document.createElement('div');
-        info.className = 'spending-info';
+        const info = createEl('div', { cls: 'spending-info' });
 
-        const label = document.createElement('span');
-        label.className = 'spending-label';
-        label.textContent = 'Current Month:';
+        const label = createEl('span', { cls: 'spending-label', text: 'Current month:' });
         info.appendChild(label);
 
-        const value = document.createElement('span');
-        value.className = 'spending-value';
-        value.textContent = `$${currentSpending.toFixed(2)} / $${budget.toFixed(2)}`;
+        const value = createEl('span', {
+            cls: 'spending-value',
+            text: `$${currentSpending.toFixed(2)} / $${budget.toFixed(2)}`
+        });
         info.appendChild(value);
 
-        const bar = document.createElement('div');
-        bar.className = 'spending-bar';
-        const progress = document.createElement('div');
-        progress.className = `spending-progress ${percentage > 80 ? 'warning' : ''}`.trim();
+        const bar = createEl('div', { cls: 'spending-bar' });
+        const progress = createEl('div', {
+            cls: `spending-progress ${percentage > 80 ? 'warning' : ''}`.trim()
+        });
         progress.setAttribute('style', `--sn-width-pct:${Math.min(100, percentage)}%`);
         bar.appendChild(progress);
 
@@ -845,31 +846,25 @@ export class AdvancedSettingsPanel {
      * Split Display 업데이트
      */
     private updateSplitDisplay(containerEl: HTMLElement): void {
-        let displayEl = containerEl.querySelector('.split-display') as HTMLElement;
+        let displayEl = containerEl.querySelector('.split-display');
         
-        if (!displayEl) {
+        if (!(displayEl instanceof HTMLElement)) {
             displayEl = containerEl.createDiv({ cls: 'split-display' });
         }
 
-        const visualization = document.createElement('div');
-        visualization.className = 'split-visualization';
+        const visualization = createEl('div', { cls: 'split-visualization' });
 
-        const splitBar = document.createElement('div');
-        splitBar.className = 'split-bar';
+        const splitBar = createEl('div', { cls: 'split-bar' });
 
-        const providerA = document.createElement('div');
-        providerA.className = 'split-a';
+        const providerA = createEl('div', { cls: 'split-a' });
         providerA.setAttribute('style', `--sn-width-pct:${this.abTestSplit}%`);
-        const providerALabel = document.createElement('span');
-        providerALabel.textContent = `Provider A: ${this.abTestSplit}%`;
+        const providerALabel = createEl('span', { text: `Provider A: ${this.abTestSplit}%` });
         providerA.appendChild(providerALabel);
 
         const providerBWidth = 100 - this.abTestSplit;
-        const providerB = document.createElement('div');
-        providerB.className = 'split-b';
+        const providerB = createEl('div', { cls: 'split-b' });
         providerB.setAttribute('style', `--sn-width-pct:${providerBWidth}%`);
-        const providerBLabel = document.createElement('span');
-        providerBLabel.textContent = `Provider B: ${providerBWidth}%`;
+        const providerBLabel = createEl('span', { text: `Provider B: ${providerBWidth}%` });
         providerB.appendChild(providerBLabel);
 
         splitBar.appendChild(providerA);
@@ -890,7 +885,7 @@ export class AdvancedSettingsPanel {
     /**
      * Cache 초기화
      */
-    private async clearCache(): Promise<void> {
+    private clearCache(): void {
         // TODO: Implement cache clearing
         new Notice('Cache cleared successfully!');
     }
@@ -914,35 +909,34 @@ export class AdvancedSettingsPanel {
     /**
      * Reset 확인
      */
-    private async confirmReset(): Promise<boolean> {
+    private confirmReset(): Promise<boolean> {
         return new Promise((resolve) => {
-            const notice = new Notice('', 0);
-            const noticeEl = notice.noticeEl;
+            const fragment = document.createDocumentFragment();
 
-            if (typeof (noticeEl as any).empty === 'function') {
-                (noticeEl as any).empty();
-            } else {
-                noticeEl.replaceChildren();
-            }
+            const message = createEl('div', {
+                text: 'Reset all advanced settings to defaults?'
+            });
+            fragment.appendChild(message);
 
-            const message = document.createElement('div');
-            message.textContent = 'Reset all advanced settings to defaults?';
-            noticeEl.appendChild(message);
+            const buttonRow = createEl('div', {
+                cls: 'notice-action-row'
+            });
 
-            const buttonRow = document.createElement('div');
-            buttonRow.className = 'notice-action-row';
+            const resetBtn = createEl('button', {
+                cls: 'mod-cta',
+                text: 'Reset'
+            });
 
-            const resetBtn = document.createElement('button');
-            resetBtn.className = 'mod-cta';
-            resetBtn.textContent = 'Reset';
-
-            const cancelBtn = document.createElement('button');
-            cancelBtn.classList.add('notice-action-button');
-            cancelBtn.textContent = 'Cancel';
+            const cancelBtn = createEl('button', {
+                cls: 'notice-action-button',
+                text: 'Cancel'
+            });
 
             buttonRow.appendChild(resetBtn);
             buttonRow.appendChild(cancelBtn);
-            noticeEl.appendChild(buttonRow);
+            fragment.appendChild(buttonRow);
+
+            const notice = new Notice(fragment, 0);
 
             resetBtn.addEventListener('click', () => {
                 notice.hide();
@@ -996,5 +990,28 @@ export class AdvancedSettingsPanel {
         this.circuitBreakerEnabled = this.plugin.settings.circuitBreakerEnabled !== false;
         this.circuitBreakerThreshold = this.plugin.settings.circuitBreakerThreshold || 5;
         this.circuitBreakerTimeout = this.plugin.settings.circuitBreakerTimeout || 60000;
+    }
+
+    public destroy(): void {
+        // No-op for now; reserved for future cleanup hooks.
+    }
+
+    private isSelectionStrategy(value: string): value is SelectionStrategy {
+        return (
+            value === SelectionStrategy.MANUAL ||
+            value === SelectionStrategy.COST_OPTIMIZED ||
+            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
+            value === SelectionStrategy.QUALITY_OPTIMIZED ||
+            value === SelectionStrategy.ROUND_ROBIN ||
+            value === SelectionStrategy.AB_TEST
+        );
+    }
+
+    private isFallbackStrategy(value: string): value is 'auto' | 'none' | 'manual' {
+        return value === 'auto' || value === 'none' || value === 'manual';
+    }
+
+    private isAbTestMetric(value: string): value is 'all' | 'latency' | 'accuracy' | 'cost' {
+        return value === 'all' || value === 'latency' || value === 'accuracy' || value === 'cost';
     }
 }
