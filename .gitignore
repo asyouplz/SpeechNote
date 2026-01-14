@@ -136,6 +136,8 @@ __mocks__/**/*.snapshot
 # Development documentation
 docs/
 *.md
+!docs/
+!docs/**/*.md
 !README.md
 !CHANGELOG.md
 !CONTRIBUTING.md
