@@ -32,27 +32,27 @@ export const UI_CONSTANTS = {
     
     // 텍스트 메시지
     MESSAGES: {
-        HEADER: 'Deepgram Configuration',
+        HEADER: 'Deepgram configuration',
         DESCRIPTION: 'Configure Deepgram for advanced speech recognition with multiple language support and AI features.',
         REGISTRY_WARNING: '⚠️ Model registry not available. Using default configuration.',
-        API_KEY_LABEL: 'Deepgram API Key',
+        API_KEY_LABEL: 'Deepgram API key',
         API_KEY_DESC: 'Enter your Deepgram API key for transcription',
         API_KEY_PLACEHOLDER: 'Enter API key...',
         API_KEY_SAVED: 'Deepgram API key saved',
         API_KEY_REQUIRED: 'Please enter your Deepgram API key first',
-        MODEL_LABEL: 'Deepgram Model',
+        MODEL_LABEL: 'Deepgram model',
         MODEL_DESC: 'Select the Deepgram model for transcription',
         MODEL_PLACEHOLDER: 'Select a model...',
         FEATURES_HEADER: 'Features',
-        ADVANCED_HEADER: 'Advanced Settings',
-        COST_HEADER: 'Cost Estimation',
-        VALIDATION_LABEL: 'Validate Configuration',
+        ADVANCED_HEADER: 'Advanced settings',
+        COST_HEADER: 'Cost estimation',
+        VALIDATION_LABEL: 'Validate configuration',
         VALIDATION_DESC: 'Test your Deepgram API key and settings',
         VALIDATION_BUTTON: 'Validate',
         VALIDATING: 'Validating...',
         VALIDATION_SUCCESS: '✅ Deepgram configuration is valid',
         VALIDATION_ERROR: '❌ Invalid Deepgram API key or configuration',
-        FALLBACK_ERROR_TITLE: '⚠️ Deepgram Settings Error',
+        FALLBACK_ERROR_TITLE: '⚠️ Deepgram settings error',
         FALLBACK_ERROR_DESC: 'Unable to load full configuration. Basic settings are available below.',
         CRITICAL_ERROR: 'Deepgram settings could not be loaded. Please check the console for errors.'
     },
@@ -151,13 +151,13 @@ export const DEFAULT_FEATURES = [
     },
     { 
         key: 'smartFormat', 
-        name: 'Smart Format', 
+        name: 'Smart format', 
         description: 'Format numbers, dates, etc.', 
         default: true 
     },
     { 
         key: 'diarization', 
-        name: 'Speaker Diarization', 
+        name: 'Speaker diarization', 
         description: 'Identify different speakers', 
         default: true 
     },

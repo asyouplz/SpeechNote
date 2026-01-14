@@ -41,6 +41,10 @@ export class RetryHandler {
         this.retryCondition = config.retryCondition ?? this.defaultRetryCondition;
     }
 
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error('Unknown error');
+    }
+
     /**
      * Execute operation with retry logic
      */
@@ -48,37 +52,38 @@ export class RetryHandler {
         operation: () => Promise<T>,
         context?: string
     ): Promise<T> {
-        let lastError: Error;
+        let lastError: Error | null = null;
         
         for (let attempt = 0; attempt < this.maxRetries; attempt++) {
             try {
                 this.logger.debug(`${this.name}: Attempt ${attempt + 1}/${this.maxRetries}${context ? ` for ${context}` : ''}`);
                 return await operation();
             } catch (error) {
-                lastError = error as Error;
+                const normalizedError = this.normalizeError(error);
+                lastError = normalizedError;
                 
                 if (!this.shouldRetry(error, attempt)) {
-                    throw error;
+                    throw normalizedError;
                 }
                 
                 if (attempt < this.maxRetries - 1) {
                     const delay = this.calculateDelay(attempt);
                     this.logger.debug(
                         `${this.name}: Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`,
-                        { error: lastError instanceof Error ? lastError.message : String(lastError) }
+                        { error: normalizedError.message }
                     );
                     await this.sleep(delay);
                 }
             }
         }
         
-        throw this.wrapError(lastError!, context);
+        throw this.wrapError(lastError ?? new Error('Unknown error'), context);
     }
 
     /**
      * Execute with custom retry config
      */
-    async executeWithConfig<T>(
+    executeWithConfig<T>(
         operation: () => Promise<T>,
         customConfig: RetryConfig
     ): Promise<T> {
@@ -114,14 +119,19 @@ export class RetryHandler {
         }
         
         // Retry on specific HTTP status codes
-        const statusCode = (error as { statusCode?: number } | undefined)?.statusCode;
-        if (statusCode) {
+        const statusCode = typeof error === 'object' && error !== null
+            ? Reflect.get(error, 'statusCode')
+            : undefined;
+        if (typeof statusCode === 'number') {
             const retryableCodes = [408, 429, 500, 502, 503, 504];
             return retryableCodes.includes(statusCode);
         }
         
         // Don't retry on explicit non-retryable errors
-        if ((error as { isRetryable?: boolean } | undefined)?.isRetryable === false) {
+        const isRetryable = typeof error === 'object' && error !== null
+            ? Reflect.get(error, 'isRetryable')
+            : undefined;
+        if (isRetryable === false) {
             return false;
         }
         
@@ -173,8 +183,7 @@ export class RetryHandler {
         const message = `${this.name}: Operation failed after ${this.maxRetries} attempts${context ? ` for ${context}` : ''}: ${error.message}`;
         const wrappedError = new Error(message);
         wrappedError.stack = error.stack;
-        (wrappedError as Error & { originalError?: Error; retriesExhausted?: boolean }).originalError = error;
-        (wrappedError as Error & { originalError?: Error; retriesExhausted?: boolean }).retriesExhausted = true;
+        Object.assign(wrappedError, { originalError: error, retriesExhausted: true });
         return wrappedError;
     }
 

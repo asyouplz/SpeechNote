@@ -243,11 +243,15 @@ export class RecentFiles {
     }
 
     /**
-     * 로컬 스토리지에서 최근 파일 로드
+     * Obsidian API를 통해 최근 파일 로드
      */
     private loadRecentFiles() {
         try {
-            const stored = localStorage.getItem(this.STORAGE_KEY);
+            if (typeof this.app.loadLocalStorage !== 'function') {
+                this.recentFiles = [];
+                return;
+            }
+            const stored = this.app.loadLocalStorage(this.STORAGE_KEY);
             if (stored) {
                 this.recentFiles = JSON.parse(stored);
             }
@@ -258,11 +262,14 @@ export class RecentFiles {
     }
 
     /**
-     * 로컬 스토리지에 최근 파일 저장
+     * Obsidian API를 통해 최근 파일 저장
      */
     private saveRecentFiles() {
         try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.recentFiles));
+            if (typeof this.app.saveLocalStorage !== 'function') {
+                return;
+            }
+            this.app.saveLocalStorage(this.STORAGE_KEY, JSON.stringify(this.recentFiles));
         } catch (error) {
             console.error('Failed to save recent files:', error);
         }

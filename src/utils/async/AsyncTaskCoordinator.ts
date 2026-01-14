@@ -365,7 +365,7 @@ export class ConcurrencyManager {
     /**
      * 슬롯 획득
      */
-    async acquire(priority = 0): Promise<void> {
+    acquire(priority = 0): Promise<void> {
         return new Promise((resolve) => {
             this.priorityQueue.enqueue(resolve, priority);
             void this.processQueue();

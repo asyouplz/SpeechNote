@@ -105,9 +105,13 @@ export class AdvancedSettings {
             .setName('디버그 로깅')
             .setDesc('상세한 디버그 정보를 콘솔에 출력합니다')
             .addToggle(toggle => toggle
-                .setValue((this.plugin.settings as any).enableDebugLogging || false)
+                .setValue(
+                    typeof this.plugin.settings['enableDebugLogging'] === 'boolean'
+                        ? this.plugin.settings['enableDebugLogging']
+                        : false
+                )
                 .onChange(async (value) => {
-                    (this.plugin.settings as any).enableDebugLogging = value;
+                    this.plugin.settings['enableDebugLogging'] = value;
                     await this.plugin.saveSettings();
                 }));
 
@@ -322,10 +326,10 @@ export class AdvancedSettings {
     /**
      * 캐시 삭제
      */
-    private async clearCache(): Promise<void> {
+    private clearCache(): void {
         try {
-            // 캐시 삭제 로직
-            localStorage.removeItem('speech-to-text-cache');
+            // Obsidian API를 통해 캐시 삭제
+            this.plugin.app.saveLocalStorage('speech-to-text-cache', null);
             new Notice('캐시가 삭제되었습니다');
         } catch (error) {
             new Notice('캐시 삭제 실패');
@@ -359,13 +363,13 @@ export class AdvancedSettings {
     /**
      * 로그 내보내기
      */
-    private async exportLogs(): Promise<void> {
+    private exportLogs(): void {
         try {
             const logs = this.getLogs();
             const blob = new Blob([logs], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             
-            const a = document.createElement('a');
+            const a = createEl('a');
             a.href = url;
             a.download = `speech-to-text-logs-${Date.now()}.txt`;
             a.click();
@@ -381,7 +385,7 @@ export class AdvancedSettings {
     /**
      * 로그 삭제
      */
-    private async clearLogs(): Promise<void> {
+    private clearLogs(): void {
         const confirmed = confirm('모든 로그를 삭제하시겠습니까?');
         if (confirmed) {
             // 로그 삭제 로직

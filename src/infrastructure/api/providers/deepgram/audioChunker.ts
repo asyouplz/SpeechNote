@@ -22,12 +22,12 @@ export class AudioChunker {
      * Split audio buffer into smaller chunks
      * Currently supports WAV format for precise splitting
      */
-    async splitAudio(audio: ArrayBuffer): Promise<ArrayBuffer[]> {
+    splitAudio(audio: ArrayBuffer): Promise<ArrayBuffer[]> {
         const audioSize = audio.byteLength;
         
         // If small enough, return as single chunk
         if (!this.needsChunking(audioSize)) {
-            return [audio];
+            return Promise.resolve([audio]);
         }
         
         this.logger.info('Splitting large audio file into chunks', {
@@ -38,11 +38,11 @@ export class AudioChunker {
         
         // For WAV files, we can split more intelligently
         if (this.isWavFile(audio)) {
-            return this.splitWavAudio(audio);
+            return Promise.resolve(this.splitWavAudio(audio));
         }
         
         // For other formats, simple byte splitting (may not work perfectly)
-        return this.splitByteArray(audio);
+        return Promise.resolve(this.splitByteArray(audio));
     }
     
     /**

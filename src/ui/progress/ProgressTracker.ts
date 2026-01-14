@@ -7,6 +7,7 @@
 import { EventEmitter } from 'events';
 import { IProgressTracker, ProgressData, StepProgress, IProgressReporter } from '../../types/phase3-api';
 import { EventManager } from '../../application/EventManager';
+import type { StateManager } from '../../application/StateManager';
 
 // Unsubscribe 타입 정의 (phase3-api에 정의되어 있으면 import로 변경)
 type Unsubscribe = () => void;
@@ -195,18 +196,50 @@ export class ProgressTracker implements IProgressTracker {
     private estimator: ETAEstimator;
     private stepManager: StepManager;
     private eventManager: EventManager;
+    private stateManager?: StateManager;
     private isPaused = false;
     private isCancelled = false;
     private emitter: EventEmitter;
 
-    constructor(taskId: string, totalSteps = 100) {
+    constructor(taskId: string, totalStepsOrState: number | StateManager = 100, state?: StateManager) {
         this.emitter = new EventEmitter();
         this.taskId = taskId;
-        this.totalSteps = totalSteps;
+        if (typeof totalStepsOrState === 'number') {
+            this.totalSteps = totalStepsOrState;
+            this.stateManager = state;
+        } else {
+            this.totalSteps = 100;
+            this.stateManager = totalStepsOrState;
+        }
         this.startTime = Date.now();
         this.estimator = new ETAEstimator();
         this.stepManager = new StepManager();
         this.eventManager = EventManager.getInstance();
+    }
+
+    start(totalSteps?: number, message?: string): void {
+        if (typeof totalSteps === 'number' && Number.isFinite(totalSteps)) {
+            this.totalSteps = totalSteps;
+        }
+        this.currentProgress = 0;
+        this.message = message ?? '';
+        this.status = 'running';
+        this.isPaused = false;
+        this.isCancelled = false;
+        this.pausedTime = 0;
+        this.totalPausedDuration = 0;
+        this.startTime = Date.now();
+        this.estimator.reset();
+        this.stepManager.reset();
+        this.emitter.emit('progress', this.getProgressData());
+    }
+
+    updateMessage(message: string): void {
+        this.setMessage(message);
+    }
+
+    getProgress(): number {
+        return this.currentProgress;
     }
 
     /**
@@ -222,6 +255,8 @@ export class ProgressTracker implements IProgressTracker {
         if (message) {
             this.message = message;
         }
+
+        this.stateManager?.setState({ progress: this.currentProgress });
 
         const data = this.getProgressData();
         
@@ -257,7 +292,8 @@ export class ProgressTracker implements IProgressTracker {
      * 진행률 증가
      */
     increment(delta = 1): void {
-        this.update(this.currentProgress + delta);
+        const stepSize = this.totalSteps > 0 ? 100 / this.totalSteps : 1;
+        this.update(this.currentProgress + delta * stepSize);
     }
 
     /**
@@ -407,14 +443,16 @@ export class ProgressTracker implements IProgressTracker {
     /**
      * 완료 처리
      */
-    private complete(result?: any): void {
+    complete(result?: any): void {
         this.currentProgress = 100;
         this.status = 'completed';
+        this.stateManager?.setState({ progress: this.currentProgress });
         
         const data = this.getProgressData();
         
         this.emitter.emit('complete', result);
         this.emitter.emit('progress', data);
+        this.eventManager.emit('progress:update', data);
         this.eventManager.emit('task:completed', { taskId: this.taskId, result });
     }
 
@@ -439,6 +477,7 @@ export class ProgressTracker implements IProgressTracker {
             overall: this.currentProgress,
             current: this.currentProgress,
             total: this.totalSteps,
+            percentage: this.currentProgress,
             message: this.message,
             eta: this.getETA(),
             speed: this.getSpeed(),

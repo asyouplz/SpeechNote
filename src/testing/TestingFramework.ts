@@ -58,7 +58,7 @@ export class MockFactory {
      * StatusBar 아이템 모의 객체 생성
      */
     static createMockStatusBarItem(): HTMLElement {
-        const element = document.createElement('div');
+        const element = createEl('div');
         (element as any).setText = jest.fn();
         (element as any).remove = jest.fn();
         return element;

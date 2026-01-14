@@ -13,12 +13,16 @@ interface StatusBarConfig {
     hideAfter?: number; // 밀리초 단위
 }
 
+type StatusBarItem = HTMLElement & {
+    setText?: (text: string | DocumentFragment) => void;
+};
+
 /**
  * StatusBar 관리자
  * StatusBar 아이템의 안전한 생성과 관리를 담당
  */
 export class StatusBarManager implements IDisposable {
-    private statusBarItem: HTMLElement | null = null;
+    private statusBarItem: StatusBarItem | null = null;
     private hideTimeout: NodeJS.Timeout | null = null;
     private unsubscribe: (() => void) | null = null;
     private logger: Logger;
@@ -34,7 +38,7 @@ export class StatusBarManager implements IDisposable {
     /**
      * StatusBar 초기화
      */
-    public async initialize(): Promise<void> {
+    public initialize(): void {
         try {
             // workspace가 준비되었는지 확인
             if (!this.plugin.app.workspace) {
@@ -149,8 +153,8 @@ export class StatusBarManager implements IDisposable {
             }
 
             // setText 메서드 존재 확인
-            if (typeof (this.statusBarItem as any).setText === 'function') {
-                (this.statusBarItem as any).setText(config.text);
+            if (this.statusBarItem.setText) {
+                this.statusBarItem.setText(config.text);
             } else if ('textContent' in this.statusBarItem) {
                 // textContent 직접 설정
                 this.statusBarItem.textContent = config.text;
@@ -198,8 +202,8 @@ export class StatusBarManager implements IDisposable {
         }
 
         try {
-            if (typeof (this.statusBarItem as any).setText === 'function') {
-                (this.statusBarItem as any).setText('');
+            if (this.statusBarItem.setText) {
+                this.statusBarItem.setText('');
             } else if ('textContent' in this.statusBarItem) {
                 this.statusBarItem.textContent = '';
             }
@@ -257,8 +261,8 @@ export class StatusBarManager implements IDisposable {
         if (this.statusBarItem) {
             try {
                 // remove 메서드가 있으면 호출
-                if (typeof (this.statusBarItem as any).remove === 'function') {
-                    (this.statusBarItem as any).remove();
+                if (typeof this.statusBarItem.remove === 'function') {
+                    this.statusBarItem.remove();
                 } else if (this.statusBarItem.parentNode) {
                     // DOM에서 직접 제거
                     this.statusBarItem.parentNode.removeChild(this.statusBarItem);
