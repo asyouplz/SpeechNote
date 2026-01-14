@@ -89,7 +89,7 @@ jobs:
           zip -r "obsidian-speech-to-text-${{ needs.prepare-release.outputs.version }}.zip" release/
           
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-artifacts
           path: |
@@ -165,7 +165,7 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Download release artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: release-artifacts
           
