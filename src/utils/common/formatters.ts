@@ -9,16 +9,16 @@
 export function formatFileSize(bytes: number): string {
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     const unitSize = 1024;
-    
+
     if (bytes === 0) return '0 B';
     if (bytes < 0) throw new Error('Invalid file size: negative bytes');
-    
+
     const unitIndex = Math.floor(Math.log(bytes) / Math.log(unitSize));
     const size = bytes / Math.pow(unitSize, unitIndex);
-    
+
     // 적절한 소수점 자리수 결정
     const decimals = unitIndex === 0 ? 0 : 2;
-    
+
     return `${size.toFixed(decimals)} ${units[unitIndex]}`;
 }
 
@@ -27,31 +27,31 @@ export function formatFileSize(bytes: number): string {
  */
 export function formatDate(date: Date, format: string): string {
     const tokens: Record<string, () => string> = {
-        'YYYY': () => date.getFullYear().toString(),
-        'YY': () => date.getFullYear().toString().slice(-2),
-        'MM': () => (date.getMonth() + 1).toString().padStart(2, '0'),
-        'M': () => (date.getMonth() + 1).toString(),
-        'DD': () => date.getDate().toString().padStart(2, '0'),
-        'D': () => date.getDate().toString(),
-        'HH': () => date.getHours().toString().padStart(2, '0'),
-        'H': () => date.getHours().toString(),
-        'mm': () => date.getMinutes().toString().padStart(2, '0'),
-        'm': () => date.getMinutes().toString(),
-        'ss': () => date.getSeconds().toString().padStart(2, '0'),
-        's': () => date.getSeconds().toString(),
-        'SSS': () => date.getMilliseconds().toString().padStart(3, '0')
+        YYYY: () => date.getFullYear().toString(),
+        YY: () => date.getFullYear().toString().slice(-2),
+        MM: () => (date.getMonth() + 1).toString().padStart(2, '0'),
+        M: () => (date.getMonth() + 1).toString(),
+        DD: () => date.getDate().toString().padStart(2, '0'),
+        D: () => date.getDate().toString(),
+        HH: () => date.getHours().toString().padStart(2, '0'),
+        H: () => date.getHours().toString(),
+        mm: () => date.getMinutes().toString().padStart(2, '0'),
+        m: () => date.getMinutes().toString(),
+        ss: () => date.getSeconds().toString().padStart(2, '0'),
+        s: () => date.getSeconds().toString(),
+        SSS: () => date.getMilliseconds().toString().padStart(3, '0'),
     };
 
     let formatted = format;
-    
+
     // 긴 토큰부터 처리하여 잘못된 치환 방지
     const sortedTokens = Object.keys(tokens).sort((a, b) => b.length - a.length);
-    
+
     for (const token of sortedTokens) {
         const regex = new RegExp(token, 'g');
         formatted = formatted.replace(regex, tokens[token]());
     }
-    
+
     return formatted;
 }
 
@@ -60,25 +60,25 @@ export function formatDate(date: Date, format: string): string {
  */
 export function formatDuration(milliseconds: number): string {
     if (milliseconds < 0) throw new Error('Invalid duration: negative milliseconds');
-    
+
     const seconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
         const remainingMinutes = minutes % 60;
         return `${hours}h ${remainingMinutes}m`;
     }
-    
+
     if (minutes > 0) {
         const remainingSeconds = seconds % 60;
         return `${minutes}m ${remainingSeconds}s`;
     }
-    
+
     if (seconds > 0) {
         return `${seconds}s`;
     }
-    
+
     return `${milliseconds}ms`;
 }
 
@@ -89,7 +89,7 @@ export function formatPercentage(value: number, decimals = 1): string {
     if (value < 0 || value > 100) {
         throw new Error('Percentage must be between 0 and 100');
     }
-    
+
     return `${value.toFixed(decimals)}%`;
 }
 
@@ -103,17 +103,13 @@ export function formatNumber(value: number, locale = 'en-US'): string {
 /**
  * 텍스트 자르기 (말줄임표 추가)
  */
-export function truncateText(
-    text: string, 
-    maxLength: number, 
-    suffix = '...'
-): string {
+export function truncateText(text: string, maxLength: number, suffix = '...'): string {
     if (maxLength <= 0) throw new Error('Max length must be positive');
     if (text.length <= maxLength) return text;
-    
+
     const truncateAt = maxLength - suffix.length;
     if (truncateAt <= 0) return suffix;
-    
+
     return text.substring(0, truncateAt) + suffix;
 }
 
@@ -123,14 +119,14 @@ export function truncateText(
 export function extractFileName(path: string, includeExtension = true): string {
     const parts = path.split('/');
     const fileName = parts[parts.length - 1];
-    
+
     if (!includeExtension) {
         const dotIndex = fileName.lastIndexOf('.');
         if (dotIndex > 0) {
             return fileName.substring(0, dotIndex);
         }
     }
-    
+
     return fileName;
 }
 

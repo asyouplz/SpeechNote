@@ -42,36 +42,36 @@ export class DragDropZone {
         if (!this.container) return;
 
         this.dropZone = this.container.createDiv('drag-drop-zone');
-        
+
         // 아이콘
         const iconContainer = this.dropZone.createDiv('drop-zone-icon');
         iconContainer.appendChild(this.createUploadIcon());
-        
+
         // 메인 텍스트
         const mainText = this.dropZone.createDiv('drop-zone-text');
         mainText.createEl('h3', { text: '파일을 여기에 드롭하세요' });
-        
+
         // 서브 텍스트
         const subText = mainText.createEl('p', { cls: 'drop-zone-subtext' });
         subText.setText('또는 클릭하여 파일 선택');
-        
+
         // 지원 형식 표시
         const formats = mainText.createEl('p', { cls: 'drop-zone-formats' });
-        formats.setText(`지원 형식: ${this.acceptedFormats.map(f => `.${f}`).join(', ')}`);
-        
+        formats.setText(`지원 형식: ${this.acceptedFormats.map((f) => `.${f}`).join(', ')}`);
+
         // 숨겨진 파일 입력
         const fileInput = this.dropZone.createEl('input', {
             type: 'file',
-            cls: 'drop-zone-input'
+            cls: 'drop-zone-input',
         });
-        fileInput.accept = this.acceptedFormats.map(f => `.${f}`).join(',');
+        fileInput.accept = this.acceptedFormats.map((f) => `.${f}`).join(',');
         fileInput.multiple = true;
-        
+
         // 클릭 이벤트
         this.dropZone.addEventListener('click', () => {
             fileInput.click();
         });
-        
+
         fileInput.addEventListener('change', (e) => {
             const target = e.target;
             if (target instanceof HTMLInputElement && target.files && target.files.length > 0) {
@@ -91,7 +91,7 @@ export class DragDropZone {
         this.dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
         this.dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
         this.dropZone.addEventListener('drop', this.handleDrop.bind(this));
-        
+
         // 전체 문서에 대한 드래그 방지
         document.addEventListener('dragover', this.preventDefaultDrag);
         document.addEventListener('drop', this.preventDefaultDrag);
@@ -107,7 +107,7 @@ export class DragDropZone {
         this.dropZone.removeEventListener('dragleave', this.handleDragLeave.bind(this));
         this.dropZone.removeEventListener('dragover', this.handleDragOver.bind(this));
         this.dropZone.removeEventListener('drop', this.handleDrop.bind(this));
-        
+
         document.removeEventListener('dragover', this.preventDefaultDrag);
         document.removeEventListener('drop', this.preventDefaultDrag);
     }
@@ -118,9 +118,9 @@ export class DragDropZone {
     private handleDragEnter(e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         this.dragCounter++;
-        
+
         if (e.dataTransfer?.items) {
             const hasValidFile = this.hasValidFiles(e.dataTransfer);
             if (hasValidFile) {
@@ -135,9 +135,9 @@ export class DragDropZone {
     private handleDragLeave(e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         this.dragCounter--;
-        
+
         if (this.dragCounter === 0) {
             this.setDragging(false);
         }
@@ -149,7 +149,7 @@ export class DragDropZone {
     private handleDragOver(e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (e.dataTransfer) {
             e.dataTransfer.dropEffect = 'copy';
         }
@@ -161,10 +161,10 @@ export class DragDropZone {
     private handleDrop(e: DragEvent) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         this.dragCounter = 0;
         this.setDragging(false);
-        
+
         const files = this.getFilesFromEvent(e);
         if (files.length > 0) {
             this.handleFiles(files);
@@ -183,7 +183,7 @@ export class DragDropZone {
      */
     private setDragging(isDragging: boolean) {
         this.isDragging = isDragging;
-        
+
         if (this.dropZone) {
             if (isDragging) {
                 this.dropZone.addClass('dragging');
@@ -200,7 +200,7 @@ export class DragDropZone {
      */
     private showDragOverlay() {
         if (!this.dropZone) return;
-        
+
         const existingOverlay = this.dropZone.querySelector('.drag-overlay');
         let overlay: HTMLElement;
         if (existingOverlay instanceof HTMLElement) {
@@ -230,7 +230,7 @@ export class DragDropZone {
      */
     private getFilesFromEvent(e: DragEvent): File[] {
         const files: File[] = [];
-        
+
         if (e.dataTransfer?.files) {
             for (let i = 0; i < e.dataTransfer.files.length; i++) {
                 const file = e.dataTransfer.files[i];
@@ -239,7 +239,7 @@ export class DragDropZone {
                 }
             }
         }
-        
+
         return files;
     }
 
@@ -248,20 +248,20 @@ export class DragDropZone {
      */
     private hasValidFiles(dataTransfer: DataTransfer): boolean {
         if (!dataTransfer.items) return false;
-        
+
         for (let i = 0; i < dataTransfer.items.length; i++) {
             const item = dataTransfer.items[i];
             if (item.kind === 'file') {
                 // 타입 체크 (브라우저가 지원하는 경우)
                 if (item.type) {
-                    const isAudio = item.type.startsWith('audio/') || 
-                                   item.type.startsWith('video/');
+                    const isAudio =
+                        item.type.startsWith('audio/') || item.type.startsWith('video/');
                     if (isAudio) return true;
                 }
                 return true; // 타입을 알 수 없어도 일단 허용
             }
         }
-        
+
         return false;
     }
 
@@ -285,17 +285,17 @@ export class DragDropZone {
      * 파일 처리
      */
     private handleFiles(files: File[]) {
-        const validFiles = files.filter(file => this.isValidFile(file));
-        
+        const validFiles = files.filter((file) => this.isValidFile(file));
+
         if (validFiles.length === 0) {
             this.showError('유효한 오디오 파일이 없습니다');
             return;
         }
-        
+
         if (this.fileCallback) {
             this.fileCallback(validFiles);
         }
-        
+
         // 시각적 피드백
         this.showSuccess(`${validFiles.length}개 파일 선택됨`);
     }
@@ -319,10 +319,10 @@ export class DragDropZone {
      */
     private showMessage(message: string, type: 'success' | 'error') {
         if (!this.dropZone) return;
-        
+
         const messageEl = this.dropZone.createDiv(`drop-zone-message ${type}`);
         messageEl.setText(message);
-        
+
         setTimeout(() => {
             messageEl.remove();
         }, 3000);
@@ -348,7 +348,7 @@ export class DragDropZone {
         const paths = [
             'M42.667 42.667L32 32L21.333 42.667',
             'M32 32V56',
-            'M54.373 46.373C56.871 43.875 58.667 40.617 58.667 37.333C58.667 30.707 53.293 25.333 46.667 25.333C45.827 25.333 45.013 25.44 44.24 25.64C41.795 18.747 35.488 13.333 28 13.333C18.427 13.333 10.667 21.093 10.667 30.667C10.667 31.947 10.827 33.187 11.12 34.373C6.88 35.92 4 39.947 4 44.667C4 50.56 8.773 55.333 14.667 55.333'
+            'M54.373 46.373C56.871 43.875 58.667 40.617 58.667 37.333C58.667 30.707 53.293 25.333 46.667 25.333C45.827 25.333 45.013 25.44 44.24 25.64C41.795 18.747 35.488 13.333 28 13.333C18.427 13.333 10.667 21.093 10.667 30.667C10.667 31.947 10.827 33.187 11.12 34.373C6.88 35.92 4 39.947 4 44.667C4 50.56 8.773 55.333 14.667 55.333',
         ];
 
         paths.forEach((d) => {
@@ -374,10 +374,7 @@ export class DragDropZone {
         svg.setAttribute('viewBox', '0 0 48 48');
         svg.setAttribute('fill', 'none');
 
-        const pathData = [
-            'M8 30L24 14L40 30',
-            'M24 14V38'
-        ];
+        const pathData = ['M8 30L24 14L40 30', 'M24 14V38'];
 
         pathData.forEach((d) => {
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -397,16 +394,16 @@ export class DragDropZone {
      */
     setAcceptedFormats(formats: string[]) {
         this.acceptedFormats = formats;
-        
+
         // UI 업데이트
         const formatsEl = this.dropZone?.querySelector('.drop-zone-formats');
         if (formatsEl instanceof HTMLElement) {
-            formatsEl.setText(`지원 형식: ${formats.map(f => `.${f}`).join(', ')}`);
+            formatsEl.setText(`지원 형식: ${formats.map((f) => `.${f}`).join(', ')}`);
         }
-        
+
         const input = this.dropZone?.querySelector('.drop-zone-input');
         if (input instanceof HTMLInputElement) {
-            input.accept = formats.map(f => `.${f}`).join(',');
+            input.accept = formats.map((f) => `.${f}`).join(',');
         }
     }
 }

@@ -22,7 +22,7 @@ export class AudioProcessor implements IAudioProcessor {
         this.logger.debug('AudioProcessor capabilities updated', {
             previousLimit: this.DEFAULT_MAX_FILE_SIZE / 1024 / 1024,
             newLimit: capabilities.maxFileSize / 1024 / 1024,
-            provider: capabilities.maxFileSize === 2 * 1024 * 1024 * 1024 ? 'Deepgram' : 'Whisper'
+            provider: capabilities.maxFileSize === 2 * 1024 * 1024 * 1024 ? 'Deepgram' : 'Whisper',
         });
     }
 
@@ -65,7 +65,7 @@ export class AudioProcessor implements IAudioProcessor {
         this.logger.debug('Processing audio file', {
             fileName: file.name,
             extension: file.extension,
-            sizeBytes: file.stat.size
+            sizeBytes: file.stat.size,
         });
 
         const arrayBuffer = await this.vault.readBinary(file);
@@ -73,7 +73,7 @@ export class AudioProcessor implements IAudioProcessor {
 
         this.logger.debug('Audio processing completed', {
             bufferSize: arrayBuffer.byteLength,
-            detectedFormat: metadata.format
+            detectedFormat: metadata.format,
         });
 
         return {
@@ -93,7 +93,7 @@ export class AudioProcessor implements IAudioProcessor {
             this.logger.debug('Audio format detected from file extension', {
                 fileName: file.name,
                 extension,
-                format
+                format,
             });
         }
 
@@ -102,7 +102,7 @@ export class AudioProcessor implements IAudioProcessor {
         this.logger.debug('Audio file analysis', {
             sizeKB: fileSizeKB,
             sizeBytes: buffer.byteLength,
-            format
+            format,
         });
 
         return Promise.resolve({
@@ -112,7 +112,7 @@ export class AudioProcessor implements IAudioProcessor {
             channels: undefined,
             codec: undefined,
             format, // 🔥 핵심: 파일 형식 정보 추가
-            fileSize: buffer.byteLength
+            fileSize: buffer.byteLength,
         });
     }
 }

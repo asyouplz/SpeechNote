@@ -1,6 +1,6 @@
 /**
  * LazyLoader - Phase 4 Performance Optimization
- * 
+ *
  * 동적 모듈 로딩을 통한 번들 사이즈 최적화
  * - 초기 로딩 시간 단축
  * - 메모리 사용량 감소
@@ -34,10 +34,7 @@ export class LazyLoader {
     /**
      * 모듈을 동적으로 로드
      */
-    static async loadModule<T>(
-        modulePath: string,
-        options: LazyLoadOptions = {}
-    ): Promise<T> {
+    static async loadModule<T>(modulePath: string, options: LazyLoadOptions = {}): Promise<T> {
         // 이미 로드된 모듈 반환
         if (this.loadedModules.has(modulePath)) {
             return this.loadedModules.get(modulePath) as T;
@@ -68,22 +65,22 @@ export class LazyLoader {
         try {
             const module = await promise;
             this.loadedModules.set(modulePath, module);
-            this.updateLoadingState(modulePath, { 
-                isLoading: false, 
-                module 
+            this.updateLoadingState(modulePath, {
+                isLoading: false,
+                module,
             });
-            
+
             if (options.onLoad) {
                 options.onLoad(module);
             }
 
             return module;
         } catch (error) {
-            this.updateLoadingState(modulePath, { 
-                isLoading: false, 
-                error: normalizeError(error)
+            this.updateLoadingState(modulePath, {
+                isLoading: false,
+                error: normalizeError(error),
             });
-            
+
             if (options.onError) {
                 options.onError(normalizeError(error));
             }
@@ -101,10 +98,7 @@ export class LazyLoader {
     /**
      * 실제 모듈 로딩 수행
      */
-    private static async performLoad<T>(
-        modulePath: string,
-        _options: LazyLoadOptions
-    ): Promise<T> {
+    private static async performLoad<T>(modulePath: string, _options: LazyLoadOptions): Promise<T> {
         try {
             // 동적 import를 통한 모듈 로드
             const module = await this.dynamicImport(modulePath);
@@ -123,22 +117,22 @@ export class LazyLoader {
         // UI 컴포넌트 매핑
         const moduleMap: Record<string, () => Promise<unknown>> = {
             // Dashboard components (낮은 우선순위)
-            'StatisticsDashboard': () => import('../ui/dashboard/StatisticsDashboard'),
-            
+            StatisticsDashboard: () => import('../ui/dashboard/StatisticsDashboard'),
+
             // Settings components (중간 우선순위)
-            'AdvancedSettings': () => import('../ui/settings/components/AdvancedSettings'),
-            'ShortcutSettings': () => import('../ui/settings/components/ShortcutSettings'),
-            'AudioSettings': () => import('../ui/settings/components/AudioSettings'),
-            
+            AdvancedSettings: () => import('../ui/settings/components/AdvancedSettings'),
+            ShortcutSettings: () => import('../ui/settings/components/ShortcutSettings'),
+            AudioSettings: () => import('../ui/settings/components/AudioSettings'),
+
             // Modal components (높은 우선순위)
-            'FilePickerModal': () => import('../ui/modals/FilePickerModal'),
-            
+            FilePickerModal: () => import('../ui/modals/FilePickerModal'),
+
             // Progress components
-            'CircularProgress': () => import('../ui/progress/CircularProgress'),
-            'ProgressBar': () => import('../ui/progress/ProgressBar'),
-            
+            CircularProgress: () => import('../ui/progress/CircularProgress'),
+            ProgressBar: () => import('../ui/progress/ProgressBar'),
+
             // Notification components
-            'NotificationSystem': () => import('../ui/notifications/NotificationSystem'),
+            NotificationSystem: () => import('../ui/notifications/NotificationSystem'),
         };
 
         const importFn = moduleMap[modulePath];
@@ -153,7 +147,7 @@ export class LazyLoader {
      * 여러 모듈을 미리 로드 (백그라운드)
      */
     static preloadModules(modulePaths: string[]): void {
-        modulePaths.forEach(path => {
+        modulePaths.forEach((path) => {
             if (!this.loadedModules.has(path) && !this.preloadQueue.has(path)) {
                 this.preloadQueue.add(path);
             }
@@ -189,8 +183,8 @@ export class LazyLoader {
             return;
         }
 
-        resources.forEach(resource => {
-            void fetch(resource, { cache: 'force-cache', mode: 'no-cors' }).catch(error => {
+        resources.forEach((resource) => {
+            void fetch(resource, { cache: 'force-cache', mode: 'no-cors' }).catch((error) => {
                 console.warn(`Failed to preload resource: ${resource}`, error);
             });
         });
@@ -217,10 +211,7 @@ export class LazyLoader {
     /**
      * 로딩 상태 업데이트
      */
-    private static updateLoadingState(
-        modulePath: string, 
-        state: LoadingState
-    ): void {
+    private static updateLoadingState(modulePath: string, state: LoadingState): void {
         this.loadingStates.set(modulePath, state);
     }
 
@@ -251,7 +242,7 @@ export class LazyLoader {
             loadedCount: this.loadedModules.size,
             loadingCount: this.loadingPromises.size,
             preloadCount: this.preloadQueue.size,
-            totalMemory: this.estimateMemoryUsage()
+            totalMemory: this.estimateMemoryUsage(),
         };
     }
 
@@ -267,11 +258,9 @@ export class LazyLoader {
 /**
  * React-style lazy loading wrapper
  */
-export function lazy<T>(
-    loader: () => Promise<{ default: T }>
-): () => Promise<T> {
+export function lazy<T>(loader: () => Promise<{ default: T }>): () => Promise<T> {
     let component: T | null = null;
-    
+
     return async () => {
         if (!component) {
             const module = await loader();
@@ -286,10 +275,10 @@ export function lazy<T>(
  */
 export class LoadingBoundary {
     private loading = new Set<Promise<unknown>>();
-    
+
     async wrap<T>(promise: Promise<T>): Promise<T> {
         this.loading.add(promise);
-        
+
         try {
             const result = await promise;
             return result;
@@ -297,11 +286,11 @@ export class LoadingBoundary {
             this.loading.delete(promise);
         }
     }
-    
+
     get isLoading(): boolean {
         return this.loading.size > 0;
     }
-    
+
     async waitForAll(): Promise<void> {
         await Promise.all(Array.from(this.loading));
     }

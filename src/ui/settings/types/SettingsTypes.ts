@@ -1,10 +1,13 @@
 /**
  * Settings 관련 타입 정의 및 Type Guards
- * 
+ *
  * 타입 안전성을 보장하기 위한 유틸리티 타입과 가드 함수들
  */
 
-import { TranscriptionProvider, SelectionStrategy } from '../../../infrastructure/api/providers/ITranscriber';
+import {
+    TranscriptionProvider,
+    SelectionStrategy,
+} from '../../../infrastructure/api/providers/ITranscriber';
 import { isDate, isPlainRecord, isRecord } from '../../../types/guards';
 
 // === 기본 타입 정의 ===
@@ -72,12 +75,12 @@ export interface MetricsData {
 /**
  * 설정 값 타입
  */
-export type SettingValue = 
-    | string 
-    | number 
-    | boolean 
-    | Date 
-    | TranscriptionProvider 
+export type SettingValue =
+    | string
+    | number
+    | boolean
+    | Date
+    | TranscriptionProvider
     | SelectionStrategy
     | Record<string, unknown>
     | unknown[];
@@ -105,16 +108,14 @@ const selectionStrategyValues = new Set<string>(Object.values(SelectionStrategy)
  * TranscriptionProvider 타입 가드
  */
 export function isTranscriptionProvider(value: unknown): value is TranscriptionProvider {
-    return typeof value === 'string' && 
-           ['whisper', 'deepgram'].includes(value);
+    return typeof value === 'string' && ['whisper', 'deepgram'].includes(value);
 }
 
 /**
  * SelectionStrategy 타입 가드
  */
 export function isSelectionStrategy(value: unknown): value is SelectionStrategy {
-    return typeof value === 'string' && 
-           selectionStrategyValues.has(value);
+    return typeof value === 'string' && selectionStrategyValues.has(value);
 }
 
 /**
@@ -122,11 +123,13 @@ export function isSelectionStrategy(value: unknown): value is SelectionStrategy 
  */
 export function isApiKeyInfo(value: unknown): value is ApiKeyInfo {
     if (!isRecord(value)) return false;
-    
-    return isTranscriptionProvider(value.provider) &&
-           typeof value.key === 'string' &&
-           typeof value.encrypted === 'boolean' &&
-           typeof value.isValid === 'boolean';
+
+    return (
+        isTranscriptionProvider(value.provider) &&
+        typeof value.key === 'string' &&
+        typeof value.encrypted === 'boolean' &&
+        typeof value.isValid === 'boolean'
+    );
 }
 
 /**
@@ -134,10 +137,12 @@ export function isApiKeyInfo(value: unknown): value is ApiKeyInfo {
  */
 export function isValidationResult(value: unknown): value is ValidationResult {
     if (!isRecord(value)) return false;
-    
-    return typeof value.isValid === 'boolean' &&
-           Array.isArray(value.errors) &&
-           Array.isArray(value.warnings);
+
+    return (
+        typeof value.isValid === 'boolean' &&
+        Array.isArray(value.errors) &&
+        Array.isArray(value.warnings)
+    );
 }
 
 /**
@@ -151,10 +156,7 @@ export function isValidDate(value: unknown): value is Date {
  * 숫자 범위 타입 가드
  */
 export function isInRange(value: unknown, min: number, max: number): value is number {
-    return typeof value === 'number' && 
-           !isNaN(value) && 
-           value >= min && 
-           value <= max;
+    return typeof value === 'number' && !isNaN(value) && value >= min && value <= max;
 }
 
 /**
@@ -213,35 +215,35 @@ export type NonNullableObject<T> = {
  */
 export class TypeSafeSettings<T extends Record<string, unknown>> {
     constructor(private settings: T) {}
-    
+
     /**
      * 타입 안전한 getter
      */
     get<K extends keyof T>(key: K): T[K] {
         return this.settings[key];
     }
-    
+
     /**
      * 타입 안전한 setter
      */
     set<K extends keyof T>(key: K, value: T[K]): void {
         this.settings[key] = value;
     }
-    
+
     /**
      * 기본값과 함께 가져오기
      */
     getWithDefault<K extends keyof T>(key: K, defaultValue: T[K]): T[K] {
         return this.settings[key] ?? defaultValue;
     }
-    
+
     /**
      * 여러 값 한번에 설정
      */
     setMultiple(updates: Partial<T>): void {
         Object.assign(this.settings, updates);
     }
-    
+
     /**
      * 검증과 함께 설정
      */
@@ -256,7 +258,7 @@ export class TypeSafeSettings<T extends Record<string, unknown>> {
         }
         return false;
     }
-    
+
     /**
      * 모든 설정 가져오기
      */
@@ -271,11 +273,11 @@ export class TypeSafeSettings<T extends Record<string, unknown>> {
 export class SettingsChangeTracker<T extends Record<string, unknown>> {
     private originalSettings: T;
     private changes: Map<keyof T, { old: T[keyof T]; new: T[keyof T] }> = new Map();
-    
+
     constructor(settings: T) {
         this.originalSettings = { ...settings };
     }
-    
+
     /**
      * 변경 추적
      */
@@ -283,35 +285,35 @@ export class SettingsChangeTracker<T extends Record<string, unknown>> {
         if (!this.changes.has(key)) {
             this.changes.set(key, {
                 old: this.originalSettings[key],
-                new: newValue
+                new: newValue,
             });
         } else {
             const change = this.changes.get(key)!;
             change.new = newValue;
         }
     }
-    
+
     /**
      * 변경사항 확인
      */
     hasChanges(): boolean {
         return this.changes.size > 0;
     }
-    
+
     /**
      * 변경사항 가져오기
      */
     getChanges(): Map<keyof T, { old: T[keyof T]; new: T[keyof T] }> {
         return new Map(this.changes);
     }
-    
+
     /**
      * 변경사항 초기화
      */
     reset(): void {
         this.changes.clear();
     }
-    
+
     /**
      * 원본으로 되돌리기
      */
@@ -326,14 +328,11 @@ export class SettingsChangeTracker<T extends Record<string, unknown>> {
  */
 export class SettingsValidator<T extends Record<string, unknown>> {
     private rules = new Map<string, Array<(value: unknown) => ValidationResult>>();
-    
+
     /**
      * 검증 규칙 추가
      */
-    addRule<K extends keyof T>(
-        key: K,
-        validator: (value: T[K]) => ValidationResult
-    ): this {
+    addRule<K extends keyof T>(key: K, validator: (value: T[K]) => ValidationResult): this {
         const fieldKey = String(key);
         if (!this.rules.has(fieldKey)) {
             this.rules.set(fieldKey, []);
@@ -341,7 +340,7 @@ export class SettingsValidator<T extends Record<string, unknown>> {
         this.rules.get(fieldKey)!.push((value: unknown) => validator(value as T[K]));
         return this;
     }
-    
+
     /**
      * 단일 필드 검증
      */
@@ -349,20 +348,20 @@ export class SettingsValidator<T extends Record<string, unknown>> {
         const validators = this.rules.get(key) || [];
         const errors: string[] = [];
         const warnings: string[] = [];
-        
+
         for (const validator of validators) {
             const result = validator(value);
             errors.push(...result.errors);
             warnings.push(...result.warnings);
-            
+
             if (!result.isValid) {
                 return { isValid: false, errors, warnings };
             }
         }
-        
+
         return { isValid: true, errors, warnings, data: value };
     }
-    
+
     /**
      * 전체 설정 검증
      */
@@ -370,17 +369,17 @@ export class SettingsValidator<T extends Record<string, unknown>> {
         const errors: string[] = [];
         const warnings: string[] = [];
         let isValid = true;
-        
+
         for (const [key, value] of Object.entries(settings)) {
             const result = this.validateField(key, value);
             errors.push(...result.errors);
             warnings.push(...result.warnings);
-            
+
             if (!result.isValid) {
                 isValid = false;
             }
         }
-        
+
         return { isValid, errors, warnings, data: isValid ? settings : undefined };
     }
 }
@@ -403,7 +402,7 @@ export function safeJsonParse<T>(json: string, defaultValue: T): T {
  */
 export function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
     const result = { ...target };
-    
+
     for (const key in source) {
         const sourceValue = source[key];
         if (sourceValue !== undefined) {
@@ -415,7 +414,7 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Part
             }
         }
     }
-    
+
     return result;
 }
 
@@ -424,25 +423,25 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Part
  */
 export function deepEqual(a: unknown, b: unknown): boolean {
     if (a === b) return true;
-    
+
     if (a == null || b == null) return false;
-    
+
     if (typeof a !== typeof b) return false;
-    
+
     if (typeof a !== 'object') return false;
-    
+
     if (!isRecord(a) || !isRecord(b)) return false;
-    
+
     const keysA = Object.keys(a);
     const keysB = Object.keys(b);
-    
+
     if (keysA.length !== keysB.length) return false;
-    
+
     for (const key of keysA) {
         if (!keysB.includes(key)) return false;
         if (!deepEqual(a[key], b[key])) return false;
     }
-    
+
     return true;
 }
 
@@ -454,12 +453,12 @@ export function createDebouncedSave<T>(
     delay = 500
 ): (settings: T) => void {
     let timeoutId: number | undefined;
-    
+
     return (settings: T) => {
         if (timeoutId !== undefined) {
             window.clearTimeout(timeoutId);
         }
-        
+
         timeoutId = window.setTimeout(() => {
             void saveFn(settings);
             timeoutId = undefined;
@@ -477,13 +476,13 @@ export function migrateSettings<T extends { version: number }>(
 ): T {
     let migrated = settings;
     const startVersion = migrated?.version || 0;
-    
+
     for (let i = startVersion; i < currentVersion; i++) {
         if (migrations[i]) {
             migrated = migrations[i](migrated);
         }
     }
-    
+
     migrated.version = currentVersion;
     return migrated;
 }

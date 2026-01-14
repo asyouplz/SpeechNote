@@ -8,7 +8,7 @@
  */
 export abstract class Singleton {
     private static instances = new Map<string, unknown>();
-    
+
     /**
      * 인스턴스 획득
      */
@@ -17,29 +17,29 @@ export abstract class Singleton {
         ...args: unknown[]
     ): T {
         const className = this.name;
-        
+
         if (!Singleton.instances.has(className)) {
             const instance = new this(...args);
             Singleton.instances.set(className, instance);
         }
-        
+
         return Singleton.instances.get(className) as T;
     }
-    
+
     /**
      * 인스턴스 존재 여부 확인
      */
     protected static hasInstance(className: string): boolean {
         return Singleton.instances.has(className);
     }
-    
+
     /**
      * 인스턴스 제거 (테스트용)
      */
     protected static clearInstance(className: string): void {
         Singleton.instances.delete(className);
     }
-    
+
     /**
      * 모든 인스턴스 제거 (테스트용)
      */
@@ -51,11 +51,9 @@ export abstract class Singleton {
 /**
  * 함수형 Singleton 팩토리
  */
-export function createSingleton<T>(
-    factory: () => T
-): () => T {
+export function createSingleton<T>(factory: () => T): () => T {
     let instance: T | undefined;
-    
+
     return () => {
         if (instance === undefined) {
             instance = factory();
@@ -86,11 +84,9 @@ export function SingletonDecorator<T extends new (...args: any[]) => any>(constr
 /**
  * 비동기 Singleton 팩토리
  */
-export function createAsyncSingleton<T>(
-    factory: () => Promise<T>
-): () => Promise<T> {
+export function createAsyncSingleton<T>(factory: () => Promise<T>): () => Promise<T> {
     let instance: Promise<T> | undefined;
-    
+
     return () => {
         if (instance === undefined) {
             instance = factory();
@@ -105,9 +101,9 @@ export function createAsyncSingleton<T>(
 export class LazySingleton<T> {
     private instance?: T;
     private isInitialized = false;
-    
+
     constructor(private factory: () => T) {}
-    
+
     getInstance(): T {
         if (!this.isInitialized) {
             this.instance = this.factory();
@@ -118,11 +114,11 @@ export class LazySingleton<T> {
         }
         return this.instance;
     }
-    
+
     isInstantiated(): boolean {
         return this.isInitialized;
     }
-    
+
     reset(): void {
         this.instance = undefined;
         this.isInitialized = false;
@@ -135,28 +131,28 @@ export class LazySingleton<T> {
 export class ThreadSafeSingleton<T> {
     private instance?: T;
     private initPromise?: Promise<T>;
-    
+
     constructor(private factory: () => T | Promise<T>) {}
-    
+
     getInstance(): Promise<T> {
         if (this.instance) {
             return Promise.resolve(this.instance);
         }
-        
+
         if (!this.initPromise) {
-            this.initPromise = Promise.resolve(this.factory()).then(inst => {
+            this.initPromise = Promise.resolve(this.factory()).then((inst) => {
                 this.instance = inst;
                 return inst;
             });
         }
-        
+
         return this.initPromise;
     }
-    
+
     hasInstance(): boolean {
         return this.instance !== undefined;
     }
-    
+
     reset(): void {
         this.instance = undefined;
         this.initPromise = undefined;

@@ -41,35 +41,35 @@ export class ProgressIndicator {
         this.progressElement.addClass('sn-hidden');
         this.progressElement.addClass('sn-fade');
         this.progressElement.addClass('sn-fade-hidden');
-        
+
         // 오버레이
         const _overlay = this.progressElement.createDiv('progress-overlay');
-        
+
         // 컨테이너
         const content = this.progressElement.createDiv('progress-content');
-        
+
         // 스피너
         const spinner = content.createDiv('progress-spinner');
         spinner.appendChild(this.getSpinnerSVG());
-        
+
         // 진행률 바 컨테이너
         const barContainer = content.createDiv('progress-bar-container');
         barContainer.addClass('sn-hidden');
-        
+
         // 진행률 바
         const progressBar = barContainer.createDiv('progress-bar');
         const _progressFill = progressBar.createDiv('progress-fill');
         const progressText = progressBar.createDiv('progress-text');
         progressText.setText('0%');
-        
+
         // 메시지
         const message = content.createDiv('progress-message');
         message.setText('처리 중...');
-        
+
         // 취소 버튼
         const cancelBtn = content.createEl('button', {
             cls: 'progress-cancel-btn',
-            text: '취소'
+            text: '취소',
         });
         cancelBtn.addClass('sn-hidden');
         cancelBtn.addEventListener('click', () => {
@@ -85,14 +85,14 @@ export class ProgressIndicator {
      */
     show(message?: string, showProgressBar = false, cancellable = false) {
         if (!this.progressElement) return;
-        
+
         this.isVisible = true;
         this.currentProgress = 0;
-        
+
         // 요소 표시
         this.progressElement.removeClass('sn-hidden');
         this.progressElement.addClass('sn-flex');
-        
+
         // 메시지 설정
         if (message) {
             const messageEl = this.progressElement.querySelector('.progress-message');
@@ -100,11 +100,11 @@ export class ProgressIndicator {
                 messageEl.setText(message);
             }
         }
-        
+
         // 진행률 바 표시/숨김
         const barContainer = this.progressElement.querySelector('.progress-bar-container');
         const spinner = this.progressElement.querySelector('.progress-spinner');
-        
+
         if (showProgressBar) {
             if (barContainer instanceof HTMLElement) {
                 barContainer.removeClass('sn-hidden');
@@ -123,13 +123,13 @@ export class ProgressIndicator {
             }
             this.startSpinnerAnimation();
         }
-        
+
         // 취소 버튼 표시/숨김
         const cancelBtn = this.progressElement.querySelector('.progress-cancel-btn');
         if (cancelBtn instanceof HTMLElement) {
             cancelBtn.toggleClass('sn-hidden', !cancellable);
         }
-        
+
         // 페이드인 애니메이션
         this.fadeIn();
     }
@@ -139,10 +139,10 @@ export class ProgressIndicator {
      */
     hide() {
         if (!this.progressElement) return;
-        
+
         this.isVisible = false;
         this.stopSpinnerAnimation();
-        
+
         // 페이드아웃 애니메이션
         this.fadeOut(() => {
             if (this.progressElement) {
@@ -157,17 +157,17 @@ export class ProgressIndicator {
      */
     update(progress: number, message?: string) {
         if (!this.isVisible || !this.progressElement) return;
-        
+
         this.currentProgress = Math.min(100, Math.max(0, progress));
-        
+
         // 진행률 바 업데이트
         const progressFill = this.progressElement.querySelector('.progress-fill');
         const progressText = this.progressElement.querySelector('.progress-text');
-        
+
         if (progressFill instanceof HTMLElement && progressText instanceof HTMLElement) {
             progressFill.setAttribute('style', `--sn-progress-width:${this.currentProgress}%`);
             progressText.setText(`${Math.round(this.currentProgress)}%`);
-            
+
             // 진행률에 따른 색상 변경
             if (this.currentProgress < 30) {
                 progressFill.removeClass('progress-warning', 'progress-success');
@@ -179,7 +179,7 @@ export class ProgressIndicator {
                 progressFill.addClass('progress-success');
             }
         }
-        
+
         // 메시지 업데이트
         if (message) {
             const messageEl = this.progressElement.querySelector('.progress-message');
@@ -194,27 +194,26 @@ export class ProgressIndicator {
      */
     animateProgress(targetProgress: number, duration = 500) {
         if (!this.isVisible || !this.progressElement) return;
-        
+
         const startProgress = this.currentProgress;
         const startTime = performance.now();
-        
+
         const animate = (currentTime: number) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
+
             // 이징 함수 (easeInOutQuad)
-            const eased = progress < 0.5
-                ? 2 * progress * progress
-                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-            
+            const eased =
+                progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
             const currentValue = startProgress + (targetProgress - startProgress) * eased;
             this.update(currentValue);
-            
+
             if (progress < 1) {
                 requestAnimationFrame(animate);
             }
         };
-        
+
         requestAnimationFrame(animate);
     }
 
@@ -223,7 +222,7 @@ export class ProgressIndicator {
      */
     setMessage(message: string) {
         if (!this.progressElement) return;
-        
+
         const messageEl = this.progressElement.querySelector('.progress-message');
         if (messageEl instanceof HTMLElement) {
             messageEl.setText(message);
@@ -235,20 +234,20 @@ export class ProgressIndicator {
      */
     showError(message: string) {
         if (!this.progressElement) return;
-        
+
         this.show(message, false, false);
-        
+
         const content = this.progressElement.querySelector('.progress-content');
         if (content instanceof HTMLElement) {
             content.addClass('error');
-            
+
             // 스피너를 에러 아이콘으로 변경
             const spinner = content.querySelector('.progress-spinner');
             if (spinner instanceof HTMLElement) {
                 spinner.replaceChildren(this.getErrorIcon());
             }
         }
-        
+
         // 3초 후 자동 숨김
         setTimeout(() => this.hide(), 3000);
     }
@@ -258,20 +257,20 @@ export class ProgressIndicator {
      */
     showSuccess(message: string) {
         if (!this.progressElement) return;
-        
+
         this.show(message, false, false);
-        
+
         const content = this.progressElement.querySelector('.progress-content');
         if (content instanceof HTMLElement) {
             content.addClass('success');
-            
+
             // 스피너를 성공 아이콘으로 변경
             const spinner = content.querySelector('.progress-spinner');
             if (spinner instanceof HTMLElement) {
                 spinner.replaceChildren(this.getSuccessIcon());
             }
         }
-        
+
         // 2초 후 자동 숨김
         setTimeout(() => this.hide(), 2000);
     }
@@ -308,7 +307,7 @@ export class ProgressIndicator {
      */
     private fadeIn() {
         if (!this.progressElement) return;
-        
+
         this.progressElement.removeClass('sn-fade-hidden');
         requestAnimationFrame(() => {
             this.progressElement?.addClass('sn-fade-visible');
@@ -320,10 +319,10 @@ export class ProgressIndicator {
      */
     private fadeOut(callback?: () => void) {
         if (!this.progressElement) return;
-        
+
         this.progressElement.removeClass('sn-fade-visible');
         this.progressElement.addClass('sn-fade-hidden');
-        
+
         setTimeout(() => {
             if (callback) {
                 callback();

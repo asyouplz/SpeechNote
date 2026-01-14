@@ -1,17 +1,27 @@
 import { Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
-import { DeepgramModelRegistry, DeepgramModel, DeepgramFeature } from '../../../config/DeepgramModelRegistry';
-import { UI_CONSTANTS, CONFIG_CONSTANTS, LANGUAGE_OPTIONS, DEFAULT_MODELS, DEFAULT_FEATURES } from '../../../config/DeepgramConstants';
+import {
+    DeepgramModelRegistry,
+    DeepgramModel,
+    DeepgramFeature,
+} from '../../../config/DeepgramModelRegistry';
+import {
+    UI_CONSTANTS,
+    CONFIG_CONSTANTS,
+    LANGUAGE_OPTIONS,
+    DEFAULT_MODELS,
+    DEFAULT_FEATURES,
+} from '../../../config/DeepgramConstants';
 import { DeepgramLogger } from '../helpers/DeepgramLogger';
 import { DeepgramUIBuilder } from './DeepgramUIBuilder';
 import { DeepgramValidator } from '../services/DeepgramValidator';
 import { DeepgramCostCalculator } from '../services/DeepgramCostCalculator';
-import type { 
-    TextComponent, 
-    DropdownComponent, 
-    ToggleComponent, 
+import type {
+    TextComponent,
+    DropdownComponent,
+    ToggleComponent,
     ButtonComponent,
-    DeepgramFeatures 
+    DeepgramFeatures,
 } from '../../../types/DeepgramTypes';
 
 /**
@@ -27,7 +37,7 @@ export class DeepgramSettings {
     private containerEl: HTMLElement;
     private selectedModel: DeepgramModel | null = null;
     private estimatedCostEl: HTMLElement | null = null;
-    
+
     // 헬퍼 클래스들
     private logger: DeepgramLogger;
     private uiBuilder: DeepgramUIBuilder;
@@ -37,13 +47,13 @@ export class DeepgramSettings {
     constructor(plugin: SpeechToTextPlugin, containerEl: HTMLElement) {
         this.plugin = plugin;
         this.containerEl = containerEl;
-        
+
         // 헬퍼 클래스 초기화
         this.logger = DeepgramLogger.getInstance();
         this.uiBuilder = new DeepgramUIBuilder(containerEl);
         this.validator = new DeepgramValidator();
         this.costCalculator = new DeepgramCostCalculator();
-        
+
         // DeepgramModelRegistry 안전한 초기화
         this.initializeRegistry();
     }
@@ -55,10 +65,10 @@ export class DeepgramSettings {
         try {
             this.logger.info('Attempting to initialize DeepgramModelRegistry...');
             this.registry = DeepgramModelRegistry.getInstance();
-            
+
             const models = this.registry.getAllModels();
             this.logger.info(`Registry initialized successfully with ${models.length} models`);
-            
+
             if (models.length === 0) {
                 this.logger.warn('Registry has no models, will use fallback');
                 this.registry = null;
@@ -76,12 +86,12 @@ export class DeepgramSettings {
     public render(): void {
         this.logger.group('render()');
         this.logRenderState();
-        
+
         try {
             this.uiBuilder.clearContainer();
             this.renderHeader();
             this.renderSections();
-            
+
             this.logger.info(`Total elements created: ${this.containerEl.children.length}`);
             this.logger.groupEnd();
         } catch (error) {
@@ -98,11 +108,11 @@ export class DeepgramSettings {
         this.logger.debug('Container is connected:', this.containerEl.isConnected);
         this.logger.debug('Registry available:', !!this.registry);
         this.logger.debug('API key exists:', !!this.plugin.settings.deepgramApiKey);
-        
+
         if (!this.containerEl.isConnected) {
             this.logger.warn('Container is not connected to DOM, attempting to render anyway');
         }
-        
+
         if (!this.registry) {
             this.logger.warn('Registry not available, using fallback UI');
         }
@@ -114,7 +124,7 @@ export class DeepgramSettings {
     private renderHeader(): void {
         this.uiBuilder.createHeader(UI_CONSTANTS.MESSAGES.HEADER);
         this.uiBuilder.createDescription(UI_CONSTANTS.MESSAGES.DESCRIPTION);
-        
+
         if (!this.registry) {
             this.uiBuilder.createWarning(UI_CONSTANTS.MESSAGES.REGISTRY_WARNING);
         }
@@ -126,19 +136,19 @@ export class DeepgramSettings {
     private renderSections(): void {
         this.logger.info('Rendering API key section...');
         this.renderApiKeySection();
-        
+
         this.logger.info('Rendering model selection...');
         this.renderModelSelection();
-        
+
         this.logger.info('Rendering feature toggles...');
         this.renderFeatureToggles();
-        
+
         this.logger.info('Rendering advanced settings...');
         this.renderAdvancedSettings();
-        
+
         this.logger.info('Rendering cost estimation...');
         this.renderCostEstimation();
-        
+
         this.logger.info('Rendering validation button...');
         this.renderValidationButton();
     }
@@ -150,7 +160,7 @@ export class DeepgramSettings {
         new Setting(this.containerEl)
             .setName(UI_CONSTANTS.MESSAGES.API_KEY_LABEL)
             .setDesc(UI_CONSTANTS.MESSAGES.API_KEY_DESC)
-            .addText(text => {
+            .addText((text) => {
                 this.setupApiKeyInput(text);
             });
     }
@@ -160,18 +170,17 @@ export class DeepgramSettings {
      */
     private setupApiKeyInput(text: TextComponent): void {
         const currentKey = this.plugin.settings.deepgramApiKey || '';
-        
-        text
-            .setPlaceholder(UI_CONSTANTS.MESSAGES.API_KEY_PLACEHOLDER)
+
+        text.setPlaceholder(UI_CONSTANTS.MESSAGES.API_KEY_PLACEHOLDER)
             .setValue(this.validator.maskApiKey(currentKey))
             .onChange(async (value: string) => {
                 await this.handleApiKeyChange(value, text);
             });
-        
+
         // Security settings
         text.inputEl.type = 'password';
         text.inputEl.addClass(UI_CONSTANTS.CLASSES.API_KEY_INPUT);
-        
+
         // Event listeners
         this.attachApiKeyEventListeners(text);
     }
@@ -183,10 +192,10 @@ export class DeepgramSettings {
         if (value && !value.includes('*')) {
             this.plugin.settings.deepgramApiKey = value;
             await this.plugin.saveSettings();
-            
+
             text.setValue(this.validator.maskApiKey(value));
             new Notice(UI_CONSTANTS.MESSAGES.API_KEY_SAVED);
-            
+
             this.updateUIState();
         }
     }
@@ -200,7 +209,7 @@ export class DeepgramSettings {
                 text.setValue(this.plugin.settings.deepgramApiKey);
             }
         });
-        
+
         text.inputEl.addEventListener('blur', () => {
             if (this.plugin.settings.deepgramApiKey) {
                 text.setValue(this.validator.maskApiKey(this.plugin.settings.deepgramApiKey));
@@ -216,7 +225,7 @@ export class DeepgramSettings {
             .setName(UI_CONSTANTS.MESSAGES.MODEL_LABEL)
             .setDesc(UI_CONSTANTS.MESSAGES.MODEL_DESC);
 
-        const _dropdown = setting.addDropdown(dropdown => {
+        const _dropdown = setting.addDropdown((dropdown) => {
             this.populateModelDropdown(dropdown);
             this.setupModelDropdownHandlers(dropdown);
             return dropdown;
@@ -230,13 +239,13 @@ export class DeepgramSettings {
      */
     private populateModelDropdown(dropdown: DropdownComponent): void {
         dropdown.addOption('', UI_CONSTANTS.MESSAGES.MODEL_PLACEHOLDER);
-        
+
         if (!this.registry) {
             this.logger.warn('Registry not available, using default models');
             this.addDefaultModelOptions(dropdown);
             return;
         }
-        
+
         try {
             const models = this.registry.getAllModels();
             if (models.length === 0) {
@@ -275,7 +284,7 @@ export class DeepgramSettings {
     private setupModelDropdownHandlers(dropdown: DropdownComponent): void {
         const currentModel = this.plugin.settings.transcription?.deepgram?.model || '';
         dropdown.setValue(currentModel);
-        
+
         dropdown.onChange(async (value: string) => {
             await this.handleModelChange(value);
         });
@@ -289,11 +298,11 @@ export class DeepgramSettings {
             this.selectedModel = null;
             return;
         }
-        
+
         this.selectedModel = this.registry?.getModel(modelId) || null;
         await this.saveModelSelection(modelId);
         this.updateUIAfterModelChange();
-        
+
         if (this.selectedModel) {
             new Notice(`Selected model: ${this.selectedModel.name}`);
         }
@@ -309,12 +318,12 @@ export class DeepgramSettings {
         if (!this.plugin.settings.transcription.deepgram) {
             this.plugin.settings.transcription.deepgram = {
                 enabled: true,
-                model: modelId
+                model: modelId,
             };
         } else {
             this.plugin.settings.transcription.deepgram.model = modelId;
         }
-        
+
         await this.plugin.saveSettings();
     }
 
@@ -361,7 +370,7 @@ export class DeepgramSettings {
             this.renderDefaultFeatures(container);
             return;
         }
-        
+
         const features = this.registry.getAllFeatures();
         features.forEach((feature, key) => {
             this.renderFeatureToggle(container, feature, key);
@@ -372,26 +381,24 @@ export class DeepgramSettings {
      * 개별 기능 토글 렌더링
      */
     private renderFeatureToggle(
-        container: HTMLElement, 
-        feature: DeepgramFeature, 
+        container: HTMLElement,
+        feature: DeepgramFeature,
         key: string
     ): void {
         const setting = new Setting(container)
             .setName(feature.name)
             .setDesc(this.getFeatureDescription(feature));
 
-        setting.addToggle(toggle => {
+        setting.addToggle((toggle) => {
             const currentValue = this.getFeatureValue(key, feature.default);
-            
-            toggle
-                .setValue(currentValue)
-                .onChange(async (value: boolean) => {
-                    await this.saveFeatureSetting(key, value);
-                    this.updateCostEstimation();
-                });
-            
+
+            toggle.setValue(currentValue).onChange(async (value: boolean) => {
+                await this.saveFeatureSetting(key, value);
+                this.updateCostEstimation();
+            });
+
             this.updateFeatureAvailabilityForToggle(toggle, setting, feature, key);
-            
+
             return toggle;
         });
     }
@@ -400,8 +407,8 @@ export class DeepgramSettings {
      * 기능 설명 가져오기
      */
     private getFeatureDescription(feature: DeepgramFeature): string {
-        return feature.requiresPremium 
-            ? `${feature.description} (Premium feature)` 
+        return feature.requiresPremium
+            ? `${feature.description} (Premium feature)`
             : feature.description;
     }
 
@@ -446,13 +453,16 @@ export class DeepgramSettings {
      * 기능 토글 가용성 업데이트
      */
     private updateFeatureAvailabilityForToggle(
-        toggle: ToggleComponent, 
-        setting: Setting, 
-        feature: DeepgramFeature, 
+        toggle: ToggleComponent,
+        setting: Setting,
+        feature: DeepgramFeature,
         key: string
     ): void {
-        if (this.selectedModel && this.registry && 
-            !this.registry.isFeatureSupported(this.selectedModel.id, key)) {
+        if (
+            this.selectedModel &&
+            this.registry &&
+            !this.registry.isFeatureSupported(this.selectedModel.id, key)
+        ) {
             toggle.setDisabled(true);
             setting.setDesc(`${feature.description} (Not supported by selected model)`);
         }
@@ -480,11 +490,11 @@ export class DeepgramSettings {
         new Setting(container)
             .setName('Preferred Language')
             .setDesc('Set preferred language for better accuracy')
-            .addDropdown(dropdown => {
-                LANGUAGE_OPTIONS.forEach(option => {
+            .addDropdown((dropdown) => {
+                LANGUAGE_OPTIONS.forEach((option) => {
                     dropdown.addOption(option.value, option.label);
                 });
-                
+
                 dropdown.setValue(this.plugin.settings.language || 'auto');
                 dropdown.onChange(async (value: string) => {
                     this.plugin.settings.language = value;
@@ -500,11 +510,11 @@ export class DeepgramSettings {
         new Setting(container)
             .setName('Request Timeout')
             .setDesc('Maximum time to wait for transcription (in seconds)')
-            .addText(text => {
-                const currentTimeout = this.plugin.settings.requestTimeout || CONFIG_CONSTANTS.TIMEOUT.DEFAULT;
-                
-                text
-                    .setPlaceholder('30')
+            .addText((text) => {
+                const currentTimeout =
+                    this.plugin.settings.requestTimeout || CONFIG_CONSTANTS.TIMEOUT.DEFAULT;
+
+                text.setPlaceholder('30')
                     .setValue(String(currentTimeout / 1000))
                     .onChange(async (value: string) => {
                         const timeout = this.validator.validateTimeout(value);
@@ -523,15 +533,16 @@ export class DeepgramSettings {
         new Setting(container)
             .setName('Max Retries')
             .setDesc('Number of retry attempts on failure')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 for (let i = 0; i <= CONFIG_CONSTANTS.RETRIES.MAX; i++) {
                     const label = i === 0 ? 'No retries' : `${i} ${i === 1 ? 'retry' : 'retries'}`;
                     dropdown.addOption(String(i), label);
                 }
-                
-                const currentRetries = this.plugin.settings.maxRetries || CONFIG_CONSTANTS.RETRIES.DEFAULT;
+
+                const currentRetries =
+                    this.plugin.settings.maxRetries || CONFIG_CONSTANTS.RETRIES.DEFAULT;
                 dropdown.setValue(String(currentRetries));
-                
+
                 dropdown.onChange(async (value: string) => {
                     this.plugin.settings.maxRetries = parseInt(value);
                     await this.plugin.saveSettings();
@@ -546,14 +557,16 @@ export class DeepgramSettings {
         // Auto-chunking toggle
         new Setting(container)
             .setName('Automatic File Chunking')
-            .setDesc('Automatically split large audio files (>50MB) into smaller chunks for reliable processing')
-            .addToggle(toggle => {
+            .setDesc(
+                'Automatically split large audio files (>50MB) into smaller chunks for reliable processing'
+            )
+            .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.autoChunking ?? true)
                     .onChange(async (value: boolean) => {
                         this.plugin.settings.autoChunking = value;
                         await this.plugin.saveSettings();
-                        
+
                         // Show/hide chunk size setting based on toggle
                         const chunkSizeSetting = container.querySelector('.chunk-size-setting');
                         if (chunkSizeSetting instanceof HTMLElement) {
@@ -566,7 +579,7 @@ export class DeepgramSettings {
         const chunkSizeSetting = new Setting(container)
             .setName('Maximum chunk size')
             .setDesc('Maximum size per chunk in MB (recommended: 50MB)')
-            .addSlider(slider => {
+            .addSlider((slider) => {
                 slider
                     .setLimits(10, 100, 10)
                     .setValue(this.plugin.settings.maxChunkSizeMB ?? 50)
@@ -576,15 +589,15 @@ export class DeepgramSettings {
                         await this.plugin.saveSettings();
                     });
             });
-        
+
         // Add class for conditional display
         chunkSizeSetting.settingEl.addClass('chunk-size-setting');
-        
+
         // Initially hide if auto-chunking is disabled
         if (!this.plugin.settings.autoChunking) {
             chunkSizeSetting.settingEl.addClass('sn-hidden');
         }
-        
+
         // Add informational note about chunking
         const noteEl = container.createDiv();
         noteEl.addClass('setting-item-description');
@@ -592,22 +605,23 @@ export class DeepgramSettings {
         noteEl.createEl('strong', { text: 'Note on large files:' });
 
         const primaryList = noteEl.createEl('ul');
-        ['Files larger than 50MB may experience timeout errors',
+        [
+            'Files larger than 50MB may experience timeout errors',
             'Auto-chunking splits files into manageable pieces',
-            'Each chunk is processed separately and results are merged'
-        ].forEach(item => {
+            'Each chunk is processed separately and results are merged',
+        ].forEach((item) => {
             primaryList.createEl('li', { text: item });
         });
 
         noteEl.createEl('p', {
-            text: 'For best results with very large files (>100MB), consider:'
+            text: 'For best results with very large files (>100MB), consider:',
         });
         const secondaryList = noteEl.createEl('ul');
         [
             "Using the 'enhanced' model for faster processing",
             'Reducing audio bitrate to 64-128 kbps',
-            'Converting to efficient formats (MP3, OGG)'
-        ].forEach(item => {
+            'Converting to efficient formats (MP3, OGG)',
+        ].forEach((item) => {
             secondaryList.createEl('li', { text: item });
         });
     }
@@ -617,7 +631,9 @@ export class DeepgramSettings {
      */
     private renderCostEstimation(): void {
         const costContainer = this.uiBuilder.createCostEstimationContainer();
-        this.estimatedCostEl = costContainer.createEl('div', { cls: UI_CONSTANTS.CLASSES.COST_DETAILS });
+        this.estimatedCostEl = costContainer.createEl('div', {
+            cls: UI_CONSTANTS.CLASSES.COST_DETAILS,
+        });
         this.updateCostEstimation();
     }
 
@@ -626,27 +642,27 @@ export class DeepgramSettings {
      */
     private updateCostEstimation(): void {
         if (!this.estimatedCostEl) return;
-        
+
         const estimation = this.costCalculator.calculateEstimation(
-            this.selectedModel, 
+            this.selectedModel,
             this.plugin.settings.monthlyBudget
         );
-        
+
         if (!estimation) {
             this.uiBuilder.updateCostDetails(this.estimatedCostEl.parentElement!, null);
             return;
         }
-        
+
         this.uiBuilder.updateCostDetails(
-            this.estimatedCostEl.parentElement!, 
-            this.selectedModel, 
+            this.estimatedCostEl.parentElement!,
+            this.selectedModel,
             estimation.monthly
         );
-        
+
         if (estimation.exceeedsBudget && this.plugin.settings.monthlyBudget) {
             this.uiBuilder.addBudgetWarning(
-                this.estimatedCostEl.parentElement!, 
-                estimation.monthly, 
+                this.estimatedCostEl.parentElement!,
+                estimation.monthly,
                 this.plugin.settings.monthlyBudget
             );
         }
@@ -659,7 +675,7 @@ export class DeepgramSettings {
         new Setting(this.containerEl)
             .setName(UI_CONSTANTS.MESSAGES.VALIDATION_LABEL)
             .setDesc(UI_CONSTANTS.MESSAGES.VALIDATION_DESC)
-            .addButton(button => {
+            .addButton((button) => {
                 this.setupValidationButton(button);
             });
     }
@@ -682,12 +698,12 @@ export class DeepgramSettings {
     private async handleValidation(button: ButtonComponent): Promise<void> {
         button.setDisabled(true);
         button.setButtonText(UI_CONSTANTS.MESSAGES.VALIDATING);
-        
+
         try {
             const isValid = await this.validator.validateApiKey(
                 this.plugin.settings.deepgramApiKey || ''
             );
-            
+
             if (isValid) {
                 this.handleValidationSuccess(button);
             } else {
@@ -705,7 +721,7 @@ export class DeepgramSettings {
         new Notice(UI_CONSTANTS.MESSAGES.VALIDATION_SUCCESS);
         button.setButtonText('Valid ✓');
         button.removeCta();
-        
+
         setTimeout(() => {
             button.setButtonText(UI_CONSTANTS.MESSAGES.VALIDATION_BUTTON);
             button.setCta();
@@ -724,19 +740,18 @@ export class DeepgramSettings {
         button.setDisabled(false);
     }
 
-
     /**
      * UI 상태 업데이트
      */
     private updateUIState(): void {
         const hasApiKey = !!this.plugin.settings.deepgramApiKey;
-        
+
         // 모델 선택 드롭다운 활성화/비활성화
         const modelDropdown = this.containerEl.querySelector('select');
         if (modelDropdown instanceof HTMLSelectElement) {
             modelDropdown.disabled = !hasApiKey;
         }
-        
+
         // 기능 토글 활성화/비활성화
         const toggles = this.containerEl.querySelectorAll('.checkbox-container input');
         toggles.forEach((toggle: Element) => {
@@ -750,18 +765,16 @@ export class DeepgramSettings {
      * 기본 기능 렌더링 (Registry 없을 때 폴백)
      */
     private renderDefaultFeatures(container: HTMLElement): void {
-        DEFAULT_FEATURES.forEach(feature => {
+        DEFAULT_FEATURES.forEach((feature) => {
             new Setting(container)
                 .setName(feature.name)
                 .setDesc(feature.description)
-                .addToggle(toggle => {
+                .addToggle((toggle) => {
                     const currentValue = this.getFeatureValue(feature.key, feature.default);
-                    
-                    toggle
-                        .setValue(currentValue)
-                        .onChange(async (value: boolean) => {
-                            await this.saveFeatureSetting(feature.key, value);
-                        });
+
+                    toggle.setValue(currentValue).onChange(async (value: boolean) => {
+                        await this.saveFeatureSetting(feature.key, value);
+                    });
                 });
         });
     }
@@ -771,7 +784,7 @@ export class DeepgramSettings {
      */
     private updateFeatureAvailability(): void {
         if (!this.selectedModel || !this.registry) return;
-        
+
         const features = this.registry.getAllFeatures();
         features.forEach((feature, key) => {
             this.updateFeatureToggleState(key);
@@ -782,21 +795,16 @@ export class DeepgramSettings {
      * 개별 기능 토글 상태 업데이트
      */
     private updateFeatureToggleState(featureKey: string): void {
-        const toggle = this.containerEl.querySelector(
-            `[data-feature="${featureKey}"]`
-        );
-        
+        const toggle = this.containerEl.querySelector(`[data-feature="${featureKey}"]`);
+
         if (!(toggle instanceof HTMLInputElement) || !this.selectedModel || !this.registry) {
             return;
         }
-        
-        const isSupported = this.registry.isFeatureSupported(
-            this.selectedModel.id, 
-            featureKey
-        );
-        
+
+        const isSupported = this.registry.isFeatureSupported(this.selectedModel.id, featureKey);
+
         toggle.disabled = !isSupported;
-        
+
         if (!isSupported && toggle.checked) {
             toggle.checked = false;
             toggle.dispatchEvent(new Event('change'));
@@ -807,11 +815,11 @@ export class DeepgramSettings {
      * 기본 모델 옵션 추가 (Registry 실패 시 폴백)
      */
     private addDefaultModelOptions(dropdown: DropdownComponent): void {
-        DEFAULT_MODELS.forEach(model => {
+        DEFAULT_MODELS.forEach((model) => {
             const optionText = `${model.name} (${model.tier}) - $${model.price}/min`;
             dropdown.addOption(model.id, optionText);
         });
-        
+
         this.logger.info('Added default model options');
     }
 
@@ -820,12 +828,12 @@ export class DeepgramSettings {
      */
     private renderFallbackUI(error: unknown): void {
         this.logger.info('Rendering fallback UI due to error');
-        
+
         try {
             this.uiBuilder.clearContainer();
             this.uiBuilder.createErrorContainer(error);
             this.renderMinimalSettings();
-            
+
             this.logger.info('Fallback UI rendered successfully');
         } catch (fallbackError) {
             this.logger.error('Failed to render fallback UI', fallbackError);
@@ -841,9 +849,8 @@ export class DeepgramSettings {
         new Setting(this.containerEl)
             .setName(UI_CONSTANTS.MESSAGES.API_KEY_LABEL)
             .setDesc(UI_CONSTANTS.MESSAGES.API_KEY_DESC)
-            .addText(text => {
-                text
-                    .setPlaceholder(UI_CONSTANTS.MESSAGES.API_KEY_PLACEHOLDER)
+            .addText((text) => {
+                text.setPlaceholder(UI_CONSTANTS.MESSAGES.API_KEY_PLACEHOLDER)
                     .setValue(this.plugin.settings.deepgramApiKey || '')
                     .onChange(async (value: string) => {
                         this.plugin.settings.deepgramApiKey = value;
@@ -852,18 +859,18 @@ export class DeepgramSettings {
                     });
                 text.inputEl.type = 'password';
             });
-        
+
         // 모델 선택
         new Setting(this.containerEl)
             .setName(UI_CONSTANTS.MESSAGES.MODEL_LABEL)
             .setDesc(UI_CONSTANTS.MESSAGES.MODEL_DESC)
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown.addOption('', UI_CONSTANTS.MESSAGES.MODEL_PLACEHOLDER);
                 this.addDefaultModelOptions(dropdown);
-                
+
                 const currentModel = this.plugin.settings.transcription?.deepgram?.model || '';
                 dropdown.setValue(currentModel);
-                
+
                 dropdown.onChange(async (value: string) => {
                     await this.saveModelSelection(value);
                 });
@@ -877,7 +884,7 @@ export class DeepgramSettings {
         this.uiBuilder.clearContainer();
         this.containerEl.createEl('p', {
             text: UI_CONSTANTS.MESSAGES.CRITICAL_ERROR,
-            cls: UI_CONSTANTS.CLASSES.WARNING
+            cls: UI_CONSTANTS.CLASSES.WARNING,
         });
     }
 }

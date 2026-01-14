@@ -7,7 +7,7 @@ import type SpeechToTextPlugin from '../../../main';
  */
 export class ApiKeyValidator {
     private readonly API_TEST_ENDPOINT = 'https://api.openai.com/v1/models';
-    
+
     constructor(private plugin: SpeechToTextPlugin) {}
 
     /**
@@ -17,20 +17,20 @@ export class ApiKeyValidator {
         if (!apiKey) {
             return { valid: false, message: 'API 키를 입력해주세요' };
         }
-        
+
         if (!apiKey.startsWith('sk-')) {
             return { valid: false, message: 'API 키는 "sk-"로 시작해야 합니다' };
         }
-        
+
         if (apiKey.length < 40) {
             return { valid: false, message: 'API 키가 너무 짧습니다' };
         }
-        
+
         // 프로젝트 키 형식 검증 (sk-proj-)
         if (apiKey.startsWith('sk-proj-') && apiKey.length < 50) {
             return { valid: false, message: '프로젝트 API 키가 너무 짧습니다' };
         }
-        
+
         return { valid: true };
     }
 
@@ -51,26 +51,26 @@ export class ApiKeyValidator {
                 url: this.API_TEST_ENDPOINT,
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             // 성공적으로 응답을 받으면 유효한 키
             if (response.status === 200) {
                 // Whisper 모델 존재 확인
                 const models = response.json.data || [];
-                const hasWhisper = models.some((model: any) => 
-                    model.id && model.id.includes('whisper')
+                const hasWhisper = models.some(
+                    (model: any) => model.id && model.id.includes('whisper')
                 );
-                
+
                 if (!hasWhisper) {
                     new Notice('⚠ API 키는 유효하지만 Whisper 모델 접근 권한이 없을 수 있습니다');
                 }
-                
+
                 return true;
             }
-            
+
             return false;
         } catch (error) {
             const status = this.getErrorStatus(error);
@@ -79,13 +79,13 @@ export class ApiKeyValidator {
                 new Notice('❌ 유효하지 않은 API 키입니다');
                 return false;
             }
-            
+
             // 429: Rate limit (키는 유효하지만 한도 초과)
             if (status === 429) {
                 new Notice('⚠ API 키는 유효하지만 사용 한도를 초과했습니다');
                 return true; // 키 자체는 유효함
             }
-            
+
             // 기타 네트워크 오류
             console.error('API 키 검증 실패:', error);
             new Notice('네트워크 오류로 API 키를 검증할 수 없습니다');
@@ -108,9 +108,9 @@ export class ApiKeyValidator {
                 url: this.API_TEST_ENDPOINT,
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                }
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
             });
 
             // Rate limit 헤더 확인
@@ -122,7 +122,7 @@ export class ApiKeyValidator {
             return {
                 used,
                 limit,
-                remaining
+                remaining,
             };
         } catch (error) {
             console.error('사용량 조회 실패:', error);
@@ -135,12 +135,16 @@ export class ApiKeyValidator {
      */
     mask(apiKey: string): string {
         if (!apiKey || apiKey.length < 10) return '***';
-        
+
         const visibleStart = 7; // sk-XXXXX
         const visibleEnd = 4;
         const masked = '*'.repeat(Math.max(0, apiKey.length - visibleStart - visibleEnd));
-        
-        return apiKey.substring(0, visibleStart) + masked + apiKey.substring(apiKey.length - visibleEnd);
+
+        return (
+            apiKey.substring(0, visibleStart) +
+            masked +
+            apiKey.substring(apiKey.length - visibleEnd)
+        );
     }
 
     /**
@@ -149,7 +153,7 @@ export class ApiKeyValidator {
      */
     encrypt(apiKey: string): string {
         if (!apiKey) return '';
-        
+
         try {
             // Base64 인코딩 + 간단한 변환
             const encoded = btoa(apiKey);
@@ -166,7 +170,7 @@ export class ApiKeyValidator {
      */
     decrypt(encryptedKey: string): string {
         if (!encryptedKey) return '';
-        
+
         try {
             // 역순으로 복호화
             const reversed = atob(encryptedKey);
@@ -184,13 +188,13 @@ export class ApiKeyValidator {
     async saveSecurely(apiKey: string): Promise<void> {
         // 암호화하여 저장
         const encrypted = this.encrypt(apiKey);
-        
+
         // 설정에 저장 (암호화된 버전)
         this.plugin.settings['encryptedApiKey'] = encrypted;
-        
+
         // 평문 키는 메모리에만 유지
         this.plugin.settings.apiKey = apiKey;
-        
+
         await this.plugin.saveSettings();
     }
 
@@ -199,13 +203,13 @@ export class ApiKeyValidator {
      */
     loadSecurely(): Promise<string> {
         const encrypted = this.plugin.settings['encryptedApiKey'];
-        
+
         if (encrypted) {
             const decrypted = this.decrypt(encrypted);
             this.plugin.settings.apiKey = decrypted;
             return Promise.resolve(decrypted);
         }
-        
+
         return Promise.resolve(this.plugin.settings.apiKey || '');
     }
 

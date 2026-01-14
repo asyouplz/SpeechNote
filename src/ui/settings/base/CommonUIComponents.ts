@@ -2,7 +2,7 @@ import { ButtonComponent } from 'obsidian';
 
 /**
  * 공통 UI 컴포넌트 팩토리
- * 
+ *
  * 재사용 가능한 UI 컴포넌트들을 생성하는 팩토리 클래스
  * Single Responsibility Principle 적용
  */
@@ -16,23 +16,23 @@ export class UIComponentFactory {
         text: string,
         icon?: string
     ): HTMLElement {
-        const statusEl = containerEl.createDiv({ 
+        const statusEl = containerEl.createDiv({
             cls: `status-indicator status-${status}`,
             attr: {
-                'role': 'status',
-                'aria-label': text
-            }
+                role: 'status',
+                'aria-label': text,
+            },
         });
-        
+
         if (icon) {
             statusEl.createSpan({ text: icon, cls: 'status-icon' });
         }
-        
+
         statusEl.createSpan({ text, cls: 'status-text' });
-        
+
         return statusEl;
     }
-    
+
     /**
      * 프로그레스 바 생성
      */
@@ -43,42 +43,42 @@ export class UIComponentFactory {
         label?: string
     ): HTMLElement {
         const progressContainer = containerEl.createDiv({ cls: 'progress-container' });
-        
+
         if (label) {
-            progressContainer.createDiv({ 
-                text: label, 
+            progressContainer.createDiv({
+                text: label,
                 cls: 'progress-label',
-                attr: { 'id': `progress-label-${Date.now()}` }
+                attr: { id: `progress-label-${Date.now()}` },
             });
         }
-        
-        const progressBar = progressContainer.createDiv({ 
+
+        const progressBar = progressContainer.createDiv({
             cls: 'progress-bar',
             attr: {
-                'role': 'progressbar',
+                role: 'progressbar',
                 'aria-valuenow': String(value),
                 'aria-valuemin': '0',
                 'aria-valuemax': String(max),
-                'aria-labelledby': label ? `progress-label-${Date.now()}` : null
-            }
+                'aria-labelledby': label ? `progress-label-${Date.now()}` : null,
+            },
         });
-        
-        const progressFill = progressBar.createDiv({ 
+
+        const progressFill = progressBar.createDiv({
             cls: 'progress-fill',
             attr: {
-                'style': `width: ${(value / max) * 100}%`
-            }
+                style: `width: ${(value / max) * 100}%`,
+            },
         });
-        
+
         // 접근성을 위한 텍스트
-        progressFill.createSpan({ 
+        progressFill.createSpan({
             text: `${Math.round((value / max) * 100)}%`,
-            cls: 'progress-text'
+            cls: 'progress-text',
         });
-        
+
         return progressContainer;
     }
-    
+
     /**
      * 접을 수 있는 섹션 생성
      */
@@ -89,32 +89,32 @@ export class UIComponentFactory {
         onToggle?: (expanded: boolean) => void
     ): { headerEl: HTMLElement; contentEl: HTMLElement } {
         const sectionEl = containerEl.createDiv({ cls: 'collapsible-section' });
-        
-        const headerEl = sectionEl.createDiv({ 
+
+        const headerEl = sectionEl.createDiv({
             cls: 'collapsible-header',
             attr: {
-                'role': 'button',
-                'tabindex': '0',
+                role: 'button',
+                tabindex: '0',
                 'aria-expanded': String(isExpanded),
-                'aria-controls': `collapsible-content-${Date.now()}`
-            }
+                'aria-controls': `collapsible-content-${Date.now()}`,
+            },
         });
-        
-        const toggleIcon = headerEl.createSpan({ 
+
+        const toggleIcon = headerEl.createSpan({
             text: isExpanded ? '▼' : '▶',
-            cls: 'toggle-icon'
+            cls: 'toggle-icon',
         });
-        
+
         headerEl.createSpan({ text: title, cls: 'collapsible-title' });
-        
-        const contentEl = sectionEl.createDiv({ 
+
+        const contentEl = sectionEl.createDiv({
             cls: `collapsible-content ${isExpanded ? 'expanded' : 'collapsed'}`,
             attr: {
-                'id': `collapsible-content-${Date.now()}`,
-                'aria-hidden': String(!isExpanded)
-            }
+                id: `collapsible-content-${Date.now()}`,
+                'aria-hidden': String(!isExpanded),
+            },
         });
-        
+
         // 이벤트 핸들러
         const toggle = () => {
             isExpanded = !isExpanded;
@@ -124,7 +124,7 @@ export class UIComponentFactory {
             contentEl.setAttribute('aria-hidden', String(!isExpanded));
             onToggle?.(isExpanded);
         };
-        
+
         headerEl.onclick = toggle;
         headerEl.onkeydown = (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -132,10 +132,10 @@ export class UIComponentFactory {
                 toggle();
             }
         };
-        
+
         return { headerEl, contentEl };
     }
-    
+
     /**
      * 카드 컴포넌트 생성
      */
@@ -143,32 +143,36 @@ export class UIComponentFactory {
         containerEl: HTMLElement,
         title: string,
         content: string,
-        actions?: Array<{ text: string; onClick: () => void; type?: 'primary' | 'secondary' | 'danger' }>
+        actions?: Array<{
+            text: string;
+            onClick: () => void;
+            type?: 'primary' | 'secondary' | 'danger';
+        }>
     ): HTMLElement {
         const cardEl = containerEl.createDiv({ cls: 'settings-card' });
-        
+
         const headerEl = cardEl.createDiv({ cls: 'card-header' });
         headerEl.createEl('h5', { text: title, cls: 'card-title' });
-        
+
         const contentEl = cardEl.createDiv({ cls: 'card-content' });
         contentEl.createEl('p', { text: content });
-        
+
         if (actions && actions.length > 0) {
             const actionsEl = cardEl.createDiv({ cls: 'card-actions' });
-            
-            actions.forEach(action => {
+
+            actions.forEach((action) => {
                 const btn = new ButtonComponent(actionsEl)
                     .setButtonText(action.text)
                     .onClick(action.onClick);
-                
+
                 if (action.type === 'primary') btn.setCta();
                 if (action.type === 'danger') btn.setWarning();
             });
         }
-        
+
         return cardEl;
     }
-    
+
     /**
      * 탭 컴포넌트 생성
      */
@@ -178,80 +182,80 @@ export class UIComponentFactory {
         activeTabId?: string
     ): HTMLElement {
         const tabsContainer = containerEl.createDiv({ cls: 'tabs-container' });
-        
-        const tabList = tabsContainer.createDiv({ 
+
+        const tabList = tabsContainer.createDiv({
             cls: 'tab-list',
             attr: {
-                'role': 'tablist'
-            }
+                role: 'tablist',
+            },
         });
-        
+
         const tabPanels = tabsContainer.createDiv({ cls: 'tab-panels' });
-        
+
         let activeTab = activeTabId || tabs[0]?.id;
-        
+
         tabs.forEach((tab, index) => {
             // 탭 버튼
             const tabButton = tabList.createEl('button', {
                 text: tab.label,
                 cls: `tab-button ${tab.id === activeTab ? 'active' : ''}`,
                 attr: {
-                    'role': 'tab',
-                    'id': `tab-${tab.id}`,
+                    role: 'tab',
+                    id: `tab-${tab.id}`,
                     'aria-controls': `panel-${tab.id}`,
                     'aria-selected': String(tab.id === activeTab),
-                    'tabindex': tab.id === activeTab ? '0' : '-1'
-                }
+                    tabindex: tab.id === activeTab ? '0' : '-1',
+                },
             });
-            
+
             // 탭 패널
             const tabPanel = tabPanels.createDiv({
                 cls: `tab-panel ${tab.id === activeTab ? 'active' : ''}`,
                 attr: {
-                    'role': 'tabpanel',
-                    'id': `panel-${tab.id}`,
+                    role: 'tabpanel',
+                    id: `panel-${tab.id}`,
                     'aria-labelledby': `tab-${tab.id}`,
-                    'hidden': tab.id !== activeTab ? 'true' : null
-                }
+                    hidden: tab.id !== activeTab ? 'true' : null,
+                },
             });
-            
+
             if (tab.id === activeTab) {
                 tabPanel.appendChild(tab.content());
             }
-            
+
             // 이벤트 핸들러
             tabButton.onclick = () => {
                 // 모든 탭 비활성화
-                tabList.querySelectorAll('.tab-button').forEach(btn => {
+                tabList.querySelectorAll('.tab-button').forEach((btn) => {
                     btn.classList.remove('active');
                     btn.setAttribute('aria-selected', 'false');
                     btn.setAttribute('tabindex', '-1');
                 });
-                
-                tabPanels.querySelectorAll('.tab-panel').forEach(panel => {
+
+                tabPanels.querySelectorAll('.tab-panel').forEach((panel) => {
                     panel.classList.remove('active');
                     panel.setAttribute('hidden', 'true');
                     if (panel instanceof HTMLElement) {
                         panel.empty();
                     }
                 });
-                
+
                 // 선택된 탭 활성화
                 tabButton.classList.add('active');
                 tabButton.setAttribute('aria-selected', 'true');
                 tabButton.setAttribute('tabindex', '0');
-                
+
                 tabPanel.classList.add('active');
                 tabPanel.removeAttribute('hidden');
                 tabPanel.appendChild(tab.content());
-                
+
                 activeTab = tab.id;
             };
-            
+
             // 키보드 네비게이션
             tabButton.onkeydown = (e) => {
                 let newIndex = index;
-                
+
                 if (e.key === 'ArrowLeft') {
                     newIndex = index > 0 ? index - 1 : tabs.length - 1;
                 } else if (e.key === 'ArrowRight') {
@@ -263,7 +267,7 @@ export class UIComponentFactory {
                 } else {
                     return;
                 }
-                
+
                 e.preventDefault();
                 const newTab = tabList.querySelectorAll('.tab-button')[newIndex];
                 if (newTab instanceof HTMLElement) {
@@ -272,10 +276,10 @@ export class UIComponentFactory {
                 }
             };
         });
-        
+
         return tabsContainer;
     }
-    
+
     /**
      * 툴팁 추가
      */
@@ -284,25 +288,25 @@ export class UIComponentFactory {
         element.setAttribute('aria-label', text);
         element.addClass('has-tooltip');
     }
-    
+
     /**
      * 로딩 스피너 생성
      */
     static createLoadingSpinner(containerEl: HTMLElement, text = 'Loading...'): HTMLElement {
-        const spinnerEl = containerEl.createDiv({ 
+        const spinnerEl = containerEl.createDiv({
             cls: 'loading-spinner',
             attr: {
-                'role': 'status',
-                'aria-label': text
-            }
+                role: 'status',
+                'aria-label': text,
+            },
         });
-        
+
         spinnerEl.createDiv({ cls: 'spinner' });
         spinnerEl.createSpan({ text, cls: 'spinner-text' });
-        
+
         return spinnerEl;
     }
-    
+
     /**
      * 에러 메시지 표시
      */
@@ -312,32 +316,30 @@ export class UIComponentFactory {
         details?: string,
         onRetry?: () => void
     ): HTMLElement {
-        const errorEl = containerEl.createDiv({ 
+        const errorEl = containerEl.createDiv({
             cls: 'error-message',
             attr: {
-                'role': 'alert',
-                'aria-live': 'assertive'
-            }
+                role: 'alert',
+                'aria-live': 'assertive',
+            },
         });
-        
+
         errorEl.createDiv({ text: '⚠️', cls: 'error-icon' });
         errorEl.createDiv({ text: message, cls: 'error-text' });
-        
+
         if (details) {
             const detailsEl = errorEl.createEl('details');
             detailsEl.createEl('summary', { text: '자세히 보기' });
             detailsEl.createEl('pre', { text: details, cls: 'error-details' });
         }
-        
+
         if (onRetry) {
-            new ButtonComponent(errorEl)
-                .setButtonText('다시 시도')
-                .onClick(onRetry);
+            new ButtonComponent(errorEl).setButtonText('다시 시도').onClick(onRetry);
         }
-        
+
         return errorEl;
     }
-    
+
     /**
      * 확인 다이얼로그
      */
@@ -359,7 +361,7 @@ export class UIComponentFactory {
             const closeBtn = createEl('div', {
                 cls: 'modal-close-button',
                 text: '×',
-                attr: { 'aria-label': 'Close' }
+                attr: { 'aria-label': 'Close' },
             });
             dialog.appendChild(closeBtn);
 
@@ -380,19 +382,19 @@ export class UIComponentFactory {
             buttonContainer.appendChild(cancelBtn);
 
             dialog.appendChild(buttonContainer);
-            
+
             document.body.appendChild(modal);
-            
+
             const close = (result: boolean) => {
                 document.body.removeChild(modal);
                 resolve(result);
             };
-            
+
             confirmBtn.onclick = () => close(true);
             cancelBtn.onclick = () => close(false);
             closeBtn.onclick = () => close(false);
             backdrop.addEventListener('click', () => close(false));
-            
+
             // 포커스 설정
             confirmBtn.focus();
         });
@@ -404,7 +406,7 @@ export class UIComponentFactory {
  */
 export class FormValidator {
     private errors: Map<string, string> = new Map();
-    
+
     /**
      * 필수 필드 검증
      */
@@ -414,7 +416,7 @@ export class FormValidator {
         }
         return this;
     }
-    
+
     /**
      * 최소 길이 검증
      */
@@ -424,7 +426,7 @@ export class FormValidator {
         }
         return this;
     }
-    
+
     /**
      * 최대 길이 검증
      */
@@ -434,7 +436,7 @@ export class FormValidator {
         }
         return this;
     }
-    
+
     /**
      * 패턴 검증
      */
@@ -444,7 +446,7 @@ export class FormValidator {
         }
         return this;
     }
-    
+
     /**
      * 범위 검증
      */
@@ -454,21 +456,21 @@ export class FormValidator {
         }
         return this;
     }
-    
+
     /**
      * 유효성 검사 통과 여부
      */
     isValid(): boolean {
         return this.errors.size === 0;
     }
-    
+
     /**
      * 에러 가져오기
      */
     getErrors(): Map<string, string> {
         return this.errors;
     }
-    
+
     /**
      * 첫 번째 에러 가져오기
      */
@@ -476,7 +478,7 @@ export class FormValidator {
         const firstError = this.errors.values().next();
         return firstError.done ? null : firstError.value;
     }
-    
+
     /**
      * 에러 초기화
      */

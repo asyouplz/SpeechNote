@@ -66,37 +66,41 @@ class ExponentialBackoffRetry implements RetryStrategy {
 
     async execute<T>(operation: () => Promise<T>): Promise<T> {
         let lastError: Error | undefined;
-        
+
         for (let attempt = 0; attempt < this.maxRetries; attempt++) {
             try {
                 return await operation();
             } catch (error) {
                 lastError = this.normalizeError(error);
-                
+
                 if (!this.isRetryable(error)) {
                     throw lastError;
                 }
-                
+
                 if (attempt < this.maxRetries - 1) {
                     const delay = this.calculateDelay(attempt);
-                    this.logger.debug(`Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
+                    this.logger.debug(
+                        `Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`
+                    );
                     await this.sleep(delay);
                 }
             }
         }
-        
+
         if (lastError instanceof WhisperAPIError) {
             throw lastError;
         }
 
         throw new WhisperAPIError(
-            `Operation failed after ${this.maxRetries} attempts: ${lastError?.message ?? 'Unknown error'}`,
+            `Operation failed after ${this.maxRetries} attempts: ${
+                lastError?.message ?? 'Unknown error'
+            }`,
             'MAX_RETRIES_EXCEEDED',
             undefined,
             false
         );
     }
-    
+
     private isRetryable(error: unknown): boolean {
         if (error instanceof WhisperAPIError) {
             return error.isRetryable;
@@ -109,16 +113,13 @@ class ExponentialBackoffRetry implements RetryStrategy {
             message.includes('timeout')
         );
     }
-    
+
     private calculateDelay(attempt: number): number {
-        const delay = Math.min(
-            this.baseDelay * Math.pow(2, attempt),
-            this.maxDelay
-        );
+        const delay = Math.min(this.baseDelay * Math.pow(2, attempt), this.maxDelay);
         // Jitter 추가
         return delay + Math.random() * 250;
     }
-    
+
     private sleep(ms: number): Promise<void> {
         return sleep(ms);
     }
@@ -139,7 +140,9 @@ class CircuitBreaker {
     async execute<T>(operation: () => Promise<T>): Promise<T> {
         if (this.isOpen()) {
             throw new WhisperAPIError(
-                `Circuit breaker is open. Try again after ${new Date(this.nextAttemptTime).toLocaleTimeString()}`,
+                `Circuit breaker is open. Try again after ${new Date(
+                    this.nextAttemptTime
+                ).toLocaleTimeString()}`,
                 'CIRCUIT_OPEN',
                 undefined,
                 false
@@ -170,7 +173,7 @@ class CircuitBreaker {
 
     private onSuccess(): void {
         this.failureCount = 0;
-        
+
         if (this.state === 'HALF_OPEN') {
             this.successCount++;
             if (this.successCount >= this.successThreshold) {
@@ -183,7 +186,7 @@ class CircuitBreaker {
 
     private onFailure(): void {
         this.failureCount++;
-        
+
         if (this.state === 'HALF_OPEN') {
             this.state = 'OPEN';
             this.nextAttemptTime = Date.now() + this.timeout;
@@ -205,10 +208,10 @@ class CircuitBreaker {
 
 /**
  * OpenAI Whisper API 서비스
- * 
+ *
  * Whisper API와의 통신을 담당하며, 자동 재시도, Circuit Breaker,
  * 큐잉 시스템을 통해 안정적인 API 호출을 보장합니다.
- * 
+ *
  * @example
  * ```typescript
  * const whisperService = new WhisperService(apiKey, logger);
@@ -226,7 +229,7 @@ export class WhisperService implements IWhisperService {
 
     private apiKey: string;
     private logger: ILogger;
-    
+
     private abortController?: AbortController;
     private retryStrategy: RetryStrategy;
     private circuitBreaker: CircuitBreaker;
@@ -240,7 +243,8 @@ export class WhisperService implements IWhisperService {
             this.logger = logger ?? this.createNoopLogger();
         } else {
             const config = apiKeyOrConfig ?? {};
-            const whisperApiKey = typeof config.whisperApiKey === 'string' ? config.whisperApiKey : undefined;
+            const whisperApiKey =
+                typeof config.whisperApiKey === 'string' ? config.whisperApiKey : undefined;
             const apiKey = typeof config.apiKey === 'string' ? config.apiKey : undefined;
             this.apiKey = whisperApiKey ?? apiKey ?? '';
             this.logger = logger ?? this.createNoopLogger();
@@ -258,7 +262,7 @@ export class WhisperService implements IWhisperService {
             debug: () => undefined,
             info: () => undefined,
             warn: () => undefined,
-            error: () => undefined
+            error: () => undefined,
         };
     }
 
@@ -280,7 +284,12 @@ export class WhisperService implements IWhisperService {
 
     private async performFetchRequest(
         formData: FormData
-    ): Promise<{ status: number; headers?: Record<string, string>; json?: unknown; text?: string }> {
+    ): Promise<{
+        status: number;
+        headers?: Record<string, string>;
+        json?: unknown;
+        text?: string;
+    }> {
         if (typeof fetch !== 'function') {
             throw new Error('Fetch API is not available');
         }
@@ -288,16 +297,13 @@ export class WhisperService implements IWhisperService {
         const response = await fetch(this.API_ENDPOINT, {
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${this.apiKey}`
+                Authorization: `Bearer ${this.apiKey}`,
             },
-            body: formData
+            body: formData,
         });
 
-        const status = typeof response.status === 'number'
-            ? response.status
-            : response.ok
-                ? 200
-                : 500;
+        const status =
+            typeof response.status === 'number' ? response.status : response.ok ? 200 : 500;
         const headers: Record<string, string> = {};
         if (response.headers && typeof response.headers.forEach === 'function') {
             response.headers.forEach((value, key) => {
@@ -325,7 +331,7 @@ export class WhisperService implements IWhisperService {
             status,
             headers: Object.keys(headers).length > 0 ? headers : undefined,
             json,
-            text
+            text,
         };
     }
 
@@ -349,17 +355,19 @@ export class WhisperService implements IWhisperService {
         const compressionRatio = Reflect.get(value, 'compression_ratio');
         const noSpeechProb = Reflect.get(value, 'no_speech_prob');
 
-        return (id === undefined || typeof id === 'number') &&
+        return (
+            (id === undefined || typeof id === 'number') &&
             (seek === undefined || typeof seek === 'number') &&
             typeof start === 'number' &&
             typeof end === 'number' &&
             typeof text === 'string' &&
             (tokens === undefined ||
-                (Array.isArray(tokens) && tokens.every(token => typeof token === 'number'))) &&
+                (Array.isArray(tokens) && tokens.every((token) => typeof token === 'number'))) &&
             (temperature === undefined || typeof temperature === 'number') &&
             (avgLogprob === undefined || typeof avgLogprob === 'number') &&
             (compressionRatio === undefined || typeof compressionRatio === 'number') &&
-            (noSpeechProb === undefined || typeof noSpeechProb === 'number');
+            (noSpeechProb === undefined || typeof noSpeechProb === 'number')
+        );
     }
 
     private extractSegments(value: unknown): WhisperResponse['segments'] | undefined {
@@ -367,13 +375,13 @@ export class WhisperService implements IWhisperService {
             return undefined;
         }
 
-        const segments = value.filter(segment => this.isSegment(segment));
+        const segments = value.filter((segment) => this.isSegment(segment));
         return segments.length > 0 ? segments : undefined;
     }
 
     /**
      * 오디오를 텍스트로 변환합니다.
-     * 
+     *
      * @param audio - 변환할 오디오 버퍼 (ArrayBuffer)
      * @param options - Whisper API 옵션
      * @returns 변환된 텍스트와 메타데이터를 포함한 응답
@@ -381,7 +389,7 @@ export class WhisperService implements IWhisperService {
      * @throws {AuthenticationError} API 키가 유효하지 않을 때
      * @throws {RateLimitError} API 호출 제한에 도달했을 때
      * @throws {WhisperAPIError} 기타 API 에러
-     * 
+     *
      * @example
      * ```typescript
      * try {
@@ -419,7 +427,7 @@ export class WhisperService implements IWhisperService {
     }
 
     private executeTranscription(
-        audio: ArrayBuffer, 
+        audio: ArrayBuffer,
         options?: WhisperOptions
     ): Promise<WhisperResponse> {
         // 파일 크기 검증
@@ -429,9 +437,7 @@ export class WhisperService implements IWhisperService {
 
         // Circuit Breaker와 재시도 전략을 통한 실행
         return this.circuitBreaker.execute(() =>
-            this.retryStrategy.execute(() => 
-                this.performTranscription(audio, options)
-            )
+            this.retryStrategy.execute(() => this.performTranscription(audio, options))
         );
     }
 
@@ -445,11 +451,12 @@ export class WhisperService implements IWhisperService {
         try {
             const formData = this.buildFormData(audio, options);
             const requestParams = this.buildRequestParams(formData);
-            
-            this.logger.debug('Starting transcription request',
+
+            this.logger.debug(
+                'Starting transcription request',
                 this.sanitizeForLogging({
                     fileSize: audio.byteLength,
-                    options
+                    options,
                 })
             );
 
@@ -459,7 +466,7 @@ export class WhisperService implements IWhisperService {
             const processingTime = Date.now() - startTime;
 
             this.logger.info(`Transcription completed in ${processingTime}ms`, {
-                status: response.status
+                status: response.status,
             });
 
             if (response.status === 200) {
@@ -482,41 +489,43 @@ export class WhisperService implements IWhisperService {
 
     private buildFormData(audio: ArrayBuffer, options?: WhisperOptions): FormData {
         const formData = new FormData();
-        
+
         // 오디오 파일 추가
         const mimeType = this.getMimeType(options);
         const audioBlob = new Blob([audio], { type: mimeType });
         formData.append('file', audioBlob, 'audio.m4a');
-        
+
         // 모델 설정
         formData.append('model', options?.model || 'whisper-1');
-        
+
         // 언어 설정
         if (options?.language && options.language !== 'auto') {
             formData.append('language', options.language);
         }
-        
+
         // 프롬프트 설정 (최대 224 토큰)
         if (options?.prompt) {
             const truncatedPrompt = this.truncatePrompt(options.prompt);
             formData.append('prompt', truncatedPrompt);
         }
-        
+
         // 온도 설정 (0.0 ~ 1.0)
         if (options?.temperature !== undefined) {
             const validation = validateRange(options.temperature, 0, 1);
             if (validation.valid) {
                 formData.append('temperature', options.temperature.toString());
             } else {
-                this.logger.warn('Invalid temperature value, using default', { temperature: options.temperature });
+                this.logger.warn('Invalid temperature value, using default', {
+                    temperature: options.temperature,
+                });
             }
         }
-        
+
         // 응답 형식 설정
         if (options?.responseFormat) {
             formData.append('response_format', options.responseFormat);
         }
-        
+
         return formData;
     }
 
@@ -525,11 +534,11 @@ export class WhisperService implements IWhisperService {
             url: this.API_ENDPOINT,
             method: 'POST',
             headers: {
-                Authorization: `Bearer ${this.apiKey}`
+                Authorization: `Bearer ${this.apiKey}`,
             },
             body: formData as unknown as RequestUrlParam['body'],
             timeout: this.timeoutMs,
-            throw: false
+            throw: false,
         } as RequestUrlParam & { timeout: number };
         return requestParams;
     }
@@ -539,7 +548,7 @@ export class WhisperService implements IWhisperService {
             const duration = Math.max(processingTime / 1000, 0.001);
             return {
                 text: '',
-                duration
+                duration,
             };
         }
 
@@ -548,7 +557,7 @@ export class WhisperService implements IWhisperService {
             const duration = Math.max(processingTime / 1000, 0.001);
             return {
                 text: json,
-                duration
+                duration,
             };
         }
 
@@ -558,27 +567,36 @@ export class WhisperService implements IWhisperService {
         const response: WhisperResponse = {
             text: typeof safe.text === 'string' ? safe.text : '',
             language: typeof safe.language === 'string' ? safe.language : undefined,
-            duration: typeof safe.duration === 'number' ? safe.duration : fallbackDuration
+            duration: typeof safe.duration === 'number' ? safe.duration : fallbackDuration,
         };
-        
+
         // verbose_json 형식인 경우 segments 포함
         response.segments = this.extractSegments(safe.segments);
-        
+
         return response;
     }
 
-    private handleAPIError(response: { status: number; headers?: Record<string, string>; json?: unknown; text?: string }): never {
+    private handleAPIError(response: {
+        status: number;
+        headers?: Record<string, string>;
+        json?: unknown;
+        text?: string;
+    }): never {
         const errorBody = isPlainRecord(response.json) ? response.json : undefined;
-        const errorDetails = errorBody && isPlainRecord(errorBody.error) ? errorBody.error : undefined;
-        const errorMessage = typeof errorDetails?.message === 'string' ? errorDetails.message : 'Unknown error';
-        
-        this.logger.error(`API Error: ${response.status} - ${errorMessage}`, undefined,
+        const errorDetails =
+            errorBody && isPlainRecord(errorBody.error) ? errorBody.error : undefined;
+        const errorMessage =
+            typeof errorDetails?.message === 'string' ? errorDetails.message : 'Unknown error';
+
+        this.logger.error(
+            `API Error: ${response.status} - ${errorMessage}`,
+            undefined,
             this.sanitizeForLogging({
                 status: response.status,
-                errorBody
+                errorBody,
             })
         );
-        
+
         switch (response.status) {
             case 400:
                 throw new WhisperAPIError(
@@ -598,10 +616,7 @@ export class WhisperService implements IWhisperService {
             case 500:
             case 502:
             case 503:
-                throw new ServerError(
-                    `Server error: ${errorMessage}`,
-                    response.status
-                );
+                throw new ServerError(`Server error: ${errorMessage}`, response.status);
             default:
                 throw new WhisperAPIError(
                     `API error: ${errorMessage}`,
@@ -666,10 +681,10 @@ export class WhisperService implements IWhisperService {
 
     /**
      * API 키의 유효성을 검증합니다.
-     * 
+     *
      * @param key - 검증할 OpenAI API 키
      * @returns API 키가 유효하면 true, 그렇지 않으면 false
-     * 
+     *
      * @example
      * ```typescript
      * const isValid = await whisperService.validateApiKey('sk-...');
@@ -681,12 +696,12 @@ export class WhisperService implements IWhisperService {
     async validateApiKey(key: string): Promise<boolean> {
         const originalKey = this.apiKey;
         this.apiKey = key;
-        
+
         try {
             // 유효한 크기의 테스트 오디오 생성 (1KB)
             const testAudio = new ArrayBuffer(1024);
             await this.performTranscription(testAudio, {
-                responseFormat: 'text'
+                responseFormat: 'text',
             });
             return true;
         } catch (error) {
@@ -704,12 +719,12 @@ export class WhisperService implements IWhisperService {
 
     /**
      * 진행 중인 변환 요청을 취소합니다.
-     * 
+     *
      * @example
      * ```typescript
      * // 변환 시작
      * const promise = whisperService.transcribe(audioBuffer);
-     * 
+     *
      * // 취소
      * whisperService.cancel();
      * ```
@@ -766,10 +781,10 @@ export class WhisperService implements IWhisperService {
 
     /**
      * Circuit Breaker를 리셋합니다.
-     * 
+     *
      * Circuit Breaker가 OPEN 상태일 때 강제로 리셋하여
      * API 호출을 다시 시도할 수 있게 합니다.
-     * 
+     *
      * @example
      * ```typescript
      * // Circuit Breaker가 열려있을 때

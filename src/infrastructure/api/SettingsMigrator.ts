@@ -25,7 +25,7 @@ export class SettingsMigrator {
         japanese: 'ja',
         chinese: 'zh',
         spanish: 'es',
-        german: 'de'
+        german: 'de',
     };
 
     private normalizeLegacyLanguage(language?: string): string {
@@ -59,14 +59,14 @@ export class SettingsMigrator {
         toVersion: string
     ): Promise<SettingsSchema> {
         const path = this.findMigrationPath(fromVersion, toVersion);
-        
+
         if (path.length === 0) {
             // 마이그레이션 경로가 없으면 그대로 반환
             return currentSettings;
         }
 
         let settings = currentSettings;
-        
+
         // 순차적으로 마이그레이션 실행
         for (const step of path) {
             const migration = this.migrations.get(step);
@@ -80,7 +80,7 @@ export class SettingsMigrator {
 
         // 버전 업데이트
         settings.version = toVersion;
-        
+
         return settings;
     }
 
@@ -90,16 +90,16 @@ export class SettingsMigrator {
     private findMigrationPath(fromVersion: string, toVersion: string): string[] {
         const from = this.parseVersion(fromVersion);
         const to = this.parseVersion(toVersion);
-        
+
         if (from.major === to.major && from.minor === to.minor && from.patch === to.patch) {
             return [];
         }
 
         const path: string[] = [];
-        
+
         // 버전 순서대로 마이그레이션 경로 생성
         const versions = this.getVersionSequence(fromVersion, toVersion);
-        
+
         for (let i = 0; i < versions.length - 1; i++) {
             const key = `${versions[i]}->${versions[i + 1]}`;
             if (this.migrations.has(key)) {
@@ -114,11 +114,7 @@ export class SettingsMigrator {
      * 버전 시퀀스 생성
      */
     private getVersionSequence(fromVersion: string, toVersion: string): string[] {
-        const knownVersions = [
-            '1.0.0', '1.1.0', '1.2.0',
-            '2.0.0', '2.1.0', '2.2.0',
-            '3.0.0'
-        ];
+        const knownVersions = ['1.0.0', '1.1.0', '1.2.0', '2.0.0', '2.1.0', '2.2.0', '3.0.0'];
 
         const fromIndex = knownVersions.indexOf(fromVersion);
         const toIndex = knownVersions.indexOf(toVersion);
@@ -133,7 +129,11 @@ export class SettingsMigrator {
     /**
      * 버전 파싱
      */
-    private parseVersion(version: string | undefined | null): { major: number; minor: number; patch: number } {
+    private parseVersion(version: string | undefined | null): {
+        major: number;
+        minor: number;
+        patch: number;
+    } {
         if (!version || typeof version !== 'string') {
             return { major: 0, minor: 0, patch: 0 };
         }
@@ -171,7 +171,7 @@ export class SettingsMigrator {
                 // autoSave 추가
                 autoSave: getBool(settings.autoSave, true),
                 // 캐시 설정 추가
-                enableCache: getBool(settings.enableCache, true)
+                enableCache: getBool(settings.enableCache, true),
             });
         });
 
@@ -182,7 +182,7 @@ export class SettingsMigrator {
                 // 언어 설정 마이그레이션
                 language: normalizeLanguage(settings.language),
                 // 청크 크기 추가
-                chunkSize: settings.chunkSize ?? 1024 * 1024
+                chunkSize: settings.chunkSize ?? 1024 * 1024,
             });
         });
 
@@ -205,15 +205,15 @@ export class SettingsMigrator {
                     notifications: {
                         enabled: true,
                         sound: false,
-                        position: 'top-right'
-                    }
+                        position: 'top-right',
+                    },
                 },
                 api: {
                     provider: 'openai',
                     apiKey: getString(settings.apiKey),
                     model: getString(settings.model) || 'whisper-1',
                     maxTokens: getNum(settings.maxTokens, 4096),
-                    temperature: 0.5
+                    temperature: 0.5,
                 },
                 audio: {
                     format: pickFormat(settings.audioFormat),
@@ -221,33 +221,33 @@ export class SettingsMigrator {
                     sampleRate: pickSampleRate(settings.sampleRate),
                     channels: 1,
                     language: this.normalizeLegacyLanguage(getString(settings.language)),
-                    enhanceAudio: false
+                    enhanceAudio: false,
                 },
                 advanced: {
                     cache: {
                         enabled: getBool(settings.enableCache, true),
                         maxSize: getNum(settings.cacheSize, 100 * 1024 * 1024),
-                        ttl: 60_000
+                        ttl: 60_000,
                     },
                     performance: {
                         chunkSize: getNum(settings.chunkSize, 1024 * 1024),
                         maxConcurrency: getNum(settings.maxConcurrency, 3),
                         timeout: 30_000,
-                        useWebWorkers: false
+                        useWebWorkers: false,
                     },
                     debug: {
                         enabled: false,
                         logLevel: 'warn',
-                        saveLogsToFile: false
-                    }
+                        saveLogsToFile: false,
+                    },
                 },
                 shortcuts: {
                     startTranscription: 'Mod+Shift+S',
                     stopTranscription: 'Mod+Shift+X',
                     pauseTranscription: 'Mod+Shift+P',
                     openSettings: 'Mod+,',
-                    openFilePicker: 'Mod+Shift+O'
-                }
+                    openFilePicker: 'Mod+Shift+O',
+                },
             };
 
             return Promise.resolve(migrated);
@@ -261,19 +261,19 @@ export class SettingsMigrator {
                 // 테마 설정 추가
                 general: {
                     ...settings.general,
-                    theme: 'auto'
+                    theme: 'auto',
                 },
                 // Temperature 설정 추가
                 api: {
                     ...settings.api,
-                    temperature: 0.5
+                    temperature: 0.5,
                 },
                 // 채널 설정 추가
                 audio: {
                     ...settings.audio,
                     channels: settings.audio?.channels ?? 1,
-                    enhanceAudio: settings.audio?.enhanceAudio ?? false
-                }
+                    enhanceAudio: settings.audio?.enhanceAudio ?? false,
+                },
             });
         });
 
@@ -288,22 +288,22 @@ export class SettingsMigrator {
                     notifications: {
                         enabled: true,
                         sound: false,
-                        position: 'top-right'
-                    }
+                        position: 'top-right',
+                    },
                 },
                 // TTL 설정 추가
                 advanced: {
                     ...settings.advanced,
                     cache: {
                         ...settings.advanced?.cache,
-                        ttl: 7 * 24 * 60 * 60 * 1000 // 7 days
+                        ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
                     },
                     // 타임아웃 설정 추가
                     performance: {
                         ...settings.advanced?.performance,
-                        timeout: 30000
-                    }
-                }
+                        timeout: 30000,
+                    },
+                },
             });
         });
 
@@ -324,50 +324,54 @@ export class SettingsMigrator {
                     notifications: settings.general?.notifications || {
                         enabled: true,
                         sound: false,
-                        position: 'top-right'
-                    }
+                        position: 'top-right',
+                    },
                 },
                 api: {
                     provider: settings.api?.provider || 'openai',
                     endpoint: settings.api?.endpoint,
                     model: settings.api?.model || 'whisper-1',
-                    maxTokens: typeof settings.api?.maxTokens === 'number' ? settings.api.maxTokens : 4096,
-                    temperature: settings.api?.temperature ?? 0.5
+                    maxTokens:
+                        typeof settings.api?.maxTokens === 'number' ? settings.api.maxTokens : 4096,
+                    temperature: settings.api?.temperature ?? 0.5,
                     // apiKey는 별도 암호화 저장으로 이동
                 },
                 audio: {
                     format: settings.audio?.format || 'webm',
                     quality: settings.audio?.quality || 'high',
-                    sampleRate: typeof settings.audio?.sampleRate === 'number' ? settings.audio.sampleRate : 16000,
+                    sampleRate:
+                        typeof settings.audio?.sampleRate === 'number'
+                            ? settings.audio.sampleRate
+                            : 16000,
                     channels: settings.audio?.channels ?? 1,
                     language: this.normalizeLegacyLanguage(legacyAudioLanguage),
-                    enhanceAudio: settings.audio?.enhanceAudio ?? true
+                    enhanceAudio: settings.audio?.enhanceAudio ?? true,
                 },
                 advanced: {
                     cache: {
                         enabled: settings.advanced?.cache?.enabled ?? true,
                         maxSize: settings.advanced?.cache?.maxSize ?? 100 * 1024 * 1024,
-                        ttl: settings.advanced?.cache?.ttl ?? 7 * 24 * 60 * 60 * 1000
+                        ttl: settings.advanced?.cache?.ttl ?? 7 * 24 * 60 * 60 * 1000,
                     },
                     performance: {
                         maxConcurrency: settings.advanced?.performance?.maxConcurrency ?? 3,
                         chunkSize: settings.advanced?.performance?.chunkSize ?? 1024 * 1024,
                         timeout: settings.advanced?.performance?.timeout ?? 30000,
-                        useWebWorkers: true // 새 기능
+                        useWebWorkers: true, // 새 기능
                     },
                     debug: {
                         enabled: false,
                         logLevel: 'error',
-                        saveLogsToFile: false
-                    }
+                        saveLogsToFile: false,
+                    },
                 },
                 shortcuts: {
                     startTranscription: settings.shortcuts?.startTranscription || 'Ctrl+Shift+S',
                     stopTranscription: settings.shortcuts?.stopTranscription || 'Ctrl+Shift+X',
                     pauseTranscription: settings.shortcuts?.pauseTranscription || 'Ctrl+Shift+P',
                     openSettings: settings.shortcuts?.openSettings || 'Ctrl+,',
-                    openFilePicker: settings.shortcuts?.openFilePicker || 'Ctrl+O'
-                }
+                    openFilePicker: settings.shortcuts?.openFilePicker || 'Ctrl+O',
+                },
             };
 
             return Promise.resolve(newSettings);
@@ -382,7 +386,7 @@ export class SettingsMigrator {
         const backup = {
             timestamp: new Date(timestamp).toISOString(),
             version: settings.version || 'unknown',
-            settings: JSON.parse(JSON.stringify(settings)) // Deep clone
+            settings: JSON.parse(JSON.stringify(settings)), // Deep clone
         };
 
         const key = `settings_backup_${timestamp}`;
@@ -430,11 +434,11 @@ export class SettingsMigrator {
 
         // 현재 백업 키 추가 (이미 createBackup에서 저장된 경우)
         const latestBackupKey = `settings_backup_${Date.now()}`;
-        const existingIndex = backupKeys.findIndex(b => b.key === latestBackupKey);
+        const existingIndex = backupKeys.findIndex((b) => b.key === latestBackupKey);
         if (existingIndex === -1) {
             // 가장 최근 백업을 목록에 추가
-            const recentBackups = backupKeys.filter(b =>
-                this.app.loadLocalStorage(b.key) !== null
+            const recentBackups = backupKeys.filter(
+                (b) => this.app.loadLocalStorage(b.key) !== null
             );
             backupKeys = recentBackups;
         }
@@ -478,9 +482,11 @@ export class SettingsMigrator {
         const current = this.parseVersion(currentVersion);
         const target = this.parseVersion(targetVersion);
 
-        return current.major !== target.major ||
-               current.minor !== target.minor ||
-               current.patch !== target.patch;
+        return (
+            current.major !== target.major ||
+            current.minor !== target.minor ||
+            current.patch !== target.patch
+        );
     }
 
     /**

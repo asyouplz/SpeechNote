@@ -13,7 +13,7 @@ interface TextTemplate {
 
 /**
  * 포맷 옵션 컴포넌트 - 텍스트 삽입 시 포맷팅 옵션 설정
- * 
+ *
  * 주요 기능:
  * - 다양한 텍스트 포맷 선택
  * - 삽입 위치 설정
@@ -37,14 +37,14 @@ export class FormatOptionsModal extends Modal {
         super(app);
         this.onConfirm = onConfirm;
         this.onCancel = onCancel;
-        
+
         // 기본 옵션 설정
         this.options = {
             mode: 'cursor',
             format: 'plain',
             addTimestamp: false,
             timestampFormat: 'YYYY-MM-DD HH:mm:ss',
-            ...defaultOptions
+            ...defaultOptions,
         };
 
         // 기본 템플릿 로드
@@ -67,11 +67,11 @@ export class FormatOptionsModal extends Modal {
         tabs.forEach((tabName, index) => {
             const tab = tabContainer.createEl('button', {
                 text: tabName,
-                cls: 'format-tab'
+                cls: 'format-tab',
             });
 
             const content = contentEl.createDiv({
-                cls: 'format-tab-content'
+                cls: 'format-tab-content',
             });
 
             if (index === 0) {
@@ -85,10 +85,10 @@ export class FormatOptionsModal extends Modal {
 
             tab.onclick = () => {
                 // 모든 탭 비활성화
-                tabContainer.querySelectorAll('.format-tab').forEach(t => {
+                tabContainer.querySelectorAll('.format-tab').forEach((t) => {
                     t.removeClass('active');
                 });
-                tabContents.forEach(c => {
+                tabContents.forEach((c) => {
                     c.removeClass('active');
                     c.addClass('sn-hidden');
                 });
@@ -127,7 +127,7 @@ export class FormatOptionsModal extends Modal {
         new Setting(container)
             .setName('Insertion mode')
             .setDesc('Where to insert the text')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown
                     .addOption('cursor', 'At cursor')
                     .addOption('replace', 'Replace selection')
@@ -136,7 +136,7 @@ export class FormatOptionsModal extends Modal {
                     .addOption('line-end', 'End of current line')
                     .addOption('new-line', 'New line below')
                     .setValue(this.options.mode)
-                    .onChange(value => {
+                    .onChange((value) => {
                         if (this.isInsertionMode(value)) {
                             this.options.mode = value;
                             this.updatePreview();
@@ -148,7 +148,7 @@ export class FormatOptionsModal extends Modal {
         new Setting(container)
             .setName('Text format')
             .setDesc('How to format the inserted text')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown
                     .addOption('plain', 'Plain text')
                     .addOption('markdown', 'Markdown')
@@ -158,7 +158,7 @@ export class FormatOptionsModal extends Modal {
                     .addOption('code', 'Code block')
                     .addOption('callout', 'Callout block')
                     .setValue(this.options.format)
-                    .onChange(value => {
+                    .onChange((value) => {
                         if (this.isTextFormat(value)) {
                             this.options.format = value;
                             this.updateFormatSpecificOptions();
@@ -171,13 +171,11 @@ export class FormatOptionsModal extends Modal {
         new Setting(container)
             .setName('Add timestamp')
             .setDesc('Add timestamp before the text')
-            .addToggle(toggle => {
-                toggle
-                    .setValue(this.options.addTimestamp || false)
-                    .onChange(value => {
-                        this.options.addTimestamp = value;
-                        this.updatePreview();
-                    });
+            .addToggle((toggle) => {
+                toggle.setValue(this.options.addTimestamp || false).onChange((value) => {
+                    this.options.addTimestamp = value;
+                    this.updatePreview();
+                });
             });
 
         // 타임스탬프 포맷
@@ -185,11 +183,10 @@ export class FormatOptionsModal extends Modal {
             new Setting(container)
                 .setName('Timestamp format')
                 .setDesc('Format for the timestamp (YYYY-MM-DD HH:mm:ss)')
-                .addText(text => {
-                    text
-                        .setPlaceholder('YYYY-MM-DD HH:mm:ss')
+                .addText((text) => {
+                    text.setPlaceholder('YYYY-MM-DD HH:mm:ss')
                         .setValue(this.options.timestampFormat || '')
-                        .onChange(value => {
+                        .onChange((value) => {
                             this.options.timestampFormat = value;
                             this.updatePreview();
                         });
@@ -221,11 +218,10 @@ export class FormatOptionsModal extends Modal {
                 new Setting(targetContainer)
                     .setName('Quote author')
                     .setDesc('Author attribution for the quote')
-                    .addText(text => {
-                        text
-                            .setPlaceholder('Author name')
+                    .addText((text) => {
+                        text.setPlaceholder('Author name')
                             .setValue(this.options.quoteAuthor || '')
-                            .onChange(value => {
+                            .onChange((value) => {
                                 this.options.quoteAuthor = value;
                                 this.updatePreview();
                             });
@@ -236,14 +232,14 @@ export class FormatOptionsModal extends Modal {
                 new Setting(targetContainer)
                     .setName('Bullet character')
                     .setDesc('Character to use for bullets')
-                    .addDropdown(dropdown => {
+                    .addDropdown((dropdown) => {
                         dropdown
                             .addOption('-', '- (Dash)')
                             .addOption('*', '* (Asterisk)')
                             .addOption('+', '+ (Plus)')
                             .addOption('•', '• (Bullet)')
                             .setValue(this.options.bulletChar || '-')
-                            .onChange(value => {
+                            .onChange((value) => {
                                 this.options.bulletChar = value;
                                 this.updatePreview();
                             });
@@ -254,13 +250,13 @@ export class FormatOptionsModal extends Modal {
                 new Setting(targetContainer)
                     .setName('Heading level')
                     .setDesc('Level of the heading (1-6)')
-                    .addDropdown(dropdown => {
+                    .addDropdown((dropdown) => {
                         for (let i = 1; i <= 6; i++) {
                             dropdown.addOption(String(i), `H${i}`);
                         }
                         dropdown
                             .setValue(String(this.options.headingLevel || 2))
-                            .onChange(value => {
+                            .onChange((value) => {
                                 this.options.headingLevel = parseInt(value);
                                 this.updatePreview();
                             });
@@ -271,11 +267,10 @@ export class FormatOptionsModal extends Modal {
                 new Setting(targetContainer)
                     .setName('Language')
                     .setDesc('Programming language for syntax highlighting')
-                    .addText(text => {
-                        text
-                            .setPlaceholder('javascript, python, etc.')
+                    .addText((text) => {
+                        text.setPlaceholder('javascript, python, etc.')
                             .setValue(this.options.codeLanguage || '')
-                            .onChange(value => {
+                            .onChange((value) => {
                                 this.options.codeLanguage = value;
                                 this.updatePreview();
                             });
@@ -286,7 +281,7 @@ export class FormatOptionsModal extends Modal {
                 new Setting(targetContainer)
                     .setName('Callout type')
                     .setDesc('Type of callout block')
-                    .addDropdown(dropdown => {
+                    .addDropdown((dropdown) => {
                         dropdown
                             .addOption('info', 'Info')
                             .addOption('tip', 'Tip')
@@ -300,7 +295,7 @@ export class FormatOptionsModal extends Modal {
                             .addOption('example', 'Example')
                             .addOption('quote', 'Quote')
                             .setValue(this.options.calloutType || 'info')
-                            .onChange(value => {
+                            .onChange((value) => {
                                 this.options.calloutType = value;
                                 this.updatePreview();
                             });
@@ -309,11 +304,10 @@ export class FormatOptionsModal extends Modal {
                 new Setting(targetContainer)
                     .setName('Callout title')
                     .setDesc('Title for the callout')
-                    .addText(text => {
-                        text
-                            .setPlaceholder('Title')
+                    .addText((text) => {
+                        text.setPlaceholder('Title')
                             .setValue(this.options.calloutTitle || '')
-                            .onChange(value => {
+                            .onChange((value) => {
                                 this.options.calloutTitle = value;
                                 this.updatePreview();
                             });
@@ -322,13 +316,11 @@ export class FormatOptionsModal extends Modal {
                 new Setting(targetContainer)
                     .setName('Foldable')
                     .setDesc('Make callout foldable')
-                    .addToggle(toggle => {
-                        toggle
-                            .setValue(this.options.calloutFoldable || false)
-                            .onChange(value => {
-                                this.options.calloutFoldable = value;
-                                this.updatePreview();
-                            });
+                    .addToggle((toggle) => {
+                        toggle.setValue(this.options.calloutFoldable || false).onChange((value) => {
+                            this.options.calloutFoldable = value;
+                            this.updatePreview();
+                        });
                     });
                 break;
         }
@@ -342,7 +334,7 @@ export class FormatOptionsModal extends Modal {
         new Setting(container)
             .setName('Language')
             .setDesc('Language for special processing')
-            .addDropdown(dropdown => {
+            .addDropdown((dropdown) => {
                 dropdown
                     .addOption('', 'Auto detect')
                     .addOption('en', 'English')
@@ -353,7 +345,7 @@ export class FormatOptionsModal extends Modal {
                     .addOption('fr', 'French')
                     .addOption('de', 'German')
                     .setValue(this.options.language || '')
-                    .onChange(value => {
+                    .onChange((value) => {
                         this.options.language = value;
                         this.updatePreview();
                     });
@@ -363,26 +355,22 @@ export class FormatOptionsModal extends Modal {
         new Setting(container)
             .setName('Paragraph breaks')
             .setDesc('Add paragraph breaks between sentences')
-            .addToggle(toggle => {
-                toggle
-                    .setValue(this.options.paragraphBreaks || false)
-                    .onChange(value => {
-                        this.options.paragraphBreaks = value;
-                        this.updatePreview();
-                    });
+            .addToggle((toggle) => {
+                toggle.setValue(this.options.paragraphBreaks || false).onChange((value) => {
+                    this.options.paragraphBreaks = value;
+                    this.updatePreview();
+                });
             });
 
         // 새 노트 생성
         new Setting(container)
             .setName('Create new note')
             .setDesc('Create a new note for the text')
-            .addToggle(toggle => {
-                toggle
-                    .setValue(this.options.createNewNote || false)
-                    .onChange(value => {
-                        this.options.createNewNote = value;
-                        this.updateNewNoteOptions();
-                    });
+            .addToggle((toggle) => {
+                toggle.setValue(this.options.createNewNote || false).onChange((value) => {
+                    this.options.createNewNote = value;
+                    this.updateNewNoteOptions();
+                });
             });
 
         // 새 노트 옵션
@@ -390,11 +378,10 @@ export class FormatOptionsModal extends Modal {
             new Setting(container)
                 .setName('Note title')
                 .setDesc('Title for the new note')
-                .addText(text => {
-                    text
-                        .setPlaceholder('Transcription-YYYY-MM-DD')
+                .addText((text) => {
+                    text.setPlaceholder('Transcription-YYYY-MM-DD')
                         .setValue(this.options.noteTitle || '')
-                        .onChange(value => {
+                        .onChange((value) => {
                             this.options.noteTitle = value;
                         });
                 });
@@ -402,11 +389,10 @@ export class FormatOptionsModal extends Modal {
             new Setting(container)
                 .setName('Note folder')
                 .setDesc('Folder for the new note')
-                .addText(text => {
-                    text
-                        .setPlaceholder('Transcriptions')
+                .addText((text) => {
+                    text.setPlaceholder('Transcriptions')
                         .setValue(this.options.noteFolder || '')
-                        .onChange(value => {
+                        .onChange((value) => {
                             this.options.noteFolder = value;
                         });
                 });
@@ -416,12 +402,10 @@ export class FormatOptionsModal extends Modal {
         new Setting(container)
             .setName('Preview before insert')
             .setDesc('Show preview before inserting text')
-            .addToggle(toggle => {
-                toggle
-                    .setValue(this.options.preview || false)
-                    .onChange(value => {
-                        this.options.preview = value;
-                    });
+            .addToggle((toggle) => {
+                toggle.setValue(this.options.preview || false).onChange((value) => {
+                    this.options.preview = value;
+                });
             });
     }
 
@@ -436,13 +420,13 @@ export class FormatOptionsModal extends Modal {
 
         const dropdown = new DropdownComponent(templateSetting.controlEl);
         dropdown.addOption('', 'None');
-        
-        this.templates.forEach(template => {
+
+        this.templates.forEach((template) => {
             dropdown.addOption(template.id, template.name);
         });
 
-        dropdown.onChange(value => {
-            const template = this.templates.find(t => t.id === value);
+        dropdown.onChange((value) => {
+            const template = this.templates.find((t) => t.id === value);
             if (template) {
                 this.options.template = template.content;
                 this.updatePreview();
@@ -456,15 +440,14 @@ export class FormatOptionsModal extends Modal {
         new Setting(container)
             .setName('Custom template')
             .setDesc('Use {{content}} for the text placeholder')
-            .addTextArea(text => {
-                text
-                    .setPlaceholder('## {{date}}\n\n{{content}}\n\n---\nTranscribed at {{time}}')
+            .addTextArea((text) => {
+                text.setPlaceholder('## {{date}}\n\n{{content}}\n\n---\nTranscribed at {{time}}')
                     .setValue(this.options.template || '')
-                    .onChange(value => {
+                    .onChange((value) => {
                         this.options.template = value;
                         this.updatePreview();
                     });
-                
+
                 text.inputEl.rows = 5;
                 text.inputEl.cols = 50;
             });
@@ -473,15 +456,15 @@ export class FormatOptionsModal extends Modal {
         const helpContainer = container.createDiv('template-help');
         helpContainer.createEl('h4', { text: 'Available variables:' });
         const helpList = helpContainer.createEl('ul');
-        
+
         const variables = [
             { var: '{{content}}', desc: 'The transcribed text' },
             { var: '{{date}}', desc: 'Current date' },
             { var: '{{time}}', desc: 'Current time' },
-            { var: '{{datetime}}', desc: 'Current date and time' }
+            { var: '{{datetime}}', desc: 'Current date and time' },
         ];
 
-        variables.forEach(v => {
+        variables.forEach((v) => {
             const li = helpList.createEl('li');
             li.createEl('code', { text: v.var });
             li.createSpan({ text: ` - ${v.desc}` });
@@ -494,11 +477,11 @@ export class FormatOptionsModal extends Modal {
     private createPreviewSection(container: HTMLElement): void {
         const previewSection = container.createDiv('preview-section');
         previewSection.createEl('h3', { text: 'Preview' });
-        
+
         this.previewContainer = previewSection.createDiv('preview-content');
-        this.previewContainer.createEl('p', { 
+        this.previewContainer.createEl('p', {
             text: 'Preview will appear here...',
-            cls: 'preview-placeholder'
+            cls: 'preview-placeholder',
         });
     }
 
@@ -511,7 +494,7 @@ export class FormatOptionsModal extends Modal {
         // 기본값 복원 버튼
         const resetButton = buttonContainer.createEl('button', {
             text: 'Reset to defaults',
-            cls: 'mod-cta-secondary'
+            cls: 'mod-cta-secondary',
         });
         resetButton.onclick = () => {
             this.resetToDefaults();
@@ -519,7 +502,7 @@ export class FormatOptionsModal extends Modal {
 
         // 취소 버튼
         const cancelButton = buttonContainer.createEl('button', {
-            text: 'Cancel'
+            text: 'Cancel',
         });
         cancelButton.onclick = () => {
             this.onCancel();
@@ -529,7 +512,7 @@ export class FormatOptionsModal extends Modal {
         // 확인 버튼
         const confirmButton = buttonContainer.createEl('button', {
             text: 'Apply',
-            cls: 'mod-cta'
+            cls: 'mod-cta',
         });
         confirmButton.onclick = () => {
             this.onConfirm(this.options);
@@ -544,17 +527,18 @@ export class FormatOptionsModal extends Modal {
         if (!this.previewContainer) return;
 
         // 샘플 텍스트
-        const sampleText = "This is a sample transcribed text to show how the formatting will be applied.";
-        
+        const sampleText =
+            'This is a sample transcribed text to show how the formatting will be applied.';
+
         // 포맷 적용 시뮬레이션
         const preview = this.simulateFormatting(sampleText);
-        
+
         // 프리뷰 표시
         this.previewContainer.empty();
-        
+
         this.previewContainer.createEl('pre', {
             text: preview,
-            cls: 'format-preview'
+            cls: 'format-preview',
         });
     }
 
@@ -599,7 +583,9 @@ export class FormatOptionsModal extends Modal {
 
         // 타임스탬프 추가
         if (this.options.addTimestamp) {
-            const timestamp = this.formatCurrentDate(this.options.timestampFormat || 'YYYY-MM-DD HH:mm:ss');
+            const timestamp = this.formatCurrentDate(
+                this.options.timestampFormat || 'YYYY-MM-DD HH:mm:ss'
+            );
             formatted = `[${timestamp}]\n${formatted}`;
         }
 
@@ -621,12 +607,12 @@ export class FormatOptionsModal extends Modal {
     private formatCurrentDate(format: string): string {
         const now = new Date();
         const replacements: Record<string, string> = {
-            'YYYY': now.getFullYear().toString(),
-            'MM': (now.getMonth() + 1).toString().padStart(2, '0'),
-            'DD': now.getDate().toString().padStart(2, '0'),
-            'HH': now.getHours().toString().padStart(2, '0'),
-            'mm': now.getMinutes().toString().padStart(2, '0'),
-            'ss': now.getSeconds().toString().padStart(2, '0')
+            YYYY: now.getFullYear().toString(),
+            MM: (now.getMonth() + 1).toString().padStart(2, '0'),
+            DD: now.getDate().toString().padStart(2, '0'),
+            HH: now.getHours().toString().padStart(2, '0'),
+            mm: now.getMinutes().toString().padStart(2, '0'),
+            ss: now.getSeconds().toString().padStart(2, '0'),
         };
 
         let formatted = format;
@@ -679,7 +665,7 @@ export class FormatOptionsModal extends Modal {
             mode: 'cursor',
             format: 'plain',
             addTimestamp: false,
-            timestampFormat: 'YYYY-MM-DD HH:mm:ss'
+            timestampFormat: 'YYYY-MM-DD HH:mm:ss',
         };
 
         // UI 재렌더링
@@ -695,26 +681,30 @@ export class FormatOptionsModal extends Modal {
                 id: 'meeting',
                 name: 'Meeting notes',
                 format: 'markdown',
-                content: '## Meeting Notes - {{date}}\n\n### Attendees\n- \n\n### Agenda\n- \n\n### Discussion\n{{content}}\n\n### Action Items\n- \n\n---\n*Transcribed at {{datetime}}*'
+                content:
+                    '## Meeting Notes - {{date}}\n\n### Attendees\n- \n\n### Agenda\n- \n\n### Discussion\n{{content}}\n\n### Action Items\n- \n\n---\n*Transcribed at {{datetime}}*',
             },
             {
                 id: 'daily',
                 name: 'Daily note',
                 format: 'markdown',
-                content: '## {{date}}\n\n### Transcription\n{{content}}\n\n### Thoughts\n\n\n### Tasks\n- [ ] \n\n---\n*Created at {{time}}*'
+                content:
+                    '## {{date}}\n\n### Transcription\n{{content}}\n\n### Thoughts\n\n\n### Tasks\n- [ ] \n\n---\n*Created at {{time}}*',
             },
             {
                 id: 'interview',
                 name: 'Interview',
                 format: 'markdown',
-                content: '# Interview Notes\n**Date:** {{date}}\n**Time:** {{time}}\n\n## Transcript\n{{content}}\n\n## Key Points\n- \n\n## Follow-up Questions\n- \n\n---'
+                content:
+                    '# Interview Notes\n**Date:** {{date}}\n**Time:** {{time}}\n\n## Transcript\n{{content}}\n\n## Key Points\n- \n\n## Follow-up Questions\n- \n\n---',
             },
             {
                 id: 'lecture',
                 name: 'Lecture notes',
                 format: 'markdown',
-                content: '# Lecture Notes\n**Date:** {{date}}\n**Topic:** \n\n## Main Content\n{{content}}\n\n## Key Concepts\n1. \n2. \n3. \n\n## Questions\n- \n\n## References\n- \n\n---\n*Transcribed at {{datetime}}*'
-            }
+                content:
+                    '# Lecture Notes\n**Date:** {{date}}\n**Topic:** \n\n## Main Content\n{{content}}\n\n## Key Concepts\n1. \n2. \n3. \n\n## Questions\n- \n\n## References\n- \n\n---\n*Transcribed at {{datetime}}*',
+            },
         ];
     }
 
@@ -727,20 +717,13 @@ export class FormatOptionsModal extends Modal {
 /**
  * 텍스트 포맷 타입
  */
-export type TextFormat = 
-    | 'plain'
-    | 'markdown'
-    | 'quote'
-    | 'bullet'
-    | 'heading'
-    | 'code'
-    | 'callout';
+export type TextFormat = 'plain' | 'markdown' | 'quote' | 'bullet' | 'heading' | 'code' | 'callout';
 
 /**
  * Format options export for external use
  */
 export const FormatOptions = {
-    FormatOptionsModal
+    FormatOptionsModal,
 };
 
 export { FormatOptionsModal as default };

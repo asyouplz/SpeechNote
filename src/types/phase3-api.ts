@@ -1,6 +1,6 @@
 /**
  * Phase 3 API 인터페이스 정의
- * 
+ *
  * 이 파일은 Phase 3 UX 개선을 위한 모든 API 인터페이스를 정의합니다.
  */
 
@@ -86,26 +86,29 @@ export interface ISettingsAPI {
     get<K extends keyof SettingsSchema>(key: K): Promise<SettingsSchema[K]>;
     getAll(): Promise<SettingsSchema>;
     getDefault<K extends keyof SettingsSchema>(key: K): SettingsSchema[K];
-    
+
     // 설정 저장
     set<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): Promise<void>;
     update(updates: Partial<SettingsSchema>): Promise<void>;
-    
+
     // 설정 검증
     validate(settings: Partial<SettingsSchema>): ValidationResult;
-    validateField<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): ValidationResult;
-    
+    validateField<K extends keyof SettingsSchema>(
+        key: K,
+        value: SettingsSchema[K]
+    ): ValidationResult;
+
     // 설정 마이그레이션
     migrate(fromVersion: string, toVersion: string): Promise<void>;
     needsMigration(): boolean;
-    
+
     // 설정 내보내기/가져오기
     export(options?: ExportOptions): Promise<Blob>;
     import(file: File, options?: ImportOptions): Promise<ImportResult>;
-    
+
     // 설정 초기화
     reset(scope?: ResetScope): Promise<void>;
-    
+
     // 이벤트 리스너
     on(event: string, listener: (...args: unknown[]) => void): Unsubscribe;
 }
@@ -113,11 +116,7 @@ export interface ISettingsAPI {
 // 설정 관련 타입
 export type LanguageCode = 'en' | 'ko' | 'ja' | 'zh' | 'es' | 'fr' | 'de' | 'auto';
 export type ResetScope = 'all' | keyof SettingsSchema | Array<keyof SettingsSchema>;
-export type SettingsChangeListener = (
-    key: string,
-    newValue: unknown,
-    oldValue: unknown
-) => void;
+export type SettingsChangeListener = (key: string, newValue: unknown, oldValue: unknown) => void;
 export type Unsubscribe = () => void;
 
 export interface ExportOptions {
@@ -229,22 +228,22 @@ export interface StepProgress {
 export interface IProgressAPI {
     // 작업 시작
     startTask(taskId: string, name: string, options?: TaskOptions): IProgressTracker;
-    
+
     // 작업 제어
     pauseTask(taskId: string): Promise<void>;
     resumeTask(taskId: string): Promise<void>;
     cancelTask(taskId: string): Promise<void>;
-    
+
     // 상태 조회
     getTaskStatus(taskId: string): TaskStatus | undefined;
     getAllTasks(): TaskStatus[];
     getActiveTasks(): TaskStatus[];
     getQueuedTasks(): TaskStatus[];
-    
+
     // 작업 정리
     clearCompleted(): void;
     clearAll(): void;
-    
+
     // 이벤트 리스너
     on(event: 'task:start', listener: (taskId: string) => void): Unsubscribe;
     on(event: 'task:complete', listener: (taskId: string, result: unknown) => void): Unsubscribe;
@@ -260,30 +259,30 @@ export interface IProgressTracker {
     update(progress: number, message?: string): void;
     updateStep(stepId: string, progress: number, message?: string): void;
     increment(delta?: number): void;
-    
+
     // 상태 변경
     setStatus(status: 'running' | 'paused' | 'completed' | 'failed'): void;
     setMessage(message: string): void;
     setTotal(total: number): void;
-    
+
     // 단계 관리
     addStep(stepId: string, name: string, weight?: number): void;
     completeStep(stepId: string): void;
     failStep(stepId: string, error?: Error): void;
-    
+
     // ETA 및 속도
     getETA(): number | undefined;
     getRemainingTime(): number | undefined;
     getSpeed(): number | undefined;
     getElapsedTime(): number;
-    
+
     // 이벤트 리스너
     on(event: 'progress', listener: (data: ProgressData) => void): Unsubscribe;
     on(event: 'complete', listener: (result?: unknown) => void): Unsubscribe;
     on(event: 'error', listener: (error: Error) => void): Unsubscribe;
     on(event: 'pause', listener: () => void): Unsubscribe;
     on(event: 'resume', listener: () => void): Unsubscribe;
-    
+
     // 제어
     pause(): void;
     resume(): void;
@@ -314,12 +313,12 @@ export interface NotificationOptions {
 }
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
-export type NotificationPosition = 
-    | 'top-right' 
-    | 'top-left' 
-    | 'bottom-right' 
-    | 'bottom-left' 
-    | 'top-center' 
+export type NotificationPosition =
+    | 'top-right'
+    | 'top-left'
+    | 'bottom-right'
+    | 'bottom-left'
+    | 'top-center'
     | 'bottom-center';
 export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -398,35 +397,32 @@ export interface INotificationAPI {
     error(message: string, options?: Partial<NotificationOptions>): string;
     warning(message: string, options?: Partial<NotificationOptions>): string;
     info(message: string, options?: Partial<NotificationOptions>): string;
-    
+
     // 알림 제어
     dismiss(notificationId: string): void;
     dismissAll(): void;
     dismissByType(type: NotificationType): void;
     update(notificationId: string, options: Partial<NotificationOptions>): void;
-    
+
     // 대화상자
     confirm(message: string, options?: ConfirmOptions): Promise<boolean>;
     prompt(message: string, options?: PromptOptions): Promise<string | null>;
     alert(message: string, title?: string): Promise<void>;
-    
+
     // 진행률 알림
-    showProgress(
-        message: string,
-        options?: ProgressNotificationOptions
-    ): IProgressNotification;
-    
+    showProgress(message: string, options?: ProgressNotificationOptions): IProgressNotification;
+
     // 설정
     configure(config: NotificationConfig): void;
     getConfig(): NotificationConfig;
     setDefaultPosition(position: NotificationPosition): void;
     setSound(enabled: boolean): void;
     setSoundFile(type: NotificationType, soundUrl: string): void;
-    
+
     // 상태 조회
     getActiveNotifications(): NotificationOptions[];
     getNotificationById(id: string): NotificationOptions | undefined;
-    
+
     // 이벤트 리스너
     on(event: 'show', listener: (notification: NotificationOptions) => void): Unsubscribe;
     on(event: 'dismiss', listener: (id: string) => void): Unsubscribe;
@@ -467,16 +463,16 @@ export interface IMemoryAPI {
     stopMonitoring(): void;
     getMemoryInfo(): MemoryInfo;
     getResourceInfo(): ResourceInfo;
-    
+
     // 임계치 설정
     setThreshold(bytes: number): void;
     setWarningLevel(percentage: number): void;
-    
+
     // 정리
     forceGarbageCollection(): void;
     clearCache(): void;
     clearUnusedResources(): void;
-    
+
     // 이벤트 리스너
     on(event: 'high-memory', listener: (info: MemoryInfo) => void): Unsubscribe;
     on(event: 'memory-leak', listener: (details: unknown) => void): Unsubscribe;
@@ -507,18 +503,18 @@ export interface IAsyncAPI {
         taskFn: (progress?: IProgressReporter) => Promise<T>,
         options?: AsyncTaskOptions
     ): Promise<T>;
-    
+
     // 동시성 제어
     setConcurrency(max: number): void;
     getConcurrency(): number;
     getQueueSize(): number;
-    
+
     // 작업 제어
     cancel(taskId: string): void;
     cancelAll(): void;
     pause(taskId: string): void;
     resume(taskId: string): void;
-    
+
     // 작업 조회
     isRunning(taskId: string): boolean;
     getRunningTasks(): string[];
@@ -589,7 +585,7 @@ export interface IAPIManager {
     notifications: INotificationAPI;
     memory: IMemoryAPI;
     async: IAsyncAPI;
-    
+
     initialize(): Promise<void>;
     dispose(): void;
 }

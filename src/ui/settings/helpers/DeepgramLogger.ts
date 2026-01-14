@@ -70,7 +70,7 @@ export class DeepgramLogger {
                 if (error instanceof Error) {
                     console.error(`${LOG_PREFIX} Error details:`, {
                         message: error.message,
-                        stack: error.stack
+                        stack: error.stack,
                     });
                 } else {
                     console.error(`${LOG_PREFIX} Error details:`, error);
@@ -102,11 +102,11 @@ export class DeepgramLogger {
      */
     private shouldLog(level: LogLevel): boolean {
         if (!this.enabled) return false;
-        
+
         const levels = [LOG_LEVEL.DEBUG, LOG_LEVEL.INFO, LOG_LEVEL.WARN, LOG_LEVEL.ERROR];
         const currentIndex = levels.indexOf(level);
         const minIndex = levels.indexOf(this.minLevel);
-        
+
         return currentIndex >= minIndex;
     }
 

@@ -11,7 +11,7 @@ import type {
     ExportOptions,
     ImportOptions,
     ImportResult,
-    ResetScope
+    ResetScope,
 } from '../../types/phase3-api';
 import type { Unsubscribe } from '../../types/events';
 import { SecureApiKeyManager, SettingsEncryptor } from '../security/Encryptor';
@@ -51,7 +51,7 @@ export class SettingsAPI implements ISettingsAPI {
             const stored = this.app.loadLocalStorage(this.storageKey);
             if (stored) {
                 const parsed = JSON.parse(stored);
-                
+
                 // 마이그레이션 확인
                 if (this.needsMigration()) {
                     this.settings = await this.migrator.migrate(
@@ -104,12 +104,9 @@ export class SettingsAPI implements ISettingsAPI {
     /**
      * 설정 저장
      */
-    async set<K extends keyof SettingsSchema>(
-        key: K, 
-        value: SettingsSchema[K]
-    ): Promise<void> {
+    async set<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): Promise<void> {
         const oldValue = this.settings[key];
-        
+
         // 검증
         const validation = this.validateField(key, value);
         if (!validation.valid) {
@@ -120,7 +117,8 @@ export class SettingsAPI implements ISettingsAPI {
         if (key === 'api') {
             const apiVal = value as SettingsSchema['api'];
             const apiKey = apiVal?.apiKey;
-            if (apiKey && !apiKey.includes('*')) { // 마스킹되지 않은 실제 키인 경우
+            if (apiKey && !apiKey.includes('*')) {
+                // 마스킹되지 않은 실제 키인 경우
                 await this.apiKeyManager.storeApiKey(apiKey);
             }
         }
@@ -170,7 +168,10 @@ export class SettingsAPI implements ISettingsAPI {
     /**
      * 필드 검증
      */
-    validateField<K extends keyof SettingsSchema>(key: K, value: SettingsSchema[K]): ValidationResult {
+    validateField<K extends keyof SettingsSchema>(
+        key: K,
+        value: SettingsSchema[K]
+    ): ValidationResult {
         return this.validator.validateField(key, value);
     }
 
@@ -193,11 +194,7 @@ export class SettingsAPI implements ISettingsAPI {
      * 설정 마이그레이션
      */
     async migrate(fromVersion: string, toVersion: string): Promise<void> {
-        this.settings = await this.migrator.migrate(
-            this.settings,
-            fromVersion,
-            toVersion
-        );
+        this.settings = await this.migrator.migrate(this.settings, fromVersion, toVersion);
         await this.save();
         this.emitter.emit('migrate', fromVersion, toVersion);
     }
@@ -221,7 +218,7 @@ export class SettingsAPI implements ISettingsAPI {
 
         // 압축 옵션
         const json = JSON.stringify(finalData, null, 2);
-        
+
         if (options.compress) {
             // gzip 압축 (브라우저 지원 시)
             const encoder = new TextEncoder();
@@ -239,7 +236,7 @@ export class SettingsAPI implements ISettingsAPI {
     async import(file: File, options: ImportOptions = {}): Promise<ImportResult> {
         try {
             let data: string;
-            
+
             // 압축 파일 처리
             if (file.type === 'application/gzip') {
                 const buffer = await file.arrayBuffer();
@@ -257,14 +254,14 @@ export class SettingsAPI implements ISettingsAPI {
             }
 
             // 검증
-        let validation: ValidationResult | null = null;
+            let validation: ValidationResult | null = null;
             if (options.validate) {
                 validation = this.validate(importedSettings);
                 if (!validation.valid) {
                     return {
                         success: false,
                         imported: {},
-                        errors: validation.errors?.map(e => e.message)
+                        errors: validation.errors?.map((e) => e.message),
                     };
                 }
             }
@@ -285,13 +282,13 @@ export class SettingsAPI implements ISettingsAPI {
             return {
                 success: true,
                 imported: importedSettings,
-                warnings: validation?.warnings?.map(w => w.message)
+                warnings: validation?.warnings?.map((w) => w.message),
             };
         } catch (error) {
             return {
                 success: false,
                 imported: {},
-                errors: [`Import failed: ${(error as Error).message}`]
+                errors: [`Import failed: ${(error as Error).message}`],
             };
         }
     }
@@ -304,7 +301,7 @@ export class SettingsAPI implements ISettingsAPI {
             this.settings = { ...this.defaultSettings };
             await this.apiKeyManager.clearApiKey();
         } else if (Array.isArray(scope)) {
-            scope.forEach(key => {
+            scope.forEach((key) => {
                 const typedKey = key;
                 this.settings[typedKey] = this.defaultSettings[typedKey];
             });
@@ -356,14 +353,14 @@ export class SettingsAPI implements ISettingsAPI {
                 notifications: {
                     enabled: true,
                     sound: false,
-                    position: 'top-right'
-                }
+                    position: 'top-right',
+                },
             },
             api: {
                 provider: 'openai',
                 model: 'whisper-1',
                 maxTokens: 4096,
-                temperature: 0.5
+                temperature: 0.5,
             },
             audio: {
                 format: 'webm',
@@ -371,33 +368,33 @@ export class SettingsAPI implements ISettingsAPI {
                 sampleRate: 16000,
                 channels: 1,
                 language: 'auto',
-                enhanceAudio: true
+                enhanceAudio: true,
             },
             advanced: {
                 cache: {
                     enabled: true,
                     maxSize: 100 * 1024 * 1024, // 100MB
-                    ttl: 7 * 24 * 60 * 60 * 1000 // 7 days
+                    ttl: 7 * 24 * 60 * 60 * 1000, // 7 days
                 },
                 performance: {
                     maxConcurrency: 3,
                     chunkSize: 1024 * 1024, // 1MB
                     timeout: 30000,
-                    useWebWorkers: true
+                    useWebWorkers: true,
                 },
                 debug: {
                     enabled: false,
                     logLevel: 'error',
-                    saveLogsToFile: false
-                }
+                    saveLogsToFile: false,
+                },
             },
             shortcuts: {
                 startTranscription: 'Ctrl+Shift+S',
                 stopTranscription: 'Ctrl+Shift+X',
                 pauseTranscription: 'Ctrl+Shift+P',
                 openSettings: 'Ctrl+,',
-                openFilePicker: 'Ctrl+O'
-            }
+                openFilePicker: 'Ctrl+O',
+            },
         };
     }
 
@@ -407,17 +404,19 @@ export class SettingsAPI implements ISettingsAPI {
     private async compress(data: Uint8Array): Promise<Uint8Array> {
         // CompressionStream API 사용 (브라우저 지원 확인 필요)
         if ('CompressionStream' in window) {
-            const cs = new (window as typeof window & { CompressionStream: new (type: string) => unknown }).CompressionStream('gzip') as unknown as {
+            const cs = new (
+                window as typeof window & { CompressionStream: new (type: string) => unknown }
+            ).CompressionStream('gzip') as unknown as {
                 writable: WritableStream<Uint8Array>;
                 readable: ReadableStream<Uint8Array>;
             };
             const writer = cs.writable.getWriter();
             await writer.write(data);
             await writer.close();
-            
+
             const chunks: Uint8Array[] = [];
             const reader = cs.readable.getReader();
-            
+
             let finished = false;
             while (!finished) {
                 const { done, value } = await reader.read();
@@ -426,20 +425,20 @@ export class SettingsAPI implements ISettingsAPI {
                     chunks.push(value);
                 }
             }
-            
+
             // 청크 결합
             const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
             const result = new Uint8Array(totalLength);
             let offset = 0;
-            
+
             for (const chunk of chunks) {
                 result.set(chunk, offset);
                 offset += chunk.length;
             }
-            
+
             return result;
         }
-        
+
         // 압축 미지원 시 원본 반환
         return data;
     }
@@ -450,17 +449,19 @@ export class SettingsAPI implements ISettingsAPI {
     private async decompress(data: Uint8Array): Promise<Uint8Array> {
         // DecompressionStream API 사용
         if ('DecompressionStream' in window) {
-            const ds = new (window as typeof window & { DecompressionStream: new (type: string) => unknown }).DecompressionStream('gzip') as unknown as {
+            const ds = new (
+                window as typeof window & { DecompressionStream: new (type: string) => unknown }
+            ).DecompressionStream('gzip') as unknown as {
                 writable: WritableStream<Uint8Array>;
                 readable: ReadableStream<Uint8Array>;
             };
             const writer = ds.writable.getWriter();
             await writer.write(data);
             await writer.close();
-            
+
             const chunks: Uint8Array[] = [];
             const reader = ds.readable.getReader();
-            
+
             let finished = false;
             while (!finished) {
                 const { done, value } = await reader.read();
@@ -469,20 +470,20 @@ export class SettingsAPI implements ISettingsAPI {
                     chunks.push(value);
                 }
             }
-            
+
             // 청크 결합
             const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
             const result = new Uint8Array(totalLength);
             let offset = 0;
-            
+
             for (const chunk of chunks) {
                 result.set(chunk, offset);
                 offset += chunk.length;
             }
-            
+
             return result;
         }
-        
+
         return data;
     }
 }

@@ -28,10 +28,7 @@ export class StatusBarManager implements IDisposable {
     private logger: Logger;
     private isDisposed = false;
 
-    constructor(
-        private plugin: Plugin,
-        private stateManager: StateManager
-    ) {
+    constructor(private plugin: Plugin, private stateManager: StateManager) {
         this.logger = new Logger('StatusBarManager');
     }
 
@@ -56,7 +53,10 @@ export class StatusBarManager implements IDisposable {
 
             this.logger.info('StatusBar initialized successfully');
         } catch (error) {
-            this.logger.error('Failed to initialize StatusBar', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Failed to initialize StatusBar',
+                error instanceof Error ? error : undefined
+            );
             // StatusBar 실패는 치명적이지 않으므로 에러를 던지지 않음
         }
     }
@@ -74,7 +74,7 @@ export class StatusBarManager implements IDisposable {
 
             // StatusBar 아이템 생성
             const item = this.plugin.addStatusBarItem();
-            
+
             // 반환값 검증
             if (!item || typeof item !== 'object') {
                 this.logger.warn('Invalid StatusBar item returned');
@@ -84,7 +84,10 @@ export class StatusBarManager implements IDisposable {
             this.statusBarItem = item;
             this.logger.debug('StatusBar item created successfully');
         } catch (error) {
-            this.logger.error('Error creating StatusBar item', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Error creating StatusBar item',
+                error instanceof Error ? error : undefined
+            );
             this.statusBarItem = null;
         }
     }
@@ -108,30 +111,30 @@ export class StatusBarManager implements IDisposable {
         switch (state.status) {
             case 'idle':
                 return { text: '' };
-            
+
             case 'processing':
                 return {
                     text: '🎙️ Transcribing...',
                     tooltip: 'Processing audio transcription',
-                    className: 'status-processing'
+                    className: 'status-processing',
                 };
-            
+
             case 'completed':
                 return {
                     text: '✅ Transcription complete',
                     tooltip: 'Transcription completed successfully',
                     className: 'status-success',
-                    hideAfter: 3000
+                    hideAfter: 3000,
                 };
-            
+
             case 'error':
                 return {
                     text: '❌ Transcription failed',
                     tooltip: state.error?.message || 'An error occurred',
                     className: 'status-error',
-                    hideAfter: 5000
+                    hideAfter: 5000,
                 };
-            
+
             default:
                 return { text: '' };
         }
@@ -180,9 +183,11 @@ export class StatusBarManager implements IDisposable {
                     this.clearStatus();
                 }, config.hideAfter);
             }
-
         } catch (error) {
-            this.logger.error('Failed to update StatusBar', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Failed to update StatusBar',
+                error instanceof Error ? error : undefined
+            );
         }
     }
 
@@ -208,7 +213,10 @@ export class StatusBarManager implements IDisposable {
                 this.statusBarItem.textContent = '';
             }
         } catch (error) {
-            this.logger.error('Failed to clear StatusBar', error instanceof Error ? error : undefined);
+            this.logger.error(
+                'Failed to clear StatusBar',
+                error instanceof Error ? error : undefined
+            );
         }
     }
 
@@ -268,9 +276,12 @@ export class StatusBarManager implements IDisposable {
                     this.statusBarItem.parentNode.removeChild(this.statusBarItem);
                 }
             } catch (error) {
-                this.logger.error('Error removing StatusBar item', error instanceof Error ? error : undefined);
+                this.logger.error(
+                    'Error removing StatusBar item',
+                    error instanceof Error ? error : undefined
+                );
             }
-            
+
             this.statusBarItem = null;
         }
 

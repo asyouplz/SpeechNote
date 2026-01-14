@@ -18,19 +18,19 @@ export class MockFactory {
                 modify: jest.fn(),
                 delete: jest.fn(),
                 rename: jest.fn(),
-                getAbstractFileByPath: jest.fn()
+                getAbstractFileByPath: jest.fn(),
             } as any,
             workspace: {
                 getActiveViewOfType: jest.fn(),
                 openLinkText: jest.fn(),
                 onLayoutReady: jest.fn((callback) => callback()),
                 layoutReady: true,
-                activeLeaf: null as any
+                activeLeaf: null as any,
             } as any,
             metadataCache: {
                 getFileCache: jest.fn(),
-                getCache: jest.fn()
-            } as any
+                getCache: jest.fn(),
+            } as any,
         };
     }
 
@@ -45,12 +45,12 @@ export class MockFactory {
             addSettingTab: jest.fn(),
             addStatusBarItem: jest.fn().mockReturnValue({
                 setText: jest.fn(),
-                remove: jest.fn()
+                remove: jest.fn(),
             }),
             loadData: jest.fn().mockResolvedValue({}),
             saveData: jest.fn().mockResolvedValue(undefined),
             registerEvent: jest.fn(),
-            registerInterval: jest.fn()
+            registerInterval: jest.fn(),
         };
     }
 
@@ -78,7 +78,7 @@ export class MockFactory {
             getCursor: jest.fn().mockReturnValue({ line: 0, ch: 0 }),
             setCursor: jest.fn(),
             getSelection: jest.fn().mockReturnValue(''),
-            somethingSelected: jest.fn().mockReturnValue(false)
+            somethingSelected: jest.fn().mockReturnValue(false),
         };
     }
 }
@@ -104,7 +104,7 @@ export class TestEnvironment {
         // 의존성 등록
         this.container.registerInstance('App', this.mockApp);
         this.container.registerInstance('Plugin', this.mockPlugin);
-        
+
         // 기본 서비스 모의 객체 등록
         this.registerMockServices();
     }
@@ -118,7 +118,7 @@ export class TestEnvironment {
             debug: jest.fn(),
             info: jest.fn(),
             warn: jest.fn(),
-            error: jest.fn()
+            error: jest.fn(),
         }));
 
         // StateManager 모의 객체
@@ -126,7 +126,7 @@ export class TestEnvironment {
             getState: jest.fn().mockReturnValue({ status: 'idle' }),
             setState: jest.fn(),
             subscribe: jest.fn().mockReturnValue(() => undefined),
-            reset: jest.fn()
+            reset: jest.fn(),
         }));
 
         // EventManager 모의 객체
@@ -134,7 +134,7 @@ export class TestEnvironment {
             emit: jest.fn(),
             on: jest.fn(),
             off: jest.fn(),
-            removeAllListeners: jest.fn()
+            removeAllListeners: jest.fn(),
         }));
     }
 
@@ -175,18 +175,14 @@ export class TestHelpers {
     /**
      * 비동기 작업 대기
      */
-    static async waitFor(
-        condition: () => boolean,
-        timeout = 5000,
-        interval = 100
-    ): Promise<void> {
+    static async waitFor(condition: () => boolean, timeout = 5000, interval = 100): Promise<void> {
         const startTime = Date.now();
-        
+
         while (!condition()) {
             if (Date.now() - startTime > timeout) {
                 throw new Error('Timeout waiting for condition');
             }
-            await new Promise(resolve => setTimeout(resolve, interval));
+            await new Promise((resolve) => setTimeout(resolve, interval));
         }
     }
 
@@ -215,18 +211,17 @@ export class TestHelpers {
     /**
      * 에러 발생 확인
      */
-    static async expectError(
-        fn: () => Promise<unknown>,
-        errorMessage?: string
-    ): Promise<void> {
+    static async expectError(fn: () => Promise<unknown>, errorMessage?: string): Promise<void> {
         let errorThrown = false;
-        
+
         try {
             await fn();
         } catch (error) {
             errorThrown = true;
             if (error instanceof Error && errorMessage && !error.message.includes(errorMessage)) {
-                throw new Error(`Expected error message to include "${errorMessage}", but got: ${error.message}`);
+                throw new Error(
+                    `Expected error message to include "${errorMessage}", but got: ${error.message}`
+                );
             }
         }
 
@@ -245,7 +240,7 @@ export class TestHelpers {
         return states.reduce(async (promise, state) => {
             await promise;
             if (state.delay) {
-                await new Promise(resolve => setTimeout(resolve, state.delay));
+                await new Promise((resolve) => setTimeout(resolve, state.delay));
             }
             stateManager.setState({ status: state.status });
         }, Promise.resolve());
@@ -289,10 +284,7 @@ export class IntegrationTestUtils {
         const env = new TestEnvironment();
         await env.setup();
 
-        const component = new componentClass(
-            env.getMockApp(),
-            env.getMockPlugin()
-        );
+        const component = new componentClass(env.getMockApp(), env.getMockPlugin());
 
         if (setupFn) {
             setupFn(component);

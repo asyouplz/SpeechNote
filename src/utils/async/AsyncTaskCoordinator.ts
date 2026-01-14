@@ -6,12 +6,7 @@
  * - 우선순위 큐
  */
 
-import { 
-    CancellablePromise, 
-    Semaphore,
-    withTimeout,
-    retryAsync
-} from './AsyncManager';
+import { CancellablePromise, Semaphore, withTimeout, retryAsync } from './AsyncManager';
 import { EventEmitter } from 'events';
 
 /**
@@ -34,7 +29,7 @@ export enum TaskStatus {
     RUNNING = 'running',
     COMPLETED = 'completed',
     FAILED = 'failed',
-    CANCELLED = 'cancelled'
+    CANCELLED = 'cancelled',
 }
 
 /**
@@ -74,7 +69,7 @@ export class ProgressReporter extends EventEmitter {
             taskId: this.taskId,
             progress: this.progress,
             message: this.message,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -83,7 +78,7 @@ export class ProgressReporter extends EventEmitter {
      */
     updateSubTask(subTaskId: string, progress: number): void {
         this.subTasks.set(subTaskId, progress);
-        
+
         // Calculate overall progress
         if (this.subTasks.size > 0) {
             const total = Array.from(this.subTasks.values()).reduce((a, b) => a + b, 0);
@@ -100,7 +95,7 @@ export class ProgressReporter extends EventEmitter {
         this.emit('message', {
             taskId: this.taskId,
             message: this.message,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 
@@ -118,7 +113,7 @@ export class ProgressReporter extends EventEmitter {
         this.update(100, 'Completed');
         this.emit('complete', {
             taskId: this.taskId,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
     }
 }
@@ -148,7 +143,7 @@ export class CancellationToken {
         this.reason = reason;
 
         // Execute callbacks
-        this.callbacks.forEach(callback => {
+        this.callbacks.forEach((callback) => {
             try {
                 callback();
             } catch (error) {
@@ -246,7 +241,7 @@ class AsyncTask<T> {
 
                         // Execute task with retry logic
                         let result: T;
-                        
+
                         if (this.options.retryCount && this.options.retryCount > 0) {
                             result = await retryAsync(
                                 () => this.executeTask(progressReporter, cancellationToken),
@@ -256,7 +251,7 @@ class AsyncTask<T> {
                                     shouldRetry: (error) => {
                                         // Don't retry on cancellation
                                         return !(error instanceof CancellationError);
-                                    }
+                                    },
                                 }
                             );
                         } else {
@@ -266,7 +261,6 @@ class AsyncTask<T> {
                         // Cleanup
                         unsubscribe();
                         resolve(result);
-
                     } catch (error) {
                         reject(error);
                     }
@@ -275,7 +269,7 @@ class AsyncTask<T> {
 
             // Apply timeout if specified
             let promise: Promise<T> = this.cancellablePromise as unknown as Promise<T>;
-            
+
             if (this.options.timeout) {
                 promise = withTimeout(
                     promise,
@@ -290,7 +284,6 @@ class AsyncTask<T> {
             progressReporter.complete();
 
             return this.result;
-
         } catch (error) {
             if (error instanceof CancellationError) {
                 this.status = TaskStatus.CANCELLED;
@@ -299,7 +292,6 @@ class AsyncTask<T> {
                 this.error = error as Error;
             }
             throw error;
-
         } finally {
             this.endTime = Date.now();
         }
@@ -341,10 +333,8 @@ class AsyncTask<T> {
             status: this.status,
             result: this.result,
             error: this.error,
-            duration: this.endTime && this.startTime
-                ? this.endTime - this.startTime
-                : undefined,
-            metadata: this.options.metadata
+            duration: this.endTime && this.startTime ? this.endTime - this.startTime : undefined,
+            metadata: this.options.metadata,
         };
     }
 }
@@ -478,8 +468,10 @@ class PriorityQueue<T> {
 
             if (rightChildIndex < length) {
                 const rightChild = this.heap[rightChildIndex];
-                if (rightChild.priority > element.priority &&
-                    rightChild.priority > this.heap[leftChildIndex].priority) {
+                if (
+                    rightChild.priority > element.priority &&
+                    rightChild.priority > this.heap[leftChildIndex].priority
+                ) {
                     swap = rightChildIndex;
                 }
             }
@@ -542,7 +534,7 @@ export class AsyncTaskCoordinator extends EventEmitter {
             this.emit('taskStarted', {
                 taskId,
                 metadata: options.metadata,
-                timestamp: Date.now()
+                timestamp: Date.now(),
             });
 
             // Run task
@@ -553,11 +545,10 @@ export class AsyncTaskCoordinator extends EventEmitter {
             this.emit('taskCompleted', taskResult);
 
             return taskResult;
-
         } catch (error) {
             // Emit task failed/cancelled event
             const taskResult = task.getResult();
-            
+
             if (error instanceof CancellationError) {
                 this.emit('taskCancelled', taskResult);
             } else {
@@ -565,7 +556,6 @@ export class AsyncTaskCoordinator extends EventEmitter {
             }
 
             throw error;
-
         } finally {
             // Cleanup
             this.cleanup(taskId);
@@ -611,7 +601,7 @@ export class AsyncTaskCoordinator extends EventEmitter {
      */
     getAllTaskStatuses(): Map<string, TaskStatus> {
         const statuses = new Map<string, TaskStatus>();
-        
+
         this.tasks.forEach((task, id) => {
             statuses.set(id, task.getStatus());
         });
@@ -644,10 +634,10 @@ export class AsyncTaskCoordinator extends EventEmitter {
             completed: 0,
             failed: 0,
             cancelled: 0,
-            pending: 0
+            pending: 0,
         };
 
-        this.tasks.forEach(task => {
+        this.tasks.forEach((task) => {
             const status = task.getStatus();
             switch (status) {
                 case TaskStatus.RUNNING:
@@ -702,7 +692,7 @@ export class AsyncTaskCoordinator extends EventEmitter {
         // Remove references
         this.tasks.delete(taskId);
         this.cancellationTokens.delete(taskId);
-        
+
         // Remove progress reporter and its listeners
         const progressReporter = this.progressReporters.get(taskId);
         if (progressReporter) {

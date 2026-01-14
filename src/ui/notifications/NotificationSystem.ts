@@ -11,7 +11,13 @@ import { EventManager } from '../../application/EventManager';
 import { StatusIcon } from '../progress/LoadingIndicators';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
-export type NotificationPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
+export type NotificationPosition =
+    | 'top-right'
+    | 'top-left'
+    | 'bottom-right'
+    | 'bottom-left'
+    | 'top-center'
+    | 'bottom-center';
 
 export interface NotificationOptions {
     type: NotificationType;
@@ -49,7 +55,7 @@ export class ToastNotification {
     static setApp(app: App): void {
         this.app = app;
     }
-    
+
     /**
      * Toast 컨테이너 초기화
      */
@@ -58,11 +64,11 @@ export class ToastNotification {
             this.container = createEl('div', {
                 cls: `toast-container toast-container--${position}`,
                 attr: {
-                    'role': 'region',
+                    role: 'region',
                     'aria-label': '알림 영역',
                     'aria-live': 'polite',
-                    'aria-atomic': 'false'
-                }
+                    'aria-atomic': 'false',
+                },
             });
             document.body.appendChild(this.container);
         } else {
@@ -70,26 +76,26 @@ export class ToastNotification {
             this.container.className = `toast-container toast-container--${position}`;
         }
     }
-    
+
     /**
      * Toast 알림 표시
      */
     static show(options: NotificationOptions): string {
         const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const position = options.position || this.defaultPosition;
-        
+
         this.initContainer(position);
-        
+
         // Toast 요소 생성
         const toast = createEl('div', {
             cls: `toast toast--${options.type}`,
             attr: {
-                'role': 'alert',
+                role: 'alert',
                 'aria-live': options.type === 'error' ? 'assertive' : 'polite',
-                'id': id
-            }
+                id: id,
+            },
         });
-        
+
         // 아이콘
         if (options.icon !== false) {
             const iconContainer = createEl('div', { cls: 'toast__icon' });
@@ -97,7 +103,7 @@ export class ToastNotification {
             iconContainer.appendChild(statusIcon.create());
             toast.appendChild(iconContainer);
         }
-        
+
         // 콘텐츠
         const content = createEl('div', { cls: 'toast__content' });
 
@@ -108,26 +114,26 @@ export class ToastNotification {
 
         const message = createEl('div', { cls: 'toast__message', text: options.message });
         content.appendChild(message);
-        
+
         // 진행률 바
         if (options.progress !== undefined) {
             const progressBar = createEl('div', { cls: 'toast__progress' });
             const progressFill = createEl('div', {
                 cls: 'toast__progress-fill',
-                attr: { 'style': `--sn-progress-width:${options.progress}%` }
+                attr: { style: `--sn-progress-width:${options.progress}%` },
             });
             progressBar.appendChild(progressFill);
             content.appendChild(progressBar);
         }
-        
+
         // 액션 버튼
         if (options.actions && options.actions.length > 0) {
             const actions = createEl('div', { cls: 'toast__actions' });
 
-            options.actions.forEach(action => {
+            options.actions.forEach((action) => {
                 const button = createEl('button', {
                     cls: `toast__action toast__action--${action.style || 'link'}`,
-                    text: action.label
+                    text: action.label,
                 });
                 button.addEventListener('click', () => {
                     action.callback();
@@ -138,93 +144,93 @@ export class ToastNotification {
 
             content.appendChild(actions);
         }
-        
+
         toast.appendChild(content);
-        
+
         // 닫기 버튼
         if (options.closable !== false) {
             const closeBtn = createEl('button', {
                 cls: 'toast__close',
                 text: '×',
-                attr: { 'aria-label': '알림 닫기' }
+                attr: { 'aria-label': '알림 닫기' },
             });
             closeBtn.addEventListener('click', () => this.dismiss(id));
             toast.appendChild(closeBtn);
         }
-        
+
         // 컨테이너에 추가
         this.container?.appendChild(toast);
         this.notifications.set(id, toast);
-        
+
         // 애니메이션
         requestAnimationFrame(() => {
             toast.classList.add('toast--show');
         });
-        
+
         // 사운드 재생
         if (options.sound && this.soundEnabled) {
             this.playSound(options.type);
         }
-        
+
         // 자동 닫기
         if (options.duration !== 0) {
             const duration = options.duration || this.getDefaultDuration(options.type);
             setTimeout(() => this.dismiss(id), duration);
         }
-        
+
         // 영구 저장
         if (options.persistent) {
             this.saveToStorage(id, options);
         }
-        
+
         return id;
     }
-    
+
     /**
      * Toast 알림 닫기
      */
     static dismiss(id: string) {
         const toast = this.notifications.get(id);
         if (!toast) return;
-        
+
         toast.classList.remove('toast--show');
         toast.classList.add('toast--hide');
-        
+
         setTimeout(() => {
             toast.remove();
             this.notifications.delete(id);
-            
+
             // 컨테이너가 비었으면 제거
             if (this.notifications.size === 0 && this.container) {
                 this.container.remove();
                 this.container = null;
             }
         }, 300);
-        
+
         // 저장소에서 제거
         this.removeFromStorage(id);
     }
-    
+
     /**
      * 모든 Toast 알림 닫기
      */
     static dismissAll() {
         this.notifications.forEach((_, id) => this.dismiss(id));
     }
-    
+
     /**
      * 진행률 업데이트
      */
     static updateProgress(id: string, progress: number) {
         const toast = this.notifications.get(id);
         if (!toast) return;
-        
+
         const progressFill = toast.querySelector('.toast__progress-fill');
         if (progressFill instanceof HTMLElement) {
             progressFill.setAttribute('style', `--sn-progress-width:${progress}%`);
         }
     }
-    
+
     /**
      * 기본 지속 시간 가져오기
      */
@@ -233,30 +239,32 @@ export class ToastNotification {
             success: 3000,
             info: 4000,
             warning: 5000,
-            error: 6000
+            error: 6000,
         };
         return durations[type];
     }
-    
+
     /**
      * 사운드 재생
      */
     private static playSound(type: NotificationType) {
         const audio = new Audio();
         const sounds = {
-            success: 'data:audio/wav;base64,UklGRu4CAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YcoCAAA=',
+            success:
+                'data:audio/wav;base64,UklGRu4CAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YcoCAAA=',
             error: 'data:audio/wav;base64,UklGRvICAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0Yc4CAAA=',
-            warning: 'data:audio/wav;base64,UklGRuwCAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YcgCAAA=',
-            info: 'data:audio/wav;base64,UklGRuYCAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YcICAAA='
+            warning:
+                'data:audio/wav;base64,UklGRuwCAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YcgCAAA=',
+            info: 'data:audio/wav;base64,UklGRuYCAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YcICAAA=',
         };
-        
+
         audio.src = sounds[type];
         audio.volume = 0.3;
         audio.play().catch(() => {
             // 사운드 재생 실패 무시
         });
     }
-    
+
     /**
      * 영구 저장
      */
@@ -291,14 +299,14 @@ export class ToastNotification {
             console.error('Failed to remove notification:', e);
         }
     }
-    
+
     /**
      * 사운드 설정
      */
     static setSoundEnabled(enabled: boolean) {
         this.soundEnabled = enabled;
     }
-    
+
     /**
      * 기본 위치 설정
      */
@@ -313,7 +321,7 @@ export class ToastNotification {
 export class ModalNotification {
     private static activeModal: HTMLElement | null = null;
     private static overlay: HTMLElement | null = null;
-    
+
     /**
      * 모달 알림 표시
      */
@@ -323,7 +331,7 @@ export class ModalNotification {
             if (this.activeModal) {
                 this.dismiss();
             }
-            
+
             // 오버레이 생성
             this.overlay = createEl('div', { cls: 'modal-overlay' });
             this.overlay.addEventListener('click', () => {
@@ -337,13 +345,13 @@ export class ModalNotification {
             this.activeModal = createEl('div', {
                 cls: `modal-notification modal-notification--${options.type}`,
                 attr: {
-                    'role': 'alertdialog',
+                    role: 'alertdialog',
                     'aria-modal': 'true',
                     'aria-labelledby': 'modal-title',
-                    'aria-describedby': 'modal-message'
-                }
+                    'aria-describedby': 'modal-message',
+                },
             });
-            
+
             // 헤더
             const header = createEl('div', { cls: 'modal-notification__header' });
 
@@ -356,7 +364,7 @@ export class ModalNotification {
                 const title = createEl('h2', {
                     cls: 'modal-notification__title',
                     text: options.title,
-                    attr: { 'id': 'modal-title' }
+                    attr: { id: 'modal-title' },
                 });
                 header.appendChild(title);
             }
@@ -365,7 +373,7 @@ export class ModalNotification {
                 const closeBtn = createEl('button', {
                     cls: 'modal-notification__close',
                     text: '×',
-                    attr: { 'aria-label': '닫기' }
+                    attr: { 'aria-label': '닫기' },
                 });
                 closeBtn.addEventListener('click', () => {
                     this.dismiss();
@@ -375,23 +383,25 @@ export class ModalNotification {
             }
 
             this.activeModal.appendChild(header);
-            
+
             // 본문
             const body = createEl('div', {
                 cls: 'modal-notification__body',
                 text: options.message,
-                attr: { 'id': 'modal-message' }
+                attr: { id: 'modal-message' },
             });
             this.activeModal.appendChild(body);
-            
+
             // 액션 버튼
             if (options.actions && options.actions.length > 0) {
                 const footer = createEl('div', { cls: 'modal-notification__footer' });
 
-                options.actions.forEach(action => {
+                options.actions.forEach((action) => {
                     const button = createEl('button', {
-                        cls: `modal-notification__action modal-notification__action--${action.style || 'secondary'}`,
-                        text: action.label
+                        cls: `modal-notification__action modal-notification__action--${
+                            action.style || 'secondary'
+                        }`,
+                        text: action.label,
                     });
                     button.addEventListener('click', () => {
                         action.callback();
@@ -403,28 +413,28 @@ export class ModalNotification {
 
                 this.activeModal.appendChild(footer);
             }
-            
+
             // DOM에 추가
             document.body.appendChild(this.overlay);
             document.body.appendChild(this.activeModal);
-            
+
             // 포커스 설정
             const firstButton = this.activeModal.querySelector('button');
             if (firstButton instanceof HTMLElement) {
                 firstButton.focus();
             }
-            
+
             // 애니메이션
             requestAnimationFrame(() => {
                 this.overlay?.classList.add('modal-overlay--show');
                 this.activeModal?.classList.add('modal-notification--show');
             });
-            
+
             // 사운드 재생
             if (options.sound) {
                 ToastNotification['playSound'](options.type);
             }
-            
+
             // ESC 키 처리
             const handleEscape = (e: KeyboardEvent) => {
                 if (e.key === 'Escape' && options.closable !== false) {
@@ -436,16 +446,16 @@ export class ModalNotification {
             document.addEventListener('keydown', handleEscape);
         });
     }
-    
+
     /**
      * 모달 닫기
      */
     static dismiss() {
         if (!this.activeModal || !this.overlay) return;
-        
+
         this.activeModal.classList.remove('modal-notification--show');
         this.overlay.classList.remove('modal-overlay--show');
-        
+
         setTimeout(() => {
             this.activeModal?.remove();
             this.overlay?.remove();
@@ -462,7 +472,7 @@ export class StatusBarNotification {
     private static container: HTMLElement | null = null;
     private static currentNotification: HTMLElement | null = null;
     private static hideTimeout: number | null = null;
-    
+
     /**
      * 상태바 컨테이너 초기화
      */
@@ -471,35 +481,35 @@ export class StatusBarNotification {
             this.container = createEl('div', {
                 cls: 'statusbar-notification',
                 attr: {
-                    'role': 'status',
-                    'aria-live': 'polite'
-                }
+                    role: 'status',
+                    'aria-live': 'polite',
+                },
             });
             document.body.appendChild(this.container);
         }
     }
-    
+
     /**
      * 상태바 알림 표시
      */
     static show(options: NotificationOptions) {
         this.initContainer();
-        
+
         // 기존 알림 제거
         if (this.currentNotification) {
             this.currentNotification.remove();
         }
-        
+
         // 타임아웃 취소
         if (this.hideTimeout) {
             clearTimeout(this.hideTimeout);
         }
-        
+
         // 알림 생성
         this.currentNotification = createEl('div', {
-            cls: `statusbar-notification__content statusbar-notification__content--${options.type}`
+            cls: `statusbar-notification__content statusbar-notification__content--${options.type}`,
         });
-        
+
         // 아이콘
         if (options.icon !== false) {
             const iconContainer = createEl('span', { cls: 'statusbar-notification__icon' });
@@ -511,16 +521,16 @@ export class StatusBarNotification {
         // 메시지
         const message = createEl('span', {
             cls: 'statusbar-notification__message',
-            text: options.message
+            text: options.message,
         });
         this.currentNotification.appendChild(message);
-        
+
         // 액션
         if (options.actions && options.actions.length > 0) {
             const action = options.actions[0]; // 상태바는 하나의 액션만 지원
             const button = createEl('button', {
                 cls: 'statusbar-notification__action',
-                text: action.label
+                text: action.label,
             });
             button.addEventListener('click', () => {
                 action.callback();
@@ -534,40 +544,40 @@ export class StatusBarNotification {
             const closeBtn = createEl('button', {
                 cls: 'statusbar-notification__close',
                 text: '×',
-                attr: { 'aria-label': '닫기' }
+                attr: { 'aria-label': '닫기' },
             });
             closeBtn.addEventListener('click', () => this.hide());
             this.currentNotification.appendChild(closeBtn);
         }
-        
+
         // 컨테이너에 추가
         this.container?.appendChild(this.currentNotification);
-        
+
         // 애니메이션
         requestAnimationFrame(() => {
             this.container?.classList.add('statusbar-notification--show');
         });
-        
+
         // 자동 숨기기
         if (options.duration !== 0) {
             const duration = options.duration || 5000;
             this.hideTimeout = window.setTimeout(() => this.hide(), duration);
         }
     }
-    
+
     /**
      * 상태바 알림 숨기기
      */
     static hide() {
         if (!this.container) return;
-        
+
         this.container.classList.remove('statusbar-notification--show');
-        
+
         setTimeout(() => {
             this.currentNotification?.remove();
             this.currentNotification = null;
         }, 300);
-        
+
         if (this.hideTimeout) {
             clearTimeout(this.hideTimeout);
             this.hideTimeout = null;
@@ -580,16 +590,16 @@ export class StatusBarNotification {
  */
 export class NotificationManager {
     private static eventManager = EventManager.getInstance();
-    
+
     /**
      * 알림 표시
      */
     static notify(options: NotificationOptions & { method?: 'toast' | 'modal' | 'statusbar' }) {
         const method = options.method || 'toast';
-        
+
         // 이벤트 발생
         this.eventManager.emit('notification:show', { method, options });
-        
+
         switch (method) {
             case 'modal':
                 return ModalNotification.show(options);
@@ -601,7 +611,7 @@ export class NotificationManager {
                 return ToastNotification.show(options);
         }
     }
-    
+
     /**
      * 성공 알림
      */
@@ -609,10 +619,10 @@ export class NotificationManager {
         return this.notify({
             type: 'success',
             message,
-            ...options
+            ...options,
         });
     }
-    
+
     /**
      * 오류 알림
      */
@@ -620,10 +630,10 @@ export class NotificationManager {
         return this.notify({
             type: 'error',
             message,
-            ...options
+            ...options,
         });
     }
-    
+
     /**
      * 경고 알림
      */
@@ -631,10 +641,10 @@ export class NotificationManager {
         return this.notify({
             type: 'warning',
             message,
-            ...options
+            ...options,
         });
     }
-    
+
     /**
      * 정보 알림
      */
@@ -642,10 +652,10 @@ export class NotificationManager {
         return this.notify({
             type: 'info',
             message,
-            ...options
+            ...options,
         });
     }
-    
+
     /**
      * 확인 대화상자
      */
@@ -656,8 +666,8 @@ export class NotificationManager {
             message,
             actions: [
                 { label: '취소', callback: () => {}, style: 'secondary' },
-                { label: '확인', callback: () => {}, style: 'primary' }
-            ]
+                { label: '확인', callback: () => {}, style: 'primary' },
+            ],
         });
     }
 }

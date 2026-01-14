@@ -1,6 +1,6 @@
 /**
  * 원형 진행률 표시 컴포넌트
- * 
+ *
  * SVG 기반의 원형 진행률 표시기를 제공합니다.
  */
 
@@ -37,27 +37,30 @@ export class CircularProgress {
             animated: true,
             animationDuration: 500,
             clockwise: true,
-            ...options
+            ...options,
         };
-        
+
         this.currentProgress = this.options.progress;
     }
 
     create(container: HTMLElement): HTMLElement {
         this.element = createEl('div', { cls: 'circular-progress' });
         this.element.style.setProperty('--cp-size', `${this.options.size}px`);
-        this.element.style.setProperty('--cp-animation-duration', `${this.options.animationDuration}ms`);
-        
+        this.element.style.setProperty(
+            '--cp-animation-duration',
+            `${this.options.animationDuration}ms`
+        );
+
         // SVG 생성
         this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.svg.setAttribute('width', String(this.options.size));
         this.svg.setAttribute('height', String(this.options.size));
         this.svg.setAttribute('viewBox', `0 0 ${this.options.size} ${this.options.size}`);
-        
+
         const center = this.options.size / 2;
         const radius = center - this.options.strokeWidth / 2;
         const circumference = 2 * Math.PI * radius;
-        
+
         // 배경 원
         this.backgroundCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         this.backgroundCircle.setAttribute('cx', String(center));
@@ -66,7 +69,7 @@ export class CircularProgress {
         this.backgroundCircle.setAttribute('fill', 'none');
         this.backgroundCircle.setAttribute('stroke', this.options.backgroundColor);
         this.backgroundCircle.setAttribute('stroke-width', String(this.options.strokeWidth));
-        
+
         // 진행률 원
         this.progressCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         this.progressCircle.setAttribute('cx', String(center));
@@ -77,24 +80,27 @@ export class CircularProgress {
         this.progressCircle.setAttribute('stroke-width', String(this.options.strokeWidth));
         this.progressCircle.setAttribute('stroke-linecap', 'round');
         this.progressCircle.setAttribute('stroke-dasharray', String(circumference));
-        
+
         // 회전 방향 설정
         if (this.options.clockwise) {
             this.progressCircle.setAttribute('transform', `rotate(-90 ${center} ${center})`);
         } else {
-            this.progressCircle.setAttribute('transform', `rotate(90 ${center} ${center}) scale(1, -1)`);
+            this.progressCircle.setAttribute(
+                'transform',
+                `rotate(90 ${center} ${center}) scale(1, -1)`
+            );
         }
-        
+
         // 초기 진행률 설정
         const offset = circumference - (this.currentProgress / 100) * circumference;
         this.progressCircle.setAttribute('stroke-dashoffset', String(offset));
-        
+
         // 애니메이션 설정
         this.progressCircle.classList.add('circular-progress__circle');
-        
+
         this.svg.appendChild(this.backgroundCircle);
         this.svg.appendChild(this.progressCircle);
-        
+
         // 퍼센트 텍스트
         if (this.options.showPercentage) {
             this.percentageText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -107,17 +113,17 @@ export class CircularProgress {
             this.percentageText.textContent = `${Math.round(this.currentProgress)}%`;
             this.svg.appendChild(this.percentageText);
         }
-        
+
         this.element.appendChild(this.svg);
-        
+
         // ARIA 속성
         this.element.setAttribute('role', 'progressbar');
         this.element.setAttribute('aria-valuenow', String(this.currentProgress));
         this.element.setAttribute('aria-valuemin', '0');
         this.element.setAttribute('aria-valuemax', '100');
-        
+
         container.appendChild(this.element);
-        
+
         return this.element;
     }
 
@@ -126,9 +132,9 @@ export class CircularProgress {
      */
     updateProgress(progress: number, animate = true): void {
         if (!this.progressCircle) return;
-        
+
         const clampedProgress = Math.min(100, Math.max(0, progress));
-        
+
         if (animate && this.options.animated) {
             this.animateProgress(clampedProgress);
         } else {
@@ -141,20 +147,20 @@ export class CircularProgress {
      */
     private setProgressImmediate(progress: number): void {
         if (!this.progressCircle) return;
-        
+
         this.currentProgress = progress;
-        
+
         const center = this.options.size / 2;
         const radius = center - this.options.strokeWidth / 2;
         const circumference = 2 * Math.PI * radius;
         const offset = circumference - (progress / 100) * circumference;
-        
+
         this.progressCircle.setAttribute('stroke-dashoffset', String(offset));
-        
+
         if (this.percentageText) {
             this.percentageText.textContent = `${Math.round(progress)}%`;
         }
-        
+
         if (this.element) {
             this.element.setAttribute('aria-valuenow', String(progress));
         }
@@ -167,26 +173,26 @@ export class CircularProgress {
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
-        
+
         const startProgress = this.currentProgress;
         const startTime = performance.now();
         const duration = this.options.animationDuration;
-        
+
         const animate = (currentTime: number) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
+
             // Easing function
             const eased = this.easeInOutQuad(progress);
-            
+
             const currentValue = startProgress + (targetProgress - startProgress) * eased;
             this.setProgressImmediate(currentValue);
-            
+
             if (progress < 1) {
                 this.animationFrame = requestAnimationFrame(animate);
             }
         };
-        
+
         this.animationFrame = requestAnimationFrame(animate);
     }
 
@@ -222,7 +228,7 @@ export class CircularProgress {
      */
     togglePercentage(show: boolean): void {
         this.options.showPercentage = show;
-        
+
         if (this.percentageText) {
             this.percentageText.classList.toggle('sn-hidden', !show);
         }
@@ -242,7 +248,7 @@ export class CircularProgress {
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
-        
+
         this.element?.remove();
         this.element = null;
         this.svg = null;
@@ -259,18 +265,21 @@ export class SemiCircularProgress extends CircularProgress {
     create(container: HTMLElement): HTMLElement {
         this.element = createEl('div', { cls: 'semi-circular-progress' });
         this.element.style.setProperty('--cp-size', `${this.options.size}px`);
-        this.element.style.setProperty('--cp-animation-duration', `${this.options.animationDuration}ms`);
-        
+        this.element.style.setProperty(
+            '--cp-animation-duration',
+            `${this.options.animationDuration}ms`
+        );
+
         // SVG 생성
         this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.svg.setAttribute('width', String(this.options.size));
         this.svg.setAttribute('height', String(this.options.size / 2));
         this.svg.setAttribute('viewBox', `0 0 ${this.options.size} ${this.options.size / 2}`);
-        
+
         const center = this.options.size / 2;
         const radius = center - this.options.strokeWidth / 2;
         const circumference = Math.PI * radius; // 반원이므로 PI * r
-        
+
         // 배경 반원
         this.backgroundCircle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         const backgroundPath = this.describeArc(center, center, radius, 0, 180);
@@ -278,7 +287,7 @@ export class SemiCircularProgress extends CircularProgress {
         this.backgroundCircle.setAttribute('fill', 'none');
         this.backgroundCircle.setAttribute('stroke', this.options.backgroundColor);
         this.backgroundCircle.setAttribute('stroke-width', String(this.options.strokeWidth));
-        
+
         // 진행률 반원
         this.progressCircle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         this.progressCircle.setAttribute('d', backgroundPath);
@@ -288,17 +297,17 @@ export class SemiCircularProgress extends CircularProgress {
         this.progressCircle.setAttribute('stroke-linecap', 'round');
         this.progressCircle.setAttribute('stroke-dasharray', String(circumference));
         this.progressCircle.classList.add('semi-circular-progress__circle');
-        
+
         // 초기 진행률 설정
         const offset = circumference - (this.currentProgress / 100) * circumference;
         this.progressCircle.setAttribute('stroke-dashoffset', String(offset));
-        
+
         // 애니메이션 설정
         // 애니메이션은 CSS 변수 기반 전환을 사용
-        
+
         this.svg.appendChild(this.backgroundCircle);
         this.svg.appendChild(this.progressCircle);
-        
+
         // 퍼센트 텍스트
         if (this.options.showPercentage) {
             this.percentageText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -310,43 +319,53 @@ export class SemiCircularProgress extends CircularProgress {
             this.percentageText.textContent = `${Math.round(this.currentProgress)}%`;
             this.svg.appendChild(this.percentageText);
         }
-        
+
         this.element.appendChild(this.svg);
-        
+
         // ARIA 속성
         this.element.setAttribute('role', 'progressbar');
         this.element.setAttribute('aria-valuenow', String(this.currentProgress));
         this.element.setAttribute('aria-valuemin', '0');
         this.element.setAttribute('aria-valuemax', '100');
-        
+
         container.appendChild(this.element);
-        
+
         return this.element;
     }
 
     /**
      * 호 경로 생성
      */
-    private describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number): string {
+    private describeArc(
+        x: number,
+        y: number,
+        radius: number,
+        startAngle: number,
+        endAngle: number
+    ): string {
         const start = this.polarToCartesian(x, y, radius, endAngle);
         const end = this.polarToCartesian(x, y, radius, startAngle);
         const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
-        
-        return [
-            'M', start.x, start.y,
-            'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y
-        ].join(' ');
+
+        return ['M', start.x, start.y, 'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(
+            ' '
+        );
     }
 
     /**
      * 극좌표를 직교좌표로 변환
      */
-    private polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number): { x: number; y: number } {
-        const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-        
+    private polarToCartesian(
+        centerX: number,
+        centerY: number,
+        radius: number,
+        angleInDegrees: number
+    ): { x: number; y: number } {
+        const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+
         return {
-            x: centerX + (radius * Math.cos(angleInRadians)),
-            y: centerY + (radius * Math.sin(angleInRadians))
+            x: centerX + radius * Math.cos(angleInRadians),
+            y: centerY + radius * Math.sin(angleInRadians),
         };
     }
 }

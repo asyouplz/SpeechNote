@@ -1,6 +1,6 @@
 /**
  * MemoryCache - Phase 4 Performance Optimization
- * 
+ *
  * LRU (Least Recently Used) 캐시 구현
  * - 메모리 효율적인 캐싱
  * - TTL (Time To Live) 지원
@@ -15,9 +15,9 @@ export interface CacheEntry<T> {
 }
 
 export interface CacheOptions {
-    maxSize?: number;       // 최대 항목 수
-    maxMemory?: number;     // 최대 메모리 (bytes)
-    ttl?: number;          // Time To Live (ms)
+    maxSize?: number; // 최대 항목 수
+    maxMemory?: number; // 최대 메모리 (bytes)
+    ttl?: number; // Time To Live (ms)
     onEvict?: <T>(key: string, value: CacheEntry<T>) => void;
 }
 
@@ -39,9 +39,9 @@ export class MemoryCache<T = any> {
         evictions: 0,
         size: 0,
         memoryUsage: 0,
-        hitRate: 0
+        hitRate: 0,
     };
-    
+
     private readonly maxSize: number;
     private readonly maxMemory: number;
     private readonly ttl: number;
@@ -53,7 +53,7 @@ export class MemoryCache<T = any> {
         this.maxMemory = options.maxMemory || 10 * 1024 * 1024; // 10MB
         this.ttl = options.ttl || 5 * 60 * 1000; // 5분
         this.onEvict = options.onEvict;
-        
+
         // 주기적인 만료 항목 정리
         this.startCleanup();
     }
@@ -63,7 +63,7 @@ export class MemoryCache<T = any> {
      */
     get(key: string): T | undefined {
         const entry = this.cache.get(key);
-        
+
         if (!entry) {
             this.stats.misses++;
             this.updateHitRate();
@@ -81,10 +81,10 @@ export class MemoryCache<T = any> {
         // LRU 업데이트
         this.updateAccessOrder(key);
         entry.accessCount++;
-        
+
         this.stats.hits++;
         this.updateHitRate();
-        
+
         return entry.data;
     }
 
@@ -93,7 +93,7 @@ export class MemoryCache<T = any> {
      */
     set(key: string, data: T, _ttl?: number): void {
         const size = this.estimateSize(data);
-        
+
         // 메모리 제한 체크
         if (size > this.maxMemory) {
             console.warn(`Cache entry too large: ${key} (${size} bytes)`);
@@ -113,7 +113,7 @@ export class MemoryCache<T = any> {
             data,
             timestamp: Date.now(),
             accessCount: 0,
-            size
+            size,
         };
 
         this.cache.set(key, entry);
@@ -130,8 +130,8 @@ export class MemoryCache<T = any> {
         if (!entry) return false;
 
         this.cache.delete(key);
-        this.accessOrder = this.accessOrder.filter(k => k !== key);
-        
+        this.accessOrder = this.accessOrder.filter((k) => k !== key);
+
         this.stats.size--;
         this.stats.memoryUsage -= entry.size || 0;
 
@@ -154,7 +154,7 @@ export class MemoryCache<T = any> {
             evictions: 0,
             size: 0,
             memoryUsage: 0,
-            hitRate: 0
+            hitRate: 0,
         };
     }
 
@@ -163,9 +163,8 @@ export class MemoryCache<T = any> {
      */
     invalidate(pattern: string | RegExp): number {
         let count = 0;
-        const regex = typeof pattern === 'string' 
-            ? new RegExp(pattern.replace(/\*/g, '.*'))
-            : pattern;
+        const regex =
+            typeof pattern === 'string' ? new RegExp(pattern.replace(/\*/g, '.*')) : pattern;
 
         for (const key of this.cache.keys()) {
             if (regex.test(key)) {
@@ -183,12 +182,12 @@ export class MemoryCache<T = any> {
     has(key: string): boolean {
         const entry = this.cache.get(key);
         if (!entry) return false;
-        
+
         if (this.isExpired(entry)) {
             this.delete(key);
             return false;
         }
-        
+
         return true;
     }
 
@@ -211,14 +210,14 @@ export class MemoryCache<T = any> {
      */
     dump(): Record<string, any> {
         const entries: Record<string, any> = {};
-        
+
         for (const [key, entry] of this.cache.entries()) {
             entries[key] = {
                 timestamp: entry.timestamp,
                 accessCount: entry.accessCount,
                 size: entry.size,
                 age: Date.now() - entry.timestamp,
-                data: entry.data
+                data: entry.data,
             };
         }
 
@@ -228,8 +227,8 @@ export class MemoryCache<T = any> {
             config: {
                 maxSize: this.maxSize,
                 maxMemory: this.maxMemory,
-                ttl: this.ttl
-            }
+                ttl: this.ttl,
+            },
         };
     }
 
@@ -329,38 +328,35 @@ export class MemoryCache<T = any> {
 export const globalCache = new MemoryCache({
     maxSize: 200,
     maxMemory: 20 * 1024 * 1024, // 20MB
-    ttl: 10 * 60 * 1000 // 10분
+    ttl: 10 * 60 * 1000, // 10분
 });
 
 /**
  * 캐시 데코레이터
  */
 export function Cacheable(options: { ttl?: number; key?: string } = {}) {
-    return function (
-        target: any,
-        propertyName: string,
-        descriptor: PropertyDescriptor
-    ) {
+    return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
         const originalMethod = descriptor.value;
-        
+
         descriptor.value = async function (...args: any[]) {
-            const cacheKey = options.key || `${target.constructor.name}.${propertyName}:${JSON.stringify(args)}`;
-            
+            const cacheKey =
+                options.key || `${target.constructor.name}.${propertyName}:${JSON.stringify(args)}`;
+
             // 캐시 확인
             const cached = globalCache.get(cacheKey);
             if (cached !== undefined) {
                 return cached;
             }
-            
+
             // 원본 메서드 실행
             const result = await originalMethod.apply(this, args);
-            
+
             // 결과 캐싱
             globalCache.set(cacheKey, result, options.ttl);
-            
+
             return result;
         };
-        
+
         return descriptor;
     };
 }

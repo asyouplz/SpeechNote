@@ -1,6 +1,6 @@
 /**
  * Deepgram 모델 안전한 마이그레이션 서비스
- * 
+ *
  * 핵심 기능:
  * - 기존 사용자 설정 보존
  * - 점진적 마이그레이션 전략
@@ -84,19 +84,19 @@ const DEFAULT_MIGRATION_RULES: MigrationRule[] = [
             {
                 type: 'user_consent',
                 parameters: { message: 'Upgrade to Nova-3 for better accuracy and new features?' },
-                required: true
+                required: true,
             },
             {
                 type: 'cost_threshold',
                 parameters: { maxIncrease: 15 }, // 15% 비용 증가 허용
-                required: false
-            }
+                required: false,
+            },
         ],
         warnings: [
             'Nova-3 has slightly different pricing structure',
-            'Some advanced features may require API key upgrade'
+            'Some advanced features may require API key upgrade',
         ],
-        backupSettings: ['model', 'features', 'diarization']
+        backupSettings: ['model', 'features', 'diarization'],
     },
     {
         fromModel: 'nova',
@@ -106,19 +106,19 @@ const DEFAULT_MIGRATION_RULES: MigrationRule[] = [
             {
                 type: 'user_consent',
                 parameters: { message: 'Upgrade to Nova-3 for significantly better performance?' },
-                required: true
+                required: true,
             },
             {
                 type: 'feature_compatible',
                 parameters: { requiredFeatures: ['diarization'] },
-                required: false
-            }
+                required: false,
+            },
         ],
         warnings: [
             'Nova-3 is a premium model with higher cost',
-            'Significant improvement in accuracy and features'
+            'Significant improvement in accuracy and features',
         ],
-        backupSettings: ['model', 'features', 'language']
+        backupSettings: ['model', 'features', 'language'],
     },
     {
         fromModel: 'enhanced',
@@ -127,18 +127,18 @@ const DEFAULT_MIGRATION_RULES: MigrationRule[] = [
         conditions: [
             {
                 type: 'user_consent',
-                parameters: { 
+                parameters: {
                     message: 'Upgrade to Nova-3 for advanced features like speaker diarization?',
-                    benefits: ['98% accuracy', 'Speaker diarization', 'Advanced formatting']
+                    benefits: ['98% accuracy', 'Speaker diarization', 'Advanced formatting'],
                 },
-                required: true
-            }
+                required: true,
+            },
         ],
         warnings: [
             'Cost increase from $0.0085 to $0.0043 per minute (actually cheaper!)',
-            'Unlocks premium features'
+            'Unlocks premium features',
         ],
-        backupSettings: ['model', 'features']
+        backupSettings: ['model', 'features'],
     },
     {
         fromModel: 'base',
@@ -148,15 +148,15 @@ const DEFAULT_MIGRATION_RULES: MigrationRule[] = [
             {
                 type: 'cost_threshold',
                 parameters: { maxIncrease: 50 },
-                required: true
-            }
+                required: true,
+            },
         ],
         warnings: [
             'Upgrading to Enhanced model for better quality',
-            'Cost increase from $0.0059 to $0.0085 per minute'
+            'Cost increase from $0.0059 to $0.0085 per minute',
         ],
-        backupSettings: ['model']
-    }
+        backupSettings: ['model'],
+    },
 ];
 
 /**
@@ -165,7 +165,7 @@ const DEFAULT_MIGRATION_RULES: MigrationRule[] = [
 export class ModelMigrationService {
     private capabilityManager: ModelCapabilityManager;
     private migrationRules: MigrationRule[];
-    
+
     constructor(
         private logger: ILogger,
         private settingsManager: ISettingsManager,
@@ -174,10 +174,10 @@ export class ModelMigrationService {
     ) {
         this.capabilityManager = capabilityManager || new ModelCapabilityManager(logger);
         this.migrationRules = [...DEFAULT_MIGRATION_RULES, ...(customRules || [])];
-        
+
         this.logger.debug('ModelMigrationService initialized', {
             rulesCount: this.migrationRules.length,
-            availableModels: this.capabilityManager.getAvailableModels().length
+            availableModels: this.capabilityManager.getAvailableModels().length,
         });
     }
 
@@ -194,7 +194,7 @@ export class ModelMigrationService {
         const opportunities: MigrationPlan[] = [];
 
         // 해당 모델에서 시작하는 마이그레이션 규칙 찾기
-        const applicableRules = this.migrationRules.filter(rule => rule.fromModel === model);
+        const applicableRules = this.migrationRules.filter((rule) => rule.fromModel === model);
 
         for (const rule of applicableRules) {
             const compatibility = await this.checkMigrationCompatibility(rule);
@@ -205,7 +205,9 @@ export class ModelMigrationService {
         }
 
         // 점수 순으로 정렬
-        opportunities.sort((a, b) => this.calculateMigrationScore(b) - this.calculateMigrationScore(a));
+        opportunities.sort(
+            (a, b) => this.calculateMigrationScore(b) - this.calculateMigrationScore(a)
+        );
 
         this.logger.info(`Found ${opportunities.length} migration opportunities for ${model}`);
         return opportunities;
@@ -215,7 +217,7 @@ export class ModelMigrationService {
      * 마이그레이션을 실행합니다
      */
     async executeMigration(
-        plan: MigrationPlan, 
+        plan: MigrationPlan,
         userPreferences?: Partial<UserMigrationPreferences>
     ): Promise<MigrationResult> {
         const startTime = Date.now();
@@ -225,7 +227,7 @@ export class ModelMigrationService {
             fromModel: plan.fromModel,
             toModel: plan.toModel,
             strategy: plan.strategy,
-            stepCount: plan.steps.length
+            stepCount: plan.steps.length,
         });
 
         const result: MigrationResult = {
@@ -239,8 +241,8 @@ export class ModelMigrationService {
             metadata: {
                 duration: 0,
                 timestamp: new Date().toISOString(),
-                userApproved: false
-            }
+                userApproved: false,
+            },
         };
 
         try {
@@ -250,7 +252,7 @@ export class ModelMigrationService {
             }
 
             // 사용자 승인 확인
-            if (!await this.getUserApproval(plan, prefs)) {
+            if (!(await this.getUserApproval(plan, prefs))) {
                 result.errors.push('User approval required but not granted');
                 return result;
             }
@@ -266,7 +268,7 @@ export class ModelMigrationService {
                     result.errors.push(errorMsg);
                     this.logger.error('Migration step failed', error as Error, {
                         stepId: step.id,
-                        critical: step.critical
+                        critical: step.critical,
                     });
 
                     if (step.critical) {
@@ -285,7 +287,6 @@ export class ModelMigrationService {
             if (result.rollbackRequired) {
                 await this.executeRollback(plan, result);
             }
-
         } catch (error) {
             result.errors.push(`Migration failed: ${(error as Error).message}`);
             this.logger.error('Migration execution failed', error as Error);
@@ -297,7 +298,7 @@ export class ModelMigrationService {
             success: result.success,
             duration: result.metadata.duration,
             warnings: result.warnings.length,
-            errors: result.errors.length
+            errors: result.errors.length,
         });
 
         return result;
@@ -311,11 +312,12 @@ export class ModelMigrationService {
         if (!currentModel) return false;
 
         const opportunities = await this.checkForMigrationOpportunities(currentModel);
-        const autoMigrations = opportunities.filter(plan => 
-            this.migrationRules.find(rule => 
-                rule.fromModel === plan.fromModel && 
-                rule.toModel === plan.toModel && 
-                rule.strategy === 'auto'
+        const autoMigrations = opportunities.filter((plan) =>
+            this.migrationRules.find(
+                (rule) =>
+                    rule.fromModel === plan.fromModel &&
+                    rule.toModel === plan.toModel &&
+                    rule.strategy === 'auto'
             )
         );
 
@@ -325,18 +327,18 @@ export class ModelMigrationService {
 
         // 최고 점수의 마이그레이션 실행
         const bestMigration = autoMigrations[0];
-        const result = await this.executeMigration(bestMigration, { 
+        const result = await this.executeMigration(bestMigration, {
             autoMigration: true,
             testMode: false,
-            notifyBeforeMigration: false
+            notifyBeforeMigration: false,
         });
 
         if (result.success) {
             this.logger.info('Automatic migration completed successfully', {
                 fromModel: result.fromModel,
-                toModel: result.toModel
+                toModel: result.toModel,
             });
-            
+
             // 사용자에게 알림 (선택적)
             this.notifyUser(`Automatically upgraded from ${result.fromModel} to ${result.toModel}`);
         }
@@ -350,7 +352,7 @@ export class ModelMigrationService {
     async rollbackMigration(migrationId: string): Promise<boolean> {
         // 구현: 백업된 설정으로 복원
         this.logger.info(`Rolling back migration: ${migrationId}`);
-        
+
         try {
             const backup = this.getBackup(migrationId);
             if (backup) {
@@ -361,7 +363,7 @@ export class ModelMigrationService {
         } catch (error) {
             this.logger.error('Migration rollback failed', error as Error);
         }
-        
+
         return false;
     }
 
@@ -375,13 +377,15 @@ export class ModelMigrationService {
         success: boolean;
         automatic: boolean;
     }> {
-        return (this.settingsManager.get('migrationHistory') as Array<{
-            timestamp: string;
-            fromModel: string;
-            toModel: string;
-            success: boolean;
-            automatic: boolean;
-        }>) || [];
+        return (
+            (this.settingsManager.get('migrationHistory') as Array<{
+                timestamp: string;
+                fromModel: string;
+                toModel: string;
+                success: boolean;
+                automatic: boolean;
+            }>) || []
+        );
     }
 
     /**
@@ -390,19 +394,19 @@ export class ModelMigrationService {
 
     private getCurrentModel(): string | null {
         const transcriptionSettings = this.settingsManager.get('transcription') as any;
-        return transcriptionSettings?.deepgram?.model || 
-               transcriptionSettings?.model || 
-               null;
+        return transcriptionSettings?.deepgram?.model || transcriptionSettings?.model || null;
     }
 
-    private getUserPreferences(overrides?: Partial<UserMigrationPreferences>): UserMigrationPreferences {
+    private getUserPreferences(
+        overrides?: Partial<UserMigrationPreferences>
+    ): UserMigrationPreferences {
         const defaults: UserMigrationPreferences = {
             autoMigration: false,
             notifyBeforeMigration: true,
             maxCostIncrease: 20,
             preferredMigrationTime: 'manual',
             backupSettings: true,
-            testMode: false
+            testMode: false,
         };
 
         const saved = this.settingsManager.get('migrationPreferences') || {};
@@ -419,19 +423,19 @@ export class ModelMigrationService {
                 missingFeatures: [],
                 degradedFeatures: [],
                 recommendations: ['Model not found'],
-                alternativeModels: []
+                alternativeModels: [],
             };
         }
 
         // 조건 검사
         for (const condition of rule.conditions) {
-            if (condition.required && !await this.evaluateCondition(condition)) {
+            if (condition.required && !(await this.evaluateCondition(condition))) {
                 return {
                     compatible: false,
                     missingFeatures: [],
                     degradedFeatures: [],
                     recommendations: [`Condition not met: ${condition.type}`],
-                    alternativeModels: []
+                    alternativeModels: [],
                 };
             }
         }
@@ -441,7 +445,7 @@ export class ModelMigrationService {
             missingFeatures: [],
             degradedFeatures: [],
             recommendations: [],
-            alternativeModels: []
+            alternativeModels: [],
         };
     }
 
@@ -475,14 +479,14 @@ export class ModelMigrationService {
                 description: 'Backup current settings',
                 action: 'backup_settings',
                 parameters: { settings: rule.backupSettings },
-                critical: true
+                critical: true,
             },
             {
                 id: 'test_compatibility',
                 description: 'Test new model compatibility',
                 action: 'test_compatibility',
                 parameters: { targetModel: rule.toModel },
-                critical: true
+                critical: true,
             },
             {
                 id: 'update_model',
@@ -490,18 +494,18 @@ export class ModelMigrationService {
                 action: 'update_model',
                 parameters: { newModel: rule.toModel },
                 critical: true,
-                rollbackAction: 'restore_model'
+                rollbackAction: 'restore_model',
             },
             {
                 id: 'notify_user',
                 description: 'Notify user of successful migration',
                 action: 'notify_user',
-                parameters: { 
+                parameters: {
                     message: `Successfully upgraded to ${rule.toModel}`,
-                    type: 'success'
+                    type: 'success',
                 },
-                critical: false
-            }
+                critical: false,
+            },
         ];
 
         const rollbackSteps: MigrationStep[] = [
@@ -510,8 +514,8 @@ export class ModelMigrationService {
                 description: `Rollback to ${rule.fromModel}`,
                 action: 'rollback',
                 parameters: { originalModel: rule.fromModel },
-                critical: true
-            }
+                critical: true,
+            },
         ];
 
         return {
@@ -522,7 +526,7 @@ export class ModelMigrationService {
             rollbackPlan: rollbackSteps,
             estimatedTime: steps.length * 2, // 2분 per step
             risks: rule.warnings || [],
-            benefits: this.calculateMigrationBenefits(rule.fromModel, rule.toModel)
+            benefits: this.calculateMigrationBenefits(rule.fromModel, rule.toModel),
         };
     }
 
@@ -535,7 +539,7 @@ export class ModelMigrationService {
         // 품질 향상, 비용 고려, 기능 개선을 종합하여 점수 계산
         const qualityImprovement = toCap.performance.accuracy - fromCap.performance.accuracy;
         const costRatio = fromCap.pricing.perMinute / toCap.pricing.perMinute;
-        
+
         return qualityImprovement * 10 + costRatio * 20;
     }
 
@@ -570,11 +574,11 @@ export class ModelMigrationService {
 
     private simulateMigration(plan: MigrationPlan, result: MigrationResult): MigrationResult {
         this.logger.info('Running migration simulation (test mode)');
-        
+
         result.warnings.push('Migration simulation completed - no actual changes made');
         result.success = true;
-        result.executedSteps = plan.steps.map(step => `${step.id} (simulated)`);
-        
+        result.executedSteps = plan.steps.map((step) => `${step.id} (simulated)`);
+
         return result;
     }
 
@@ -588,16 +592,19 @@ export class ModelMigrationService {
             fromModel: plan.fromModel,
             toModel: plan.toModel,
             benefits: plan.benefits,
-            risks: plan.risks
+            risks: plan.risks,
         });
 
         // 임시 구현: 자동 승인 (실제로는 사용자 인터페이스 필요)
         return false;
     }
 
-    private async executeRollback(plan: MigrationPlan | null, result: MigrationResult): Promise<void> {
+    private async executeRollback(
+        plan: MigrationPlan | null,
+        result: MigrationResult
+    ): Promise<void> {
         this.logger.warn('Executing migration rollback');
-        
+
         try {
             const backup = this.getLatestBackup();
             if (backup) {
@@ -613,7 +620,7 @@ export class ModelMigrationService {
     private async backupCurrentSettings(settingsToBackup: string[]): Promise<void> {
         const backup: Record<string, any> = {
             timestamp: new Date().toISOString(),
-            settings: {}
+            settings: {},
         };
 
         for (const settingKey of settingsToBackup) {
@@ -622,19 +629,22 @@ export class ModelMigrationService {
 
         const backupId = `migration_backup_${Date.now()}`;
         await this.settingsManager.set(`backup.${backupId}`, backup);
-        
-        this.logger.debug('Settings backup created', { backupId, settingsCount: settingsToBackup.length });
+
+        this.logger.debug('Settings backup created', {
+            backupId,
+            settingsCount: settingsToBackup.length,
+        });
     }
 
     private async updateModel(newModel: string): Promise<void> {
         const transcriptionSettings = (this.settingsManager.get('transcription') as any) || {};
-        
+
         if (transcriptionSettings.deepgram) {
             transcriptionSettings.deepgram.model = newModel;
         } else {
             transcriptionSettings.model = newModel;
         }
-        
+
         await this.settingsManager.set('transcription', transcriptionSettings);
         this.logger.info(`Model updated to: ${newModel}`);
     }
@@ -649,7 +659,10 @@ export class ModelMigrationService {
         this.logger.debug(`Model compatibility test passed for: ${targetModel}`);
     }
 
-    private notifyUser(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
+    private notifyUser(
+        message: string,
+        type: 'info' | 'success' | 'warning' | 'error' = 'info'
+    ): void {
         // 실제 구현에서는 사용자 인터페이스를 통한 알림 필요
         this.logger.info(`User notification (${type}): ${message}`);
     }
@@ -668,10 +681,10 @@ export class ModelMigrationService {
 
             // 최근 24시간 내의 백업을 체크 (타임스탬프 기반)
             for (let i = 0; i < 24; i++) {
-                const timestamp = currentTime - (i * 60 * 60 * 1000); // i시간 전
+                const timestamp = currentTime - i * 60 * 60 * 1000; // i시간 전
                 const backupId = `${backupPattern}${timestamp}`;
                 const backup = this.getBackup(backupId);
-                
+
                 if (backup && timestamp > latestTimestamp) {
                     latestBackup = backup;
                     latestTimestamp = timestamp;
@@ -696,7 +709,7 @@ export class ModelMigrationService {
 
         this.logger.info('Settings restored from backup', {
             timestamp: backup.timestamp,
-            settingsCount: Object.keys(backup.settings).length
+            settingsCount: Object.keys(backup.settings).length,
         });
     }
 
@@ -709,16 +722,22 @@ export class ModelMigrationService {
         const benefits: string[] = [];
 
         if (toCap.performance.accuracy > fromCap.performance.accuracy) {
-            benefits.push(`${toCap.performance.accuracy - fromCap.performance.accuracy}% accuracy improvement`);
+            benefits.push(
+                `${toCap.performance.accuracy - fromCap.performance.accuracy}% accuracy improvement`
+            );
         }
 
         if (toCap.pricing.perMinute < fromCap.pricing.perMinute) {
-            const savings = ((fromCap.pricing.perMinute - toCap.pricing.perMinute) / fromCap.pricing.perMinute * 100).toFixed(1);
+            const savings = (
+                ((fromCap.pricing.perMinute - toCap.pricing.perMinute) /
+                    fromCap.pricing.perMinute) *
+                100
+            ).toFixed(1);
             benefits.push(`${savings}% cost reduction`);
         }
 
         const newFeatures = Object.keys(toCap.features).filter(
-            feature => toCap.features[feature] && !fromCap.features[feature]
+            (feature) => toCap.features[feature] && !fromCap.features[feature]
         );
 
         if (newFeatures.length > 0) {

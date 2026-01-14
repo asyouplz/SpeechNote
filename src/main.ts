@@ -13,7 +13,11 @@ import { ErrorHandler } from './utils/ErrorHandler';
 import { StateManager } from './application/StateManager';
 import { EventManager } from './application/EventManager';
 import { EditorService } from './application/EditorService';
-import { TextInsertionHandler, type InsertionOptions, type InsertionMode } from './application/TextInsertionHandler';
+import {
+    TextInsertionHandler,
+    type InsertionOptions,
+    type InsertionMode,
+} from './application/TextInsertionHandler';
 import { FormatOptionsModal, type TextFormat } from './ui/formatting/FormatOptions';
 import { SettingsTab } from './ui/settings/SettingsTab';
 import { assertTFile } from './utils/fs/typeGuards';
@@ -36,29 +40,29 @@ export default class SpeechToTextPlugin extends Plugin {
     async onload() {
         this.logger = new Logger('SpeechToText');
         this.logger.info('Loading Speech-to-Text plugin');
-        
+
         try {
             // Initialize services
             await this.initializeServices();
-            
+
             // Register commands
             this.registerCommands();
-            
+
             // Register context menu items
             this.registerContextMenu();
-            
+
             // Add settings tab
             this.addSettingTab(new SettingsTab(this.app, this));
             this.logger.debug('SettingsTab added');
-            
+
             // Register event handlers
             this.registerEventHandlers();
-            
+
             // Add status bar item after a short delay to ensure workspace is ready
             this.app.workspace.onLayoutReady(() => {
                 this.createStatusBarItem();
             });
-            
+
             new Notice('Speech-to-Text plugin loaded successfully');
         } catch (error) {
             console.error('Failed to load Speech-to-Text plugin:', error);
@@ -68,11 +72,11 @@ export default class SpeechToTextPlugin extends Plugin {
 
     onunload() {
         this.logger?.info('Unloading Speech-to-Text plugin');
-        
+
         // Clean up resources
         this.cleanupEventHandlers();
         this.cancelPendingOperations();
-        
+
         // Clean up editor services
         if (this.editorService) {
             this.editorService.destroy();
@@ -128,34 +132,30 @@ export default class SpeechToTextPlugin extends Plugin {
     private async initializeServices() {
         // Load settings
         await this.loadSettings();
-        
+
         // Initialize core services
         this.logger = new Logger('SpeechToText');
         this.errorHandler = new ErrorHandler(this.logger);
         this.settingsManager = new SettingsManager(this);
         this.stateManager = new StateManager();
         this.eventManager = new EventManager();
-        
+
         // Initialize editor services
-        this.editorService = new EditorService(
-            this.app,
-            this.eventManager,
-            this.logger
-        );
-        
+        this.editorService = new EditorService(this.app, this.eventManager, this.logger);
+
         this.textInsertionHandler = new TextInsertionHandler(
             this.editorService,
             this.eventManager,
             this.logger
         );
-        
+
         // Initialize TranscriberFactory with proper settings
         this.initializeTranscriberFactory();
-        
+
         // Initialize transcription service with appropriate provider
         this.initializeTranscriptionService();
     }
-    
+
     private initializeTranscriberFactory() {
         const getString = (value: unknown): string | undefined =>
             typeof value === 'string' ? value : undefined;
@@ -178,27 +178,27 @@ export default class SpeechToTextPlugin extends Plugin {
                         autoSelect: this.settings.provider === 'auto',
                         selectionStrategy: this.settings.selectionStrategy,
                         fallbackEnabled: this.settings.fallbackStrategy !== 'none',
-                        
+
                         whisper: {
                             enabled: !!this.settings.apiKey || !!this.settings.whisperApiKey,
-                            apiKey: this.settings.whisperApiKey || this.settings.apiKey
+                            apiKey: this.settings.whisperApiKey || this.settings.apiKey,
                         },
-                        
+
                         deepgram: {
                             enabled: !!this.settings.deepgramApiKey,
                             apiKey: this.settings.deepgramApiKey,
                             model: this.settings.deepgramModel || 'nova-2',
-                            features: this.settings.transcription?.deepgram?.features
+                            features: this.settings.transcription?.deepgram?.features,
                         },
-                        
+
                         abTest: {
                             enabled: this.settings.abTestEnabled,
-                            trafficSplit: this.settings.abTestSplit
+                            trafficSplit: this.settings.abTestSplit,
                         },
-                        
+
                         monitoring: {
-                            enabled: this.settings.metricsEnabled
-                        }
+                            enabled: this.settings.metricsEnabled,
+                        },
                     };
                 }
                 if (key === 'apiKey') {
@@ -210,7 +210,10 @@ export default class SpeechToTextPlugin extends Plugin {
                 if (key === 'transcription') {
                     // Map back to settings
                     if (isPlainRecord(value)) {
-                        if (value.defaultProvider === 'whisper' || value.defaultProvider === 'deepgram') {
+                        if (
+                            value.defaultProvider === 'whisper' ||
+                            value.defaultProvider === 'deepgram'
+                        ) {
                             this.settings.provider = value.defaultProvider;
                         }
                         const whisper = isPlainRecord(value.whisper) ? value.whisper : undefined;
@@ -228,35 +231,34 @@ export default class SpeechToTextPlugin extends Plugin {
                     this.settings[key] = value;
                 }
                 await this.saveSettings();
-            }
+            },
         };
-        
-        this.transcriberFactory = new TranscriberFactory(
-            factorySettingsManager,
-            this.logger
-        );
+
+        this.transcriberFactory = new TranscriberFactory(factorySettingsManager, this.logger);
     }
-    
+
     private initializeTranscriptionService() {
         // Get the appropriate transcriber based on settings
         const provider = this.resolveProvider(this.settings.provider);
-        
+
         let whisperCompatibleService: IWhisperService | null = null;
-        
+
         try {
             // Always try to use TranscriberFactory first for better provider support
             const transcriber = this.transcriberFactory.getProvider(provider);
-            
+
             // Wrap the ITranscriber in an adapter to make it IWhisperService compatible
             whisperCompatibleService = new TranscriberToWhisperAdapter(transcriber, this.logger);
-            
-            this.logger.info(`Initialized transcription service with provider: ${transcriber.getProviderName()}`);
+
+            this.logger.info(
+                `Initialized transcription service with provider: ${transcriber.getProviderName()}`
+            );
         } catch (error) {
             this.logger.warn(
                 'Failed to initialize transcriber from factory, using fallback',
                 this.normalizeError(error)
             );
-            
+
             // Fallback to direct WhisperService if factory fails
             const apiKey = this.settings.whisperApiKey || this.settings.apiKey;
             if (apiKey) {
@@ -268,13 +270,10 @@ export default class SpeechToTextPlugin extends Plugin {
                 this.logger.warn('No transcription service initialized - API key missing');
             }
         }
-        
+
         if (whisperCompatibleService) {
-            const audioProcessor = new AudioProcessor(
-                this.app.vault,
-                this.logger
-            );
-            
+            const audioProcessor = new AudioProcessor(this.app.vault, this.logger);
+
             // Set provider-specific capabilities for file size limits
             try {
                 const transcriber = this.transcriberFactory.getProvider(provider);
@@ -282,7 +281,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 audioProcessor.setProviderCapabilities({ maxFileSize: capabilities.maxFileSize });
                 this.logger.info(`AudioProcessor configured with provider capabilities`, {
                     provider: transcriber.getProviderName(),
-                    maxFileSize: capabilities.maxFileSize / 1024 / 1024 + 'MB'
+                    maxFileSize: capabilities.maxFileSize / 1024 / 1024 + 'MB',
                 });
             } catch (error) {
                 this.logger.warn(
@@ -290,9 +289,9 @@ export default class SpeechToTextPlugin extends Plugin {
                     this.normalizeError(error)
                 );
             }
-            
+
             const textFormatter = new TextFormatter(this.settings);
-            
+
             this.transcriptionService = new TranscriptionService(
                 whisperCompatibleService,
                 audioProcessor,
@@ -301,7 +300,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 this.logger,
                 this.settings // 🔥 설정 전달
             );
-            
+
             this.logger.debug('TranscriptionService initialized successfully');
         }
     }
@@ -314,12 +313,11 @@ export default class SpeechToTextPlugin extends Plugin {
                 if (!file || !(file instanceof TFile)) {
                     return;
                 }
-                
+
                 const audioExtensions = ['m4a', 'mp3', 'wav', 'mp4', 'webm', 'ogg'];
                 if (audioExtensions.includes(file.extension.toLowerCase())) {
                     menu.addItem((item) => {
-                        item
-                            .setTitle('Transcribe audio file')
+                        item.setTitle('Transcribe audio file')
                             .setIcon('microphone')
                             .onClick(async () => {
                                 await this.transcribeFile(file);
@@ -337,7 +335,7 @@ export default class SpeechToTextPlugin extends Plugin {
             name: 'Transcribe audio file',
             callback: () => {
                 void this.showAudioFilePicker();
-            }
+            },
         });
 
         // Command: Transcribe from clipboard
@@ -346,7 +344,7 @@ export default class SpeechToTextPlugin extends Plugin {
             name: 'Transcribe audio from clipboard',
             callback: () => {
                 new Notice('Clipboard transcription not yet implemented');
-            }
+            },
         });
 
         // Command: Show formatting options
@@ -355,7 +353,7 @@ export default class SpeechToTextPlugin extends Plugin {
             name: 'Show text formatting options',
             callback: () => {
                 this.showFormatOptions();
-            }
+            },
         });
 
         // Command: Show transcription history
@@ -364,7 +362,7 @@ export default class SpeechToTextPlugin extends Plugin {
             name: 'Show transcription history',
             callback: () => {
                 new Notice('Transcription history not yet implemented');
-            }
+            },
         });
 
         // Command: Cancel current transcription
@@ -374,7 +372,7 @@ export default class SpeechToTextPlugin extends Plugin {
             callback: () => {
                 this.transcriptionService.cancel();
                 new Notice('Transcription cancelled');
-            }
+            },
         });
 
         // Command: Undo last insertion
@@ -388,7 +386,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 } else {
                     new Notice('Nothing to undo');
                 }
-            }
+            },
         });
 
         // Command: Redo last insertion
@@ -402,7 +400,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 } else {
                     new Notice('Nothing to redo');
                 }
-            }
+            },
         });
     }
 
@@ -418,26 +416,28 @@ export default class SpeechToTextPlugin extends Plugin {
                 hasData: !!data,
                 hasText: !!data?.text,
                 textLength: data?.text?.length || 0,
-                autoInsert: this.settings.autoInsert
+                autoInsert: this.settings.autoInsert,
             });
-            
+
             this.stateManager.setState({ status: 'completed' });
             new Notice('Transcription completed successfully');
-            
+
             // Extract text from data.text
             const textToInsert = data.text;
-            
+
             if (!textToInsert) {
-                this.logger.error('No text found in transcription complete event', undefined, { data });
+                this.logger.error('No text found in transcription complete event', undefined, {
+                    data,
+                });
                 new Notice('Transcription completed but no text was returned');
                 return;
             }
-            
+
             // Auto-insert if enabled
             if (this.settings.autoInsert) {
                 this.logger.debug('Auto-inserting transcribed text', {
                     textLength: textToInsert.length,
-                    textPreview: textToInsert.substring(0, 100)
+                    textPreview: textToInsert.substring(0, 100),
                 });
                 await this.insertTranscriptionWithOptions(textToInsert);
             } else {
@@ -484,16 +484,16 @@ export default class SpeechToTextPlugin extends Plugin {
 
             // Create status bar item - addStatusBarItem() doesn't take parameters
             const statusBarItem = this.addStatusBarItem();
-            
+
             // Ensure statusBarItem exists before using it
             if (!statusBarItem) {
                 console.warn('Failed to create status bar item');
                 return;
             }
-            
+
             // Set initial text as empty
             statusBarItem.textContent = '';
-            
+
             // Helper function to safely update text
             const updateStatusText = (text: string) => {
                 if (statusBarItem) {
@@ -507,13 +507,13 @@ export default class SpeechToTextPlugin extends Plugin {
                     }
                 }
             };
-            
+
             // Update status bar based on state
             this.stateManager.subscribe((state) => {
                 if (!statusBarItem) {
                     return;
                 }
-                
+
                 switch (state.status) {
                     case 'idle':
                         updateStatusText('');
@@ -544,7 +544,7 @@ export default class SpeechToTextPlugin extends Plugin {
                         break;
                 }
             });
-            
+
             this.logger?.debug('Status bar item created successfully');
         } catch (error) {
             console.error('Error creating status bar item:', error);
@@ -554,12 +554,15 @@ export default class SpeechToTextPlugin extends Plugin {
 
     private showAudioFilePicker() {
         // Get all audio files in vault
-        const audioFiles = this.app.vault.getFiles().filter(file => 
-            file.extension === 'm4a' || 
-            file.extension === 'mp3' || 
-            file.extension === 'wav' ||
-            file.extension === 'mp4'
-        );
+        const audioFiles = this.app.vault
+            .getFiles()
+            .filter(
+                (file) =>
+                    file.extension === 'm4a' ||
+                    file.extension === 'mp3' ||
+                    file.extension === 'wav' ||
+                    file.extension === 'mp4'
+            );
 
         if (audioFiles.length === 0) {
             new Notice('No audio files found in vault');
@@ -579,7 +582,7 @@ export default class SpeechToTextPlugin extends Plugin {
             const provider = this.settings.provider || 'whisper';
             let hasValidApiKey = false;
             let errorMessage = '';
-            
+
             if (provider === 'whisper') {
                 hasValidApiKey = !!(this.settings.apiKey || this.settings.whisperApiKey);
                 errorMessage = 'Please configure your OpenAI API key in settings';
@@ -588,22 +591,29 @@ export default class SpeechToTextPlugin extends Plugin {
                 errorMessage = 'Please configure your Deepgram API key in settings';
             } else if (provider === 'auto') {
                 // For auto mode, check if at least one API key exists
-                hasValidApiKey = !!(this.settings.apiKey || this.settings.whisperApiKey || this.settings.deepgramApiKey);
-                errorMessage = 'Please configure at least one API key (OpenAI or Deepgram) in settings';
+                hasValidApiKey = !!(
+                    this.settings.apiKey ||
+                    this.settings.whisperApiKey ||
+                    this.settings.deepgramApiKey
+                );
+                errorMessage =
+                    'Please configure at least one API key (OpenAI or Deepgram) in settings';
             }
-            
+
             if (!hasValidApiKey) {
                 new Notice(errorMessage);
                 return;
             }
-            
+
             // Ensure transcription service is initialized
             if (!this.transcriptionService) {
                 // Try to initialize it now
                 this.initializeTranscriptionService();
-                
+
                 if (!this.transcriptionService) {
-                    new Notice('Failed to initialize transcription service. Please check your API keys.');
+                    new Notice(
+                        'Failed to initialize transcription service. Please check your API keys.'
+                    );
                     return;
                 }
             }
@@ -611,20 +621,20 @@ export default class SpeechToTextPlugin extends Plugin {
             // Start transcription
             this.logger.debug('Starting transcription for file:', { fileName: file.name });
             const result = await this.transcriptionService.transcribe(file);
-            
+
             this.logger.debug('Transcription result received:', {
                 hasResult: !!result,
                 hasText: !!result?.text,
                 textLength: result?.text?.length || 0,
-                textPreview: result?.text?.substring(0, 100)
+                textPreview: result?.text?.substring(0, 100),
             });
-            
+
             if (!result || !result.text) {
                 this.logger.error('Transcription returned no text', undefined, { result });
                 new Notice('Transcription completed but no text was returned');
                 return;
             }
-            
+
             // Show format options or insert directly
             if (this.settings.showFormatOptions) {
                 this.logger.debug('Showing format options with text');
@@ -633,7 +643,6 @@ export default class SpeechToTextPlugin extends Plugin {
                 this.logger.debug('Inserting text directly without format options');
                 await this.insertTranscriptionWithOptions(result.text);
             }
-            
         } catch (error) {
             this.errorHandler.handle(error);
         }
@@ -644,9 +653,9 @@ export default class SpeechToTextPlugin extends Plugin {
             textLength: text?.length || 0,
             textPreview: text?.substring(0, 100),
             insertPosition: this.settings.insertPosition,
-            autoInsert: this.settings.autoInsert
+            autoInsert: this.settings.autoInsert,
         });
-        
+
         // Use TextInsertionHandler with current settings
         const options: InsertionOptions = {
             mode: this.resolveInsertionMode(this.settings.insertPosition),
@@ -654,13 +663,13 @@ export default class SpeechToTextPlugin extends Plugin {
             addTimestamp: this.settings.addTimestamp || false,
             timestampFormat: this.settings.timestampFormat,
             language: this.settings.language,
-            createNewNote: !this.editorService.hasActiveEditor()
+            createNewNote: !this.editorService.hasActiveEditor(),
         };
-        
+
         this.logger.debug('Inserting text with options:', options);
 
         const success = await this.textInsertionHandler.insertText(text, options);
-        
+
         if (success) {
             this.logger.info('Text successfully inserted');
             new Notice('Transcription inserted successfully');
@@ -673,7 +682,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
     private async insertTranscriptionLegacy(text: string) {
         const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
-        
+
         if (!activeView) {
             new Notice('No active editor found. Opening new note...');
             const newFile = await this.app.vault.create(
@@ -717,7 +726,7 @@ export default class SpeechToTextPlugin extends Plugin {
                 mode: 'cursor',
                 format: this.settings.textFormat || 'plain',
                 addTimestamp: this.settings.addTimestamp || false,
-                language: this.settings.language
+                language: this.settings.language,
             },
             async (options) => {
                 // Apply formatting and insert
@@ -742,10 +751,10 @@ export default class SpeechToTextPlugin extends Plugin {
     async saveSettings() {
         await this.saveData(this.settings);
     }
-    
+
     async saveSettingsAndReinitialize() {
         await this.saveData(this.settings);
-        
+
         // Reinitialize services when settings change
         if (this.transcriberFactory) {
             this.initializeTranscriberFactory();
@@ -767,17 +776,17 @@ class AudioFilePickerModal extends Modal {
 
     onOpen() {
         const { contentEl } = this;
-        
+
         contentEl.createEl('h2', { text: 'Select an audio file to transcribe' });
-        
+
         const listEl = contentEl.createEl('div', { cls: 'speech-to-text-file-list' });
-        
-        this.files.forEach(file => {
-            const itemEl = listEl.createEl('div', { 
+
+        this.files.forEach((file) => {
+            const itemEl = listEl.createEl('div', {
                 cls: 'speech-to-text-file-item',
-                text: file.path 
+                text: file.path,
             });
-            
+
             itemEl.addEventListener('click', () => {
                 this.onChoose(file);
                 this.close();

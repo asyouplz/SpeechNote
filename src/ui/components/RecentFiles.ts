@@ -45,19 +45,19 @@ export class RecentFiles {
      */
     private render() {
         if (!this.container) return;
-        
+
         this.container.empty();
         this.container.addClass('recent-files');
 
         // 헤더
         const header = this.container.createDiv('recent-files-header');
         header.createEl('h3', { text: '최근 사용 파일' });
-        
+
         // 초기화 버튼
         const clearBtn = header.createEl('button', {
             cls: 'clear-recent-btn',
             text: '초기화',
-            title: '최근 사용 목록 초기화'
+            title: '최근 사용 목록 초기화',
         });
         clearBtn.addEventListener('click', () => {
             this.clearRecentFiles();
@@ -80,14 +80,14 @@ export class RecentFiles {
         }
 
         const listContainer = this.container.createDiv('recent-files-list');
-        
+
         // 유효한 파일만 필터링
         const validFiles = this.getValidRecentFiles();
-        
+
         if (validFiles.length === 0) {
             listContainer.createDiv({
                 cls: 'empty-state',
-                text: '최근 사용한 파일이 없습니다'
+                text: '최근 사용한 파일이 없습니다',
             });
             return;
         }
@@ -105,59 +105,59 @@ export class RecentFiles {
      * 파일 아이템 생성
      */
     private createFileItem(
-        container: HTMLElement, 
-        file: TFile, 
-        entry: RecentFileEntry, 
+        container: HTMLElement,
+        file: TFile,
+        entry: RecentFileEntry,
         order: number
     ) {
         const fileItem = container.createDiv('recent-file-item');
-        
+
         // 순서 번호
         const orderBadge = fileItem.createDiv('file-order');
         orderBadge.setText(order.toString());
-        
+
         // 파일 아이콘
         const icon = fileItem.createDiv('file-icon');
         icon.setText(this.getFileIcon(file.extension));
-        
+
         // 파일 정보
         const fileInfo = fileItem.createDiv('file-info');
-        
+
         // 파일명
         const fileName = fileInfo.createDiv('file-name');
         fileName.setText(file.basename);
-        
+
         // 파일 경로와 시간
         const fileMeta = fileInfo.createDiv('file-meta');
-        
+
         // 경로 (폴더명만)
         if (file.parent) {
             fileMeta.createEl('span', {
                 cls: 'file-path',
                 text: file.parent.path,
-                title: file.path
+                title: file.path,
             });
         }
-        
+
         // 사용 시간
         fileMeta.createEl('span', {
             cls: 'file-time',
-            text: this.formatRelativeTime(entry.timestamp)
+            text: this.formatRelativeTime(entry.timestamp),
         });
-        
+
         // 파일 크기
         fileMeta.createEl('span', {
             cls: 'file-size',
-            text: this.formatFileSize(file.stat.size)
+            text: this.formatFileSize(file.stat.size),
         });
 
         // 액션 버튼들
         const actions = fileItem.createDiv('file-actions');
-        
+
         // 선택 버튼
         const selectBtn = actions.createEl('button', {
             cls: 'select-btn',
-            title: '파일 선택'
+            title: '파일 선택',
         });
         selectBtn.appendChild(this.createSelectIcon());
         selectBtn.addEventListener('click', (e) => {
@@ -166,11 +166,11 @@ export class RecentFiles {
                 this.fileCallback(file);
             }
         });
-        
+
         // 제거 버튼
         const removeBtn = actions.createEl('button', {
             cls: 'remove-btn',
-            title: '목록에서 제거'
+            title: '목록에서 제거',
         });
         removeBtn.appendChild(this.createRemoveIcon());
         removeBtn.addEventListener('click', (e) => {
@@ -197,19 +197,19 @@ export class RecentFiles {
      */
     addRecentFile(file: TFile) {
         // 기존 항목 제거 (중복 방지)
-        this.recentFiles = this.recentFiles.filter(entry => entry.path !== file.path);
-        
+        this.recentFiles = this.recentFiles.filter((entry) => entry.path !== file.path);
+
         // 새 항목 추가 (맨 앞에)
         this.recentFiles.unshift({
             path: file.path,
-            timestamp: Date.now()
+            timestamp: Date.now(),
         });
-        
+
         // 최대 개수 제한
         if (this.recentFiles.length > this.MAX_RECENT_FILES) {
             this.recentFiles = this.recentFiles.slice(0, this.MAX_RECENT_FILES);
         }
-        
+
         this.saveRecentFiles();
         this.render();
     }
@@ -218,7 +218,7 @@ export class RecentFiles {
      * 최근 파일 제거
      */
     private removeRecentFile(path: string) {
-        this.recentFiles = this.recentFiles.filter(entry => entry.path !== path);
+        this.recentFiles = this.recentFiles.filter((entry) => entry.path !== path);
         this.saveRecentFiles();
         this.render();
     }
@@ -236,7 +236,7 @@ export class RecentFiles {
      * 유효한 최근 파일 가져오기
      */
     private getValidRecentFiles(): RecentFileEntry[] {
-        return this.recentFiles.filter(entry => {
+        return this.recentFiles.filter((entry) => {
             const file = this.app.vault.getAbstractFileByPath(entry.path);
             return file instanceof TFile;
         });
@@ -292,7 +292,7 @@ export class RecentFiles {
         const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);
         const days = Math.floor(hours / 24);
-        
+
         if (seconds < 60) {
             return '방금 전';
         } else if (minutes < 60) {
@@ -326,14 +326,14 @@ export class RecentFiles {
      */
     private getFileIcon(extension: string): string {
         const icons: Record<string, string> = {
-            'm4a': '🎵',
-            'mp3': '🎵',
-            'wav': '🎵',
-            'mp4': '🎬',
-            'webm': '🎬',
-            'ogg': '🎵'
+            m4a: '🎵',
+            mp3: '🎵',
+            wav: '🎵',
+            mp4: '🎬',
+            webm: '🎬',
+            ogg: '🎵',
         };
-        
+
         return icons[extension.toLowerCase()] || '📄';
     }
 

@@ -1,6 +1,6 @@
 /**
  * Phase 3 통합 알림 시스템
- * 
+ *
  * Toast, Modal, StatusBar, Sound 알림을 통합 관리합니다.
  */
 
@@ -14,7 +14,7 @@ import {
     PromptOptions,
     ProgressNotificationOptions,
     IProgressNotification,
-    Unsubscribe
+    Unsubscribe,
 } from '../../types/phase3-api';
 import { EventEmitter } from 'events';
 import { EventManager } from '../../application/EventManager';
@@ -28,7 +28,8 @@ interface NotificationChannel {
     dismissAll(): void;
 }
 
-const DOM_AVAILABLE = typeof document !== 'undefined' && typeof document.createElement === 'function';
+const DOM_AVAILABLE =
+    typeof document !== 'undefined' && typeof document.createElement === 'function';
 const AUDIO_AVAILABLE = typeof Audio !== 'undefined';
 
 const createEl = (
@@ -78,15 +79,15 @@ class PriorityQueue<T> {
 
     dequeue(): T | undefined {
         if (this.heap.length === 0) return undefined;
-        
+
         const result = this.heap[0];
         const end = this.heap.pop()!;
-        
+
         if (this.heap.length > 0) {
             this.heap[0] = end;
             this.sinkDown(0);
         }
-        
+
         return result.item;
     }
 
@@ -96,37 +97,37 @@ class PriorityQueue<T> {
 
     private bubbleUp(index: number): void {
         const element = this.heap[index];
-        
+
         while (index > 0) {
             const parentIndex = Math.floor((index - 1) / 2);
             const parent = this.heap[parentIndex];
-            
+
             if (element.priority <= parent.priority) break;
-            
+
             this.heap[index] = parent;
             index = parentIndex;
         }
-        
+
         this.heap[index] = element;
     }
 
     private sinkDown(index: number): void {
         const element = this.heap[index];
         const length = this.heap.length;
-        
+
         let searching = true;
         while (searching) {
             const leftChildIdx = 2 * index + 1;
             const rightChildIdx = 2 * index + 2;
             let swapIdx = -1;
-            
+
             if (leftChildIdx < length) {
                 const leftChild = this.heap[leftChildIdx];
                 if (leftChild.priority > element.priority) {
                     swapIdx = leftChildIdx;
                 }
             }
-            
+
             if (rightChildIdx < length) {
                 const rightChild = this.heap[rightChildIdx];
                 const compare = swapIdx === -1 ? element : this.heap[swapIdx];
@@ -134,16 +135,16 @@ class PriorityQueue<T> {
                     swapIdx = rightChildIdx;
                 }
             }
-            
+
             if (swapIdx === -1) {
                 searching = false;
                 continue;
             }
-            
+
             this.heap[index] = this.heap[swapIdx];
             index = swapIdx;
         }
-        
+
         this.heap[index] = element;
     }
 }
@@ -159,39 +160,41 @@ class RateLimiter {
 
     constructor(maxPerMinute = 30, maxPerType?: Map<NotificationType, number>) {
         this.maxPerMinute = maxPerMinute;
-        this.maxPerType = maxPerType || new Map([
-            ['error', 10],
-            ['warning', 15],
-            ['info', 20],
-            ['success', 20]
-        ]);
+        this.maxPerType =
+            maxPerType ||
+            new Map([
+                ['error', 10],
+                ['warning', 15],
+                ['info', 20],
+                ['success', 20],
+            ]);
     }
 
     allow(type: NotificationType): boolean {
         const now = Date.now();
         const oneMinuteAgo = now - 60000;
-        
+
         // 전체 속도 제한 확인
         const allTimestamps = this.timestamps.get('all') || [];
-        const recentAll = allTimestamps.filter(t => t > oneMinuteAgo);
-        
+        const recentAll = allTimestamps.filter((t) => t > oneMinuteAgo);
+
         if (recentAll.length >= this.maxPerMinute) {
             return false;
         }
-        
+
         // 타입별 속도 제한 확인
         const typeTimestamps = this.timestamps.get(type) || [];
-        const recentType = typeTimestamps.filter(t => t > oneMinuteAgo);
+        const recentType = typeTimestamps.filter((t) => t > oneMinuteAgo);
         const maxForType = this.maxPerType.get(type) || 20;
-        
+
         if (recentType.length >= maxForType) {
             return false;
         }
-        
+
         // 타임스탬프 업데이트
         this.timestamps.set('all', [...recentAll, now]);
         this.timestamps.set(type, [...recentType, now]);
-        
+
         return true;
     }
 
@@ -236,14 +239,14 @@ class ToastChannel implements NotificationChannel {
 
         if (!this.container) this.createContainer();
         if (!this.container) return Promise.resolve();
-        
+
         const id = this.generateId();
         const toast = this.createToast(notification, id);
         if (!toast) return Promise.resolve();
-        
+
         this.notifications.set(id, toast);
         this.container.appendChild(toast);
-        
+
         if (typeof requestAnimationFrame === 'function') {
             requestAnimationFrame(() => {
                 toast.classList.add('toast--show');
@@ -251,7 +254,7 @@ class ToastChannel implements NotificationChannel {
         } else {
             toast.classList.add('toast--show');
         }
-        
+
         if (notification.duration !== 0) {
             const duration = notification.duration || 5000;
             setTimeout(() => this.dismiss(id), duration);
@@ -303,10 +306,10 @@ class ToastChannel implements NotificationChannel {
         if (notification.actions && notification.actions.length > 0) {
             const actions = createEl('div', { cls: 'toast__actions' });
 
-            notification.actions.forEach(action => {
+            notification.actions.forEach((action) => {
                 const btn = createEl('button', {
                     cls: `toast__action toast__action--${action.style || 'secondary'}`,
-                    text: action.label
+                    text: action.label,
                 });
                 btn.onclick = async () => {
                     await action.callback();
@@ -336,20 +339,20 @@ class ToastChannel implements NotificationChannel {
         const iconConfig: Record<NotificationType, { viewBox: string; path: string }> = {
             success: {
                 viewBox: '0 0 24 24',
-                path: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'
+                path: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
             },
             error: {
                 viewBox: '0 0 24 24',
-                path: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'
+                path: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
             },
             warning: {
                 viewBox: '0 0 24 24',
-                path: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'
+                path: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
             },
             info: {
                 viewBox: '0 0 24 24',
-                path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'
-            }
+                path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z',
+            },
         };
 
         const config = iconConfig[type] || iconConfig.info;
@@ -368,10 +371,10 @@ class ToastChannel implements NotificationChannel {
         }
         const toast = this.notifications.get(notificationId);
         if (!toast) return;
-        
+
         toast.classList.remove('toast--show');
         toast.classList.add('toast--hide');
-        
+
         setTimeout(() => {
             toast.remove();
             this.notifications.delete(notificationId);
@@ -396,13 +399,13 @@ class ModalChannel implements NotificationChannel {
     send(notification: NotificationOptions): Promise<void> {
         const id = this.generateId();
         const modal = this.createModal(notification, id);
-        
+
         this.activeModals.set(id, modal);
         document.body.appendChild(modal);
-        
+
         // 포커스 트랩
         this.trapFocus(modal);
-        
+
         // ESC 키로 닫기
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && notification.closable !== false) {
@@ -428,7 +431,7 @@ class ModalChannel implements NotificationChannel {
 
         const title = createEl('h2', {
             cls: 'modal__title',
-            text: notification.title || this.getDefaultTitle(notification.type)
+            text: notification.title || this.getDefaultTitle(notification.type),
         });
         title.id = `modal-title-${id}`;
         header.appendChild(title);
@@ -450,10 +453,10 @@ class ModalChannel implements NotificationChannel {
         if (notification.actions && notification.actions.length > 0) {
             const footer = createEl('div', { cls: 'modal__footer' });
 
-            notification.actions.forEach(action => {
+            notification.actions.forEach((action) => {
                 const btn = createEl('button', {
                     cls: `modal__action modal__action--${action.style || 'secondary'}`,
-                    text: action.label
+                    text: action.label,
                 });
                 btn.onclick = async () => {
                     await action.callback();
@@ -484,25 +487,27 @@ class ModalChannel implements NotificationChannel {
             success: '성공',
             error: '오류',
             warning: '경고',
-            info: '알림'
+            info: '알림',
         };
         return titles[type] || '알림';
     }
 
     private trapFocus(modal: HTMLElement): void {
-        const focusableElements = Array.from(modal.querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        )).filter((el): el is HTMLElement => el instanceof HTMLElement);
-        
+        const focusableElements = Array.from(
+            modal.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            )
+        ).filter((el): el is HTMLElement => el instanceof HTMLElement);
+
         if (focusableElements.length === 0) {
             return;
         }
-        
+
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
-        
+
         firstElement.focus();
-        
+
         modal.addEventListener('keydown', (e) => {
             if (e.key === 'Tab') {
                 if (e.shiftKey && document.activeElement === firstElement) {
@@ -519,9 +524,9 @@ class ModalChannel implements NotificationChannel {
     dismiss(notificationId: string): void {
         const modal = this.activeModals.get(notificationId);
         if (!modal) return;
-        
+
         modal.classList.add('modal-overlay--hide');
-        
+
         setTimeout(() => {
             modal.remove();
             this.activeModals.delete(notificationId);
@@ -560,18 +565,18 @@ class StatusBarChannel implements NotificationChannel {
 
     send(notification: NotificationOptions): Promise<void> {
         if (!this.statusBar) this.createStatusBar();
-        
+
         const id = this.generateId();
         this.currentNotification = id;
-        
+
         this.statusBar!.className = `status-bar status-bar--${notification.type}`;
         this.statusBar!.textContent = notification.message;
         this.statusBar!.classList.add('status-bar--show');
-        
+
         if (this.timeout) {
             clearTimeout(this.timeout);
         }
-        
+
         if (notification.duration !== 0) {
             const duration = notification.duration || 3000;
             this.timeout = setTimeout(() => this.dismiss(id), duration);
@@ -581,10 +586,10 @@ class StatusBarChannel implements NotificationChannel {
 
     dismiss(notificationId: string): void {
         if (this.currentNotification !== notificationId) return;
-        
+
         this.statusBar?.classList.remove('status-bar--show');
         this.currentNotification = null;
-        
+
         if (this.timeout) {
             clearTimeout(this.timeout);
             this.timeout = null;
@@ -637,13 +642,14 @@ class SoundChannel implements NotificationChannel {
 
     async send(notification: NotificationOptions): Promise<void> {
         if (!this.enabled || notification.sound === false) return;
-        
-        const soundUrl = typeof notification.sound === 'string' 
-            ? notification.sound 
-            : this.sounds.get(notification.type);
-        
+
+        const soundUrl =
+            typeof notification.sound === 'string'
+                ? notification.sound
+                : this.sounds.get(notification.type);
+
         if (!soundUrl) return;
-        
+
         try {
             const audio = await this.getAudio(soundUrl);
             await audio.play();
@@ -656,11 +662,11 @@ class SoundChannel implements NotificationChannel {
         if (this.audioCache.has(url)) {
             return Promise.resolve(this.audioCache.get(url)!);
         }
-        
+
         const audio = new Audio(url);
         audio.volume = 0.5;
         this.audioCache.set(url, audio);
-        
+
         return Promise.resolve(audio);
     }
 
@@ -695,15 +701,15 @@ class ProgressNotification implements IProgressNotification {
             message,
             type: 'info',
             duration: 0, // 자동으로 닫지 않음
-            progress: 0
+            progress: 0,
         };
-        
+
         void this.init();
     }
 
     private async init(): Promise<void> {
         await this.channel.send(this.options);
-        
+
         if (this.options.updateInterval) {
             this.updateInterval = setInterval(() => {
                 this.render();
@@ -724,11 +730,11 @@ class ProgressNotification implements IProgressNotification {
         this.options.message = message || '완료되었습니다';
         this.options.progress = 100;
         this.render();
-        
+
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
-        
+
         setTimeout(() => this.close(), 3000);
     }
 
@@ -736,7 +742,7 @@ class ProgressNotification implements IProgressNotification {
         this.options.type = 'error';
         this.options.message = message;
         this.render();
-        
+
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
@@ -752,25 +758,25 @@ class ProgressNotification implements IProgressNotification {
     private render(): void {
         const element = document.querySelector(`[data-notification-id="${this.notificationId}"]`);
         if (!element) return;
-        
+
         // 메시지 업데이트
         const messageEl = element.querySelector('.toast__message');
         if (messageEl) {
             let text = this.options.message || '';
-            
+
             if (this.options.showPercentage && this.options.progress !== undefined) {
                 text += ` (${Math.round(this.options.progress)}%)`;
             }
-            
+
             messageEl.textContent = text;
         }
-        
+
         // 진행률 바 업데이트
         const progressFill = element.querySelector('.toast__progress-fill');
         if (progressFill instanceof HTMLElement) {
             progressFill.setAttribute('style', `--sn-progress-width:${this.options.progress}%`);
         }
-        
+
         // 타입별 스타일 업데이트
         element.className = `toast toast--${this.options.type} toast--show`;
     }
@@ -799,14 +805,14 @@ export class NotificationManager implements INotificationAPI {
             soundEnabled: true,
             stackNotifications: true,
             animationDuration: 300,
-            ...config
+            ...config,
         };
-        
+
         this.rateLimiter = new RateLimiter(
             this.config.rateLimit?.maxPerMinute,
             this.buildRateLimitMap(this.config.rateLimit?.maxPerType)
         );
-        
+
         this.eventManager = EventManager.getInstance();
         this.initializeChannels();
     }
@@ -853,36 +859,36 @@ export class NotificationManager implements INotificationAPI {
             }
         }, 2000);
         this.recentMessageTimers.set(messageKey, timeout);
-        
+
         const id = this.generateNotificationId();
         const notification = {
             ...options,
             duration: options.duration ?? this.config.defaultDuration,
-            position: options.position ?? this.config.defaultPosition
+            position: options.position ?? this.config.defaultPosition,
         };
-        
+
         this.activeNotifications.set(id, notification);
-        
+
         // 속도 제한 확인
         if (!this.rateLimiter.allow(notification.type)) {
             this.queue.enqueue(notification, this.getPriority(notification.priority));
             return id;
         }
-        
+
         // 채널 선택 및 전송
         const channels = this.selectChannels(notification);
         void Promise.all(
-            channels.map(channel => 
-                channel.send(notification).catch(error => {
+            channels.map((channel) =>
+                channel.send(notification).catch((error) => {
                     console.error('Notification channel error:', error);
                 })
             )
         );
-        
+
         // 이벤트 발생
         this.emitter.emit('show', notification);
         this.eventManager.emit('notification:show', { id, notification });
-        
+
         return id;
     }
 
@@ -893,7 +899,7 @@ export class NotificationManager implements INotificationAPI {
         return this.show({
             ...options,
             type: 'success',
-            message
+            message,
         });
     }
 
@@ -904,7 +910,7 @@ export class NotificationManager implements INotificationAPI {
         return this.show({
             ...options,
             type: 'error',
-            message
+            message,
         });
     }
 
@@ -915,7 +921,7 @@ export class NotificationManager implements INotificationAPI {
         return this.show({
             ...options,
             type: 'warning',
-            message
+            message,
         });
     }
 
@@ -926,7 +932,7 @@ export class NotificationManager implements INotificationAPI {
         return this.show({
             ...options,
             type: 'info',
-            message
+            message,
         });
     }
 
@@ -934,12 +940,12 @@ export class NotificationManager implements INotificationAPI {
      * 알림 닫기
      */
     dismiss(notificationId: string): void {
-        this.channels.forEach(channel => channel.dismiss(notificationId));
+        this.channels.forEach((channel) => channel.dismiss(notificationId));
         this.activeNotifications.delete(notificationId);
-        
+
         this.emitter.emit('dismiss', notificationId);
         this.eventManager.emit('notification:dismiss', { id: notificationId });
-        
+
         // 큐에서 다음 알림 처리
         this.processQueue();
     }
@@ -948,7 +954,7 @@ export class NotificationManager implements INotificationAPI {
      * 모든 알림 닫기
      */
     dismissAll(): void {
-        this.channels.forEach(channel => channel.dismissAll());
+        this.channels.forEach((channel) => channel.dismissAll());
         this.activeNotifications.clear();
         this.queue = new PriorityQueue();
     }
@@ -958,14 +964,14 @@ export class NotificationManager implements INotificationAPI {
      */
     dismissByType(type: NotificationType): void {
         const toRemove: string[] = [];
-        
+
         this.activeNotifications.forEach((notification, id) => {
             if (notification.type === type) {
                 toRemove.push(id);
             }
         });
-        
-        toRemove.forEach(id => this.dismiss(id));
+
+        toRemove.forEach((id) => this.dismiss(id));
     }
 
     /**
@@ -974,10 +980,10 @@ export class NotificationManager implements INotificationAPI {
     update(notificationId: string, options: Partial<NotificationOptions>): void {
         const existing = this.activeNotifications.get(notificationId);
         if (!existing) return;
-        
+
         const updated = { ...existing, ...options };
         this.activeNotifications.set(notificationId, updated);
-        
+
         // 재렌더링
         this.dismiss(notificationId);
         this.show(updated);
@@ -990,7 +996,7 @@ export class NotificationManager implements INotificationAPI {
         return new Promise((resolve) => {
             const modal = new ModalChannel();
             const id = this.generateNotificationId();
-            
+
             void modal.send({
                 type: 'info',
                 title: options?.title || '확인',
@@ -1003,7 +1009,7 @@ export class NotificationManager implements INotificationAPI {
                         callback: () => {
                             modal.dismiss(id);
                             resolve(false);
-                        }
+                        },
                     },
                     {
                         label: options?.confirmText || '확인',
@@ -1011,9 +1017,9 @@ export class NotificationManager implements INotificationAPI {
                         callback: () => {
                             modal.dismiss(id);
                             resolve(true);
-                        }
-                    }
-                ]
+                        },
+                    },
+                ],
             });
         });
     }
@@ -1035,7 +1041,7 @@ export class NotificationManager implements INotificationAPI {
         return new Promise((resolve) => {
             const modal = new ModalChannel();
             const id = this.generateNotificationId();
-            
+
             void modal.send({
                 type: 'info',
                 title: title || '알림',
@@ -1047,9 +1053,9 @@ export class NotificationManager implements INotificationAPI {
                         callback: () => {
                             modal.dismiss(id);
                             resolve();
-                        }
-                    }
-                ]
+                        },
+                    },
+                ],
             });
         });
     }
@@ -1060,7 +1066,7 @@ export class NotificationManager implements INotificationAPI {
     showProgress(message: string, options?: ProgressNotificationOptions): IProgressNotification {
         const id = this.generateNotificationId();
         const channel = this.channels.get('toast') ?? new NoopChannel();
-        
+
         return new ProgressNotification(id, channel, message, options);
     }
 
@@ -1069,7 +1075,7 @@ export class NotificationManager implements INotificationAPI {
      */
     configure(config: NotificationConfig): void {
         this.config = { ...this.config, ...config };
-        
+
         if (config.rateLimit) {
             this.rateLimiter = new RateLimiter(
                 config.rateLimit.maxPerMinute,
@@ -1198,7 +1204,7 @@ export class NotificationManager implements INotificationAPI {
             urgent: 4,
             high: 3,
             normal: 2,
-            low: 1
+            low: 1,
         };
         if (priority && this.isPriorityKey(priority, priorities)) {
             return priorities[priority];
@@ -1240,7 +1246,7 @@ export class NotificationManager implements INotificationAPI {
         if (this.activeNotifications.size >= (this.config.maxNotifications || 5)) {
             return;
         }
-        
+
         const notification = this.queue.dequeue();
         if (notification) {
             this.show(notification);

@@ -1,6 +1,6 @@
 /**
  * 접근성 향상을 위한 유틸리티 및 컴포넌트
- * 
+ *
  * WCAG 2.1 레벨 AA 준수
  * - 키보드 네비게이션
  * - 스크린 리더 지원
@@ -15,12 +15,12 @@ export class AccessibilityManager {
     private focusTrap: FocusTrap | null = null;
     private announcer: ScreenReaderAnnouncer;
     private keyboardNav: KeyboardNavigationManager;
-    
+
     constructor(private container: HTMLElement) {
         this.announcer = new ScreenReaderAnnouncer(container);
         this.keyboardNav = new KeyboardNavigationManager(container);
     }
-    
+
     /**
      * 접근성 기능 초기화
      */
@@ -30,7 +30,7 @@ export class AccessibilityManager {
         this.setupFocusManagement();
         this.setupHighContrastMode();
     }
-    
+
     /**
      * ARIA 영역 설정
      */
@@ -38,10 +38,10 @@ export class AccessibilityManager {
         // 메인 영역
         this.container.setAttribute('role', 'main');
         this.container.setAttribute('aria-label', '설정 패널');
-        
+
         // 라이브 리전 생성
         this.announcer.createLiveRegion();
-        
+
         // 네비게이션 랜드마크
         const nav = this.container.querySelector('.settings-nav');
         if (nav) {
@@ -49,7 +49,7 @@ export class AccessibilityManager {
             nav.setAttribute('aria-label', '설정 네비게이션');
         }
     }
-    
+
     /**
      * 키보드 단축키 설정
      */
@@ -58,25 +58,25 @@ export class AccessibilityManager {
             this.announcer.announce('설정 저장');
             // 저장 로직
         });
-        
+
         this.keyboardNav.registerShortcut('Alt+R', () => {
             this.announcer.announce('설정 초기화');
             // 초기화 로직
         });
-        
+
         this.keyboardNav.registerShortcut('Escape', () => {
             this.announcer.announce('설정 패널 닫기');
             // 닫기 로직
         });
     }
-    
+
     /**
      * 포커스 관리 설정
      */
     private setupFocusManagement(): void {
         // 포커스 트랩 생성
         this.focusTrap = new FocusTrap(this.container);
-        
+
         // 초기 포커스 설정
         const firstFocusable = this.container.querySelector<HTMLElement>(
             'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -85,17 +85,17 @@ export class AccessibilityManager {
             firstFocusable.focus();
         }
     }
-    
+
     /**
      * 고대비 모드 설정
      */
     private setupHighContrastMode(): void {
         const prefersHighContrast = window.matchMedia('(prefers-contrast: high)');
-        
+
         if (prefersHighContrast.matches) {
             this.container.classList.add('high-contrast');
         }
-        
+
         prefersHighContrast.addEventListener('change', (e) => {
             if (e.matches) {
                 this.container.classList.add('high-contrast');
@@ -104,7 +104,7 @@ export class AccessibilityManager {
             }
         });
     }
-    
+
     /**
      * 정리
      */
@@ -122,27 +122,27 @@ export class ScreenReaderAnnouncer {
     private liveRegion: HTMLElement | null = null;
     private announcementQueue: string[] = [];
     private isProcessing = false;
-    
+
     constructor(private container: HTMLElement) {}
-    
+
     /**
      * 라이브 리전 생성
      */
     createLiveRegion(): void {
         if (this.liveRegion) return;
-        
+
         this.liveRegion = createEl('div', {
             cls: 'sr-only',
             attr: {
                 'aria-live': 'polite',
                 'aria-atomic': 'true',
-                'role': 'status'
-            }
+                role: 'status',
+            },
         });
-        
+
         this.container.appendChild(this.liveRegion);
     }
-    
+
     /**
      * 알림 발송
      */
@@ -150,45 +150,45 @@ export class ScreenReaderAnnouncer {
         if (!this.liveRegion) {
             this.createLiveRegion();
         }
-        
+
         this.announcementQueue.push(message);
-        
+
         if (priority === 'assertive') {
             this.liveRegion!.setAttribute('aria-live', 'assertive');
         }
-        
+
         void this.processQueue();
     }
-    
+
     /**
      * 큐 처리
      */
     private async processQueue(): Promise<void> {
         if (this.isProcessing || this.announcementQueue.length === 0) return;
-        
+
         this.isProcessing = true;
-        
+
         while (this.announcementQueue.length > 0) {
             const message = this.announcementQueue.shift()!;
-            
+
             if (this.liveRegion) {
                 this.liveRegion.textContent = message;
-                
+
                 // 스크린 리더가 읽을 시간 확보
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
+                await new Promise((resolve) => setTimeout(resolve, 100));
+
                 // 메시지 초기화
                 this.liveRegion.textContent = '';
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise((resolve) => setTimeout(resolve, 100));
             }
         }
-        
+
         this.isProcessing = false;
-        
+
         // 기본값으로 복원
         this.liveRegion?.setAttribute('aria-live', 'polite');
     }
-    
+
     /**
      * 정리
      */
@@ -207,30 +207,30 @@ export class KeyboardNavigationManager {
     private focusableElements: HTMLElement[] = [];
     private currentFocusIndex = 0;
     private keyHandler: (e: KeyboardEvent) => void;
-    
+
     constructor(private container: HTMLElement) {
         this.keyHandler = this.handleKeyPress.bind(this);
         this.initialize();
     }
-    
+
     /**
      * 초기화
      */
     private initialize(): void {
         this.updateFocusableElements();
         this.container.addEventListener('keydown', this.keyHandler);
-        
+
         // 포커스 가능 요소 변경 감지
         const observer = new MutationObserver(() => {
             this.updateFocusableElements();
         });
-        
+
         observer.observe(this.container, {
             childList: true,
-            subtree: true
+            subtree: true,
         });
     }
-    
+
     /**
      * 포커스 가능 요소 업데이트
      */
@@ -243,12 +243,10 @@ export class KeyboardNavigationManager {
             textarea:not([disabled]),
             [tabindex]:not([tabindex="-1"])
         `;
-        
-        this.focusableElements = Array.from(
-            this.container.querySelectorAll<HTMLElement>(selector)
-        );
+
+        this.focusableElements = Array.from(this.container.querySelectorAll<HTMLElement>(selector));
     }
-    
+
     /**
      * 키 입력 처리
      */
@@ -260,84 +258,83 @@ export class KeyboardNavigationManager {
             this.shortcuts.get(shortcut)!();
             return;
         }
-        
+
         // 탭 네비게이션 개선
         if (e.key === 'Tab') {
             this.handleTabNavigation(e);
         }
-        
+
         // 화살표 키 네비게이션
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             this.handleArrowNavigation(e);
         }
-        
+
         // Home/End 키
         if (e.key === 'Home' || e.key === 'End') {
             this.handleHomeEndNavigation(e);
         }
     }
-    
+
     /**
      * 탭 네비게이션 처리
      */
     private handleTabNavigation(e: KeyboardEvent): void {
         if (this.focusableElements.length === 0) return;
-        
+
         const currentElement = document.activeElement;
         if (!(currentElement instanceof HTMLElement)) return;
         const currentIndex = this.focusableElements.indexOf(currentElement);
-        
+
         if (currentIndex === -1) return;
-        
+
         if (e.shiftKey) {
             // 역방향
-            this.currentFocusIndex = currentIndex === 0 
-                ? this.focusableElements.length - 1 
-                : currentIndex - 1;
+            this.currentFocusIndex =
+                currentIndex === 0 ? this.focusableElements.length - 1 : currentIndex - 1;
         } else {
             // 정방향
             this.currentFocusIndex = (currentIndex + 1) % this.focusableElements.length;
         }
-        
+
         // 섹션 건너뛰기 링크 제공
         if (this.focusableElements[this.currentFocusIndex].hasAttribute('data-skip-link')) {
             // 스킵 링크 표시
             this.showSkipLink();
         }
     }
-    
+
     /**
      * 화살표 키 네비게이션 처리
      */
     private handleArrowNavigation(e: KeyboardEvent): void {
         const currentElement = document.activeElement;
         if (!(currentElement instanceof HTMLElement)) return;
-        
+
         // 라디오 버튼 그룹
         if (currentElement.getAttribute('role') === 'radio') {
             this.handleRadioGroupNavigation(e);
             return;
         }
-        
+
         // 탭 리스트
         if (currentElement.getAttribute('role') === 'tab') {
             this.handleTabListNavigation(e);
             return;
         }
-        
+
         // 메뉴
         if (currentElement.getAttribute('role') === 'menuitem') {
             this.handleMenuNavigation(e);
             return;
         }
     }
-    
+
     /**
      * Home/End 키 네비게이션 처리
      */
     private handleHomeEndNavigation(e: KeyboardEvent): void {
         e.preventDefault();
-        
+
         if (e.key === 'Home') {
             this.focusableElements[0]?.focus();
             this.currentFocusIndex = 0;
@@ -347,7 +344,7 @@ export class KeyboardNavigationManager {
             this.currentFocusIndex = lastIndex;
         }
     }
-    
+
     /**
      * 라디오 그룹 네비게이션
      */
@@ -358,12 +355,12 @@ export class KeyboardNavigationManager {
         const radioGroup = this.container.querySelectorAll<HTMLInputElement>(
             `input[type="radio"][name="${currentRadio.name}"]`
         );
-        
+
         const radios = Array.from(radioGroup);
         const currentIndex = radios.indexOf(currentRadio);
-        
+
         let newIndex = currentIndex;
-        
+
         switch (e.key) {
             case 'ArrowUp':
             case 'ArrowLeft':
@@ -374,14 +371,14 @@ export class KeyboardNavigationManager {
                 newIndex = (currentIndex + 1) % radios.length;
                 break;
         }
-        
+
         if (newIndex !== currentIndex) {
             e.preventDefault();
             radios[newIndex].focus();
             radios[newIndex].checked = true;
         }
     }
-    
+
     /**
      * 탭 리스트 네비게이션
      */
@@ -390,12 +387,12 @@ export class KeyboardNavigationManager {
         if (!(currentTab instanceof HTMLElement)) return;
         const tabList = currentTab.closest('[role="tablist"]');
         if (!tabList) return;
-        
+
         const tabs = Array.from(tabList.querySelectorAll<HTMLElement>('[role="tab"]'));
         const currentIndex = tabs.indexOf(currentTab);
-        
+
         let newIndex = currentIndex;
-        
+
         switch (e.key) {
             case 'ArrowLeft':
                 newIndex = currentIndex === 0 ? tabs.length - 1 : currentIndex - 1;
@@ -404,21 +401,21 @@ export class KeyboardNavigationManager {
                 newIndex = (currentIndex + 1) % tabs.length;
                 break;
         }
-        
+
         if (newIndex !== currentIndex) {
             e.preventDefault();
             tabs[newIndex].focus();
             tabs[newIndex].click();
         }
     }
-    
+
     /**
      * 메뉴 네비게이션
      */
     private handleMenuNavigation(_e: KeyboardEvent): void {
         // 메뉴 항목 네비게이션 로직
     }
-    
+
     /**
      * 스킵 링크 표시
      */
@@ -429,7 +426,7 @@ export class KeyboardNavigationManager {
             setTimeout(() => skipLink.classList.remove('visible'), 3000);
         }
     }
-    
+
     /**
      * 단축키 문자열 생성
      */
@@ -442,21 +439,21 @@ export class KeyboardNavigationManager {
         parts.push(e.key);
         return parts.join('+');
     }
-    
+
     /**
      * 단축키 등록
      */
     registerShortcut(shortcut: string, handler: () => void): void {
         this.shortcuts.set(shortcut, handler);
     }
-    
+
     /**
      * 단축키 제거
      */
     unregisterShortcut(shortcut: string): void {
         this.shortcuts.delete(shortcut);
     }
-    
+
     /**
      * 정리
      */
@@ -473,12 +470,12 @@ export class FocusTrap {
     private firstFocusable: HTMLElement | null = null;
     private lastFocusable: HTMLElement | null = null;
     private trapHandler: (e: KeyboardEvent) => void;
-    
+
     constructor(private container: HTMLElement) {
         this.trapHandler = this.handleTrap.bind(this);
         this.activate();
     }
-    
+
     /**
      * 활성화
      */
@@ -486,7 +483,7 @@ export class FocusTrap {
         this.updateFocusableElements();
         document.addEventListener('keydown', this.trapHandler);
     }
-    
+
     /**
      * 포커스 가능 요소 업데이트
      */
@@ -494,21 +491,21 @@ export class FocusTrap {
         const focusableElements = this.container.querySelectorAll<HTMLElement>(
             'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
-        
+
         if (focusableElements.length > 0) {
             this.firstFocusable = focusableElements[0];
             this.lastFocusable = focusableElements[focusableElements.length - 1];
         }
     }
-    
+
     /**
      * 트랩 처리
      */
     private handleTrap(e: KeyboardEvent): void {
         if (e.key !== 'Tab') return;
-        
+
         if (!this.firstFocusable || !this.lastFocusable) return;
-        
+
         if (e.shiftKey) {
             // 역방향
             if (document.activeElement === this.firstFocusable) {
@@ -523,14 +520,14 @@ export class FocusTrap {
             }
         }
     }
-    
+
     /**
      * 비활성화
      */
     deactivate(): void {
         document.removeEventListener('keydown', this.trapHandler);
     }
-    
+
     /**
      * 정리
      */
@@ -548,61 +545,59 @@ export class AriaHelper {
      */
     static setLoadingState(element: HTMLElement, isLoading: boolean): void {
         element.setAttribute('aria-busy', String(isLoading));
-        
+
         if (isLoading) {
             element.setAttribute('aria-label', '로딩 중...');
         } else {
             element.removeAttribute('aria-label');
         }
     }
-    
+
     /**
      * 유효성 상태 설정
      */
-    static setValidationState(
-        element: HTMLElement,
-        isValid: boolean,
-        errorMessage?: string
-    ): void {
+    static setValidationState(element: HTMLElement, isValid: boolean, errorMessage?: string): void {
         element.setAttribute('aria-invalid', String(!isValid));
-        
+
         if (!isValid && errorMessage) {
             const errorId = `error-${Date.now()}`;
             element.setAttribute('aria-describedby', errorId);
-            
+
             const errorEl = createEl('div', {
                 cls: 'sr-only',
                 text: errorMessage,
-                attr: { id: errorId }
+                attr: { id: errorId },
             });
             element.parentElement?.appendChild(errorEl);
         }
     }
-    
+
     /**
      * 확장/축소 상태 설정
      */
     static setExpandedState(element: HTMLElement, isExpanded: boolean): void {
         element.setAttribute('aria-expanded', String(isExpanded));
     }
-    
+
     /**
      * 선택 상태 설정
      */
     static setSelectedState(element: HTMLElement, isSelected: boolean): void {
         element.setAttribute('aria-selected', String(isSelected));
     }
-    
+
     /**
      * 비활성화 상태 설정
      */
     static setDisabledState(element: HTMLElement, isDisabled: boolean): void {
         element.setAttribute('aria-disabled', String(isDisabled));
-        
-        if (element instanceof HTMLButtonElement || 
+
+        if (
+            element instanceof HTMLButtonElement ||
             element instanceof HTMLInputElement ||
             element instanceof HTMLSelectElement ||
-            element instanceof HTMLTextAreaElement) {
+            element instanceof HTMLTextAreaElement
+        ) {
             element.disabled = isDisabled;
         }
     }

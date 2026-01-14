@@ -49,45 +49,45 @@ export class FileValidator {
 
     private initializeFormats(customFormats?: string[]): Map<string, FormatInfo> {
         const formats = new Map<string, FormatInfo>();
-        
+
         // 기본 지원 형식
         const defaultFormats: Record<string, FormatInfo> = {
-            'm4a': {
+            m4a: {
                 mimeTypes: ['audio/mp4', 'audio/x-m4a'],
                 magicBytes: [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
-                magicOffset: 0
-            },
-            'mp3': {
-                mimeTypes: ['audio/mpeg'],
-                magicBytes: [0xFF, 0xFB],
                 magicOffset: 0,
-                alternativeMagic: [0xFF, 0xF3]
             },
-            'wav': {
+            mp3: {
+                mimeTypes: ['audio/mpeg'],
+                magicBytes: [0xff, 0xfb],
+                magicOffset: 0,
+                alternativeMagic: [0xff, 0xf3],
+            },
+            wav: {
                 mimeTypes: ['audio/wav', 'audio/x-wav'],
                 magicBytes: [0x52, 0x49, 0x46, 0x46], // RIFF
-                magicOffset: 0
+                magicOffset: 0,
             },
-            'mp4': {
+            mp4: {
                 mimeTypes: ['video/mp4', 'audio/mp4'],
                 magicBytes: [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
-                magicOffset: 0
+                magicOffset: 0,
             },
-            'webm': {
+            webm: {
                 mimeTypes: ['audio/webm', 'video/webm'],
-                magicBytes: [0x1A, 0x45, 0xDF, 0xA3],
-                magicOffset: 0
+                magicBytes: [0x1a, 0x45, 0xdf, 0xa3],
+                magicOffset: 0,
             },
-            'ogg': {
+            ogg: {
                 mimeTypes: ['audio/ogg'],
-                magicBytes: [0x4F, 0x67, 0x67, 0x53], // OggS
-                magicOffset: 0
-            }
+                magicBytes: [0x4f, 0x67, 0x67, 0x53], // OggS
+                magicOffset: 0,
+            },
         };
 
         // 커스텀 형식이 지정된 경우
         if (customFormats && customFormats.length > 0) {
-            customFormats.forEach(format => {
+            customFormats.forEach((format) => {
                 const formatLower = format.toLowerCase();
                 if (defaultFormats[formatLower]) {
                     formats.set(formatLower, defaultFormats[formatLower]);
@@ -145,7 +145,7 @@ export class FileValidator {
             valid: errors.length === 0,
             errors: errors.length > 0 ? errors : undefined,
             warnings: warnings.length > 0 ? warnings : undefined,
-            metadata
+            metadata,
         };
     }
 
@@ -154,32 +154,32 @@ export class FileValidator {
      */
     private validateExtension(file: TFile): { valid: boolean; error?: ValidationError } {
         const extension = file.extension.toLowerCase();
-        
+
         if (!this.SUPPORTED_FORMATS.has(extension)) {
             const supported = Array.from(this.SUPPORTED_FORMATS.keys())
-                .map(ext => `.${ext}`)
+                .map((ext) => `.${ext}`)
                 .join(', ');
-            
+
             return {
                 valid: false,
                 error: {
                     code: 'INVALID_EXTENSION',
                     message: `지원하지 않는 형식: .${extension}. 지원 형식: ${supported}`,
-                    field: 'extension'
-                }
+                    field: 'extension',
+                },
             };
         }
-        
+
         return { valid: true };
     }
 
     /**
      * 파일 크기 검증
      */
-    private validateFileSize(size: number): { 
-        valid: boolean; 
-        error?: ValidationError; 
-        warning?: ValidationWarning 
+    private validateFileSize(size: number): {
+        valid: boolean;
+        error?: ValidationError;
+        warning?: ValidationWarning;
     } {
         if (size < this.MIN_FILE_SIZE) {
             return {
@@ -187,57 +187,61 @@ export class FileValidator {
                 error: {
                     code: 'FILE_TOO_SMALL',
                     message: `파일이 너무 작습니다 (${size} bytes). 최소 크기: ${this.MIN_FILE_SIZE} bytes`,
-                    field: 'size'
-                }
+                    field: 'size',
+                },
             };
         }
-        
+
         if (size > this.MAX_FILE_SIZE) {
             return {
                 valid: false,
                 error: {
                     code: 'FILE_TOO_LARGE',
-                    message: `파일 크기(${this.formatFileSize(size)})가 최대 허용 크기(${this.formatFileSize(this.MAX_FILE_SIZE)})를 초과합니다`,
-                    field: 'size'
-                }
+                    message: `파일 크기(${this.formatFileSize(
+                        size
+                    )})가 최대 허용 크기(${this.formatFileSize(this.MAX_FILE_SIZE)})를 초과합니다`,
+                    field: 'size',
+                },
             };
         }
-        
+
         // 경고: 10MB 이상
         if (size > 10 * 1024 * 1024) {
             return {
                 valid: true,
                 warning: {
                     code: 'LARGE_FILE',
-                    message: `큰 파일(${this.formatFileSize(size)})은 처리 시간이 오래 걸릴 수 있습니다`
-                }
+                    message: `큰 파일(${this.formatFileSize(
+                        size
+                    )})은 처리 시간이 오래 걸릴 수 있습니다`,
+                },
             };
         }
-        
+
         return { valid: true };
     }
 
     /**
      * 파일명 검증
      */
-    private validateFileName(name: string): { 
-        valid: boolean; 
-        warning?: ValidationWarning 
+    private validateFileName(name: string): {
+        valid: boolean;
+        warning?: ValidationWarning;
     } {
         // 문제가 될 수 있는 문자 체크
         const problematicChars = /[<>:"/\\|?*]/g;
         const specialChars = /[^\w\s.-]/g;
-        
+
         if (problematicChars.test(name)) {
             return {
                 valid: false,
                 warning: {
                     code: 'PROBLEMATIC_FILENAME',
-                    message: '파일명에 문제가 될 수 있는 문자가 포함되어 있습니다'
-                }
+                    message: '파일명에 문제가 될 수 있는 문자가 포함되어 있습니다',
+                },
             };
         }
-        
+
         // 특수 문자가 많은 경우 경고
         const specialCharMatches = name.match(specialChars);
         if (specialCharMatches && specialCharMatches.length > 3) {
@@ -245,11 +249,11 @@ export class FileValidator {
                 valid: true,
                 warning: {
                     code: 'SPECIAL_CHARS_IN_FILENAME',
-                    message: '파일명에 특수 문자가 많이 포함되어 있습니다'
-                }
+                    message: '파일명에 특수 문자가 많이 포함되어 있습니다',
+                },
             };
         }
-        
+
         return { valid: true };
     }
 
@@ -257,7 +261,7 @@ export class FileValidator {
      * 매직 바이트 검증
      */
     private validateMagicBytes(
-        extension: string, 
+        extension: string,
         buffer: ArrayBuffer
     ): Promise<{ valid: boolean; error?: ValidationError }> {
         const format = this.SUPPORTED_FORMATS.get(extension.toLowerCase());
@@ -267,7 +271,7 @@ export class FileValidator {
 
         const bytes = new Uint8Array(buffer);
         const offset = format.magicOffset || 0;
-        
+
         // 버퍼가 너무 작은 경우
         if (bytes.length < offset + format.magicBytes.length) {
             return Promise.resolve({
@@ -275,15 +279,13 @@ export class FileValidator {
                 error: {
                     code: 'INVALID_FILE_STRUCTURE',
                     message: '파일 구조가 올바르지 않습니다',
-                    field: 'format'
-                }
+                    field: 'format',
+                },
             });
         }
 
         // 매직 바이트 확인
-        const magicMatch = format.magicBytes.every(
-            (byte, index) => bytes[offset + index] === byte
-        );
+        const magicMatch = format.magicBytes.every((byte, index) => bytes[offset + index] === byte);
 
         // 대체 매직 바이트 확인 (MP3 등)
         let alternativeMatch = false;
@@ -299,8 +301,8 @@ export class FileValidator {
                 error: {
                     code: 'INVALID_FORMAT',
                     message: `파일 내용이 예상된 ${extension.toUpperCase()} 형식과 일치하지 않습니다`,
-                    field: 'format'
-                }
+                    field: 'format',
+                },
             });
         }
 
@@ -318,7 +320,7 @@ export class FileValidator {
             size: file.stat.size,
             sizeFormatted: this.formatFileSize(file.stat.size),
             created: new Date(file.stat.ctime),
-            modified: new Date(file.stat.mtime)
+            modified: new Date(file.stat.mtime),
         };
 
         // MIME 타입 설정
@@ -338,18 +340,21 @@ export class FileValidator {
     /**
      * 오디오 길이 추정 (간단한 구현)
      */
-    private estimateAudioDuration(extension: string, buffer: ArrayBuffer): Promise<number | undefined> {
+    private estimateAudioDuration(
+        extension: string,
+        buffer: ArrayBuffer
+    ): Promise<number | undefined> {
         // 실제 구현에서는 오디오 메타데이터 파서를 사용해야 함
         // 여기서는 대략적인 추정만 제공
-        
+
         const fileSizeKB = buffer.byteLength / 1024;
-        
+
         // 평균 비트레이트 기반 추정 (매우 부정확함)
         const avgBitrates: Record<string, number> = {
-            'mp3': 128, // kbps
-            'm4a': 256,
-            'wav': 1411,
-            'ogg': 192
+            mp3: 128, // kbps
+            m4a: 256,
+            wav: 1411,
+            ogg: 192,
         };
 
         const bitrate = avgBitrates[extension.toLowerCase()];

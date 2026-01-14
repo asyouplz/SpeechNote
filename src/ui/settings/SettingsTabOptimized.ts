@@ -19,39 +19,39 @@ import { DEFAULT_SETTINGS } from '../../domain/models/Settings';
  */
 export class SettingsTabOptimized extends PluginSettingTab {
     plugin: SpeechToTextPlugin;
-    
+
     // Components
     private components: SettingsComponents;
-    
+
     // Memory Management
     private eventManager: EventListenerManager;
     private disposed = false;
-    
+
     // State
     private state: SettingsState;
-    
+
     // Error Manager
     private errorManager: GlobalErrorManager;
 
     constructor(app: App, plugin: SpeechToTextPlugin) {
         super(app, plugin);
         this.plugin = plugin;
-        
+
         // Initialize managers
         this.eventManager = new EventListenerManager();
         this.errorManager = GlobalErrorManager.getInstance();
-        
+
         // Initialize state
         this.state = {
             isDirty: false,
             isSaving: false,
             apiKeyVisible: false,
-            validationStatus: new Map()
+            validationStatus: new Map(),
         };
-        
+
         // Initialize components with error boundaries
         this.components = this.initializeComponents();
-        
+
         // Setup auto-save
         this.setupAutoSave();
     }
@@ -71,15 +71,15 @@ export class SettingsTabOptimized extends PluginSettingTab {
                 audioSettings: new AudioSettings(this.plugin),
                 advancedSettings: new AdvancedSettings(this.plugin),
                 shortcutSettings: new ShortcutSettings(this.app, this.plugin),
-                sectionRenderers: new Map()
+                sectionRenderers: new Map(),
             };
         } catch (error) {
             this.errorManager.handleError(this.normalizeError(error), {
                 type: ErrorType.RESOURCE,
                 severity: ErrorSeverity.HIGH,
-                context: { component: 'SettingsTab' }
+                context: { component: 'SettingsTab' },
             });
-            
+
             // Return minimal components on error
             return {
                 apiKeyValidator: null,
@@ -87,7 +87,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
                 audioSettings: null,
                 advancedSettings: null,
                 shortcutSettings: null,
-                sectionRenderers: new Map()
+                sectionRenderers: new Map(),
             };
         }
     }
@@ -98,9 +98,9 @@ export class SettingsTabOptimized extends PluginSettingTab {
     private setupAutoSave(): void {
         const saveFunction = async (): Promise<void> => {
             if (!this.state.isDirty || this.state.isSaving) return;
-            
+
             this.state.isSaving = true;
-            
+
             try {
                 await this.plugin.saveSettings();
                 this.state.isDirty = false;
@@ -109,23 +109,23 @@ export class SettingsTabOptimized extends PluginSettingTab {
                 this.errorManager.handleError(this.normalizeError(error), {
                     type: ErrorType.RESOURCE,
                     severity: ErrorSeverity.MEDIUM,
-                    userMessage: '설정 저장 실패'
+                    userMessage: '설정 저장 실패',
                 });
                 this.updateSaveStatus('error');
             } finally {
                 this.state.isSaving = false;
             }
         };
-        
+
         this.saveSettings = debounceAsync(saveFunction, 1000);
     }
 
     display(): void {
         const { containerEl } = this;
-        
+
         // Clear and setup container
         this.prepareContainer(containerEl);
-        
+
         // Create sections with error boundaries
         const sections = [
             { id: 'header', builder: () => this.createHeader(containerEl) },
@@ -134,11 +134,11 @@ export class SettingsTabOptimized extends PluginSettingTab {
             { id: 'audio', builder: () => this.createAudioSection(containerEl) },
             { id: 'advanced', builder: () => this.createAdvancedSection(containerEl) },
             { id: 'shortcuts', builder: () => this.createShortcutSection(containerEl) },
-            { id: 'footer', builder: () => this.createFooter(containerEl) }
+            { id: 'footer', builder: () => this.createFooter(containerEl) },
         ];
-        
+
         // Render each section with error boundary
-        sections.forEach(section => {
+        sections.forEach((section) => {
             this.renderSectionWithErrorBoundary(section.id, section.builder);
         });
     }
@@ -149,7 +149,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
     private prepareContainer(containerEl: HTMLElement): void {
         containerEl.empty();
         containerEl.addClass('speech-to-text-settings', 'optimized-settings');
-        
+
         // Add loading indicator
         const loadingEl = containerEl.createDiv('settings-loading');
         loadingEl.addClass('sn-hidden');
@@ -173,21 +173,21 @@ export class SettingsTabOptimized extends PluginSettingTab {
         this.errorManager.handleError(error, {
             type: ErrorType.UNKNOWN,
             severity: ErrorSeverity.MEDIUM,
-            context: { section: sectionId }
+            context: { section: sectionId },
         });
-        
+
         // Show fallback UI
         const fallback = this.containerEl.createDiv('section-error');
         fallback.createEl('p', {
             text: `${sectionId} 섹션 로드 실패`,
-            cls: 'error-message'
+            cls: 'error-message',
         });
-        
+
         const retryBtn = fallback.createEl('button', {
             text: '다시 시도',
-            cls: 'retry-button'
+            cls: 'retry-button',
         });
-        
+
         this.eventManager.add(retryBtn, 'click', () => {
             fallback.remove();
             this.display();
@@ -200,7 +200,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
     private createHeader(containerEl: HTMLElement): void {
         const header = new SettingsHeader(containerEl, this.state);
         header.render();
-        
+
         // Register for disposal
         this.components.sectionRenderers.set('header', header);
     }
@@ -216,13 +216,13 @@ export class SettingsTabOptimized extends PluginSettingTab {
             this.eventManager,
             this.state
         );
-        
+
         section.render();
         section.onSettingsChange(() => {
             this.state.isDirty = true;
             void this.saveSettings();
         });
-        
+
         this.components.sectionRenderers.set('api', section);
     }
 
@@ -231,7 +231,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
      */
     private createGeneralSection(containerEl: HTMLElement): void {
         const section = this.createSection(containerEl, 'General', '기본 동작 설정');
-        
+
         if (this.components.generalSettings) {
             this.components.generalSettings.render(section);
             this.setupChangeTracking(section);
@@ -243,7 +243,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
      */
     private createAudioSection(containerEl: HTMLElement): void {
         const section = this.createSection(containerEl, 'Audio', '음성 변환 설정');
-        
+
         if (this.components.audioSettings) {
             this.components.audioSettings.render(section);
             this.setupChangeTracking(section);
@@ -255,7 +255,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
      */
     private createAdvancedSection(containerEl: HTMLElement): void {
         const section = this.createSection(containerEl, 'Advanced', '고급 설정');
-        
+
         if (this.components.advancedSettings) {
             this.components.advancedSettings.render(section);
             this.setupChangeTracking(section);
@@ -267,7 +267,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
      */
     private createShortcutSection(containerEl: HTMLElement): void {
         const section = this.createSection(containerEl, 'Shortcuts', '단축키 설정');
-        
+
         if (this.components.shortcutSettings) {
             this.components.shortcutSettings.render(section);
             this.setupChangeTracking(section);
@@ -278,12 +278,8 @@ export class SettingsTabOptimized extends PluginSettingTab {
      * 푸터 생성
      */
     private createFooter(containerEl: HTMLElement): void {
-        const footer = new SettingsFooter(
-            containerEl,
-            this.plugin,
-            this.eventManager
-        );
-        
+        const footer = new SettingsFooter(containerEl, this.plugin, this.eventManager);
+
         footer.render();
         this.components.sectionRenderers.set('footer', footer);
     }
@@ -294,14 +290,14 @@ export class SettingsTabOptimized extends PluginSettingTab {
     private createSection(container: HTMLElement, title: string, description: string): HTMLElement {
         const section = container.createDiv('settings-section');
         section.createEl('h3', { text: title });
-        
+
         if (description) {
-            section.createEl('p', { 
+            section.createEl('p', {
                 text: description,
-                cls: 'setting-item-description'
+                cls: 'setting-item-description',
             });
         }
-        
+
         return section;
     }
 
@@ -311,8 +307,8 @@ export class SettingsTabOptimized extends PluginSettingTab {
     private setupChangeTracking(section: HTMLElement): void {
         // Track all input changes
         const inputs = section.querySelectorAll('input, select, textarea');
-        
-        inputs.forEach(input => {
+
+        inputs.forEach((input) => {
             if (input instanceof HTMLElement) {
                 this.eventManager.add(input, 'change', () => {
                     this.state.isDirty = true;
@@ -328,17 +324,17 @@ export class SettingsTabOptimized extends PluginSettingTab {
     private updateSaveStatus(status: 'saving' | 'saved' | 'error'): void {
         const statusEl = this.containerEl.querySelector('.save-status');
         if (!statusEl) return;
-        
+
         statusEl.className = `save-status ${status}`;
-        
+
         const messages = {
             saving: '저장 중...',
             saved: '저장됨',
-            error: '저장 실패'
+            error: '저장 실패',
         };
-        
+
         statusEl.textContent = messages[status];
-        
+
         // Auto-hide success message
         if (status === 'saved') {
             setTimeout(() => {
@@ -357,19 +353,19 @@ export class SettingsTabOptimized extends PluginSettingTab {
      */
     dispose(): void {
         if (this.disposed) return;
-        
+
         this.disposed = true;
-        
+
         // Dispose all section renderers
-        this.components.sectionRenderers.forEach(renderer => {
+        this.components.sectionRenderers.forEach((renderer) => {
             if (renderer && typeof renderer.dispose === 'function') {
                 renderer.dispose();
             }
         });
-        
+
         // Clear event listeners
         this.eventManager.removeAll();
-        
+
         // Clear state
         this.state.validationStatus.clear();
     }
@@ -412,13 +408,10 @@ interface SettingsState {
  * 섹션 렌더러 기본 클래스
  */
 abstract class SectionRenderer {
-    constructor(
-        protected container: HTMLElement,
-        protected eventManager?: EventListenerManager
-    ) {}
-    
+    constructor(protected container: HTMLElement, protected eventManager?: EventListenerManager) {}
+
     abstract render(): void;
-    
+
     dispose(): void {
         // Override in subclasses if needed
     }
@@ -428,26 +421,23 @@ abstract class SectionRenderer {
  * 설정 헤더 렌더러
  */
 class SettingsHeader extends SectionRenderer {
-    constructor(
-        container: HTMLElement,
-        private state: SettingsState
-    ) {
+    constructor(container: HTMLElement, private state: SettingsState) {
         super(container);
     }
-    
+
     render(): void {
         const headerEl = this.container.createDiv({ cls: 'settings-header' });
-        
+
         headerEl.createEl('h2', {
             text: 'Speech to Text 설정',
-            cls: 'settings-title'
+            cls: 'settings-title',
         });
-        
+
         headerEl.createEl('p', {
             text: '음성을 텍스트로 변환하는 플러그인 설정을 구성합니다.',
-            cls: 'settings-description'
+            cls: 'settings-description',
         });
-        
+
         // Save status indicator
         const statusEl = headerEl.createDiv({ cls: 'save-status' });
         statusEl.classList.toggle('sn-hidden', !this.state.isDirty);
@@ -459,7 +449,7 @@ class SettingsHeader extends SectionRenderer {
  */
 class ApiSettingsSection extends SectionRenderer {
     private changeCallbacks: Set<() => void> = new Set();
-    
+
     constructor(
         container: HTMLElement,
         private plugin: SpeechToTextPlugin,
@@ -469,42 +459,42 @@ class ApiSettingsSection extends SectionRenderer {
     ) {
         super(container, eventManager);
     }
-    
+
     render(): void {
         const sectionEl = this.createSection();
         this.createApiKeyInput(sectionEl);
         this.createApiUsageDisplay(sectionEl);
     }
-    
+
     private createSection(): HTMLElement {
         const section = this.container.createDiv('settings-section');
         section.createEl('h3', { text: 'API' });
         section.createEl('p', {
             text: 'OpenAI API 설정',
-            cls: 'setting-item-description'
+            cls: 'setting-item-description',
         });
         return section;
     }
-    
+
     private createApiKeyInput(section: HTMLElement): void {
         const setting = new Setting(section)
             .setName('API Key')
             .setDesc('OpenAI API 키를 입력하세요. (sk-로 시작)');
-        
+
         const inputContainer = setting.controlEl.createDiv('api-key-container');
-        
+
         // Create secure input
         const input = new SecureApiKeyInput(
             inputContainer,
             this.plugin.settings.apiKey,
             this.eventManager!
         );
-        
+
         input.onChange(async (value) => {
             if (this.validator) {
                 const isValid = await this.validator.validate(value);
                 this.state.validationStatus.set('apiKey', isValid);
-                
+
                 if (isValid) {
                     this.plugin.settings.apiKey = value;
                     this.notifyChange();
@@ -514,25 +504,25 @@ class ApiSettingsSection extends SectionRenderer {
                 }
             }
         });
-        
+
         input.render();
     }
-    
+
     private createApiUsageDisplay(section: HTMLElement): void {
         const usageEl = section.createDiv('api-usage');
         usageEl.createEl('h4', { text: 'API 사용량' });
-        
+
         // Placeholder for usage stats
         const statsEl = usageEl.createDiv('usage-stats');
         statsEl.createEl('p', { text: '이번 달 사용량: 0 / 1000 요청' });
     }
-    
+
     onSettingsChange(callback: () => void): void {
         this.changeCallbacks.add(callback);
     }
-    
+
     private notifyChange(): void {
-        this.changeCallbacks.forEach(callback => callback());
+        this.changeCallbacks.forEach((callback) => callback());
     }
 }
 
@@ -545,51 +535,51 @@ class SecureApiKeyInput {
     private validateBtn!: HTMLButtonElement;
     private isVisible = false;
     private changeCallbacks: Set<(value: string) => void> = new Set();
-    
+
     constructor(
         private container: HTMLElement,
         private initialValue: string,
         private eventManager: EventListenerManager
     ) {}
-    
+
     render(): void {
         // Create masked input
         this.inputEl = this.container.createEl('input', {
             type: 'password',
             placeholder: 'sk-...',
-            cls: 'api-key-input'
+            cls: 'api-key-input',
         });
-        
+
         if (this.initialValue) {
             this.inputEl.value = this.maskApiKey(this.initialValue);
         }
-        
+
         // Create toggle button
         this.toggleBtn = this.container.createEl('button', {
             text: '👁',
-            cls: 'api-key-toggle'
+            cls: 'api-key-toggle',
         });
-        
+
         // Create validate button
         this.validateBtn = this.container.createEl('button', {
             text: '검증',
-            cls: 'mod-cta api-key-validate'
+            cls: 'mod-cta api-key-validate',
         });
-        
+
         this.setupEventHandlers();
     }
-    
+
     private setupEventHandlers(): void {
         // Toggle visibility
         this.eventManager.add(this.toggleBtn, 'click', () => {
             this.toggleVisibility();
         });
-        
+
         // Validate on button click
         this.eventManager.add(this.validateBtn, 'click', () => {
             void this.validate();
         });
-        
+
         // Track changes
         this.eventManager.add(this.inputEl, 'change', () => {
             const value = this.inputEl.value;
@@ -598,10 +588,10 @@ class SecureApiKeyInput {
             }
         });
     }
-    
+
     private toggleVisibility(): void {
         this.isVisible = !this.isVisible;
-        
+
         if (this.isVisible) {
             this.inputEl.type = 'text';
             this.inputEl.value = this.initialValue || '';
@@ -612,18 +602,18 @@ class SecureApiKeyInput {
             this.toggleBtn.textContent = '👁';
         }
     }
-    
+
     private validate(): void {
         const value = this.inputEl.value;
-        
+
         if (!value || value === this.maskApiKey(this.initialValue)) {
             new Notice('API 키를 입력해주세요');
             return;
         }
-        
+
         this.validateBtn.disabled = true;
         this.validateBtn.textContent = '검증 중...';
-        
+
         try {
             this.notifyChange(value);
         } finally {
@@ -631,19 +621,19 @@ class SecureApiKeyInput {
             this.validateBtn.textContent = '검증';
         }
     }
-    
+
     private maskApiKey(key: string): string {
         if (!key) return '';
         if (key.length <= 8) return key;
         return key.substring(0, 7) + '...' + key.substring(key.length - 4);
     }
-    
+
     onChange(callback: (value: string) => void): void {
         this.changeCallbacks.add(callback);
     }
-    
+
     private notifyChange(value: string): void {
-        this.changeCallbacks.forEach(callback => callback(value));
+        this.changeCallbacks.forEach((callback) => callback(value));
     }
 }
 
@@ -658,58 +648,59 @@ class SettingsFooter extends SectionRenderer {
     ) {
         super(container, eventManager);
     }
-    
+
     render(): void {
         const footer = this.container.createDiv('settings-footer');
-        
+
         // Export/Import buttons
         new Setting(footer)
-            .addButton(btn => btn
-                .setButtonText('설정 내보내기')
-                .onClick(() => {
+            .addButton((btn) =>
+                btn.setButtonText('설정 내보내기').onClick(() => {
                     void this.exportSettings();
-                }))
-            .addButton(btn => btn
-                .setButtonText('설정 가져오기')
-                .onClick(() => {
+                })
+            )
+            .addButton((btn) =>
+                btn.setButtonText('설정 가져오기').onClick(() => {
                     void this.importSettings();
-                }));
-        
+                })
+            );
+
         // Reset button
-        new Setting(footer)
-            .addButton(btn => btn
+        new Setting(footer).addButton((btn) =>
+            btn
                 .setButtonText('기본값으로 재설정')
                 .setWarning()
                 .onClick(() => {
                     void this.resetSettings();
-                }));
+                })
+        );
     }
-    
+
     private exportSettings(): void {
         try {
             const settings = this.plugin.settings;
             const blob = new Blob([JSON.stringify(settings, null, 2)], {
-                type: 'application/json'
+                type: 'application/json',
             });
-            
+
             const url = URL.createObjectURL(blob);
             const a = createEl('a');
             a.href = url;
             a.download = 'speech-to-text-settings.json';
             a.click();
-            
+
             URL.revokeObjectURL(url);
             new Notice('설정을 내보냈습니다');
         } catch (error) {
             new Notice('설정 내보내기 실패');
         }
     }
-    
+
     private importSettings(): void {
         const input = createEl('input');
         input.type = 'file';
         input.accept = '.json';
-        
+
         input.onchange = async (e) => {
             const target = e.target;
             if (!(target instanceof HTMLInputElement)) {
@@ -717,39 +708,39 @@ class SettingsFooter extends SectionRenderer {
             }
             const file = target.files?.[0];
             if (!file) return;
-            
+
             try {
                 const text = await file.text();
                 const settings = JSON.parse(text);
-                
+
                 // Validate and merge settings
                 Object.assign(this.plugin.settings, settings);
                 await this.plugin.saveSettings();
-                
+
                 new Notice('설정을 가져왔습니다');
-                
+
                 // Refresh UI - need to trigger parent component refresh
                 // This should be handled via event or callback
             } catch (error) {
                 new Notice('설정 가져오기 실패');
             }
         };
-        
+
         input.click();
     }
-    
+
     private async resetSettings(): Promise<void> {
         if (!confirm('모든 설정을 기본값으로 재설정하시겠습니까?')) {
             return;
         }
-        
+
         try {
             // Reset to defaults
             this.plugin.settings = { ...DEFAULT_SETTINGS };
             await this.plugin.saveSettings();
-            
+
             new Notice('설정을 재설정했습니다');
-            
+
             // Refresh UI
             // Note: We need to refresh the main settings tab, not from within footer
             // This should be handled by the parent component

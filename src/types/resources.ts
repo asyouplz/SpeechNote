@@ -1,6 +1,6 @@
 /**
  * 통합 리소스 관리 타입 정의
- * 
+ *
  * 메모리 관리와 리소스 해제를 위한 표준 패턴
  */
 
@@ -28,33 +28,33 @@ export interface IResourceManager {
 export abstract class AutoDisposable implements IDisposable {
     private _isDisposed = false;
     protected resourceManager: ResourceManager;
-    
+
     constructor() {
         this.resourceManager = new ResourceManager();
     }
-    
+
     get isDisposed(): boolean {
         return this._isDisposed;
     }
-    
+
     /**
      * 리소스 추가 및 자동 관리
      */
     protected addResource<T extends IDisposable>(resource: T): T {
         return this.resourceManager.add(resource);
     }
-    
+
     /**
      * 리소스 해제
      */
     async dispose(): Promise<void> {
         if (this._isDisposed) return;
-        
+
         this._isDisposed = true;
         await this.onDispose();
         await this.resourceManager.disposeAll();
     }
-    
+
     /**
      * 서브클래스에서 구현할 정리 로직
      */
@@ -66,30 +66,30 @@ export abstract class AutoDisposable implements IDisposable {
  */
 export class ResourceManager implements IResourceManager {
     private resources = new Set<IDisposable>();
-    
+
     add<T extends IDisposable>(resource: T): T {
         this.resources.add(resource);
         return resource;
     }
-    
+
     remove(resource: IDisposable): boolean {
         return this.resources.delete(resource);
     }
-    
+
     async disposeAll(): Promise<void> {
         const promises: Promise<void>[] = [];
-        
+
         for (const resource of this.resources) {
             const result = resource.dispose();
             if (result instanceof Promise) {
                 promises.push(result);
             }
         }
-        
+
         await Promise.all(promises);
         this.resources.clear();
     }
-    
+
     get size(): number {
         return this.resources.size;
     }
@@ -101,28 +101,28 @@ export class ResourceManager implements IResourceManager {
 export class WeakResourceTracker {
     private resources = new Map<string, WeakRef<IDisposable>>();
     private cleanupInterval: NodeJS.Timeout | null = null;
-    
+
     constructor(cleanupIntervalMs = 60000) {
         this.startCleanup(cleanupIntervalMs);
     }
-    
+
     track(id: string, resource: IDisposable): void {
         this.resources.set(id, new WeakRef(resource));
     }
-    
+
     get(id: string): IDisposable | undefined {
         const ref = this.resources.get(id);
         if (!ref) return undefined;
-        
+
         const resource = ref.deref();
         if (!resource) {
             this.resources.delete(id);
             return undefined;
         }
-        
+
         return resource;
     }
-    
+
     private startCleanup(intervalMs: number): void {
         this.cleanupInterval = setInterval(() => {
             for (const [id, ref] of this.resources) {
@@ -132,7 +132,7 @@ export class WeakResourceTracker {
             }
         }, intervalMs);
     }
-    
+
     dispose(): void {
         if (this.cleanupInterval) {
             clearInterval(this.cleanupInterval);
@@ -148,25 +148,21 @@ export class WeakResourceTracker {
 export class ResourcePool<T extends IDisposable> {
     private available: T[] = [];
     private inUse = new Set<T>();
-    
-    constructor(
-        private factory: () => T | Promise<T>,
-        private maxSize = 10,
-        private minSize = 2
-    ) {
+
+    constructor(private factory: () => T | Promise<T>, private maxSize = 10, private minSize = 2) {
         void this.initialize();
     }
-    
+
     private async initialize(): Promise<void> {
         for (let i = 0; i < this.minSize; i++) {
             const resource = await this.factory();
             this.available.push(resource);
         }
     }
-    
+
     async acquire(): Promise<T> {
         let resource = this.available.pop();
-        
+
         if (!resource) {
             if (this.inUse.size < this.maxSize) {
                 resource = await this.factory();
@@ -175,11 +171,11 @@ export class ResourcePool<T extends IDisposable> {
                 throw new Error('Resource pool exhausted');
             }
         }
-        
+
         this.inUse.add(resource);
         return resource;
     }
-    
+
     release(resource: T): void {
         if (this.inUse.delete(resource)) {
             if (!resource.isDisposed) {
@@ -187,10 +183,10 @@ export class ResourcePool<T extends IDisposable> {
             }
         }
     }
-    
+
     async dispose(): Promise<void> {
         const allResources = [...this.available, ...this.inUse];
-        await Promise.all(allResources.map(r => r.dispose()));
+        await Promise.all(allResources.map((r) => r.dispose()));
         this.available = [];
         this.inUse.clear();
     }

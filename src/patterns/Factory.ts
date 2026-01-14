@@ -29,21 +29,21 @@ export interface IAbstractFactory<T extends Record<string, unknown>> {
  */
 export class RegistryFactory<T> implements IFactory<T, string> {
     private registry = new Map<string, () => T>();
-    
+
     /**
      * 생성자 등록
      */
     register(type: string, creator: () => T): void {
         this.registry.set(type, creator);
     }
-    
+
     /**
      * 생성자 등록 해제
      */
     unregister(type: string): void {
         this.registry.delete(type);
     }
-    
+
     /**
      * 객체 생성
      */
@@ -54,14 +54,14 @@ export class RegistryFactory<T> implements IFactory<T, string> {
         }
         return creator();
     }
-    
+
     /**
      * 등록된 타입 확인
      */
     hasType(type: string): boolean {
         return this.registry.has(type);
     }
-    
+
     /**
      * 등록된 모든 타입 반환
      */
@@ -74,10 +74,8 @@ export class RegistryFactory<T> implements IFactory<T, string> {
  * 파라미터화된 팩토리
  */
 export class ParameterizedFactory<T, P = unknown> implements IFactory<T, P> {
-    constructor(
-        private creator: (params?: P) => T
-    ) {}
-    
+    constructor(private creator: (params?: P) => T) {}
+
     create(params?: P): T {
         return this.creator(params);
     }
@@ -91,20 +89,17 @@ export class ConditionalFactory<T, P = unknown> {
         predicate: (params: P) => boolean;
         creator: (params: P) => T;
     }> = [];
-    
+
     private defaultCreator?: (params: P) => T;
-    
+
     /**
      * 조건 추가
      */
-    addCondition(
-        predicate: (params: P) => boolean,
-        creator: (params: P) => T
-    ): this {
+    addCondition(predicate: (params: P) => boolean, creator: (params: P) => T): this {
         this.conditions.push({ predicate, creator });
         return this;
     }
-    
+
     /**
      * 기본 생성자 설정
      */
@@ -112,7 +107,7 @@ export class ConditionalFactory<T, P = unknown> {
         this.defaultCreator = creator;
         return this;
     }
-    
+
     /**
      * 객체 생성
      */
@@ -122,11 +117,11 @@ export class ConditionalFactory<T, P = unknown> {
                 return creator(params as P);
             }
         }
-        
+
         if (this.defaultCreator) {
             return this.defaultCreator(params as P);
         }
-        
+
         throw new Error('No matching condition and no default creator');
     }
 }
@@ -137,24 +132,24 @@ export class ConditionalFactory<T, P = unknown> {
 export class PoolFactory<T> {
     private pool: T[] = [];
     private inUse = new Set<T>();
-    
+
     constructor(
         private creator: () => T,
         private resetter?: (item: T) => void,
         private maxSize = 10
     ) {}
-    
+
     /**
      * 객체 획득
      */
     acquire(): T {
         const item = this.pool.length > 0 ? this.pool.pop() : undefined;
         const resolvedItem = item ?? this.creator();
-        
+
         this.inUse.add(resolvedItem);
         return resolvedItem;
     }
-    
+
     /**
      * 객체 반환
      */
@@ -162,18 +157,18 @@ export class PoolFactory<T> {
         if (!this.inUse.has(item)) {
             return;
         }
-        
+
         this.inUse.delete(item);
-        
+
         if (this.resetter) {
             this.resetter(item);
         }
-        
+
         if (this.pool.length < this.maxSize) {
             this.pool.push(item);
         }
     }
-    
+
     /**
      * 풀 상태 확인
      */
@@ -185,10 +180,10 @@ export class PoolFactory<T> {
         return {
             poolSize: this.pool.length,
             inUseSize: this.inUse.size,
-            available: this.pool.length
+            available: this.pool.length,
         };
     }
-    
+
     /**
      * 풀 초기화
      */
@@ -203,14 +198,14 @@ export class PoolFactory<T> {
  */
 export class BuilderFactory<T> {
     private builders = new Map<string, () => IBuilder<T>>();
-    
+
     /**
      * 빌더 등록
      */
     registerBuilder(type: string, builder: () => IBuilder<T>): void {
         this.builders.set(type, builder);
     }
-    
+
     /**
      * 빌더 생성
      */
@@ -221,7 +216,7 @@ export class BuilderFactory<T> {
         }
         return builderCreator();
     }
-    
+
     /**
      * 객체 생성 (빌더를 통해)
      */
@@ -246,14 +241,14 @@ export interface IBuilder<T> {
  */
 export class PrototypeFactory<T extends { clone(): T }> {
     private prototypes = new Map<string, T>();
-    
+
     /**
      * 프로토타입 등록
      */
     registerPrototype(type: string, prototype: T): void {
         this.prototypes.set(type, prototype);
     }
-    
+
     /**
      * 객체 생성 (복제)
      */
@@ -269,9 +264,7 @@ export class PrototypeFactory<T extends { clone(): T }> {
 /**
  * 함수형 팩토리 생성 헬퍼
  */
-export function createFactory<T, P = void>(
-    creator: (params: P) => T
-): (params: P) => T {
+export function createFactory<T, P = void>(creator: (params: P) => T): (params: P) => T {
     return (params: P) => creator(params);
 }
 
@@ -280,30 +273,30 @@ export function createFactory<T, P = void>(
  */
 export class MemoizedFactory<T, P = unknown> {
     private cache = new Map<string, T>();
-    
+
     constructor(
         private creator: (params: P) => T,
         private keyGenerator: (params: P) => string = JSON.stringify
     ) {}
-    
+
     create(params: P): T {
         const key = this.keyGenerator(params);
-        
+
         if (!this.cache.has(key)) {
             this.cache.set(key, this.creator(params));
         }
-        
+
         const value = this.cache.get(key);
         if (value === undefined) {
             throw new Error(`MemoizedFactory failed to create value for key ${key}`);
         }
         return value;
     }
-    
+
     clearCache(): void {
         this.cache.clear();
     }
-    
+
     getCacheSize(): number {
         return this.cache.size;
     }

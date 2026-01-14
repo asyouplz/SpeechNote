@@ -16,7 +16,7 @@ export class MetricsTracker {
      * Initialize metrics for all providers
      */
     private initializeMetrics(): void {
-        this.providers.forEach(provider => {
+        this.providers.forEach((provider) => {
             this.metrics.set(provider, this.createEmptyMetrics(provider));
         });
     }
@@ -31,7 +31,7 @@ export class MetricsTracker {
             successfulRequests: 0,
             failedRequests: 0,
             averageLatency: 0,
-            averageCost: 0
+            averageCost: 0,
         };
     }
 
@@ -46,15 +46,15 @@ export class MetricsTracker {
         error?: Error
     ): void {
         const metric = this.getOrCreateMetric(provider);
-        
+
         this.updateRequestCounts(metric, success);
-        
+
         if (success) {
             this.updateSuccessMetrics(metric, latency, cost);
         } else {
             this.updateFailureMetrics(metric, error);
         }
-        
+
         this.logger.debug(`Metrics updated for ${provider}`, this.formatMetrics(metric));
     }
 
@@ -85,11 +85,7 @@ export class MetricsTracker {
     /**
      * Update success metrics
      */
-    private updateSuccessMetrics(
-        metric: ProviderMetrics,
-        latency?: number,
-        cost?: number
-    ): void {
+    private updateSuccessMetrics(metric: ProviderMetrics, latency?: number, cost?: number): void {
         if (latency !== undefined) {
             metric.averageLatency = this.calculateRunningAverage(
                 metric.averageLatency,
@@ -97,7 +93,7 @@ export class MetricsTracker {
                 metric.successfulRequests
             );
         }
-        
+
         if (cost !== undefined) {
             metric.averageCost = this.calculateRunningAverage(
                 metric.averageCost,
@@ -114,7 +110,7 @@ export class MetricsTracker {
         if (error) {
             metric.lastError = {
                 message: error.message,
-                timestamp: new Date()
+                timestamp: new Date(),
             };
         }
     }
@@ -122,11 +118,7 @@ export class MetricsTracker {
     /**
      * Calculate running average
      */
-    private calculateRunningAverage(
-        currentAvg: number,
-        newValue: number,
-        count: number
-    ): number {
+    private calculateRunningAverage(currentAvg: number, newValue: number, count: number): number {
         if (count <= 1) return newValue;
         return (currentAvg * (count - 1) + newValue) / count;
     }
@@ -151,7 +143,7 @@ export class MetricsTracker {
     getSuccessRate(provider: TranscriptionProvider): number {
         const metric = this.metrics.get(provider);
         if (!metric || metric.totalRequests === 0) return 0;
-        
+
         return metric.successfulRequests / metric.totalRequests;
     }
 
@@ -172,7 +164,7 @@ export class MetricsTracker {
                 errorRate: 0,
                 averageLatency: 0,
                 averageCost: 0,
-                availability: 0
+                availability: 0,
             };
         }
 
@@ -182,7 +174,7 @@ export class MetricsTracker {
             errorRate: 1 - successRate,
             averageLatency: metric.averageLatency,
             averageCost: metric.averageCost,
-            availability: this.calculateAvailability(metric)
+            availability: this.calculateAvailability(metric),
         };
     }
 
@@ -191,21 +183,21 @@ export class MetricsTracker {
      */
     private calculateAvailability(metric: ProviderMetrics): number {
         if (metric.totalRequests === 0) return 1;
-        
+
         // Simple availability: success rate
         const baseAvailability = this.getSuccessRate(metric.provider);
-        
+
         // Apply time decay if there was a recent error
         if (metric.lastError) {
             const timeSinceError = Date.now() - metric.lastError.timestamp.getTime();
             const decayPeriod = 5 * 60 * 1000; // 5 minutes
-            
+
             if (timeSinceError < decayPeriod) {
                 const decayFactor = timeSinceError / decayPeriod;
                 return baseAvailability * decayFactor;
             }
         }
-        
+
         return baseAvailability;
     }
 
@@ -231,14 +223,14 @@ export class MetricsTracker {
             requests: {
                 total: metric.totalRequests,
                 successful: metric.successfulRequests,
-                failed: metric.failedRequests
+                failed: metric.failedRequests,
             },
             performance: {
                 successRate: `${(this.getSuccessRate(metric.provider) * 100).toFixed(2)}%`,
                 avgLatency: `${metric.averageLatency.toFixed(0)}ms`,
-                avgCost: `$${metric.averageCost.toFixed(4)}`
+                avgCost: `$${metric.averageCost.toFixed(4)}`,
             },
-            lastError: metric.lastError
+            lastError: metric.lastError,
         };
     }
 
@@ -246,11 +238,11 @@ export class MetricsTracker {
      * Export metrics as JSON
      */
     exportMetrics(): string {
-        const metricsData = this.getAllMetrics().map(metric => ({
+        const metricsData = this.getAllMetrics().map((metric) => ({
             ...metric,
-            stats: this.getPerformanceStats(metric.provider)
+            stats: this.getPerformanceStats(metric.provider),
         }));
-        
+
         return JSON.stringify(metricsData, null, 2);
     }
 }

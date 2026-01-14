@@ -4,10 +4,7 @@
  */
 
 import type { ILogger } from '../../../../types';
-import { 
-    TranscriptionError,
-    ProviderUnavailableError 
-} from '../ITranscriber';
+import { TranscriptionError, ProviderUnavailableError } from '../ITranscriber';
 import { RELIABILITY, ERROR_MESSAGES } from './constants';
 
 /**
@@ -18,22 +15,19 @@ export class RateLimiter {
     private queue: Array<() => void> = [];
     private processing = false;
     private lastRequestTime = 0;
-    
-    constructor(
-        private requestsPerMinute: number,
-        private logger: ILogger
-    ) {}
-    
+
+    constructor(private requestsPerMinute: number, private logger: ILogger) {}
+
     /**
      * Rate limit을 고려한 요청 허가 대기
      */
     acquire(): Promise<void> {
-        return new Promise<void>(resolve => {
+        return new Promise<void>((resolve) => {
             this.queue.push(resolve);
             void this.processQueue();
         });
     }
-    
+
     /**
      * 대기열 처리
      */
@@ -41,34 +35,34 @@ export class RateLimiter {
         if (this.processing || this.queue.length === 0) {
             return;
         }
-        
+
         this.processing = true;
         const minInterval = 60000 / this.requestsPerMinute;
-        
+
         while (this.queue.length > 0) {
             const now = Date.now();
             const timeSinceLastRequest = now - this.lastRequestTime;
-            
+
             if (timeSinceLastRequest < minInterval) {
                 const waitTime = minInterval - timeSinceLastRequest;
                 await this.sleep(waitTime);
             }
-            
+
             const resolve = this.queue.shift();
             if (resolve) {
                 this.lastRequestTime = Date.now();
                 resolve();
             }
         }
-        
+
         this.processing = false;
     }
-    
+
     /**
      * 지연 유틸리티
      */
     private sleep(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
 
@@ -127,7 +121,7 @@ export class CircuitBreaker {
      */
     private onSuccess(): void {
         this.failureCount = 0;
-        
+
         if (this.state === 'HALF_OPEN') {
             this.successCount++;
             if (this.successCount >= this.successThreshold) {
@@ -143,7 +137,7 @@ export class CircuitBreaker {
      */
     private onFailure(): void {
         this.failureCount++;
-        
+
         if (this.state === 'HALF_OPEN') {
             this.state = 'OPEN';
             this.nextAttemptTime = Date.now() + this.timeout;
@@ -191,33 +185,36 @@ export class ExponentialBackoffRetry {
      */
     async execute<T>(operation: () => Promise<T>): Promise<T> {
         let lastError: Error;
-        
+
         for (let attempt = 0; attempt < this.maxRetries; attempt++) {
             try {
                 return await operation();
             } catch (error) {
                 lastError = error as Error;
-                
+
                 if (!this.isRetryable(error)) {
                     throw error;
                 }
-                
+
                 if (attempt < this.maxRetries - 1) {
                     const delay = this.calculateDelay(attempt);
-                    this.logger.debug(`Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`);
+                    this.logger.debug(
+                        `Retrying after ${delay}ms (attempt ${attempt + 1}/${this.maxRetries})`
+                    );
                     await this.sleep(delay);
                 }
             }
         }
-        
+
         throw new TranscriptionError(
-            ERROR_MESSAGES.API.MAX_RETRIES.replace('{retries}', this.maxRetries.toString()) + `: ${lastError!.message}`,
+            ERROR_MESSAGES.API.MAX_RETRIES.replace('{retries}', this.maxRetries.toString()) +
+                `: ${lastError!.message}`,
             'MAX_RETRIES_EXCEEDED',
             'deepgram',
             false
         );
     }
-    
+
     /**
      * 재시도 가능한 에러인지 판단
      */
@@ -228,24 +225,21 @@ export class ExponentialBackoffRetry {
         // 네트워크 에러는 재시도 가능
         return error.message?.toLowerCase().includes('network');
     }
-    
+
     /**
      * 지수적 백오프 지연시간 계산
      */
     private calculateDelay(attempt: number): number {
-        const delay = Math.min(
-            this.baseDelay * Math.pow(2, attempt),
-            this.maxDelay
-        );
+        const delay = Math.min(this.baseDelay * Math.pow(2, attempt), this.maxDelay);
         // Jitter 추가로 thundering herd 방지
         return delay + Math.random() * this.jitterMax;
     }
-    
+
     /**
      * 지연 유틸리티
      */
     private sleep(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 }
 
@@ -257,10 +251,7 @@ export class ReliabilityManager {
     private circuitBreaker: CircuitBreaker;
     private retryStrategy: ExponentialBackoffRetry;
 
-    constructor(
-        logger: ILogger,
-        requestsPerMinute = 100
-    ) {
+    constructor(logger: ILogger, requestsPerMinute = 100) {
         this.rateLimiter = new RateLimiter(requestsPerMinute, logger);
         this.circuitBreaker = new CircuitBreaker(logger);
         this.retryStrategy = new ExponentialBackoffRetry(logger);
@@ -272,11 +263,9 @@ export class ReliabilityManager {
     async executeWithReliability<T>(operation: () => Promise<T>): Promise<T> {
         // Rate limiting 먼저 적용
         await this.rateLimiter.acquire();
-        
+
         // Circuit Breaker와 Retry 전략 조합
-        return this.circuitBreaker.execute(() =>
-            this.retryStrategy.execute(operation)
-        );
+        return this.circuitBreaker.execute(() => this.retryStrategy.execute(operation));
     }
 
     /**
@@ -293,7 +282,7 @@ export class ReliabilityManager {
         circuitBreakerState: string;
     } {
         return {
-            circuitBreakerState: this.circuitBreaker.getState()
+            circuitBreakerState: this.circuitBreaker.getState(),
         };
     }
 }

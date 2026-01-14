@@ -5,10 +5,10 @@ import { Logger } from '../infrastructure/logging/Logger';
  * 에러 심각도 레벨
  */
 export enum ErrorSeverity {
-    CRITICAL = 'critical',  // 플러그인 동작 불가
-    HIGH = 'high',         // 주요 기능 영향
-    MEDIUM = 'medium',     // 일부 기능 영향
-    LOW = 'low'           // 미미한 영향
+    CRITICAL = 'critical', // 플러그인 동작 불가
+    HIGH = 'high', // 주요 기능 영향
+    MEDIUM = 'medium', // 일부 기능 영향
+    LOW = 'low', // 미미한 영향
 }
 
 /**
@@ -57,15 +57,19 @@ export class ErrorBoundary {
         this.addRecoveryStrategy({
             name: 'UI Recovery',
             canRecover: (error, context) => {
-                return context.component?.startsWith('UI') || 
-                       error.message.includes('StatusBar') ||
-                       error.message.includes('SettingsTab');
+                return (
+                    context.component?.startsWith('UI') ||
+                    error.message.includes('StatusBar') ||
+                    error.message.includes('SettingsTab')
+                );
             },
             recover: async (error, context) => {
-                this.logger.warn(`UI component error in ${context.component}, attempting graceful degradation`);
+                this.logger.warn(
+                    `UI component error in ${context.component}, attempting graceful degradation`
+                );
                 // UI 컴포넌트는 무시하고 계속 진행
                 await Promise.resolve();
-            }
+            },
         });
 
         // API 에러 복구 전략
@@ -82,21 +86,22 @@ export class ErrorBoundary {
                 this.logger.warn('API error detected, will retry with exponential backoff');
                 // 재시도 로직은 별도 서비스에서 처리
                 await Promise.resolve();
-            }
+            },
         });
 
         // 설정 에러 복구 전략
         this.addRecoveryStrategy({
             name: 'Settings Recovery',
             canRecover: (error, context) => {
-                return context.component === 'SettingsManager' ||
-                       error.message.includes('settings');
+                return (
+                    context.component === 'SettingsManager' || error.message.includes('settings')
+                );
             },
             recover: async (_error, _context) => {
                 this.logger.warn('Settings error detected, using default settings');
                 // 기본 설정으로 폴백
                 await Promise.resolve();
-            }
+            },
         });
     }
 
@@ -116,10 +121,10 @@ export class ErrorBoundary {
 
             // 전역 에러 처리
             window.addEventListener('error', (event) => {
-                void this.handleError(
-                    event.error || new Error(event.message),
-                    { component: 'Global', operation: 'Runtime' }
-                );
+                void this.handleError(event.error || new Error(event.message), {
+                    component: 'Global',
+                    operation: 'Runtime',
+                });
                 event.preventDefault();
             });
         }
@@ -151,10 +156,7 @@ export class ErrorBoundary {
     /**
      * 동기 함수 래퍼
      */
-    public wrapSync<T>(
-        fn: () => T,
-        context: ErrorContext = {}
-    ): T | undefined {
+    public wrapSync<T>(fn: () => T, context: ErrorContext = {}): T | undefined {
         try {
             return fn();
         } catch (error) {
@@ -173,13 +175,10 @@ export class ErrorBoundary {
     /**
      * 에러 처리
      */
-    public async handleError(
-        error: Error,
-        context: ErrorContext = {}
-    ): Promise<void> {
+    public async handleError(error: Error, context: ErrorContext = {}): Promise<void> {
         // 컨텍스트 보강
         context.timestamp = Date.now();
-        
+
         // 에러 빈도 체크
         if (this.isErrorRateTooHigh(error, context)) {
             this.handleCriticalError(error, context);
@@ -207,16 +206,16 @@ export class ErrorBoundary {
     private isErrorRateTooHigh(error: Error, context: ErrorContext): boolean {
         const key = `${context.component}-${context.operation}`;
         const count = this.errorCount.get(key) || 0;
-        
+
         if (count >= this.MAX_ERROR_COUNT) {
             // 일정 시간 후 카운트 리셋
             setTimeout(() => {
                 this.errorCount.set(key, 0);
             }, this.ERROR_RESET_INTERVAL);
-            
+
             return true;
         }
-        
+
         return false;
     }
 
@@ -232,10 +231,7 @@ export class ErrorBoundary {
     /**
      * 복구 시도
      */
-    private async attemptRecovery(
-        error: Error,
-        context: ErrorContext
-    ): Promise<boolean> {
+    private async attemptRecovery(error: Error, context: ErrorContext): Promise<boolean> {
         for (const strategy of this.recoveryStrategies) {
             if (strategy.canRecover(error, context)) {
                 try {
@@ -243,7 +239,10 @@ export class ErrorBoundary {
                     this.logger.info(`Recovered from error using strategy: ${strategy.name}`);
                     return true;
                 } catch (recoveryError) {
-                    this.logger.error(`Recovery strategy ${strategy.name} failed`, recoveryError instanceof Error ? recoveryError : undefined);
+                    this.logger.error(
+                        `Recovery strategy ${strategy.name} failed`,
+                        recoveryError instanceof Error ? recoveryError : undefined
+                    );
                 }
             }
         }
@@ -255,12 +254,12 @@ export class ErrorBoundary {
      */
     private logError(error: Error, context: ErrorContext): void {
         const severity = this.determineErrorSeverity(error, context);
-        
+
         const errorInfo = {
             message: error.message,
             stack: error.stack,
             context,
-            severity
+            severity,
         };
 
         switch (severity) {
@@ -280,13 +279,9 @@ export class ErrorBoundary {
     /**
      * 에러 심각도 판단
      */
-    private determineErrorSeverity(
-        error: Error,
-        context: ErrorContext
-    ): ErrorSeverity {
+    private determineErrorSeverity(error: Error, context: ErrorContext): ErrorSeverity {
         // Critical: 플러그인 초기화 실패
-        if (context.component === 'PluginLifecycle' && 
-            context.operation === 'initialize') {
+        if (context.component === 'PluginLifecycle' && context.operation === 'initialize') {
             return ErrorSeverity.CRITICAL;
         }
 
@@ -309,7 +304,7 @@ export class ErrorBoundary {
      */
     private notifyUser(error: Error, context: ErrorContext): void {
         const severity = this.determineErrorSeverity(error, context);
-        
+
         if (severity === ErrorSeverity.LOW) {
             // 낮은 심각도는 알림하지 않음
             return;
@@ -338,13 +333,10 @@ export class ErrorBoundary {
      */
     private handleCriticalError(error: Error, context: ErrorContext): void {
         this.logger.error('CRITICAL ERROR - Too many errors detected', error, {
-            context
+            context,
         });
 
-        new Notice(
-            'Speech-to-Text plugin is experiencing issues. Please restart Obsidian.',
-            15000
-        );
+        new Notice('Speech-to-Text plugin is experiencing issues. Please restart Obsidian.', 15000);
 
         // 플러그인 비활성화 고려
         // this.plugin.unload();
@@ -353,10 +345,7 @@ export class ErrorBoundary {
     /**
      * 컴포넌트별 에러 핸들러 등록
      */
-    public registerErrorHandler(
-        component: string,
-        handler: (error: Error) => void
-    ): void {
+    public registerErrorHandler(component: string, handler: (error: Error) => void): void {
         this.errorHandlers.set(component, handler);
     }
 

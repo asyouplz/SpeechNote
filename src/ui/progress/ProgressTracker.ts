@@ -1,11 +1,16 @@
 /**
  * Phase 3 진행 상태 추적 시스템
- * 
+ *
  * 계층적 진행 추적, ETA 예측, 취소 가능한 작업 관리를 제공합니다.
  */
 
 import { EventEmitter } from 'events';
-import { IProgressTracker, ProgressData, StepProgress, IProgressReporter } from '../../types/phase3-api';
+import {
+    IProgressTracker,
+    ProgressData,
+    StepProgress,
+    IProgressReporter,
+} from '../../types/phase3-api';
 import { EventManager } from '../../application/EventManager';
 import type { StateManager } from '../../application/StateManager';
 
@@ -25,18 +30,18 @@ class ETAEstimator {
      */
     calculate(currentProgress: number, startTime: number): number | undefined {
         const elapsed = Date.now() - startTime;
-        
+
         if (currentProgress === 0 || elapsed === 0) {
             return undefined;
         }
 
         const rate = currentProgress / elapsed;
-        
+
         // 히스토리에 추가
         this.addToHistory({
             timestamp: Date.now(),
             progress: currentProgress,
-            rate
+            rate,
         });
 
         if (this.history.length > 1) {
@@ -45,7 +50,7 @@ class ETAEstimator {
             const remaining = (100 - currentProgress) / smoothedRate;
             return Date.now() + remaining;
         }
-        
+
         // 단순 선형 예측
         const remaining = (100 - currentProgress) / rate;
         return Date.now() + remaining;
@@ -57,7 +62,7 @@ class ETAEstimator {
     private exponentialSmoothing(currentRate: number): number {
         const lastEntry = this.history[this.history.length - 2];
         if (!lastEntry) return currentRate;
-        
+
         const lastSmoothedRate = lastEntry.rate;
         return this.smoothingFactor * currentRate + (1 - this.smoothingFactor) * lastSmoothedRate;
     }
@@ -67,7 +72,7 @@ class ETAEstimator {
      */
     private addToHistory(entry: { timestamp: number; progress: number; rate: number }) {
         this.history.push(entry);
-        
+
         // 히스토리 크기 제한
         if (this.history.length > this.maxHistorySize) {
             this.history.shift();
@@ -98,7 +103,7 @@ class StepManager {
             id: stepId,
             name,
             progress: 0,
-            status: 'pending'
+            status: 'pending',
         });
         this.stepWeights.set(stepId, weight);
     }
@@ -112,7 +117,7 @@ class StepManager {
 
         step.progress = Math.min(100, Math.max(0, progress));
         step.status = progress >= 100 ? 'completed' : 'running';
-        
+
         if (message) {
             step.message = message;
         }
@@ -201,7 +206,11 @@ export class ProgressTracker implements IProgressTracker {
     private isCancelled = false;
     private emitter: EventEmitter;
 
-    constructor(taskId: string, totalStepsOrState: number | StateManager = 100, state?: StateManager) {
+    constructor(
+        taskId: string,
+        totalStepsOrState: number | StateManager = 100,
+        state?: StateManager
+    ) {
         this.emitter = new EventEmitter();
         this.taskId = taskId;
         if (typeof totalStepsOrState === 'number') {
@@ -251,7 +260,7 @@ export class ProgressTracker implements IProgressTracker {
         }
 
         this.currentProgress = Math.min(100, Math.max(0, progress));
-        
+
         if (message) {
             this.message = message;
         }
@@ -259,7 +268,7 @@ export class ProgressTracker implements IProgressTracker {
         this.stateManager?.setState({ progress: this.currentProgress });
 
         const data = this.getProgressData();
-        
+
         this.emitter.emit('progress', data);
         this.eventManager.emit('progress:update', data);
 
@@ -281,9 +290,9 @@ export class ProgressTracker implements IProgressTracker {
 
         // 전체 진행률 재계산
         this.currentProgress = this.stepManager.calculateOverallProgress();
-        
+
         const data = this.getProgressData();
-        
+
         this.emitter.emit('progress', data);
         this.eventManager.emit('step:update', { stepId, step, overall: this.currentProgress });
     }
@@ -302,7 +311,7 @@ export class ProgressTracker implements IProgressTracker {
     setStatus(status: 'running' | 'paused' | 'completed' | 'failed'): void {
         const prevStatus = this.status;
         this.status = status;
-        
+
         if (status === 'paused' && prevStatus === 'running') {
             this.pausedTime = Date.now();
             this.isPaused = true;
@@ -350,10 +359,10 @@ export class ProgressTracker implements IProgressTracker {
     completeStep(stepId: string): void {
         this.stepManager.completeStep(stepId);
         this.currentProgress = this.stepManager.calculateOverallProgress();
-        
+
         const data = this.getProgressData();
         this.emitter.emit('progress', data);
-        
+
         if (this.currentProgress >= 100) {
             this.complete();
         }
@@ -364,7 +373,7 @@ export class ProgressTracker implements IProgressTracker {
      */
     failStep(stepId: string, error?: Error): void {
         this.stepManager.failStep(stepId);
-        
+
         if (error) {
             this.emitter.emit('error', error);
             this.fail(error);
@@ -378,7 +387,7 @@ export class ProgressTracker implements IProgressTracker {
         if (this.isPaused || this.currentProgress === 0) {
             return undefined;
         }
-        
+
         const effectiveStartTime = this.startTime + this.totalPausedDuration;
         return this.estimator.calculate(this.currentProgress, effectiveStartTime);
     }
@@ -389,7 +398,7 @@ export class ProgressTracker implements IProgressTracker {
     getRemainingTime(): number | undefined {
         const eta = this.getETA();
         if (!eta) return undefined;
-        
+
         const remaining = eta - Date.now();
         return remaining > 0 ? remaining : undefined;
     }
@@ -400,7 +409,7 @@ export class ProgressTracker implements IProgressTracker {
     getSpeed(): number | undefined {
         const elapsed = this.getElapsedTime();
         if (elapsed === 0) return undefined;
-        
+
         return (this.currentProgress / elapsed) * 1000; // 초당 진행률
     }
 
@@ -447,9 +456,9 @@ export class ProgressTracker implements IProgressTracker {
         this.currentProgress = 100;
         this.status = 'completed';
         this.stateManager?.setState({ progress: this.currentProgress });
-        
+
         const data = this.getProgressData();
-        
+
         this.emitter.emit('complete', result);
         this.emitter.emit('progress', data);
         this.eventManager.emit('progress:update', data);
@@ -461,7 +470,7 @@ export class ProgressTracker implements IProgressTracker {
      */
     private fail(error?: Error): void {
         this.status = 'failed';
-        
+
         if (error) {
             this.emitter.emit('error', error);
             this.eventManager.emit('task:failed', { taskId: this.taskId, error });
@@ -481,7 +490,7 @@ export class ProgressTracker implements IProgressTracker {
             message: this.message,
             eta: this.getETA(),
             speed: this.getSpeed(),
-            steps: this.stepManager.getAllSteps()
+            steps: this.stepManager.getAllSteps(),
         };
     }
 
@@ -598,33 +607,33 @@ export class ProgressTrackingSystem {
         }
 
         const tracker = new ProgressTracker(taskId, totalSteps);
-        
+
         // 이벤트 리스너 설정
         tracker.on('progress', (data) => {
             this.updateUI(data);
             this.notifySubscribers(data);
         });
-        
+
         tracker.on('complete', (result) => {
             this.showCompletion(taskId, result);
             this.cleanupTracker(taskId);
         });
-        
+
         tracker.on('error', (error) => {
             this.showError(taskId, error);
             this.cleanupTracker(taskId);
         });
-        
+
         tracker.on('cancel', () => {
             this.showCancellation(taskId);
             this.cleanupTracker(taskId);
         });
-        
+
         this.trackers.set(taskId, tracker);
         this.progressStack.push(tracker);
-        
+
         this.eventManager.emit('task:started', { taskId });
-        
+
         return tracker;
     }
 
@@ -694,7 +703,7 @@ export class ProgressTrackingSystem {
      * 모든 작업 취소
      */
     cancelAll(): void {
-        this.trackers.forEach(tracker => tracker.cancel());
+        this.trackers.forEach((tracker) => tracker.cancel());
         this.trackers.clear();
         this.progressStack.clear();
     }

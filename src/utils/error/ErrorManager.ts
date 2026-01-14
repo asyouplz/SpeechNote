@@ -18,7 +18,7 @@ export enum ErrorType {
     PERMISSION = 'PERMISSION',
     TIMEOUT = 'TIMEOUT',
     RESOURCE = 'RESOURCE',
-    UNKNOWN = 'UNKNOWN'
+    UNKNOWN = 'UNKNOWN',
 }
 
 /**
@@ -28,7 +28,7 @@ export enum ErrorSeverity {
     LOW = 'LOW',
     MEDIUM = 'MEDIUM',
     HIGH = 'HIGH',
-    CRITICAL = 'CRITICAL'
+    CRITICAL = 'CRITICAL',
 }
 
 function normalizeError(error: unknown): Error {
@@ -96,7 +96,7 @@ export class GlobalErrorManager {
             void this.handleError(new Error(event.reason), {
                 type: ErrorType.UNKNOWN,
                 severity: ErrorSeverity.HIGH,
-                context: { promise: true }
+                context: { promise: true },
             });
             event.preventDefault();
         });
@@ -109,8 +109,8 @@ export class GlobalErrorManager {
                 context: {
                     filename: event.filename,
                     lineno: event.lineno,
-                    colno: event.colno
-                }
+                    colno: event.colno,
+                },
             });
             event.preventDefault();
         });
@@ -119,21 +119,18 @@ export class GlobalErrorManager {
     /**
      * 에러 처리
      */
-    async handleError(
-        error: Error | string,
-        options: Partial<ErrorInfo> = {}
-    ): Promise<void> {
+    async handleError(error: Error | string, options: Partial<ErrorInfo> = {}): Promise<void> {
         const errorInfo = this.createErrorInfo(error, options);
-        
+
         // 히스토리에 추가
         this.addToHistory(errorInfo);
-        
+
         // 리스너 알림
         this.notifyListeners(errorInfo);
-        
+
         // 리포터에 전달
         await this.reportError(errorInfo);
-        
+
         // 복구 시도
         if (errorInfo.recoverable !== false) {
             await this.attemptRecovery(errorInfo);
@@ -143,12 +140,9 @@ export class GlobalErrorManager {
     /**
      * 에러 정보 생성
      */
-    private createErrorInfo(
-        error: Error | string,
-        options: Partial<ErrorInfo>
-    ): ErrorInfo {
+    private createErrorInfo(error: Error | string, options: Partial<ErrorInfo>): ErrorInfo {
         const errorObj = typeof error === 'string' ? new Error(error) : error;
-        
+
         return {
             type: options.type || ErrorType.UNKNOWN,
             severity: options.severity || ErrorSeverity.MEDIUM,
@@ -156,7 +150,7 @@ export class GlobalErrorManager {
             stack: errorObj.stack,
             timestamp: Date.now(),
             recoverable: true,
-            ...options
+            ...options,
         };
     }
 
@@ -165,7 +159,7 @@ export class GlobalErrorManager {
      */
     private addToHistory(error: ErrorInfo): void {
         this.errorHistory.push(error);
-        
+
         if (this.errorHistory.length > this.maxHistorySize) {
             this.errorHistory.shift();
         }
@@ -175,7 +169,7 @@ export class GlobalErrorManager {
      * 리스너에 알림
      */
     private notifyListeners(error: ErrorInfo): void {
-        this.listeners.forEach(listener => {
+        this.listeners.forEach((listener) => {
             try {
                 listener(error);
             } catch (e) {
@@ -188,12 +182,12 @@ export class GlobalErrorManager {
      * 에러 리포팅
      */
     private async reportError(error: ErrorInfo): Promise<void> {
-        const promises = Array.from(this.reporters).map(reporter =>
-            Promise.resolve(reporter.report(error)).catch(e =>
+        const promises = Array.from(this.reporters).map((reporter) =>
+            Promise.resolve(reporter.report(error)).catch((e) =>
                 console.error('Error in reporter:', e)
             )
         );
-        
+
         await Promise.all(promises);
     }
 
@@ -202,7 +196,7 @@ export class GlobalErrorManager {
      */
     private async attemptRecovery(error: ErrorInfo): Promise<void> {
         const strategies = this.strategies.get(error.type) || [];
-        
+
         for (const strategy of strategies) {
             if (strategy.canRecover(error)) {
                 try {
@@ -248,8 +242,8 @@ export class GlobalErrorManager {
      */
     getHistory(filter?: { type?: ErrorType; severity?: ErrorSeverity }): ErrorInfo[] {
         if (!filter) return [...this.errorHistory];
-        
-        return this.errorHistory.filter(error => {
+
+        return this.errorHistory.filter((error) => {
             if (filter.type && error.type !== filter.type) return false;
             if (filter.severity && error.severity !== filter.severity) return false;
             return true;
@@ -266,9 +260,7 @@ export class GlobalErrorManager {
 
 export type ErrorHandlerResult = { retry?: boolean; delay?: number };
 
-export type ErrorHandler = (
-    error: Error
-) => ErrorHandlerResult | Promise<ErrorHandlerResult>;
+export type ErrorHandler = (error: Error) => ErrorHandlerResult | Promise<ErrorHandlerResult>;
 
 export type ErrorReporterCallback = (
     error: Error,
@@ -318,13 +310,13 @@ export class ConsoleErrorReporter implements ErrorReporter {
         if (process.env.NODE_ENV === 'development') {
             console.debug(`%c[${error.severity}] ${error.type}`, style, error.message);
         }
-        
+
         if (error.stack) {
             if (process.env.NODE_ENV === 'development') {
                 console.debug(error.stack);
             }
         }
-        
+
         if (error.context) {
             if (process.env.NODE_ENV === 'development') {
                 console.debug('Context:', error.context);
@@ -337,7 +329,7 @@ export class ConsoleErrorReporter implements ErrorReporter {
             [ErrorSeverity.LOW]: 'color: gray',
             [ErrorSeverity.MEDIUM]: 'color: orange',
             [ErrorSeverity.HIGH]: 'color: red',
-            [ErrorSeverity.CRITICAL]: 'color: red; font-weight: bold'
+            [ErrorSeverity.CRITICAL]: 'color: red; font-weight: bold',
         };
         return styles[severity];
     }
@@ -403,15 +395,15 @@ export class ErrorBoundary {
     ) {
         this.element = element;
         this.errorHandler = options.onError || (() => {});
-        
+
         if (options.fallback) {
             this.fallback = options.fallback();
         }
-        
+
         if (options.recoverable !== false) {
             this.setupRecovery();
         }
-        
+
         this.protect();
     }
 
@@ -432,14 +424,18 @@ export class ErrorBoundary {
         observer.observe(this.element, {
             childList: true,
             subtree: true,
-            attributes: true
+            attributes: true,
         });
 
         // 이벤트 버블링 에러 캐치
-        this.element.addEventListener('error', (event) => {
-            this.handleError(new Error('Child component error'));
-            event.stopPropagation();
-        }, true);
+        this.element.addEventListener(
+            'error',
+            (event) => {
+                this.handleError(new Error('Child component error'));
+                event.stopPropagation();
+            },
+            true
+        );
     }
 
     /**
@@ -458,7 +454,7 @@ export class ErrorBoundary {
      */
     private handleError(error: Error): void {
         console.error('Error caught by boundary:', error);
-        
+
         // 원본 콘텐츠 저장
         if (!this.originalContent) {
             const cloned = this.element.cloneNode(true);
@@ -466,7 +462,7 @@ export class ErrorBoundary {
                 this.originalContent = cloned;
             }
         }
-        
+
         // 폴백 UI 표시
         if (this.fallback) {
             this.element.empty();
@@ -474,15 +470,15 @@ export class ErrorBoundary {
         } else {
             this.showDefaultFallback(error);
         }
-        
+
         // 에러 핸들러 호출
         this.errorHandler(error);
-        
+
         // 전역 에러 매니저에 보고
         void GlobalErrorManager.getInstance().handleError(error, {
             type: ErrorType.UNKNOWN,
             severity: ErrorSeverity.MEDIUM,
-            context: { boundary: true }
+            context: { boundary: true },
         });
     }
 
@@ -496,7 +492,7 @@ export class ErrorBoundary {
         container.createEl('p', { text: error.message });
         container.createEl('button', {
             text: '다시 시도',
-            cls: 'error-boundary-retry'
+            cls: 'error-boundary-retry',
         });
     }
 
@@ -506,7 +502,10 @@ export class ErrorBoundary {
     private setupRecovery(): void {
         this.element.addEventListener('click', (event) => {
             const target = event.target;
-            if (target instanceof HTMLElement && target.classList.contains('error-boundary-retry')) {
+            if (
+                target instanceof HTMLElement &&
+                target.classList.contains('error-boundary-retry')
+            ) {
                 this.recover();
             }
         });
@@ -519,7 +518,7 @@ export class ErrorBoundary {
         if (this.originalContent) {
             this.element.empty();
             const children = Array.from(this.originalContent.children);
-            children.forEach(child => {
+            children.forEach((child) => {
                 this.element.appendChild(child.cloneNode(true));
             });
         }
@@ -541,20 +540,20 @@ export function tryCatch<T>(
         return fn();
     } catch (error) {
         const err = normalizeError(error);
-        
+
         if (options.onError) {
             options.onError(err);
         }
-        
+
         void GlobalErrorManager.getInstance().handleError(err, {
             type: ErrorType.UNKNOWN,
-            severity: ErrorSeverity.LOW
+            severity: ErrorSeverity.LOW,
         });
-        
+
         if (options.rethrow) {
             throw err;
         }
-        
+
         return options.fallback;
     }
 }
@@ -574,20 +573,20 @@ export async function tryCatchAsync<T>(
         return await fn();
     } catch (error) {
         const err = normalizeError(error);
-        
+
         if (options.onError) {
             options.onError(err);
         }
-        
+
         await GlobalErrorManager.getInstance().handleError(err, {
             type: ErrorType.UNKNOWN,
-            severity: ErrorSeverity.LOW
+            severity: ErrorSeverity.LOW,
         });
-        
+
         if (options.rethrow) {
             throw err;
         }
-        
+
         return options.fallback;
     }
 }
@@ -595,35 +594,28 @@ export async function tryCatchAsync<T>(
 /**
  * 에러 재시도 데코레이터
  */
-export function retryOnError(
-    maxAttempts = 3,
-    delay = 1000
-) {
-    return function (
-        target: unknown,
-        propertyKey: string,
-        descriptor: PropertyDescriptor
-    ) {
+export function retryOnError(maxAttempts = 3, delay = 1000) {
+    return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
         const originalMethod = descriptor.value;
-        
+
         descriptor.value = async function (...args: unknown[]) {
             let lastError: Error | null = null;
-            
+
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                 try {
                     return await originalMethod.apply(this, args);
                 } catch (error) {
                     lastError = normalizeError(error);
-                    
+
                     if (attempt < maxAttempts) {
-                        await new Promise(resolve => setTimeout(resolve, delay));
+                        await new Promise((resolve) => setTimeout(resolve, delay));
                     }
                 }
             }
-            
+
             throw lastError ?? new Error('Retry attempts exhausted');
         };
-        
+
         return descriptor;
     };
 }

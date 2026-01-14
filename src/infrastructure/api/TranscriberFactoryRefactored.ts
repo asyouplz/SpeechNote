@@ -1,5 +1,5 @@
 import type { ILogger, ISettingsManager } from '../../types';
-import { 
+import {
     ITranscriber,
     TranscriptionProvider,
     TranscriptionProviderConfig,
@@ -7,7 +7,7 @@ import {
     ProviderMetrics,
     ProviderUnavailableError,
     ABTestConfig,
-    ProviderConfig
+    ProviderConfig,
 } from './providers/ITranscriber';
 import { WhisperService } from './WhisperService';
 import { WhisperAdapter } from './providers/whisper/WhisperAdapter';
@@ -62,14 +62,10 @@ export class TranscriberFactoryRefactored {
             return this.getProvider();
         }
 
-        return this.selector.select(
-            this.providers,
-            SelectionStrategy.AB_TEST,
-            {
-                userId,
-                abTestSplit: this.config.abTest.trafficSplit
-            }
-        );
+        return this.selector.select(this.providers, SelectionStrategy.AB_TEST, {
+            userId,
+            abTestSplit: this.config.abTest.trafficSplit,
+        });
     }
 
     /**
@@ -92,13 +88,15 @@ export class TranscriberFactoryRefactored {
     /**
      * Get provider metrics
      */
-    getMetrics(provider?: TranscriptionProvider): ProviderMetrics | {
-        totalRequests: number;
-        providerUsage: Record<string, number>;
-        errorRates: Record<string, number>;
-        averageResponseTime: Record<string, number>;
-        metrics: ProviderMetrics[];
-    } {
+    getMetrics(provider?: TranscriptionProvider):
+        | ProviderMetrics
+        | {
+              totalRequests: number;
+              providerUsage: Record<string, number>;
+              errorRates: Record<string, number>;
+              averageResponseTime: Record<string, number>;
+              metrics: ProviderMetrics[];
+          } {
         if (provider) {
             const metrics = this.metricsTracker.getMetrics(provider);
             if (!metrics) {
@@ -113,13 +111,14 @@ export class TranscriberFactoryRefactored {
             providerUsage: {} as Record<string, number>,
             errorRates: {} as Record<string, number>,
             averageResponseTime: {} as Record<string, number>,
-            metrics
+            metrics,
         };
 
-        metrics.forEach(metric => {
+        metrics.forEach((metric) => {
             aggregate.totalRequests += metric.totalRequests;
             aggregate.providerUsage[metric.provider] = metric.totalRequests;
-            const errorRate = metric.totalRequests === 0 ? 0 : metric.failedRequests / metric.totalRequests;
+            const errorRate =
+                metric.totalRequests === 0 ? 0 : metric.failedRequests / metric.totalRequests;
             aggregate.errorRates[metric.provider] = errorRate;
             aggregate.averageResponseTime[metric.provider] = metric.averageLatency;
         });
@@ -168,29 +167,32 @@ export class TranscriberFactoryRefactored {
      * Load configuration from settings
      */
     protected loadConfiguration(): TranscriptionProviderConfig {
-        const settings = (this.settingsManager.get('transcription') as Partial<TranscriptionProviderConfig>) || {};
+        const settings =
+            (this.settingsManager.get('transcription') as Partial<TranscriptionProviderConfig>) ||
+            {};
 
         const abTest: ABTestConfig = settings.abTest ?? {
             enabled: false,
             trafficSplit: 50,
-            metricTracking: false
+            metricTracking: false,
         };
 
         const monitoring: TranscriptionProviderConfig['monitoring'] = settings.monitoring ?? {
-            enabled: false
+            enabled: false,
         };
 
         return {
             defaultProvider: settings.defaultProvider || 'whisper',
             autoSelect: settings.autoSelect || false,
-            selectionStrategy: (settings.selectionStrategy as SelectionStrategy) || SelectionStrategy.MANUAL,
+            selectionStrategy:
+                (settings.selectionStrategy as SelectionStrategy) || SelectionStrategy.MANUAL,
             fallbackEnabled: settings.fallbackEnabled !== false,
 
             whisper: this.loadProviderConfig('whisper', settings),
             deepgram: this.loadProviderConfig('deepgram', settings),
 
             abTest,
-            monitoring
+            monitoring,
         };
     }
 
@@ -210,7 +212,7 @@ export class TranscriberFactoryRefactored {
             model: providerSettings.model ?? defaults.model,
             maxConcurrency: providerSettings.maxConcurrency ?? defaults.maxConcurrency,
             timeout: providerSettings.timeout ?? defaults.timeout,
-            rateLimit: providerSettings.rateLimit ?? defaults.rateLimit
+            rateLimit: providerSettings.rateLimit ?? defaults.rateLimit,
         };
     }
 
@@ -225,7 +227,7 @@ export class TranscriberFactoryRefactored {
                 model: 'whisper-1',
                 maxConcurrency: 1,
                 timeout: 30000,
-                rateLimit: { requests: 60, window: 60000 }
+                rateLimit: { requests: 60, window: 60000 },
             },
             deepgram: {
                 enabled: false,
@@ -235,9 +237,9 @@ export class TranscriberFactoryRefactored {
                 timeout: 30000,
                 rateLimit: {
                     requests: 100,
-                    window: 60000
-                }
-            }
+                    window: 60000,
+                },
+            },
         };
 
         return defaults[provider];
@@ -259,15 +261,13 @@ export class TranscriberFactoryRefactored {
      * Initialize Whisper provider
      */
     private initializeWhisperProvider(): void {
-        const config =
-            this.config.whisper ??
-            {
-                enabled: false,
-                apiKey: '',
-                model: 'whisper-1',
-                maxConcurrency: 1,
-                timeout: 30000
-            };
+        const config = this.config.whisper ?? {
+            enabled: false,
+            apiKey: '',
+            model: 'whisper-1',
+            maxConcurrency: 1,
+            timeout: 30000,
+        };
 
         if (!config?.enabled || !config.apiKey) {
             this.logger.debug('Whisper provider not initialized: disabled or missing API key');
@@ -289,16 +289,14 @@ export class TranscriberFactoryRefactored {
      * Initialize Deepgram provider
      */
     private initializeDeepgramProvider(): void {
-        const config =
-            this.config.deepgram ??
-            {
-                enabled: false,
-                apiKey: '',
-                model: 'nova-3',
-                maxConcurrency: 5,
-                timeout: 30000,
-                rateLimit: { requests: 100, window: 60000 }
-            };
+        const config = this.config.deepgram ?? {
+            enabled: false,
+            apiKey: '',
+            model: 'nova-3',
+            maxConcurrency: 5,
+            timeout: 30000,
+            rateLimit: { requests: 100, window: 60000 },
+        };
 
         if (!config?.enabled || !config.apiKey) {
             this.logger.debug('Deepgram provider not initialized: disabled or missing API key');
@@ -415,10 +413,7 @@ export class TranscriberFactoryRefactored {
      * Should send metrics to endpoint
      */
     private shouldSendMetrics(): boolean {
-        return Boolean(
-            this.config.monitoring?.enabled &&
-            this.config.monitoring.metricsEndpoint
-        );
+        return Boolean(this.config.monitoring?.enabled && this.config.monitoring.metricsEndpoint);
     }
 
     /**
@@ -431,7 +426,7 @@ export class TranscriberFactoryRefactored {
         this.logger.debug('Sending metrics to monitoring endpoint', {
             provider,
             metrics,
-            stats
+            stats,
         });
 
         // Implementation would send to actual endpoint
@@ -450,8 +445,8 @@ export class TranscriberFactoryRefactored {
                 defaultProvider: this.config.defaultProvider,
                 autoSelect: this.config.autoSelect,
                 selectionStrategy: this.config.selectionStrategy,
-                fallbackEnabled: this.config.fallbackEnabled
-            }
+                fallbackEnabled: this.config.fallbackEnabled,
+            },
         };
     }
 }
@@ -462,7 +457,10 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
     private transcriptionConfig: TranscriptionProviderConfig;
     private signature: string;
 
-    constructor(private readonly settings: FactoryPluginSettings, private readonly logger: ILogger) {
+    constructor(
+        private readonly settings: FactoryPluginSettings,
+        private readonly logger: ILogger
+    ) {
         this.transcriptionConfig = this.buildConfig();
         this.signature = this.computeSignature(this.transcriptionConfig);
     }
@@ -505,39 +503,50 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
 
     private buildConfig(): TranscriptionProviderConfig {
         const providerSetting: string =
-            (this.settings as Record<string, unknown>).transcriptionProvider as string | undefined ??
-            (this.settings as Record<string, unknown>).provider as string | undefined ??
+            ((this.settings as Record<string, unknown>).transcriptionProvider as
+                | string
+                | undefined) ??
+            ((this.settings as Record<string, unknown>).provider as string | undefined) ??
             'whisper';
-        const defaultProvider: TranscriptionProvider = providerSetting === 'deepgram' ? 'deepgram' : 'whisper';
+        const defaultProvider: TranscriptionProvider =
+            providerSetting === 'deepgram' ? 'deepgram' : 'whisper';
         const autoSelect = providerSetting === 'auto';
 
         const whisperApiKey = this.settings.whisperApiKey ?? this.settings.apiKey ?? '';
         const deepgramApiKey = this.settings.deepgramApiKey ?? '';
-        const providerSettings = (this.settings.providerSettings as Record<string, unknown> | undefined) ?? {};
+        const providerSettings =
+            (this.settings.providerSettings as Record<string, unknown> | undefined) ?? {};
         const deepgramSettings = this.settings.deepgram as { model?: string } | undefined;
 
-        const whisperConfigRaw: Partial<ProviderConfig> = this.extractProviderConfig(providerSettings.whisper);
-        const deepgramConfigRaw: Partial<ProviderConfig> = this.extractProviderConfig(providerSettings.deepgram);
+        const whisperConfigRaw: Partial<ProviderConfig> = this.extractProviderConfig(
+            providerSettings.whisper
+        );
+        const deepgramConfigRaw: Partial<ProviderConfig> = this.extractProviderConfig(
+            providerSettings.deepgram
+        );
 
         const selection = this.mapSelectionStrategy(
             this.settings.selectionStrategy ?? this.settings.transcription?.selectionStrategy
         );
-        const abTestConfig =
-            this.mapAbTest(this.settings.abTesting ?? this.settings.transcription?.abTest) ?? {
-                enabled: false,
-                trafficSplit: 0.5,
-                metricTracking: false
-            };
+        const abTestConfig = this.mapAbTest(
+            this.settings.abTesting ?? this.settings.transcription?.abTest
+        ) ?? {
+            enabled: false,
+            trafficSplit: 0.5,
+            metricTracking: false,
+        };
         const selectionStrategy =
-            selection ?? (abTestConfig?.enabled ? SelectionStrategy.AB_TEST : SelectionStrategy.MANUAL);
+            selection ??
+            (abTestConfig?.enabled ? SelectionStrategy.AB_TEST : SelectionStrategy.MANUAL);
 
         const whisper: ProviderConfig = {
             enabled: Boolean(whisperApiKey || !deepgramApiKey),
             apiKey: whisperApiKey,
             model: this.pickString(whisperConfigRaw?.model) ?? this.settings.model ?? 'whisper-1',
             maxConcurrency: this.pickNumber(whisperConfigRaw?.maxConcurrency) ?? 1,
-            timeout: this.pickNumber(whisperConfigRaw?.timeout) ?? this.settings.requestTimeout ?? 30000,
-            rateLimit: this.normalizeRateLimit(whisperConfigRaw?.rateLimit)
+            timeout:
+                this.pickNumber(whisperConfigRaw?.timeout) ?? this.settings.requestTimeout ?? 30000,
+            rateLimit: this.normalizeRateLimit(whisperConfigRaw?.rateLimit),
         };
 
         const deepgram: ProviderConfig = {
@@ -550,7 +559,10 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
                 'nova-3',
             maxConcurrency: this.pickNumber(deepgramConfigRaw?.maxConcurrency) ?? 5,
             timeout: this.pickNumber(deepgramConfigRaw?.timeout) ?? 30000,
-            rateLimit: this.normalizeRateLimit(deepgramConfigRaw?.rateLimit) ?? { requests: 100, window: 60000 }
+            rateLimit: this.normalizeRateLimit(deepgramConfigRaw?.rateLimit) ?? {
+                requests: 100,
+                window: 60000,
+            },
         };
 
         const monitoring = this.normalizeMonitoring(this.settings.monitoring);
@@ -563,7 +575,7 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
             whisper,
             deepgram,
             abTest: abTestConfig,
-            monitoring
+            monitoring,
         };
     }
 
@@ -600,18 +612,21 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
             return {
                 enabled: false,
                 trafficSplit: 0.5,
-                metricTracking: false
+                metricTracking: false,
             };
         }
 
-        const rawSplit = this.pickNumber(source.whisperPercentage) ?? this.pickNumber(source.trafficSplit) ?? 0.5;
+        const rawSplit =
+            this.pickNumber(source.whisperPercentage) ??
+            this.pickNumber(source.trafficSplit) ??
+            0.5;
         const split = rawSplit > 1 ? rawSplit / 100 : rawSplit;
 
         return {
             enabled: true,
             trafficSplit: Math.max(0, Math.min(1, split)),
             metricTracking: source.metricTracking !== false,
-            experimentId: this.pickString(source.experimentId)
+            experimentId: this.pickString(source.experimentId),
         };
     }
 
@@ -651,16 +666,22 @@ class PluginSettingsManagerAdapter implements ISettingsManager {
         const alertThresholds =
             monitoring.alertThresholds && typeof monitoring.alertThresholds === 'object'
                 ? {
-                      errorRate: this.pickNumber((monitoring.alertThresholds as Record<string, unknown>).errorRate),
-                      latency: this.pickNumber((monitoring.alertThresholds as Record<string, unknown>).latency),
-                      cost: this.pickNumber((monitoring.alertThresholds as Record<string, unknown>).cost)
+                      errorRate: this.pickNumber(
+                          (monitoring.alertThresholds as Record<string, unknown>).errorRate
+                      ),
+                      latency: this.pickNumber(
+                          (monitoring.alertThresholds as Record<string, unknown>).latency
+                      ),
+                      cost: this.pickNumber(
+                          (monitoring.alertThresholds as Record<string, unknown>).cost
+                      ),
                   }
                 : undefined;
 
         return {
             enabled: monitoring.enabled === true,
             metricsEndpoint: this.pickString(monitoring.metricsEndpoint),
-            alertThresholds
+            alertThresholds,
         };
     }
 
@@ -689,10 +710,15 @@ export class TranscriberFactory extends TranscriberFactoryRefactored {
         let resolvedPreference = this.resolvePreference(preference, forced);
 
         if (!forced) {
-            const abTestRaw = this.pluginSettings?.abTesting ?? this.pluginSettings?.transcription?.abTest;
+            const abTestRaw =
+                this.pluginSettings?.abTesting ?? this.pluginSettings?.transcription?.abTest;
             const abTest =
                 abTestRaw && typeof abTestRaw === 'object'
-                    ? (abTestRaw as { enabled?: boolean; whisperPercentage?: number; trafficSplit?: number })
+                    ? (abTestRaw as {
+                          enabled?: boolean;
+                          whisperPercentage?: number;
+                          trafficSplit?: number;
+                      })
                     : undefined;
 
             if (abTest?.enabled) {
@@ -725,13 +751,15 @@ export class TranscriberFactory extends TranscriberFactoryRefactored {
         return super.getProviderForABTest(userId);
     }
 
-    override getMetrics(provider?: TranscriptionProvider): ProviderMetrics | {
-        totalRequests: number;
-        providerUsage: Record<string, number>;
-        errorRates: Record<string, number>;
-        averageResponseTime: Record<string, number>;
-        metrics: ProviderMetrics[];
-    } {
+    override getMetrics(provider?: TranscriptionProvider):
+        | ProviderMetrics
+        | {
+              totalRequests: number;
+              providerUsage: Record<string, number>;
+              errorRates: Record<string, number>;
+              averageResponseTime: Record<string, number>;
+              metrics: ProviderMetrics[];
+          } {
         this.refreshConfiguration();
         return super.getMetrics(provider);
     }
@@ -763,9 +791,13 @@ export class TranscriberFactory extends TranscriberFactoryRefactored {
     private getForcedProvider(): TranscriptionProvider | undefined {
         const settings = this.pluginSettings as Record<string, unknown> | undefined;
         const forced =
-            (settings?.abTesting as { forceProvider?: TranscriptionProvider } | undefined)?.forceProvider ??
-            ((settings?.transcription as { abTest?: { forceProvider?: TranscriptionProvider } } | undefined)?.abTest
-                ?.forceProvider);
+            (settings?.abTesting as { forceProvider?: TranscriptionProvider } | undefined)
+                ?.forceProvider ??
+            (
+                settings?.transcription as
+                    | { abTest?: { forceProvider?: TranscriptionProvider } }
+                    | undefined
+            )?.abTest?.forceProvider;
         if (forced === 'whisper' || forced === 'deepgram') {
             return forced;
         }
@@ -784,7 +816,8 @@ export class TranscriberFactory extends TranscriberFactoryRefactored {
             return preference;
         }
 
-        const configured = this.pluginSettings?.transcriptionProvider ?? this.pluginSettings?.provider;
+        const configured =
+            this.pluginSettings?.transcriptionProvider ?? this.pluginSettings?.provider;
         if (configured === 'whisper' || configured === 'deepgram' || configured === 'auto') {
             return configured;
         }
@@ -792,7 +825,9 @@ export class TranscriberFactory extends TranscriberFactoryRefactored {
         return undefined;
     }
 
-    private validateProviderAvailability(provider?: TranscriptionProvider | 'auto' | undefined): void {
+    private validateProviderAvailability(
+        provider?: TranscriptionProvider | 'auto' | undefined
+    ): void {
         if (provider === 'deepgram' && !this.config.deepgram?.enabled) {
             throw new Error('Deepgram API key is missing');
         }

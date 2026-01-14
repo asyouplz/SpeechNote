@@ -6,7 +6,7 @@ import { Logger } from '../infrastructure/logging/Logger';
 export enum ServiceLifetime {
     SINGLETON = 'singleton',
     TRANSIENT = 'transient',
-    SCOPED = 'scoped'
+    SCOPED = 'scoped',
 }
 
 /**
@@ -50,7 +50,7 @@ export class DependencyContainer {
         this.services.set(token, {
             factory,
             lifetime,
-            instance: undefined
+            instance: undefined,
         });
         this.logger.debug(`Registered service: ${String(token)} with lifetime: ${lifetime}`);
     }
@@ -82,7 +82,7 @@ export class DependencyContainer {
         this.services.set(token, {
             factory: () => instance,
             lifetime: ServiceLifetime.SINGLETON,
-            instance: instance
+            instance: instance,
         });
         this.logger.debug(`Registered instance: ${String(token)}`);
     }
@@ -95,17 +95,17 @@ export class DependencyContainer {
         if (!registration) {
             throw new Error(`Service ${String(token)} not registered`);
         }
-        
+
         switch (registration.lifetime) {
             case ServiceLifetime.SINGLETON:
                 return this.resolveSingleton<T>(token, registration);
-            
+
             case ServiceLifetime.TRANSIENT:
                 return this.resolveTransient<T>(registration);
-            
+
             case ServiceLifetime.SCOPED:
                 return this.resolveScoped<T>(token, registration);
-            
+
             default:
                 throw new Error(`Unknown lifetime: ${String(registration.lifetime)}`);
         }
@@ -132,7 +132,10 @@ export class DependencyContainer {
     /**
      * 싱글톤 해결
      */
-    private resolveSingleton<T>(token: string | symbol, registration: ServiceRegistration<unknown>): T {
+    private resolveSingleton<T>(
+        token: string | symbol,
+        registration: ServiceRegistration<unknown>
+    ): T {
         if (!registration.instance) {
             registration.instance = registration.factory(this);
             this.logger.debug(`Created singleton instance: ${String(token)}`);
@@ -150,7 +153,10 @@ export class DependencyContainer {
     /**
      * Scoped 해결
      */
-    private resolveScoped<T>(token: string | symbol, registration: ServiceRegistration<unknown>): T {
+    private resolveScoped<T>(
+        token: string | symbol,
+        registration: ServiceRegistration<unknown>
+    ): T {
         if (!this.scopedInstances.has(token)) {
             const instance = registration.factory(this);
             this.scopedInstances.set(token, instance);
@@ -164,7 +170,7 @@ export class DependencyContainer {
      */
     public beginScope(): DependencyContainer {
         const scopedContainer = new DependencyContainer();
-        
+
         // 부모 컨테이너의 서비스 등록 정보 복사
         this.services.forEach((registration, token) => {
             scopedContainer.services.set(token, registration);
@@ -193,7 +199,10 @@ export class DependencyContainer {
                     instance.dispose();
                     this.logger.debug(`Disposed service: ${String(token)}`);
                 } catch (error) {
-                    this.logger.error(`Failed to dispose service ${String(token)}`, error instanceof Error ? error : undefined);
+                    this.logger.error(
+                        `Failed to dispose service ${String(token)}`,
+                        error instanceof Error ? error : undefined
+                    );
                 }
             }
         });
@@ -226,7 +235,7 @@ export const ServiceTokens = {
     ErrorHandler: Symbol.for('ErrorHandler'),
     NotificationService: Symbol.for('NotificationService'),
     StatusBarManager: Symbol.for('StatusBarManager'),
-    SettingsTabManager: Symbol.for('SettingsTabManager')
+    SettingsTabManager: Symbol.for('SettingsTabManager'),
 };
 
 /**

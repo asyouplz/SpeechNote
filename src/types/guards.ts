@@ -3,12 +3,12 @@
  * 런타임 타입 체크를 위한 유틸리티
  */
 
-import type { 
-    WhisperResponse, 
+import type {
+    WhisperResponse,
     WhisperOptions,
     ILogger,
     ISettingsManager,
-    IWhisperService
+    IWhisperService,
 } from './index';
 
 /**
@@ -22,11 +22,9 @@ export function isError(value: unknown): value is Error {
  * Promise 타입 가드
  */
 export function isPromise<T = unknown>(value: unknown): value is Promise<T> {
-    const then = typeof value === 'object' && value !== null ? Reflect.get(value, 'then') : undefined;
-    return (
-        value instanceof Promise ||
-        typeof then === 'function'
-    );
+    const then =
+        typeof value === 'object' && value !== null ? Reflect.get(value, 'then') : undefined;
+    return value instanceof Promise || typeof then === 'function';
 }
 
 /**
@@ -43,7 +41,7 @@ export function isWhisperResponse(value: unknown): value is WhisperResponse {
     if (!isRecord(value)) {
         return false;
     }
-    
+
     const text = Reflect.get(value, 'text');
     const language = Reflect.get(value, 'language');
     const duration = Reflect.get(value, 'duration');
@@ -64,7 +62,7 @@ export function isWhisperOptions(value: unknown): value is WhisperOptions {
     if (!isRecord(value)) {
         return false;
     }
-    
+
     const model = Reflect.get(value, 'model');
     const prompt = Reflect.get(value, 'prompt');
     const responseFormat = Reflect.get(value, 'responseFormat');
@@ -74,10 +72,10 @@ export function isWhisperOptions(value: unknown): value is WhisperOptions {
     return (
         (model === undefined || typeof model === 'string') &&
         (prompt === undefined || typeof prompt === 'string') &&
-        (responseFormat === undefined || 
+        (responseFormat === undefined ||
             (typeof responseFormat === 'string' &&
                 ['json', 'text', 'srt', 'verbose_json', 'vtt'].includes(responseFormat))) &&
-        (temperature === undefined || 
+        (temperature === undefined ||
             (typeof temperature === 'number' && temperature >= 0 && temperature <= 1)) &&
         (language === undefined || typeof language === 'string')
     );
@@ -90,7 +88,7 @@ export function isLogger(value: unknown): value is ILogger {
     if (!isRecord(value)) {
         return false;
     }
-    
+
     return (
         typeof Reflect.get(value, 'debug') === 'function' &&
         typeof Reflect.get(value, 'info') === 'function' &&
@@ -106,7 +104,7 @@ export function isSettingsManager(value: unknown): value is ISettingsManager {
     if (!isRecord(value)) {
         return false;
     }
-    
+
     return (
         typeof Reflect.get(value, 'load') === 'function' &&
         typeof Reflect.get(value, 'save') === 'function' &&
@@ -122,7 +120,7 @@ export function isWhisperService(value: unknown): value is IWhisperService {
     if (!isRecord(value)) {
         return false;
     }
-    
+
     return (
         typeof Reflect.get(value, 'transcribe') === 'function' &&
         typeof Reflect.get(value, 'cancel') === 'function' &&
@@ -134,14 +132,14 @@ export function isWhisperService(value: unknown): value is IWhisperService {
  * 문자열 배열 타입 가드
  */
 export function isStringArray(value: unknown): value is string[] {
-    return Array.isArray(value) && value.every(item => typeof item === 'string');
+    return Array.isArray(value) && value.every((item) => typeof item === 'string');
 }
 
 /**
  * 숫자 배열 타입 가드
  */
 export function isNumberArray(value: unknown): value is number[] {
-    return Array.isArray(value) && value.every(item => typeof item === 'number');
+    return Array.isArray(value) && value.every((item) => typeof item === 'number');
 }
 
 /**
@@ -155,7 +153,7 @@ export function isRecord<K extends string | number | symbol, V>(
     if (typeof value !== 'object' || value === null) {
         return false;
     }
-    
+
     for (const [key, val] of Object.entries(value)) {
         if (keyGuard && !keyGuard(key)) {
             return false;
@@ -164,7 +162,7 @@ export function isRecord<K extends string | number | symbol, V>(
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -189,19 +187,19 @@ export function isNotEmpty(value: unknown): boolean {
     if (value === null || value === undefined) {
         return false;
     }
-    
+
     if (typeof value === 'string' || Array.isArray(value)) {
         return value.length > 0;
     }
-    
+
     if (value instanceof Map || value instanceof Set) {
         return value.size > 0;
     }
-    
+
     if (typeof value === 'object') {
         return Object.keys(value).length > 0;
     }
-    
+
     return true;
 }
 
@@ -217,9 +215,7 @@ export function isFunction(value: unknown): value is AnyFunction {
 /**
  * 비동기 함수 타입 가드
  */
-export function isAsyncFunction(
-    value: unknown
-): value is (...args: unknown[]) => Promise<unknown> {
+export function isAsyncFunction(value: unknown): value is (...args: unknown[]) => Promise<unknown> {
     return typeof value === 'function' && value.constructor.name === 'AsyncFunction';
 }
 

@@ -6,7 +6,6 @@
  * - 상태별 아이콘
  */
 
-
 export interface LoadingIndicatorOptions {
     type: 'spinner' | 'pulse' | 'skeleton' | 'dots';
     size?: 'small' | 'medium' | 'large';
@@ -30,7 +29,7 @@ export class SpinnerLoader {
         this.options = {
             type: 'spinner',
             size: 'medium',
-            ...options
+            ...options,
         };
     }
 
@@ -39,32 +38,32 @@ export class SpinnerLoader {
         this.element.className = `loading-spinner loading-spinner--${this.options.size}`;
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
-        
+
         this.element.appendChild(this.createSpinnerSvg());
-        
+
         if (this.options.message) {
             const messageEl = createEl('span');
             messageEl.className = 'loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
         }
-        
+
         // 스크린 리더용 라이브 영역
         const srOnly = createEl('span');
         srOnly.className = 'sr-only';
         srOnly.setAttribute('aria-live', 'polite');
         srOnly.textContent = this.options.message || '데이터를 불러오는 중입니다';
         this.element.appendChild(srOnly);
-        
+
         return this.element;
     }
 
     updateMessage(message: string) {
         if (!this.element) return;
-        
+
         const messageEl = this.element.querySelector('.loading-message');
         const srOnly = this.element.querySelector('.sr-only');
-        
+
         if (messageEl) {
             messageEl.textContent = message;
         }
@@ -129,7 +128,7 @@ export class PulseLoader {
         this.options = {
             type: 'pulse',
             size: 'medium',
-            ...options
+            ...options,
         };
     }
 
@@ -138,21 +137,21 @@ export class PulseLoader {
         this.element.className = `loading-pulse loading-pulse--${this.options.size}`;
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
-        
+
         // 펄스 요소들
         for (let i = 0; i < 3; i++) {
             const pulse = createEl('div');
             pulse.className = `pulse-dot pulse-dot--${i + 1}`;
             this.element.appendChild(pulse);
         }
-        
+
         if (this.options.message) {
             const messageEl = createEl('span');
             messageEl.className = 'loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
         }
-        
+
         return this.element;
     }
 
@@ -174,18 +173,20 @@ export class SkeletonLoader {
         animated?: boolean;
     };
 
-    constructor(options: {
-        lines?: number;
-        lineHeight?: string;
-        spacing?: string;
-        animated?: boolean;
-    } = {}) {
+    constructor(
+        options: {
+            lines?: number;
+            lineHeight?: string;
+            spacing?: string;
+            animated?: boolean;
+        } = {}
+    ) {
         this.options = {
             lines: 3,
             lineHeight: '20px',
             spacing: '10px',
             animated: true,
-            ...options
+            ...options,
         };
     }
 
@@ -194,7 +195,7 @@ export class SkeletonLoader {
         this.element.className = 'loading-skeleton';
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', '콘텐츠를 불러오는 중');
-        
+
         const lineCount = this.options.lines ?? 3;
         const heightModifier = this.getLineHeightModifier(this.options.lineHeight);
         const spacingModifier = this.getSpacingModifier(this.options.spacing);
@@ -216,7 +217,7 @@ export class SkeletonLoader {
 
             this.element.appendChild(line);
         }
-        
+
         return this.element;
     }
 
@@ -290,7 +291,7 @@ export class DotsLoader {
         this.options = {
             type: 'dots',
             size: 'medium',
-            ...options
+            ...options,
         };
     }
 
@@ -299,25 +300,25 @@ export class DotsLoader {
         this.element.className = `loading-dots loading-dots--${this.options.size}`;
         this.element.setAttribute('role', 'status');
         this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
-        
+
         const dotsContainer = createEl('div');
         dotsContainer.className = 'dots-container';
-        
+
         for (let i = 0; i < 3; i++) {
             const dot = createEl('span');
             dot.className = 'dot';
             dotsContainer.appendChild(dot);
         }
-        
+
         this.element.appendChild(dotsContainer);
-        
+
         if (this.options.message) {
             const messageEl = createEl('span');
             messageEl.className = 'loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
         }
-        
+
         return this.element;
     }
 
@@ -344,25 +345,25 @@ export class StatusIcon {
         this.element = createEl('div');
         this.element.className = `status-icon status-icon--${this.type}`;
         this.element.setAttribute('role', 'status');
-        
+
         const icon = this.getIcon();
         const iconEl = createEl('div');
         iconEl.className = 'status-icon__icon';
         iconEl.appendChild(icon);
-        
+
         this.element.appendChild(iconEl);
-        
+
         if (this.message) {
             const messageEl = createEl('span');
             messageEl.className = 'status-icon__message';
             messageEl.textContent = this.message;
             this.element.appendChild(messageEl);
         }
-        
+
         // ARIA 라벨 설정
         const ariaLabel = this.getAriaLabel();
         this.element.setAttribute('aria-label', ariaLabel);
-        
+
         return this.element;
     }
 
@@ -443,16 +444,16 @@ export class StatusIcon {
             success: '성공',
             error: '오류',
             warning: '경고',
-            info: '정보'
+            info: '정보',
         };
-        
+
         const baseLabel = labels[this.type];
         return this.message ? `${baseLabel}: ${this.message}` : baseLabel;
     }
 
     updateMessage(message: string) {
         if (!this.element) return;
-        
+
         const messageEl = this.element.querySelector('.status-icon__message');
         if (messageEl) {
             messageEl.textContent = message;
@@ -462,7 +463,7 @@ export class StatusIcon {
             newMessageEl.textContent = message;
             this.element.appendChild(newMessageEl);
         }
-        
+
         this.element.setAttribute('aria-label', `${this.getAriaLabel()}: ${message}`);
     }
 

@@ -76,7 +76,7 @@ export class TranscriptionService implements ITranscriptionService {
             // Transcribe
             this.status = 'transcribing';
             this.logger.debug('Starting transcription with WhisperService');
-            
+
             // 🔥 언어 옵션 전달
             const languagePreference =
                 typeof this.settings?.language === 'string' ? this.settings.language : undefined;
@@ -85,38 +85,43 @@ export class TranscriptionService implements ITranscriptionService {
             const hasTranscribeOptions = Boolean(languagePreference || modelPreference);
 
             if (hasTranscribeOptions) {
-                this.logger.debug('Transcription options:', { language: languagePreference, model: modelPreference });
+                this.logger.debug('Transcription options:', {
+                    language: languagePreference,
+                    model: modelPreference,
+                });
             }
 
             const response = hasTranscribeOptions
                 ? await this.whisperService.transcribe(processedAudio.buffer, {
                       language: languagePreference,
-                      model: modelPreference
+                      model: modelPreference,
                   })
                 : await this.whisperService.transcribe(processedAudio.buffer);
-            
+
             this.logger.debug('WhisperService response:', {
                 hasResponse: !!response,
                 hasText: !!response?.text,
                 textLength: response?.text?.length || 0,
                 textPreview: response?.text?.substring(0, 100),
-                language: response?.language
+                language: response?.language,
             });
-            
+
             // Validate response
             if (!response || response.text === undefined || response.text === null) {
-                this.logger.error('Empty or invalid response from WhisperService', undefined, { response });
+                this.logger.error('Empty or invalid response from WhisperService', undefined, {
+                    response,
+                });
                 throw new Error('Transcription service returned empty text');
             }
 
             // Format text
             this.status = 'formatting';
             const formattedText = this.textFormatter.format(response.text);
-            
+
             this.logger.debug('Text formatted:', {
                 originalLength: response.text.length,
                 formattedLength: formattedText.length,
-                formattedPreview: formattedText.substring(0, 100)
+                formattedPreview: formattedText.substring(0, 100),
             });
 
             const result: TranscriptionResult = {
@@ -131,13 +136,13 @@ export class TranscriptionService implements ITranscriptionService {
             };
 
             this.status = 'completed';
-            
+
             this.logger.debug('Emitting transcription:complete event', {
                 textLength: result.text.length,
                 hasSegments: !!result.segments,
-                segmentsCount: result.segments?.length || 0
+                segmentsCount: result.segments?.length || 0,
             });
-            
+
             // Ensure the event data includes the text for auto-insertion
             this.eventManager.emit('transcription:complete', { result });
 
@@ -171,7 +176,7 @@ export class TranscriptionService implements ITranscriptionService {
 
             const result: TranscriptionResult = {
                 text: formattedText,
-                language: response.language
+                language: response.language,
             };
 
             this.status = 'completed';
@@ -201,7 +206,7 @@ export class TranscriptionService implements ITranscriptionService {
             debug: () => undefined,
             info: () => undefined,
             warn: () => undefined,
-            error: () => undefined
+            error: () => undefined,
         };
     }
 
@@ -211,7 +216,7 @@ export class TranscriptionService implements ITranscriptionService {
             on: () => () => undefined,
             once: () => () => undefined,
             off: () => undefined,
-            removeAllListeners: () => undefined
+            removeAllListeners: () => undefined,
         };
     }
 
@@ -219,7 +224,7 @@ export class TranscriptionService implements ITranscriptionService {
         return {
             format: (text: string) => text,
             insertTimestamps: (text: string) => text,
-            cleanUp: (text: string) => text
+            cleanUp: (text: string) => text,
         };
     }
 
@@ -233,7 +238,7 @@ export class TranscriptionService implements ITranscriptionService {
             },
             extractMetadata: async () => {
                 throw new Error('Audio processor not configured');
-            }
+            },
         };
     }
 
@@ -243,7 +248,7 @@ export class TranscriptionService implements ITranscriptionService {
                 throw new Error('Whisper service not configured');
             },
             cancel: () => undefined,
-            validateApiKey: async () => false
+            validateApiKey: async () => false,
         };
     }
 
@@ -370,7 +375,13 @@ export class TranscriptionService implements ITranscriptionService {
         body: FormData,
         signal?: AbortSignal,
         delayForAbort = false
-    ): Promise<{ ok?: boolean; status?: number; statusText?: string; json?: () => Promise<unknown>; text?: () => Promise<string> }> {
+    ): Promise<{
+        ok?: boolean;
+        status?: number;
+        statusText?: string;
+        json?: () => Promise<unknown>;
+        text?: () => Promise<string>;
+    }> {
         if (typeof fetch !== 'function') {
             throw new Error('Fetch API is not available');
         }
@@ -385,14 +396,21 @@ export class TranscriptionService implements ITranscriptionService {
             method: 'POST',
             headers,
             body,
-            signal
-        }) as Promise<{ ok?: boolean; status?: number; statusText?: string; json?: () => Promise<unknown>; text?: () => Promise<string> }>;
-        const effectiveFetchPromise = this.isTestEnvironment() && delayForAbort
-            ? fetchPromise.then(async (response) => {
-                  await this.sleep(150);
-                  return response;
-              })
-            : fetchPromise;
+            signal,
+        }) as Promise<{
+            ok?: boolean;
+            status?: number;
+            statusText?: string;
+            json?: () => Promise<unknown>;
+            text?: () => Promise<string>;
+        }>;
+        const effectiveFetchPromise =
+            this.isTestEnvironment() && delayForAbort
+                ? fetchPromise.then(async (response) => {
+                      await this.sleep(150);
+                      return response;
+                  })
+                : fetchPromise;
 
         if (!signal) {
             return await effectiveFetchPromise;
@@ -450,7 +468,8 @@ export class TranscriptionService implements ITranscriptionService {
         text?: () => Promise<string>;
     }): Promise<{ text: string; language?: string }> {
         const settings = isPlainRecord(this.settings) ? this.settings : {};
-        const responseFormat = typeof settings.responseFormat === 'string' ? settings.responseFormat : undefined;
+        const responseFormat =
+            typeof settings.responseFormat === 'string' ? settings.responseFormat : undefined;
         const textFn = response.text;
         const jsonFn = response.json;
         const hasText = typeof textFn === 'function';
@@ -530,14 +549,14 @@ export class TranscriptionService implements ITranscriptionService {
             formData.append('language', language);
         }
 
-        const temperature = typeof settings.temperature === 'number' ? settings.temperature : undefined;
+        const temperature =
+            typeof settings.temperature === 'number' ? settings.temperature : undefined;
         if (temperature !== undefined) {
             formData.append('temperature', temperature.toString());
         }
 
-        const responseFormat = typeof settings.responseFormat === 'string'
-            ? settings.responseFormat
-            : undefined;
+        const responseFormat =
+            typeof settings.responseFormat === 'string' ? settings.responseFormat : undefined;
         if (responseFormat) {
             formData.append('response_format', responseFormat);
         }
@@ -578,15 +597,16 @@ export class TranscriptionService implements ITranscriptionService {
         const delayMs = typeof settings.retryDelay === 'number' ? settings.retryDelay : 1000;
         return {
             attempts: Math.max(1, Math.floor(attempts)),
-            delayMs: Math.max(0, delayMs)
+            delayMs: Math.max(0, delayMs),
         };
     }
 
     private getTimeoutMs(): number {
         const settings = isPlainRecord(this.settings) ? this.settings : {};
-        const timeout = typeof settings.timeout === 'number'
-            ? settings.timeout
-            : typeof settings.requestTimeout === 'number'
+        const timeout =
+            typeof settings.timeout === 'number'
+                ? settings.timeout
+                : typeof settings.requestTimeout === 'number'
                 ? settings.requestTimeout
                 : 0;
         return Number.isFinite(timeout) && timeout > 0 ? timeout : 0;
@@ -657,7 +677,7 @@ export class TranscriptionService implements ITranscriptionService {
     }
 
     private async sleep(ms: number): Promise<void> {
-        await new Promise(resolve => setTimeout(resolve, ms));
+        await new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     private isRetryableError(error: Error): boolean {

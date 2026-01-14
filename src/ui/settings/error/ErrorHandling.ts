@@ -11,7 +11,7 @@ export enum ErrorType {
     CONFIGURATION = 'CONFIGURATION',
     PERMISSION = 'PERMISSION',
     STORAGE = 'STORAGE',
-    UNKNOWN = 'UNKNOWN'
+    UNKNOWN = 'UNKNOWN',
 }
 
 /**
@@ -27,7 +27,7 @@ export class SettingsError extends Error {
         super(message);
         this.name = 'SettingsError';
     }
-    
+
     /**
      * 사용자 친화적 메시지 생성
      */
@@ -39,12 +39,12 @@ export class SettingsError extends Error {
             [ErrorType.CONFIGURATION]: '설정에 문제가 있습니다',
             [ErrorType.PERMISSION]: '권한이 없습니다',
             [ErrorType.STORAGE]: '저장소 접근에 실패했습니다',
-            [ErrorType.UNKNOWN]: '알 수 없는 오류가 발생했습니다'
+            [ErrorType.UNKNOWN]: '알 수 없는 오류가 발생했습니다',
         };
-        
+
         return messages[this.type] || this.message;
     }
-    
+
     /**
      * 복구 가능 여부
      */
@@ -88,7 +88,7 @@ function getRetryCallback(details: unknown): (() => void) | null {
  */
 export class ErrorHandlerChain {
     private handlers: ErrorHandler[] = [];
-    
+
     /**
      * 핸들러 추가
      */
@@ -96,7 +96,7 @@ export class ErrorHandlerChain {
         this.handlers.push(handler);
         return this;
     }
-    
+
     /**
      * 에러 처리
      */
@@ -107,7 +107,7 @@ export class ErrorHandlerChain {
                 return;
             }
         }
-        
+
         // 기본 핸들러
         console.error('Unhandled error:', error);
         new Notice('예기치 않은 오류가 발생했습니다');
@@ -121,7 +121,7 @@ export class ValidationErrorHandler implements ErrorHandler {
     canHandle(error: Error): boolean {
         return error instanceof SettingsError && error.type === ErrorType.VALIDATION;
     }
-    
+
     handle(error: Error): void {
         if (!(error instanceof SettingsError)) {
             new Notice('입력값이 올바르지 않습니다');
@@ -129,14 +129,14 @@ export class ValidationErrorHandler implements ErrorHandler {
         }
 
         new Notice(error.getUserMessage());
-        
+
         // 검증 에러 필드 하이라이트
         const field = getFieldFromDetails(error.details);
         if (field) {
             this.highlightErrorField(field);
         }
     }
-    
+
     private highlightErrorField(fieldName: string): void {
         const field = document.querySelector(`[data-field="${fieldName}"]`);
         if (field) {
@@ -152,21 +152,21 @@ export class ValidationErrorHandler implements ErrorHandler {
 export class NetworkErrorHandler implements ErrorHandler {
     private retryCount = 0;
     private readonly maxRetries = 3;
-    
+
     canHandle(error: Error): boolean {
         return error instanceof SettingsError && error.type === ErrorType.NETWORK;
     }
-    
+
     handle(error: Error): void {
         if (!(error instanceof SettingsError)) {
             new Notice('네트워크 연결을 확인해주세요');
             return;
         }
-        
+
         if (this.retryCount < this.maxRetries && error.recoverable) {
             this.retryCount++;
             new Notice(`네트워크 오류 (재시도 ${this.retryCount}/${this.maxRetries})`);
-            
+
             // 재시도 로직
             setTimeout(() => {
                 // 재시도 콜백 실행
@@ -202,7 +202,7 @@ export class ErrorBoundary {
             .addHandler(new AuthenticationErrorHandler())
             .addHandler(new StorageErrorHandler());
     }
-    
+
     /**
      * 에러 처리 래퍼
      */
@@ -214,7 +214,7 @@ export class ErrorBoundary {
             return null;
         }
     }
-    
+
     /**
      * 비동기 에러 처리 래퍼
      */
@@ -226,26 +226,26 @@ export class ErrorBoundary {
             return null;
         }
     }
-    
+
     /**
      * 에러 처리
      */
     private handleError(error: Error): void {
         console.error('[ErrorBoundary] Caught error:', error);
-        
+
         // 에러 핸들러 체인 실행
         this.errorHandlerChain.handle(error);
-        
+
         // 콜백 실행
         this.onError?.(error);
-        
+
         // Fallback UI 표시
         this.showFallbackUI(error);
-        
+
         // 에러 리포팅
         this.reportError(error);
     }
-    
+
     /**
      * Fallback UI 표시
      */
@@ -253,42 +253,42 @@ export class ErrorBoundary {
         if (this.fallbackUI) {
             this.fallbackUI.remove();
         }
-        
+
         this.fallbackUI = this.container.createDiv({ cls: 'error-boundary-fallback' });
-        
+
         const isRecoverable = error instanceof SettingsError && error.isRecoverable();
         const container = this.fallbackUI.createDiv({ cls: 'error-container' });
         container.createDiv({ cls: 'error-icon', text: '⚠️' });
         container.createEl('h3', { text: '문제가 발생했습니다' });
         container.createEl('p', {
             cls: 'error-message',
-            text: this.getSafeErrorMessage(error)
+            text: this.getSafeErrorMessage(error),
         });
 
         if (isRecoverable) {
             container.createEl('button', {
                 cls: 'mod-cta retry-button',
-                text: '다시 시도'
+                text: '다시 시도',
             });
             container.createEl('button', {
                 cls: 'reset-button',
-                text: '설정 초기화'
+                text: '설정 초기화',
             });
         } else {
             container.createEl('button', {
                 cls: 'refresh-button',
-                text: '새로고침'
+                text: '새로고침',
             });
         }
 
         const detailsEl = container.createEl('details', { cls: 'error-details' });
         detailsEl.createEl('summary', { text: '기술적 세부사항' });
         detailsEl.createEl('pre', { text: this.getErrorDetails(error) });
-        
+
         // 버튼 이벤트 핸들러
         this.attachFallbackHandlers(error);
     }
-    
+
     /**
      * 안전한 에러 메시지 가져오기
      */
@@ -296,16 +296,16 @@ export class ErrorBoundary {
         if (error instanceof SettingsError) {
             return error.getUserMessage();
         }
-        
+
         // 민감한 정보 제거
         const message = error.message
             .replace(/api[-_]?key[s]?/gi, 'API_KEY')
             .replace(/token[s]?/gi, 'TOKEN')
             .replace(/password[s]?/gi, 'PASSWORD');
-        
+
         return message;
     }
-    
+
     /**
      * 에러 세부사항 가져오기
      */
@@ -314,23 +314,23 @@ export class ErrorBoundary {
             name: error.name,
             message: this.getSafeErrorMessage(error),
             stack: error.stack?.split('\n').slice(0, 5).join('\n'),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         };
-        
+
         if (error instanceof SettingsError) {
             details.type = error.type;
             details.recoverable = error.recoverable;
         }
-        
+
         return JSON.stringify(details, null, 2);
     }
-    
+
     /**
      * Fallback UI 이벤트 핸들러
      */
     private attachFallbackHandlers(error: Error): void {
         if (!this.fallbackUI) return;
-        
+
         const retryButton = this.fallbackUI.querySelector('.retry-button');
         if (retryButton) {
             retryButton.addEventListener('click', () => {
@@ -342,7 +342,7 @@ export class ErrorBoundary {
                 }
             });
         }
-        
+
         const resetButton = this.fallbackUI.querySelector('.reset-button');
         if (resetButton) {
             resetButton.addEventListener('click', () => {
@@ -351,7 +351,7 @@ export class ErrorBoundary {
                 window.location.reload();
             });
         }
-        
+
         const refreshButton = this.fallbackUI.querySelector('.refresh-button');
         if (refreshButton) {
             refreshButton.addEventListener('click', () => {
@@ -359,7 +359,7 @@ export class ErrorBoundary {
             });
         }
     }
-    
+
     /**
      * Fallback UI 제거
      */
@@ -369,7 +369,7 @@ export class ErrorBoundary {
             this.fallbackUI = null;
         }
     }
-    
+
     /**
      * 에러 리포팅
      */
@@ -381,13 +381,13 @@ export class ErrorBoundary {
             message: this.getSafeErrorMessage(error),
             type: error instanceof SettingsError ? error.type : 'UNKNOWN',
             timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent
+            userAgent: navigator.userAgent,
         };
-        
+
         // 로컬 스토리지에 에러 로그 저장
         this.saveErrorLog(sanitizedError);
     }
-    
+
     /**
      * 에러 로그 저장
      */
@@ -416,14 +416,14 @@ class AuthenticationErrorHandler implements ErrorHandler {
     canHandle(error: Error): boolean {
         return error instanceof SettingsError && error.type === ErrorType.AUTHENTICATION;
     }
-    
+
     handle(error: Error): void {
         if (!(error instanceof SettingsError)) {
             new Notice('인증에 실패했습니다. API 키를 확인해주세요');
             return;
         }
         new Notice(error.getUserMessage());
-        
+
         // API 키 입력 필드로 포커스 이동
         const apiKeyInput = document.querySelector('.api-key-input');
         if (apiKeyInput instanceof HTMLInputElement) {
@@ -440,17 +440,17 @@ class StorageErrorHandler implements ErrorHandler {
     canHandle(error: Error): boolean {
         return error instanceof SettingsError && error.type === ErrorType.STORAGE;
     }
-    
+
     handle(error: Error): void {
         if (!(error instanceof SettingsError)) {
             new Notice('저장소 접근에 실패했습니다');
             return;
         }
         new Notice(error.getUserMessage());
-        
+
         // 저장소 용량 확인
         if ('storage' in navigator && 'estimate' in navigator.storage) {
-            void navigator.storage.estimate().then(estimate => {
+            void navigator.storage.estimate().then((estimate) => {
                 const percentUsed = ((estimate.usage || 0) / (estimate.quota || 1)) * 100;
                 if (percentUsed > 90) {
                     new Notice('저장 공간이 부족합니다. 일부 데이터를 정리해주세요.');
@@ -465,7 +465,7 @@ class StorageErrorHandler implements ErrorHandler {
  */
 export class GracefulDegradation {
     private features = new Map<string, boolean>();
-    
+
     /**
      * 기능 가용성 확인
      */
@@ -475,7 +475,7 @@ export class GracefulDegradation {
         }
         return this.features.get(feature) || false;
     }
-    
+
     /**
      * 기능 확인
      */
@@ -495,15 +495,11 @@ export class GracefulDegradation {
                 return false;
         }
     }
-    
+
     /**
      * 대체 기능 실행
      */
-    executeWithFallback<T>(
-        feature: string,
-        primary: () => T,
-        fallback: () => T
-    ): T {
+    executeWithFallback<T>(feature: string, primary: () => T, fallback: () => T): T {
         if (this.isFeatureAvailable(feature)) {
             try {
                 return primary();
@@ -522,11 +518,11 @@ export class GracefulDegradation {
  */
 export class ErrorRecoveryStrategy {
     private strategies = new Map<ErrorType, () => void>();
-    
+
     constructor() {
         this.registerDefaultStrategies();
     }
-    
+
     /**
      * 기본 복구 전략 등록
      */
@@ -535,18 +531,18 @@ export class ErrorRecoveryStrategy {
             new Notice('네트워크 오류가 발생했습니다. 오프라인 모드로 전환합니다.');
             // 오프라인 모드 활성화
         });
-        
+
         this.strategies.set(ErrorType.AUTHENTICATION, () => {
             new Notice('인증 실패. API 키를 다시 입력해주세요.');
             // API 키 재입력 다이얼로그 표시
         });
-        
+
         this.strategies.set(ErrorType.STORAGE, () => {
             new Notice('저장 실패. 임시 저장소를 사용합니다.');
             // 메모리 저장소로 전환
         });
     }
-    
+
     /**
      * 복구 전략 실행
      */
@@ -558,7 +554,7 @@ export class ErrorRecoveryStrategy {
             console.warn('No recovery strategy for error type:', error.type);
         }
     }
-    
+
     /**
      * 커스텀 복구 전략 등록
      */
