@@ -230,7 +230,7 @@ class RateLimiter {
         private logger: ILogger
     ) {}
     
-    acquire(): Promise<void> {
+    async acquire(): Promise<void> {
         return new Promise<void>(resolve => {
             this.queue.push(resolve);
             void this.processQueue();
@@ -754,7 +754,7 @@ export class DeepgramService {
         };
     }
     
-    private handleAPIError(response: any): never {
+    private async handleAPIError(response: any): Promise<never> {
         const errorBody = response.json;
         const rawText = response.text;
         const messageFromBody = errorBody?.message || errorBody?.error;

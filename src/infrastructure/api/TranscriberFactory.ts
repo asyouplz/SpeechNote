@@ -12,7 +12,6 @@ import { WhisperService } from './WhisperService';
 import { WhisperAdapter } from './providers/whisper/WhisperAdapter';
 import { DeepgramService } from './providers/deepgram/DeepgramService';
 import { DeepgramAdapter } from './providers/deepgram/DeepgramAdapter';
-import { isPlainRecord } from '../../types/guards';
 
 /**
  * Provider 메트릭 추적
@@ -244,101 +243,38 @@ export class TranscriberFactory {
         this.config = this.loadConfig();
         this.initializeProviders();
     }
-
-    private normalizeError(error: unknown): Error {
-        return error instanceof Error ? error : new Error(String(error));
-    }
     
     /**
      * 설정 로드
      */
     private loadConfig(): TranscriptionProviderConfig {
-        const getBool = (value: unknown, fallback: boolean): boolean =>
-            typeof value === 'boolean' ? value : fallback;
-        const getNumber = (value: unknown, fallback: number): number =>
-            typeof value === 'number' && Number.isFinite(value) ? value : fallback;
-        const getOptionalNumber = (value: unknown): number | undefined =>
-            typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-        const getString = (value: unknown, fallback = ''): string =>
-            typeof value === 'string' ? value : fallback;
-        const getOptionalString = (value: unknown): string | undefined =>
-            typeof value === 'string' ? value : undefined;
-        const isProvider = (value: unknown): value is TranscriptionProvider =>
-            value === 'whisper' || value === 'deepgram';
-        const isSelectionStrategy = (value: unknown): value is SelectionStrategy =>
-            value === SelectionStrategy.MANUAL ||
-            value === SelectionStrategy.COST_OPTIMIZED ||
-            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
-            value === SelectionStrategy.QUALITY_OPTIMIZED ||
-            value === SelectionStrategy.ROUND_ROBIN ||
-            value === SelectionStrategy.AB_TEST;
-
-        const rawSettings = this.settingsManager.get('transcription');
-        const settings = isPlainRecord(rawSettings) ? rawSettings : {};
-        const whisper = isPlainRecord(settings.whisper) ? settings.whisper : undefined;
-        const deepgram = isPlainRecord(settings.deepgram) ? settings.deepgram : undefined;
-        const abTest = isPlainRecord(settings.abTest) ? settings.abTest : undefined;
-        const monitoring = isPlainRecord(settings.monitoring) ? settings.monitoring : undefined;
-        const monitoringThresholdsSource = monitoring?.alertThresholds;
-        const monitoringThresholds = isPlainRecord(monitoringThresholdsSource)
-            ? monitoringThresholdsSource
-            : undefined;
-        const rateLimitSource = deepgram?.rateLimit;
-        const rateLimit = isPlainRecord(rateLimitSource) ? rateLimitSource : undefined;
-        const defaultProvider = isProvider(settings.defaultProvider)
-            ? settings.defaultProvider
-            : 'whisper';
-        const selectionStrategy = isSelectionStrategy(settings.selectionStrategy)
-            ? settings.selectionStrategy
-            : SelectionStrategy.MANUAL;
-
+        const settings = (this.settingsManager.get('transcription') as Partial<TranscriptionProviderConfig>) || {};
+        
         return {
-            defaultProvider,
-            autoSelect: getBool(settings.autoSelect, false),
-            selectionStrategy,
-            fallbackEnabled: getBool(settings.fallbackEnabled, true),
+            defaultProvider: settings.defaultProvider || 'whisper',
+            autoSelect: settings.autoSelect || false,
+            selectionStrategy: settings.selectionStrategy || SelectionStrategy.MANUAL,
+            fallbackEnabled: settings.fallbackEnabled !== false,
             
             whisper: {
-                enabled: getBool(whisper?.enabled, true),
-                apiKey: getString(whisper?.apiKey, ''),
+                enabled: settings.whisper?.enabled !== false,
+                apiKey: settings.whisper?.apiKey ?? '',
                 model: 'whisper-1',
                 maxConcurrency: 1,
                 timeout: 30000
             },
             
             deepgram: {
-                enabled: getBool(deepgram?.enabled, false),
-                apiKey: getString(deepgram?.apiKey, ''),
-                model: getString(deepgram?.model, 'nova-2'),
-                maxConcurrency: getNumber(deepgram?.maxConcurrency, 5),
-                timeout: getNumber(deepgram?.timeout, 30000),
-                rateLimit: {
-                    requests: getNumber(rateLimit?.requests, 100),
-                    window: getNumber(rateLimit?.window, 60000)
-                }
+                enabled: settings.deepgram?.enabled || false,
+                apiKey: settings.deepgram?.apiKey ?? '',
+                model: settings.deepgram?.model || 'nova-2',
+                maxConcurrency: settings.deepgram?.maxConcurrency ?? 5,
+                timeout: settings.deepgram?.timeout ?? 30000,
+                rateLimit: settings.deepgram?.rateLimit ?? { requests: 100, window: 60000 }
             },
             
-            abTest: abTest
-                ? {
-                      enabled: getBool(abTest.enabled, false),
-                      trafficSplit: getNumber(abTest.trafficSplit, 0.5),
-                      metricTracking: getBool(abTest.metricTracking, false),
-                      experimentId: getOptionalString(abTest.experimentId)
-                  }
-                : undefined,
-            monitoring: monitoring
-                ? {
-                      enabled: getBool(monitoring.enabled, false),
-                      metricsEndpoint: getOptionalString(monitoring.metricsEndpoint),
-                      alertThresholds: monitoringThresholds
-                          ? {
-                                errorRate: getOptionalNumber(monitoringThresholds.errorRate),
-                                latency: getOptionalNumber(monitoringThresholds.latency),
-                                cost: getOptionalNumber(monitoringThresholds.cost)
-                            }
-                          : undefined
-                  }
-                : undefined
+            abTest: settings.abTest as ABTestConfig | undefined,
+            monitoring: settings.monitoring as TranscriptionProviderConfig['monitoring'] | undefined
         };
     }
     
@@ -361,7 +297,7 @@ export class TranscriberFactory {
                 this.providers.set('whisper', whisperAdapter);
                 this.logger.info('Whisper provider initialized');
             } catch (error) {
-                this.logger.error('Failed to initialize Whisper provider', this.normalizeError(error));
+                this.logger.error('Failed to initialize Whisper provider', error as Error);
             }
         }
         
@@ -369,16 +305,15 @@ export class TranscriberFactory {
         if (this.config.deepgram?.enabled && this.config.deepgram.apiKey) {
             try {
                 // Get timeout from settings, with fallback to default
-                const settingsTimeout =
-                    Number(this.settingsManager?.get('requestTimeout')) || 30000;
-                const configTimeout = this.config.deepgram.timeout || settingsTimeout;
+        const settingsTimeout = Number(this.settingsManager?.get('requestTimeout')) || 30000;
+        const configTimeout = this.config.deepgram.timeout || settingsTimeout;
 
                 const deepgramService = new DeepgramService(
-                    this.config.deepgram.apiKey,
-                    this.logger,
-                    this.config.deepgram.rateLimit?.requests,
-                    configTimeout
-                );
+                this.config.deepgram.apiKey,
+                this.logger,
+                this.config.deepgram.rateLimit?.requests,
+                configTimeout
+            );
                 const deepgramAdapter = new DeepgramAdapter(
                     deepgramService,
                     this.logger,
@@ -388,7 +323,7 @@ export class TranscriberFactory {
                 this.providers.set('deepgram', deepgramAdapter);
                 this.logger.info('Deepgram provider initialized');
             } catch (error) {
-                this.logger.error('Failed to initialize Deepgram provider', this.normalizeError(error));
+                this.logger.error('Failed to initialize Deepgram provider', error as Error);
             }
         }
     }
@@ -511,7 +446,7 @@ export class TranscriberFactory {
     /**
      * 메트릭 엔드포인트로 전송
      */
-    private sendMetricsToEndpoint(provider: TranscriptionProvider): void {
+    private async sendMetricsToEndpoint(provider: TranscriptionProvider): Promise<void> {
         // 실제 구현에서는 메트릭을 외부 모니터링 서비스로 전송
         const metrics = this.metricsTracker.getMetrics(provider);
         this.logger.debug('Sending metrics to monitoring endpoint', metrics);

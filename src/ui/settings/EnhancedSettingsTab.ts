@@ -24,54 +24,13 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     constructor(app: App, plugin: SpeechToTextPlugin) {
         super(app, plugin);
         this.plugin = plugin;
-        this.settingsAPI = new SettingsAPI(app);
-        this.apiKeyManager = new SecureApiKeyManager(undefined, app);
+        this.settingsAPI = new SettingsAPI();
+        this.apiKeyManager = new SecureApiKeyManager();
         this.validator = new SettingsValidator();
         this.memoryManager = new ResourceManager();
-
+        
         // 초기화
         void this.initialize();
-    }
-
-    private isLanguageCode(value: string): value is 'auto' | 'en' | 'ko' | 'ja' | 'zh' | 'es' | 'fr' | 'de' {
-        return (
-            value === 'auto' ||
-            value === 'en' ||
-            value === 'ko' ||
-            value === 'ja' ||
-            value === 'zh' ||
-            value === 'es' ||
-            value === 'fr' ||
-            value === 'de'
-        );
-    }
-
-    private isTheme(value: string): value is 'auto' | 'light' | 'dark' {
-        return value === 'auto' || value === 'light' || value === 'dark';
-    }
-
-    private isApiProvider(value: string): value is 'openai' | 'azure' | 'custom' {
-        return value === 'openai' || value === 'azure' || value === 'custom';
-    }
-
-    private isAudioFormat(value: string): value is 'webm' | 'mp3' | 'm4a' | 'wav' {
-        return value === 'webm' || value === 'mp3' || value === 'm4a' || value === 'wav';
-    }
-
-    private isAudioQuality(value: string): value is 'low' | 'medium' | 'high' | 'lossless' {
-        return value === 'low' || value === 'medium' || value === 'high' || value === 'lossless';
-    }
-
-    private isSampleRate(value: number): value is 8000 | 16000 | 22050 | 44100 | 48000 {
-        return value === 8000 || value === 16000 || value === 22050 || value === 44100 || value === 48000;
-    }
-
-    private isChannelCount(value: number): value is 1 | 2 {
-        return value === 1 || value === 2;
-    }
-
-    private isLogLevel(value: string): value is 'error' | 'warn' | 'info' | 'debug' {
-        return value === 'error' || value === 'warn' || value === 'info' || value === 'debug';
     }
 
     /**
@@ -124,7 +83,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         // 제목
         const titleContainer = headerEl.createDiv({ cls: 'header-title-container' });
         titleContainer.createEl('h2', { 
-            text: 'Speech to text settings',
+            text: 'Speech to Text Settings',
             cls: 'settings-title' 
         });
         
@@ -150,7 +109,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         const quickActions = headerEl.createDiv({ cls: 'quick-actions' });
         
         new ButtonComponent(quickActions)
-            .setButtonText('Save all')
+            .setButtonText('Save All')
             .setCta()
             .onClick(async () => {
                 await this.saveSettings();
@@ -158,7 +117,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
 
         new ButtonComponent(quickActions)
-            .setButtonText('Reset to defaults')
+            .setButtonText('Reset to Defaults')
             .setWarning()
             .onClick(async () => {
                 if (await this.confirmReset()) {
@@ -198,10 +157,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 tabEl.addClass('active');
                 
                 // 콘텐츠 표시
-                const contentContainer = containerEl.querySelector('.settings-content');
-                if (contentContainer instanceof HTMLElement) {
-                    this.showTabContent(contentContainer, tab.id);
-                }
+                const contentContainer = containerEl.querySelector('.settings-content') as HTMLElement;
+                this.showTabContent(contentContainer, tab.id);
             });
         });
 
@@ -245,7 +202,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private showGeneralSettings(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'settings-section' });
         
-        section.createEl('h3', { text: 'General settings' });
+        section.createEl('h3', { text: 'General Settings' });
 
         // 언어 설정
         new Setting(section)
@@ -253,7 +210,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the language for transcription')
             .addDropdown(dropdown => {
                 const languages = {
-                    'auto': 'Auto detect',
+                    'auto': 'Auto Detect',
                     'en': 'English',
                     'ko': '한국어',
                     'ja': '日本語',
@@ -273,10 +230,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 
                 dropdown.onChange(async (value) => {
                     const general = await this.settingsAPI.get('general');
-                    if (this.isLanguageCode(value)) {
-                        general.language = value;
-                        await this.settingsAPI.set('general', general);
-                    }
+                    general.language = value as any;
+                    await this.settingsAPI.set('general', general);
                 });
             });
 
@@ -286,7 +241,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Choose the appearance theme')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('auto', 'Auto (system)')
+                    .addOption('auto', 'Auto (System)')
                     .addOption('light', 'Light')
                     .addOption('dark', 'Dark');
                 
@@ -296,17 +251,15 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 
                 dropdown.onChange(async (value) => {
                     const general = await this.settingsAPI.get('general');
-                    if (this.isTheme(value)) {
-                        general.theme = value;
-                        await this.settingsAPI.set('general', general);
-                        this.applyTheme(value);
-                    }
+                    general.theme = value as any;
+                    await this.settingsAPI.set('general', general);
+                    this.applyTheme(value);
                 });
             });
 
         // 자동 저장
         new Setting(section)
-            .setName('Auto save')
+            .setName('Auto Save')
             .setDesc('Automatically save transcriptions')
             .addToggle(toggle => {
                 void this.settingsAPI.get('general').then(general => {
@@ -322,7 +275,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 저장 간격
         new Setting(section)
-            .setName('Save interval')
+            .setName('Save Interval')
             .setDesc('Auto-save interval in seconds')
             .addSlider(slider => {
                 slider
@@ -345,7 +298,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         notificationSection.createEl('h4', { text: 'Notifications' });
 
         new Setting(notificationSection)
-            .setName('Enable notifications')
+            .setName('Enable Notifications')
             .setDesc('Show notifications for events')
             .addToggle(toggle => {
                 void this.settingsAPI.get('general').then(general => {
@@ -381,17 +334,17 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showApiSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
         
-        section.createEl('h3', { text: 'API configuration' });
+        section.createEl('h3', { text: 'API Configuration' });
 
         // API 프로바이더
         new Setting(section)
-            .setName('API provider')
+            .setName('API Provider')
             .setDesc('Select the transcription service provider')
             .addDropdown(dropdown => {
                 dropdown
                     .addOption('openai', 'OpenAI Whisper')
                     .addOption('azure', 'Azure Speech Services')
-                    .addOption('custom', 'Custom endpoint');
+                    .addOption('custom', 'Custom Endpoint');
                 
                 void this.settingsAPI.get('api').then(api => {
                     dropdown.setValue(api.provider);
@@ -399,19 +352,17 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 
                 dropdown.onChange(async (value) => {
                     const api = await this.settingsAPI.get('api');
-                    if (this.isApiProvider(value)) {
-                        api.provider = value;
-                        await this.settingsAPI.set('api', api);
-                        
-                        // UI 업데이트
-                        void this.showApiSettings(container);
-                    }
+                    api.provider = value as any;
+                    await this.settingsAPI.set('api', api);
+                    
+                    // UI 업데이트
+                    void this.showApiSettings(container);
                 });
             });
 
         // API 키 입력 (보안 강화)
         const apiKeySetting = new Setting(section)
-            .setName('API key')
+            .setName('API Key')
             .setDesc('Enter your API key (securely encrypted)');
 
         const inputContainer = apiKeySetting.controlEl.createDiv({ cls: 'api-key-input-container' });
@@ -531,7 +482,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 고급 API 설정
         new Setting(section)
-            .setName('Max tokens')
+            .setName('Max Tokens')
             .setDesc('Maximum tokens per request')
             .addText(text => {
                 text.setPlaceholder('4096');
@@ -568,53 +519,49 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showAudioSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
         
-        section.createEl('h3', { text: 'Audio settings' });
+        section.createEl('h3', { text: 'Audio Settings' });
 
         const audio = await this.settingsAPI.get('audio');
 
         // 오디오 포맷
         new Setting(section)
-            .setName('Audio format')
+            .setName('Audio Format')
             .setDesc('Select the audio format for recording')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('webm', 'WebM (recommended)')
+                    .addOption('webm', 'WebM (Recommended)')
                     .addOption('mp3', 'MP3')
                     .addOption('m4a', 'M4A')
-                    .addOption('wav', 'WAV (lossless)');
+                    .addOption('wav', 'WAV (Lossless)');
                 
                 dropdown.setValue(audio.format);
                 dropdown.onChange(async (value) => {
-                    if (this.isAudioFormat(value)) {
-                        audio.format = value;
-                        await this.settingsAPI.set('audio', audio);
-                    }
+                    audio.format = value as any;
+                    await this.settingsAPI.set('audio', audio);
                 });
             });
 
         // 오디오 품질
         new Setting(section)
-            .setName('Audio quality')
+            .setName('Audio Quality')
             .setDesc('Select recording quality')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('low', 'Low (smaller file)')
+                    .addOption('low', 'Low (Smaller file)')
                     .addOption('medium', 'Medium')
-                    .addOption('high', 'High (recommended)')
-                    .addOption('lossless', 'Lossless (large file)');
+                    .addOption('high', 'High (Recommended)')
+                    .addOption('lossless', 'Lossless (Large file)');
                 
                 dropdown.setValue(audio.quality);
                 dropdown.onChange(async (value) => {
-                    if (this.isAudioQuality(value)) {
-                        audio.quality = value;
-                        await this.settingsAPI.set('audio', audio);
-                    }
+                    audio.quality = value as any;
+                    await this.settingsAPI.set('audio', audio);
                 });
             });
 
         // 샘플 레이트
         new Setting(section)
-            .setName('Sample rate')
+            .setName('Sample Rate')
             .setDesc('Audio sample rate in Hz')
             .addDropdown(dropdown => {
                 const rates = [8000, 16000, 22050, 44100, 48000];
@@ -624,11 +571,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 
                 dropdown.setValue(String(audio.sampleRate));
                 dropdown.onChange(async (value) => {
-                    const parsed = Number.parseInt(value, 10);
-                    if (this.isSampleRate(parsed)) {
-                        audio.sampleRate = parsed;
-                        await this.settingsAPI.set('audio', audio);
-                    }
+                    audio.sampleRate = parseInt(value) as any;
+                    await this.settingsAPI.set('audio', audio);
                 });
             });
 
@@ -638,22 +582,19 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Mono or stereo recording')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('1', 'Mono (recommended)')
+                    .addOption('1', 'Mono (Recommended)')
                     .addOption('2', 'Stereo');
                 
                 dropdown.setValue(String(audio.channels));
                 dropdown.onChange(async (value) => {
-                    const parsed = Number.parseInt(value, 10);
-                    if (this.isChannelCount(parsed)) {
-                        audio.channels = parsed;
-                        await this.settingsAPI.set('audio', audio);
-                    }
+                    audio.channels = parseInt(value) as any;
+                    await this.settingsAPI.set('audio', audio);
                 });
             });
 
         // 오디오 향상
         new Setting(section)
-            .setName('Enhance audio')
+            .setName('Enhance Audio')
             .setDesc('Apply noise reduction and enhancement')
             .addToggle(toggle => {
                 toggle.setValue(audio.enhanceAudio);
@@ -665,7 +606,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 언어 설정
         new Setting(section)
-            .setName('Audio language')
+            .setName('Audio Language')
             .setDesc('Language hint for better recognition')
             .addText(text => {
                 text.setPlaceholder('auto');
@@ -683,16 +624,16 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showAdvancedSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
         
-        section.createEl('h3', { text: 'Advanced settings' });
+        section.createEl('h3', { text: 'Advanced Settings' });
 
         const advanced = await this.settingsAPI.get('advanced');
 
         // 캐시 설정
         const cacheSection = section.createDiv({ cls: 'sub-section' });
-        cacheSection.createEl('h4', { text: 'Cache settings' });
+        cacheSection.createEl('h4', { text: 'Cache Settings' });
 
         new Setting(cacheSection)
-            .setName('Enable cache')
+            .setName('Enable Cache')
             .setDesc('Cache transcription results')
             .addToggle(toggle => {
                 toggle.setValue(advanced.cache.enabled);
@@ -703,7 +644,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
 
         new Setting(cacheSection)
-            .setName('Max cache size')
+            .setName('Max Cache Size')
             .setDesc('Maximum cache size in MB')
             .addSlider(slider => {
                 slider
@@ -734,10 +675,10 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 성능 설정
         const perfSection = section.createDiv({ cls: 'sub-section' });
-        perfSection.createEl('h4', { text: 'Performance settings' });
+        perfSection.createEl('h4', { text: 'Performance Settings' });
 
         new Setting(perfSection)
-            .setName('Max concurrency')
+            .setName('Max Concurrency')
             .setDesc('Maximum concurrent operations')
             .addSlider(slider => {
                 slider
@@ -752,7 +693,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
 
         new Setting(perfSection)
-            .setName('Chunk size')
+            .setName('Chunk Size')
             .setDesc('File chunk size in MB')
             .addSlider(slider => {
                 slider
@@ -782,7 +723,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
 
         new Setting(perfSection)
-            .setName('Use web workers')
+            .setName('Use Web Workers')
             .setDesc('Process audio in background threads')
             .addToggle(toggle => {
                 toggle.setValue(advanced.performance.useWebWorkers);
@@ -794,10 +735,10 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 디버그 설정
         const debugSection = section.createDiv({ cls: 'sub-section' });
-        debugSection.createEl('h4', { text: 'Debug settings' });
+        debugSection.createEl('h4', { text: 'Debug Settings' });
 
         new Setting(debugSection)
-            .setName('Enable debug mode')
+            .setName('Enable Debug Mode')
             .setDesc('Show detailed logs and diagnostics')
             .addToggle(toggle => {
                 toggle.setValue(advanced.debug.enabled);
@@ -808,7 +749,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
 
         new Setting(debugSection)
-            .setName('Log level')
+            .setName('Log Level')
             .setDesc('Minimum log level to display')
             .addDropdown(dropdown => {
                 dropdown
@@ -819,15 +760,13 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 
                 dropdown.setValue(advanced.debug.logLevel);
                 dropdown.onChange(async (value) => {
-                    if (this.isLogLevel(value)) {
-                        advanced.debug.logLevel = value;
-                        await this.settingsAPI.set('advanced', advanced);
-                    }
+                    advanced.debug.logLevel = value as any;
+                    await this.settingsAPI.set('advanced', advanced);
                 });
             });
 
         new Setting(debugSection)
-            .setName('Save logs to file')
+            .setName('Save Logs to File')
             .setDesc('Export debug logs to file')
             .addToggle(toggle => {
                 toggle.setValue(advanced.debug.saveLogsToFile);
@@ -844,17 +783,17 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showShortcutSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
         
-        section.createEl('h3', { text: 'Keyboard shortcuts' });
+        section.createEl('h3', { text: 'Keyboard Shortcuts' });
         
         const shortcuts = await this.settingsAPI.get('shortcuts');
 
         // 단축키 항목들
-        const shortcutItems: Array<{ key: keyof typeof shortcuts; label: string }> = [
-            { key: 'startTranscription', label: 'Start transcription' },
-            { key: 'stopTranscription', label: 'Stop transcription' },
-            { key: 'pauseTranscription', label: 'Pause transcription' },
-            { key: 'openSettings', label: 'Open settings' },
-            { key: 'openFilePicker', label: 'Open file picker' }
+        const shortcutItems = [
+            { key: 'startTranscription', label: 'Start Transcription' },
+            { key: 'stopTranscription', label: 'Stop Transcription' },
+            { key: 'pauseTranscription', label: 'Pause Transcription' },
+            { key: 'openSettings', label: 'Open Settings' },
+            { key: 'openFilePicker', label: 'Open File Picker' }
         ];
 
         shortcutItems.forEach(item => {
@@ -863,7 +802,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 .setDesc(`Shortcut for ${item.label.toLowerCase()}`)
                 .addText(text => {
                     text.setPlaceholder('e.g., Ctrl+Shift+S');
-                    text.setValue(shortcuts[item.key]);
+                    text.setValue(shortcuts[item.key as keyof typeof shortcuts]);
                     
                     // 단축키 캡처
                     text.inputEl.addEventListener('keydown', async (e) => {
@@ -879,7 +818,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                             const shortcut = [...modifiers, e.key.toUpperCase()].join('+');
                             text.setValue(shortcut);
                             
-                            shortcuts[item.key] = shortcut;
+                            shortcuts[item.key as keyof typeof shortcuts] = shortcut;
                             await this.settingsAPI.set('shortcuts', shortcuts);
                         }
                     });
@@ -888,7 +827,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 단축키 리셋 버튼
         new ButtonComponent(section)
-            .setButtonText('Reset all shortcuts')
+            .setButtonText('Reset All Shortcuts')
             .onClick(async () => {
                 const defaults = this.settingsAPI.getDefault('shortcuts');
                 await this.settingsAPI.set('shortcuts', defaults);
@@ -903,7 +842,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private showAbout(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'settings-section about-section' });
         
-        section.createEl('h3', { text: 'About speech to text' });
+        section.createEl('h3', { text: 'About Speech to Text' });
 
         // 버전 정보
         const versionInfo = section.createDiv({ cls: 'version-info' });
@@ -926,39 +865,39 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         links.createEl('br');
 
         const issueLink = links.createEl('a', {
-            text: '🐛 Report issue',
+            text: '🐛 Report Issue',
             href: 'https://github.com/yourusername/obsidian-speech-to-text/issues'
         });
         issueLink.setAttribute('target', '_blank');
 
         // 통계
         const statsSection = section.createDiv({ cls: 'stats-section' });
-        statsSection.createEl('h4', { text: 'Usage statistics' });
+        statsSection.createEl('h4', { text: 'Usage Statistics' });
         
         const stats = statsSection.createDiv({ cls: 'stats-grid' });
         
         // 예시 통계 (실제 구현 시 실제 데이터 사용)
-        this.createStatItem(stats, 'Total transcriptions', '0');
-        this.createStatItem(stats, 'Total duration', '0h 0m');
-        this.createStatItem(stats, 'Cache size', '0 MB');
-        this.createStatItem(stats, 'API calls this month', '0');
+        this.createStatItem(stats, 'Total Transcriptions', '0');
+        this.createStatItem(stats, 'Total Duration', '0h 0m');
+        this.createStatItem(stats, 'Cache Size', '0 MB');
+        this.createStatItem(stats, 'API Calls This Month', '0');
 
         // 캐시 관리
         const cacheSection = section.createDiv({ cls: 'cache-management' });
-        cacheSection.createEl('h4', { text: 'Cache management' });
+        cacheSection.createEl('h4', { text: 'Cache Management' });
         
         new ButtonComponent(cacheSection)
-            .setButtonText('Clear cache')
+            .setButtonText('Clear Cache')
             .setWarning()
-            .onClick(() => {
+            .onClick(async () => {
                 // 캐시 클리어 로직
                 new Notice('Cache cleared successfully');
             });
 
         // 로그 내보내기
         new ButtonComponent(cacheSection)
-            .setButtonText('Export logs')
-            .onClick(() => {
+            .setButtonText('Export Logs')
+            .onClick(async () => {
                 // 로그 내보내기 로직
                 new Notice('Logs exported');
             });
@@ -983,13 +922,13 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         const portSection = footerEl.createDiv({ cls: 'port-section' });
         
         new ButtonComponent(portSection)
-            .setButtonText('📤 Export settings')
+            .setButtonText('📤 Export Settings')
             .onClick(async () => {
                 await this.exportSettings();
             });
 
         new ButtonComponent(portSection)
-            .setButtonText('📥 Import settings')
+            .setButtonText('📥 Import Settings')
             .onClick(async () => {
                 await this.importSettings();
             });
@@ -1002,7 +941,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         });
         
         const helpLink = helpSection.createEl('a', {
-            text: 'View documentation',
+            text: 'View Documentation',
             href: '#',
             cls: 'help-link'
         });
@@ -1048,7 +987,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     /**
      * 설정 저장
      */
-    private saveSettings(): void {
+    private async saveSettings(): Promise<void> {
         try {
             // API를 통해 저장 (이미 검증됨)
             this.isDirty = false;
@@ -1070,7 +1009,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
             
             const url = URL.createObjectURL(blob);
-            const a = createEl('a');
+            const a = document.createElement('a');
             a.href = url;
             a.download = `speech-to-text-settings-${Date.now()}.json`;
             a.click();
@@ -1086,17 +1025,13 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     /**
      * 설정 가져오기
      */
-    private importSettings(): void {
-        const input = createEl('input');
+    private async importSettings(): Promise<void> {
+        const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json,.gz';
         
         input.onchange = async (e) => {
-            const target = e.target;
-            if (!(target instanceof HTMLInputElement)) {
-                return;
-            }
-            const file = target.files?.[0];
+            const file = (e.target as HTMLInputElement).files?.[0];
             if (!file) return;
             
             try {
@@ -1124,11 +1059,11 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     /**
      * 설정 초기화 확인
      */
-    private confirmReset(): Promise<boolean> {
+    private async confirmReset(): Promise<boolean> {
         return new Promise((resolve) => {
             const modal = new ConfirmModal(
                 this.app,
-                'Reset settings',
+                'Reset Settings',
                 'Are you sure you want to reset all settings to defaults? This cannot be undone.',
                 (confirmed) => resolve(confirmed)
             );
@@ -1206,12 +1141,12 @@ class HelpModal extends Modal {
     onOpen(): void {
         const { contentEl } = this;
         
-        contentEl.createEl('h2', { text: 'Speech to text help' });
+        contentEl.createEl('h2', { text: 'Speech to Text Help' });
         
         const helpContent = contentEl.createDiv({ cls: 'help-content' });
         
         // 도움말 내용
-        helpContent.createEl('h3', { text: 'Getting started' });
+        helpContent.createEl('h3', { text: 'Getting Started' });
         helpContent.createEl('p', { 
             text: '1. Configure your API key in the API settings tab'
         });
@@ -1222,7 +1157,7 @@ class HelpModal extends Modal {
             text: '3. Use the keyboard shortcuts or buttons to start transcription'
         });
         
-        helpContent.createEl('h3', { text: 'Keyboard shortcuts' });
+        helpContent.createEl('h3', { text: 'Keyboard Shortcuts' });
         const shortcutList = helpContent.createEl('ul');
         shortcutList.createEl('li', { text: 'Ctrl+Shift+S: Start transcription' });
         shortcutList.createEl('li', { text: 'Ctrl+Shift+X: Stop transcription' });

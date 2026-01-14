@@ -27,7 +27,7 @@ export class RateLimiter {
     /**
      * Rate limit을 고려한 요청 허가 대기
      */
-    acquire(): Promise<void> {
+    async acquire(): Promise<void> {
         return new Promise<void>(resolve => {
             this.queue.push(resolve);
             void this.processQueue();

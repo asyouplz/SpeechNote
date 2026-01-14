@@ -269,8 +269,8 @@ export class SettingsState<T = any> {
     public set(newState: T | ((prev: T) => T)): void {
         const prevState = this.state;
         
-        if (this.isStateUpdater(newState)) {
-            this.state = newState(prevState);
+        if (typeof newState === 'function') {
+            this.state = (newState as (prev: T) => T)(prevState);
         } else {
             this.state = newState;
         }
@@ -293,10 +293,6 @@ export class SettingsState<T = any> {
      */
     private notifyListeners(): void {
         this.listeners.forEach(listener => listener(this.state));
-    }
-
-    private isStateUpdater(value: T | ((prev: T) => T)): value is (prev: T) => T {
-        return typeof value === 'function';
     }
     
     /**

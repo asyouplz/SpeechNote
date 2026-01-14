@@ -1,5 +1,4 @@
-import { App, PluginSettingTab } from 'obsidian';
-import type SpeechToTextPlugin from '../../main';
+import { App, Plugin, PluginSettingTab } from 'obsidian';
 import { Logger } from '../../infrastructure/logging/Logger';
 import { IDisposable } from '../../architecture/DependencyContainer';
 import { SettingsTab } from '../settings/SettingsTab';
@@ -15,7 +14,7 @@ export class SettingsTabManager implements IDisposable {
 
     constructor(
         private app: App,
-        private plugin: SpeechToTextPlugin
+        private plugin: Plugin
     ) {
         this.logger = new Logger('SettingsTabManager');
     }
@@ -23,7 +22,7 @@ export class SettingsTabManager implements IDisposable {
     /**
      * SettingsTab 초기화
      */
-    public initialize(): void {
+    public async initialize(): Promise<void> {
         try {
             // 이미 초기화된 경우 스킵
             if (this.settingsTab) {
@@ -109,7 +108,7 @@ export class SettingsTabManager implements IDisposable {
             }
 
             // 타입 체크를 통한 안전한 생성
-            const tab = new SettingsTab(this.app, this.plugin);
+            const tab = new SettingsTab(this.app, this.plugin as any);
             
             // 생성된 객체 검증
             if (!tab || typeof tab.display !== 'function') {
@@ -218,7 +217,7 @@ export class SettingsTabManager implements IDisposable {
  * 최소 기능 SettingsTab (폴백용)
  */
 class MinimalSettingsTab extends PluginSettingTab {
-    constructor(app: App, plugin: SpeechToTextPlugin) {
+    constructor(app: App, plugin: Plugin) {
         super(app, plugin);
     }
 
@@ -226,7 +225,7 @@ class MinimalSettingsTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
         
-        containerEl.createEl('h2', { text: 'Speech to text settings' });
+        containerEl.createEl('h2', { text: 'Speech to Text Settings' });
         containerEl.createEl('p', { 
             text: 'Settings are temporarily unavailable. Please restart Obsidian if this persists.',
             cls: 'settings-error-message'

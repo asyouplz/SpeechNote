@@ -73,15 +73,14 @@ export class ApiKeyValidator {
             
             return false;
         } catch (error) {
-            const status = this.getErrorStatus(error);
             // 401: 인증 실패 (잘못된 키)
-            if (status === 401) {
+            if ((error as any).status === 401) {
                 new Notice('❌ 유효하지 않은 API 키입니다');
                 return false;
             }
             
             // 429: Rate limit (키는 유효하지만 한도 초과)
-            if (status === 429) {
+            if ((error as any).status === 429) {
                 new Notice('⚠ API 키는 유효하지만 사용 한도를 초과했습니다');
                 return true; // 키 자체는 유효함
             }
@@ -186,7 +185,7 @@ export class ApiKeyValidator {
         const encrypted = this.encrypt(apiKey);
         
         // 설정에 저장 (암호화된 버전)
-        this.plugin.settings['encryptedApiKey'] = encrypted;
+        (this.plugin.settings as any).encryptedApiKey = encrypted;
         
         // 평문 키는 메모리에만 유지
         this.plugin.settings.apiKey = apiKey;
@@ -197,28 +196,15 @@ export class ApiKeyValidator {
     /**
      * API 키 안전하게 로드
      */
-    loadSecurely(): Promise<string> {
-        const encrypted = this.plugin.settings['encryptedApiKey'];
+    async loadSecurely(): Promise<string> {
+        const encrypted = (this.plugin.settings as any).encryptedApiKey;
         
         if (encrypted) {
             const decrypted = this.decrypt(encrypted);
             this.plugin.settings.apiKey = decrypted;
-            return Promise.resolve(decrypted);
+            return decrypted;
         }
         
-        return Promise.resolve(this.plugin.settings.apiKey || '');
-    }
-
-    private getErrorStatus(error: unknown): number | null {
-        if (!error || typeof error !== 'object') {
-            return null;
-        }
-
-        const status = Reflect.get(error, 'status');
-        if (typeof status === 'number') {
-            return status;
-        }
-
-        return null;
+        return this.plugin.settings.apiKey || '';
     }
 }

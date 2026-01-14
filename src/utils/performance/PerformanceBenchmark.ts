@@ -480,7 +480,7 @@ export function Benchmark(name?: string) {
         const metricName = name || `${target.constructor.name}.${propertyName}`;
         
         if (originalMethod.constructor.name === 'AsyncFunction') {
-            descriptor.value = function (...args: unknown[]) {
+            descriptor.value = async function (...args: unknown[]) {
                 return PerformanceBenchmark.measureAsync(
                     metricName,
                     () => originalMethod.apply(this, args)

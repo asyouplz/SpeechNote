@@ -1,5 +1,4 @@
 import { Notice } from 'obsidian';
-import type { App } from 'obsidian';
 
 /**
  * 에러 타입 정의
@@ -61,28 +60,6 @@ interface ErrorHandler {
     canHandle(error: Error): boolean;
 }
 
-function normalizeError(error: unknown): Error {
-    return error instanceof Error ? error : new Error('Unknown error');
-}
-
-function getFieldFromDetails(details: unknown): string | null {
-    if (!details || typeof details !== 'object') {
-        return null;
-    }
-
-    const field = Reflect.get(details, 'field');
-    return typeof field === 'string' ? field : null;
-}
-
-function getRetryCallback(details: unknown): (() => void) | null {
-    if (!details || typeof details !== 'object') {
-        return null;
-    }
-
-    const retry = Reflect.get(details, 'retry');
-    return typeof retry === 'function' ? retry : null;
-}
-
 /**
  * 에러 핸들러 체인
  */
@@ -123,17 +100,15 @@ export class ValidationErrorHandler implements ErrorHandler {
     }
     
     handle(error: Error): void {
-        if (!(error instanceof SettingsError)) {
-            new Notice('입력값이 올바르지 않습니다');
-            return;
-        }
-
-        new Notice(error.getUserMessage());
+        const settingsError = error as SettingsError;
+        new Notice(settingsError.getUserMessage());
         
         // 검증 에러 필드 하이라이트
-        const field = getFieldFromDetails(error.details);
-        if (field) {
-            this.highlightErrorField(field);
+        if (settingsError.details && typeof settingsError.details === 'object') {
+            const details = settingsError.details as { field?: string };
+            if (details.field) {
+                this.highlightErrorField(details.field);
+            }
         }
     }
     
@@ -158,19 +133,16 @@ export class NetworkErrorHandler implements ErrorHandler {
     }
     
     handle(error: Error): void {
-        if (!(error instanceof SettingsError)) {
-            new Notice('네트워크 연결을 확인해주세요');
-            return;
-        }
+        const settingsError = error as SettingsError;
         
-        if (this.retryCount < this.maxRetries && error.recoverable) {
+        if (this.retryCount < this.maxRetries && settingsError.recoverable) {
             this.retryCount++;
             new Notice(`네트워크 오류 (재시도 ${this.retryCount}/${this.maxRetries})`);
             
             // 재시도 로직
             setTimeout(() => {
                 // 재시도 콜백 실행
-                const retryCallback = getRetryCallback(error.details);
+                const retryCallback = (settingsError.details as any)?.retry;
                 if (typeof retryCallback === 'function') {
                     retryCallback();
                 }
@@ -188,14 +160,11 @@ export class NetworkErrorHandler implements ErrorHandler {
 export class ErrorBoundary {
     private errorHandlerChain: ErrorHandlerChain;
     private fallbackUI: HTMLElement | null = null;
-    private app: App;
-
+    
     constructor(
         private container: HTMLElement,
-        app: App,
         private onError?: (error: Error) => void
     ) {
-        this.app = app;
         this.errorHandlerChain = new ErrorHandlerChain()
             .addHandler(new ValidationErrorHandler())
             .addHandler(new NetworkErrorHandler())
@@ -210,7 +179,7 @@ export class ErrorBoundary {
         try {
             return fn();
         } catch (error) {
-            this.handleError(normalizeError(error));
+            this.handleError(error as Error);
             return null;
         }
     }
@@ -222,7 +191,7 @@ export class ErrorBoundary {
         try {
             return await fn();
         } catch (error) {
-            this.handleError(normalizeError(error));
+            this.handleError(error as Error);
             return null;
         }
     }
@@ -336,7 +305,7 @@ export class ErrorBoundary {
             retryButton.addEventListener('click', () => {
                 this.clearFallbackUI();
                 // 재시도 로직
-                const retryCallback = getRetryCallback(error);
+                const retryCallback = (error as any).retry;
                 if (typeof retryCallback === 'function') {
                     retryCallback();
                 }
@@ -391,18 +360,17 @@ export class ErrorBoundary {
     /**
      * 에러 로그 저장
      */
-    private saveErrorLog(errorData: Record<string, unknown>): void {
+    private saveErrorLog(errorData: any): void {
         try {
-            const storedData = this.app.loadLocalStorage('settings-error-logs');
-            const logs = storedData ? JSON.parse(storedData) : [];
+            const logs = JSON.parse(localStorage.getItem('settings-error-logs') || '[]');
             logs.push(errorData);
-
+            
             // 최대 50개의 로그만 유지
             if (logs.length > 50) {
                 logs.shift();
             }
-
-            this.app.saveLocalStorage('settings-error-logs', JSON.stringify(logs));
+            
+            localStorage.setItem('settings-error-logs', JSON.stringify(logs));
         } catch {
             // 로그 저장 실패는 무시
         }
@@ -418,15 +386,12 @@ class AuthenticationErrorHandler implements ErrorHandler {
     }
     
     handle(error: Error): void {
-        if (!(error instanceof SettingsError)) {
-            new Notice('인증에 실패했습니다. API 키를 확인해주세요');
-            return;
-        }
-        new Notice(error.getUserMessage());
+        const settingsError = error as SettingsError;
+        new Notice(settingsError.getUserMessage());
         
         // API 키 입력 필드로 포커스 이동
-        const apiKeyInput = document.querySelector('.api-key-input');
-        if (apiKeyInput instanceof HTMLInputElement) {
+        const apiKeyInput = document.querySelector('.api-key-input') as HTMLInputElement;
+        if (apiKeyInput) {
             apiKeyInput.focus();
             apiKeyInput.select();
         }
@@ -442,11 +407,8 @@ class StorageErrorHandler implements ErrorHandler {
     }
     
     handle(error: Error): void {
-        if (!(error instanceof SettingsError)) {
-            new Notice('저장소 접근에 실패했습니다');
-            return;
-        }
-        new Notice(error.getUserMessage());
+        const settingsError = error as SettingsError;
+        new Notice(settingsError.getUserMessage());
         
         // 저장소 용량 확인
         if ('storage' in navigator && 'estimate' in navigator.storage) {

@@ -6,9 +6,6 @@
  * - 에러 로깅 및 리포팅
  */
 
-import type { App } from 'obsidian';
-import type { EventManager } from '../../application/EventManager';
-
 /**
  * 에러 타입 정의
  */
@@ -29,10 +26,6 @@ export enum ErrorSeverity {
     MEDIUM = 'MEDIUM',
     HIGH = 'HIGH',
     CRITICAL = 'CRITICAL'
-}
-
-function normalizeError(error: unknown): Error {
-    return error instanceof Error ? error : new Error('Unknown error');
 }
 
 /**
@@ -264,51 +257,6 @@ export class GlobalErrorManager {
     }
 }
 
-export type ErrorHandlerResult = { retry?: boolean; delay?: number };
-
-export type ErrorHandler = (
-    error: Error
-) => ErrorHandlerResult | Promise<ErrorHandlerResult>;
-
-export type ErrorReporterCallback = (
-    error: Error,
-    context?: Record<string, unknown>
-) => void | Promise<void>;
-
-/**
- * 테스트용 경량 에러 매니저
- */
-export class ErrorManager {
-    private handlers = new Map<string, ErrorHandler>();
-    private reporter?: ErrorReporterCallback;
-
-    constructor(_eventManager?: EventManager) {
-        void _eventManager;
-    }
-
-    registerHandler(type: string, handler: ErrorHandler): void {
-        this.handlers.set(type, handler);
-    }
-
-    setReporter(reporter: ErrorReporterCallback): void {
-        this.reporter = reporter;
-    }
-
-    async report(error: Error, context?: Record<string, unknown>): Promise<void> {
-        if (this.reporter) {
-            await this.reporter(error, context);
-        }
-    }
-
-    async handle(type: string, error: Error): Promise<ErrorHandlerResult | undefined> {
-        const handler = this.handlers.get(type);
-        if (!handler) {
-            return undefined;
-        }
-        return await handler(error);
-    }
-}
-
 /**
  * 콘솔 에러 리포터
  */
@@ -349,22 +297,17 @@ export class ConsoleErrorReporter implements ErrorReporter {
 export class LocalStorageErrorReporter implements ErrorReporter {
     private storageKey = 'error_logs';
     private maxLogs = 50;
-    private app: App;
-
-    constructor(app: App) {
-        this.app = app;
-    }
 
     report(error: ErrorInfo): void {
         try {
             const logs = this.getLogs();
             logs.push(error);
-
+            
             if (logs.length > this.maxLogs) {
                 logs.shift();
             }
-
-            this.app.saveLocalStorage(this.storageKey, JSON.stringify(logs));
+            
+            localStorage.setItem(this.storageKey, JSON.stringify(logs));
         } catch (e) {
             console.error('Failed to save error log:', e);
         }
@@ -372,7 +315,7 @@ export class LocalStorageErrorReporter implements ErrorReporter {
 
     getLogs(): ErrorInfo[] {
         try {
-            const data = this.app.loadLocalStorage(this.storageKey);
+            const data = localStorage.getItem(this.storageKey);
             return data ? JSON.parse(data) : [];
         } catch {
             return [];
@@ -380,7 +323,7 @@ export class LocalStorageErrorReporter implements ErrorReporter {
     }
 
     clearLogs(): void {
-        this.app.saveLocalStorage(this.storageKey, null);
+        localStorage.removeItem(this.storageKey);
     }
 }
 
@@ -425,7 +368,7 @@ export class ErrorBoundary {
                 // DOM 변경 시 에러 체크
                 this.checkForErrors();
             } catch (error) {
-                this.handleError(normalizeError(error));
+                this.handleError(error as Error);
             }
         });
 
@@ -461,10 +404,7 @@ export class ErrorBoundary {
         
         // 원본 콘텐츠 저장
         if (!this.originalContent) {
-            const cloned = this.element.cloneNode(true);
-            if (cloned instanceof HTMLElement) {
-                this.originalContent = cloned;
-            }
+            this.originalContent = this.element.cloneNode(true) as HTMLElement;
         }
         
         // 폴백 UI 표시
@@ -505,8 +445,8 @@ export class ErrorBoundary {
      */
     private setupRecovery(): void {
         this.element.addEventListener('click', (event) => {
-            const target = event.target;
-            if (target instanceof HTMLElement && target.classList.contains('error-boundary-retry')) {
+            const target = event.target as HTMLElement;
+            if (target.classList.contains('error-boundary-retry')) {
                 this.recover();
             }
         });
@@ -540,7 +480,7 @@ export function tryCatch<T>(
     try {
         return fn();
     } catch (error) {
-        const err = normalizeError(error);
+        const err = error as Error;
         
         if (options.onError) {
             options.onError(err);
@@ -573,7 +513,7 @@ export async function tryCatchAsync<T>(
     try {
         return await fn();
     } catch (error) {
-        const err = normalizeError(error);
+        const err = error as Error;
         
         if (options.onError) {
             options.onError(err);
@@ -607,13 +547,13 @@ export function retryOnError(
         const originalMethod = descriptor.value;
         
         descriptor.value = async function (...args: unknown[]) {
-            let lastError: Error | null = null;
+            let lastError: Error;
             
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                 try {
                     return await originalMethod.apply(this, args);
                 } catch (error) {
-                    lastError = normalizeError(error);
+                    lastError = error as Error;
                     
                     if (attempt < maxAttempts) {
                         await new Promise(resolve => setTimeout(resolve, delay));
@@ -621,7 +561,7 @@ export function retryOnError(
                 }
             }
             
-            throw lastError ?? new Error('Retry attempts exhausted');
+            throw lastError!;
         };
         
         return descriptor;

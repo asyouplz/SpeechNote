@@ -73,8 +73,8 @@ export class DragDropZone {
         });
         
         fileInput.addEventListener('change', (e) => {
-            const target = e.target;
-            if (target instanceof HTMLInputElement && target.files && target.files.length > 0) {
+            const target = e.target as HTMLInputElement;
+            if (target.files && target.files.length > 0) {
                 this.handleFiles(Array.from(target.files));
             }
         });
@@ -201,11 +201,8 @@ export class DragDropZone {
     private showDragOverlay() {
         if (!this.dropZone) return;
         
-        const existingOverlay = this.dropZone.querySelector('.drag-overlay');
-        let overlay: HTMLElement;
-        if (existingOverlay instanceof HTMLElement) {
-            overlay = existingOverlay;
-        } else {
+        let overlay = this.dropZone.querySelector('.drag-overlay') as HTMLElement;
+        if (!overlay) {
             overlay = this.dropZone.createDiv('drag-overlay');
             const content = overlay.createDiv('drag-overlay-content');
             const icon = content.createDiv('drag-overlay-icon');
@@ -220,7 +217,7 @@ export class DragDropZone {
      */
     private hideDragOverlay() {
         const overlay = this.dropZone?.querySelector('.drag-overlay');
-        if (overlay instanceof HTMLElement) {
+        if (overlay) {
             overlay.removeClass('active');
         }
     }
@@ -400,12 +397,12 @@ export class DragDropZone {
         
         // UI 업데이트
         const formatsEl = this.dropZone?.querySelector('.drop-zone-formats');
-        if (formatsEl instanceof HTMLElement) {
+        if (formatsEl) {
             formatsEl.setText(`지원 형식: ${formats.map(f => `.${f}`).join(', ')}`);
         }
         
-        const input = this.dropZone?.querySelector('.drop-zone-input');
-        if (input instanceof HTMLInputElement) {
+        const input = this.dropZone?.querySelector('.drop-zone-input') as HTMLInputElement;
+        if (input) {
             input.accept = formats.map(f => `.${f}`).join(',');
         }
     }

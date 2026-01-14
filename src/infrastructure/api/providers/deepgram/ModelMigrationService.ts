@@ -445,7 +445,7 @@ export class ModelMigrationService {
         };
     }
 
-    private evaluateCondition(condition: MigrationCondition): boolean {
+    private async evaluateCondition(condition: MigrationCondition): Promise<boolean> {
         switch (condition.type) {
             case 'user_consent':
                 // 실제 구현에서는 UI를 통해 사용자 동의를 받아야 함
@@ -468,7 +468,7 @@ export class ModelMigrationService {
         }
     }
 
-    private createMigrationPlan(rule: MigrationRule): MigrationPlan {
+    private async createMigrationPlan(rule: MigrationRule): Promise<MigrationPlan> {
         const steps: MigrationStep[] = [
             {
                 id: 'backup_settings',
@@ -568,7 +568,7 @@ export class ModelMigrationService {
         }
     }
 
-    private simulateMigration(plan: MigrationPlan, result: MigrationResult): MigrationResult {
+    private async simulateMigration(plan: MigrationPlan, result: MigrationResult): Promise<MigrationResult> {
         this.logger.info('Running migration simulation (test mode)');
         
         result.warnings.push('Migration simulation completed - no actual changes made');
@@ -578,7 +578,7 @@ export class ModelMigrationService {
         return result;
     }
 
-    private getUserApproval(plan: MigrationPlan, prefs: UserMigrationPreferences): boolean {
+    private async getUserApproval(plan: MigrationPlan, prefs: UserMigrationPreferences): Promise<boolean> {
         if (prefs.autoMigration && !prefs.notifyBeforeMigration) {
             return true;
         }
@@ -639,7 +639,7 @@ export class ModelMigrationService {
         this.logger.info(`Model updated to: ${newModel}`);
     }
 
-    private testModelCompatibility(targetModel: string): void {
+    private async testModelCompatibility(targetModel: string): Promise<void> {
         const capabilities = this.capabilityManager.getModelCapabilities(targetModel);
         if (!capabilities) {
             throw new Error(`Target model ${targetModel} not found`);

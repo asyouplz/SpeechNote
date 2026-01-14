@@ -26,7 +26,7 @@ export class AudioProcessor implements IAudioProcessor {
         });
     }
 
-    validate(file: TFile): Promise<ValidationResult> {
+    async validate(file: TFile): Promise<ValidationResult> {
         const errors: string[] = [];
         const warnings: string[] = [];
 
@@ -54,11 +54,11 @@ export class AudioProcessor implements IAudioProcessor {
             warnings.push('Large file may take longer to process');
         }
 
-        return Promise.resolve({
+        return {
             valid: errors.length === 0,
             errors: errors.length > 0 ? errors : undefined,
             warnings: warnings.length > 0 ? warnings : undefined,
-        });
+        };
     }
 
     async process(file: TFile): Promise<ProcessedAudio> {
@@ -84,7 +84,7 @@ export class AudioProcessor implements IAudioProcessor {
         };
     }
 
-    extractMetadata(buffer: ArrayBuffer, file?: TFile): Promise<AudioMetadata> {
+    async extractMetadata(buffer: ArrayBuffer, file?: TFile): Promise<AudioMetadata> {
         // Extract format from file extension
         let format: string | undefined;
         if (file) {
@@ -105,7 +105,7 @@ export class AudioProcessor implements IAudioProcessor {
             format
         });
 
-        return Promise.resolve({
+        return {
             duration: undefined, // Would need audio parsing library
             bitrate: undefined,
             sampleRate: undefined,
@@ -113,6 +113,6 @@ export class AudioProcessor implements IAudioProcessor {
             codec: undefined,
             format, // 🔥 핵심: 파일 형식 정보 추가
             fileSize: buffer.byteLength
-        });
+        };
     }
 }

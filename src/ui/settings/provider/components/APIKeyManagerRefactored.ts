@@ -4,7 +4,6 @@ import { TranscriptionProvider } from '../../../../infrastructure/api/providers/
 import { Encryptor } from '../../../../infrastructure/security/Encryptor';
 import { BaseSettingsComponent } from '../../base/BaseSettingsComponent';
 import { UIComponentFactory } from '../../base/CommonUIComponents';
-import { isPlainRecord } from '../../../../types/guards';
 
 /**
  * API 키 타입 정의
@@ -155,13 +154,10 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         const inputsSection = this.createSection(containerEl, 'API 키', '', 'api-key-inputs');
         
         // 현재 Provider 또는 모든 Provider 표시
-        const currentProvider = this.plugin.settings.provider ?? 'auto';
-        const providers =
-            currentProvider === 'auto'
-                ? Array.from(this.providerConfigs.keys())
-                : this.isTranscriptionProvider(currentProvider)
-                    ? [currentProvider]
-                    : [];
+        const currentProvider = this.plugin.settings.provider;
+        const providers = currentProvider === 'auto' 
+            ? Array.from(this.providerConfigs.keys())
+            : [currentProvider as TranscriptionProvider];
         
         providers.forEach(provider => {
             this.renderSingleApiKeyInput(inputsSection, provider);
@@ -255,11 +251,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
     ): void {
         // 입력 검증 (디바운스 적용)
         inputEl.addEventListener('input', (e) => {
-            const target = e.target;
-            if (!(target instanceof HTMLInputElement)) {
-                return;
-            }
-            const value = target.value;
+            const value = (e.target as HTMLInputElement).value;
             
             // 마스킹된 값은 무시
             if (value.includes('*')) return;
@@ -272,11 +264,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         
         // 포커스 아웃시 저장
         inputEl.addEventListener('blur', async (e) => {
-            const target = e.target;
-            if (!(target instanceof HTMLInputElement)) {
-                return;
-            }
-            const value = target.value;
+            const value = (e.target as HTMLInputElement).value;
             
             if (value && !value.includes('*') && config.pattern.test(value)) {
                 await this.saveApiKey(provider, value);
@@ -287,10 +275,8 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         inputEl.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const validateBtn = inputEl.parentElement?.querySelector('.validate-btn');
-                if (validateBtn instanceof HTMLButtonElement) {
-                    validateBtn.click();
-                }
+                const validateBtn = inputEl.parentElement?.querySelector('.validate-btn') as HTMLButtonElement;
+                validateBtn?.click();
             }
         });
     }
@@ -778,30 +764,18 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
     /**
      * 키 가져오기
      */
-    private importKeys(): void {
-        const input = createEl('input');
+    private async importKeys(): Promise<void> {
+        const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
         
         input.onchange = async (e) => {
-            const target = e.target;
-            if (!(target instanceof HTMLInputElement)) {
-                return;
-            }
-            const file = target.files?.[0];
+            const file = (e.target as HTMLInputElement).files?.[0];
             if (!file) return;
             
             await this.withErrorHandling(async () => {
                 const content = await file.text();
-                const parsed = JSON.parse(content);
-                const keys: Record<string, string> = {};
-                if (isPlainRecord(parsed)) {
-                    Object.entries(parsed).forEach(([key, value]) => {
-                        if (typeof value === 'string') {
-                            keys[key] = value;
-                        }
-                    });
-                }
+                const keys = JSON.parse(content) as Record<string, string>;
                 
                 for (const [provider, key] of Object.entries(keys)) {
                     if (this.isTranscriptionProvider(provider)) {
@@ -825,7 +799,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
      * 키 내보내기
      */
     private async exportKeys(): Promise<void> {
-        await this.withErrorHandling(() => {
+        await this.withErrorHandling(async () => {
             const exportData: Record<string, string> = {};
             
             this.apiKeys.forEach((keyData, provider) => {
@@ -837,14 +811,13 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             });
             const url = URL.createObjectURL(blob);
             
-            const a = createEl('a');
+            const a = document.createElement('a');
             a.href = url;
             a.download = `api-keys-${Date.now()}.json`;
             a.click();
             
             URL.revokeObjectURL(url);
             this.showNotice('API 키를 내보냈습니다');
-            return Promise.resolve();
         }, 'API 키 내보내기 실패');
     }
     
@@ -947,7 +920,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             }
         }
     }
-
+    
     /**
      * 정리
      */

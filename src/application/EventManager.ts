@@ -77,7 +77,7 @@ export interface AppEventMap extends EventMap {
 export class EventManager extends EventEmitter<AppEventMap> {
     private static instance?: EventManager;
     private logger?: ILogger;
-    private eventStats = new Map<string, number>();
+    private eventStats = new Map<keyof AppEventMap, number>();
     private eventHistory: EventHistoryEntry[] = [];
     private readonly maxHistorySize = 100;
     private isDebugMode = false;
@@ -107,7 +107,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         this.updateStats(event);
         
         // 히스토리 기록
-        this.recordHistory(event, data);
+        this.recordHistory(event, data as AppEventMap[keyof AppEventMap]);
         
         // 디버그 로깅
         if (this.isDebugMode && this.logger) {
@@ -121,14 +121,14 @@ export class EventManager extends EventEmitter<AppEventMap> {
     /**
      * 비동기 이벤트 발생 (오버라이드)
      */
-    emitAsync<K extends keyof AppEventMap>(event: K, data: AppEventMap[K]): Promise<void>;
-    emitAsync(event: string, data?: unknown): Promise<void>;
+    async emitAsync<K extends keyof AppEventMap>(event: K, data: AppEventMap[K]): Promise<void>;
+    async emitAsync(event: string, data?: unknown): Promise<void>;
     async emitAsync(event: string, data?: unknown): Promise<void> {
         // 통계 업데이트
         this.updateStats(event);
         
         // 히스토리 기록
-        this.recordHistory(event, data);
+        this.recordHistory(event, data as AppEventMap[keyof AppEventMap]);
         
         // 디버그 로깅
         if (this.isDebugMode && this.logger) {
@@ -254,7 +254,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
     /**
      * 이벤트 통계 업데이트
      */
-    private updateStats(event: string): void {
+    private updateStats(event: keyof AppEventMap): void {
         const count = this.eventStats.get(event) || 0;
         this.eventStats.set(event, count + 1);
     }
@@ -262,7 +262,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
     /**
      * 이벤트 히스토리 기록
      */
-    private recordHistory(event: string, data: unknown): void {
+    private recordHistory<K extends keyof AppEventMap>(event: K, data: AppEventMap[K]): void {
         const entry: EventHistoryEntry = {
             event: String(event),
             data: this.isDebugMode ? data : undefined, // 디버그 모드에서만 데이터 저장
@@ -280,7 +280,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
     /**
      * 이벤트 통계 조회
      */
-    getStats(): Map<string, number> {
+    getStats(): Map<keyof AppEventMap, number> {
         return new Map(this.eventStats);
     }
     
@@ -294,7 +294,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
     /**
      * 특정 이벤트의 통계 조회
      */
-    getEventStats(event: string): number {
+    getEventStats(event: keyof AppEventMap): number {
         return this.eventStats.get(event) || 0;
     }
     
@@ -359,7 +359,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
  */
 interface EventHistoryEntry {
     event: string;
-    data?: unknown;
+    data?: AppEventMap[keyof AppEventMap];
     timestamp: number;
 }
 

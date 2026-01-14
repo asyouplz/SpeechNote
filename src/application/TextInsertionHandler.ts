@@ -20,10 +20,6 @@ export class TextInsertionHandler {
     private lastInsertedText = '';
     private insertionHistory: InsertionRecord[] = [];
     private readonly maxHistorySize = 20;
-    
-    private normalizeError(error: unknown): Error {
-        return error instanceof Error ? error : new Error('Unknown error');
-    }
 
     constructor(
         private editorService: EditorService,
@@ -116,7 +112,7 @@ export class TextInsertionHandler {
 
             return success;
         } catch (error) {
-            this.logger.error('Failed to insert text', this.normalizeError(error));
+            this.logger.error('Failed to insert text', error as Error);
             new Notice('Failed to insert text. Please try again.');
             return false;
         }

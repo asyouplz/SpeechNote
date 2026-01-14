@@ -24,37 +24,17 @@ export class EditorService {
 
     constructor(
         private app: App,
-        private eventManager: EventManager = EventManager.getInstance(),
+        private eventManager: EventManager,
         logger?: Logger
     ) {
         this.logger = logger || new Logger('EditorService');
         this.setupEventListeners();
     }
 
-    private normalizeError(error: unknown): Error {
-        return error instanceof Error ? error : new Error('Unknown error');
-    }
-
-    private isEditor(value: unknown): value is Editor {
-        if (!value || typeof value !== 'object') {
-            return false;
-        }
-
-        return typeof Reflect.get(value, 'getCursor') === 'function' &&
-            typeof Reflect.get(value, 'replaceRange') === 'function' &&
-            typeof Reflect.get(value, 'setValue') === 'function';
-    }
-
     /**
      * 이벤트 리스너 설정
      */
     private setupEventListeners(): void {
-        const workspace = this.app.workspace;
-        if (!workspace || typeof workspace.on !== 'function') {
-            this.logger.warn('Workspace event API not available');
-            return;
-        }
-
         // 활성 뷰 변경 감지
         const activeLeafCallback = () => {
             if (this.destroyed) {
@@ -62,22 +42,19 @@ export class EditorService {
             }
             this.updateActiveEditor();
         };
-        workspace.on('active-leaf-change', activeLeafCallback);
+        this.app.workspace.on('active-leaf-change', activeLeafCallback);
         this.eventRefs.push({ event: 'active-leaf-change', callback: activeLeafCallback });
 
         // 에디터 변경 감지
         const editorChangeCallback = (...args: unknown[]) => {
-            const [editor] = args;
-            if (!this.isEditor(editor)) {
-                return;
-            }
+            const [editor] = args as [Editor];
             if (this.destroyed) {
                 return;
             }
             this.activeEditor = editor;
             this.eventManager.emit('editor:changed', { editor });
         };
-        workspace.on('editor-change', editorChangeCallback);
+        this.app.workspace.on('editor-change', editorChangeCallback);
         this.eventRefs.push({ event: 'editor-change', callback: editorChangeCallback });
     }
 
@@ -222,7 +199,7 @@ export class EditorService {
             
             return true;
         } catch (error) {
-            this.logger.error('Failed to insert text at cursor', this.normalizeError(error));
+            this.logger.error('Failed to insert text at cursor', error as Error);
             return false;
         }
     }
@@ -267,26 +244,9 @@ export class EditorService {
             
             return true;
         } catch (error) {
-            this.logger.error('Failed to replace selection', this.normalizeError(error));
+            this.logger.error('Failed to replace selection', error as Error);
             return false;
         }
-    }
-
-    /**
-     * 간단한 텍스트 삽입 헬퍼
-     */
-    async insertText(
-        text: string,
-        options?: { position?: 'cursor' | 'beginning' | 'end' }
-    ): Promise<boolean> {
-        const position = options?.position ?? 'cursor';
-        if (position === 'beginning') {
-            return this.prependToDocument(text);
-        }
-        if (position === 'end') {
-            return this.appendToDocument(text);
-        }
-        return this.replaceSelection(text);
     }
 
     /**
@@ -324,7 +284,7 @@ export class EditorService {
             
             return true;
         } catch (error) {
-            this.logger.error('Failed to insert text at position', this.normalizeError(error));
+            this.logger.error('Failed to insert text at position', error as Error);
             return false;
         }
     }
@@ -350,7 +310,7 @@ export class EditorService {
 
             return await this.insertAtPosition(text, position);
         } catch (error) {
-            this.logger.error('Failed to append to line', this.normalizeError(error));
+            this.logger.error('Failed to append to line', error as Error);
             return false;
         }
     }
@@ -373,7 +333,7 @@ export class EditorService {
             const textToInsert = addNewLine ? `\n${text}` : text;
             return await this.insertAtPosition(textToInsert, position);
         } catch (error) {
-            this.logger.error('Failed to append to document', this.normalizeError(error));
+            this.logger.error('Failed to append to document', error as Error);
             return false;
         }
     }
@@ -390,7 +350,7 @@ export class EditorService {
             const textToInsert = addNewLine ? `${text}\n` : text;
             return await this.insertAtPosition(textToInsert, position);
         } catch (error) {
-            this.logger.error('Failed to prepend to document', this.normalizeError(error));
+            this.logger.error('Failed to prepend to document', error as Error);
             return false;
         }
     }
@@ -449,7 +409,7 @@ export class EditorService {
             
             return true;
         } catch (error) {
-            this.logger.error('Failed to set document content', this.normalizeError(error));
+            this.logger.error('Failed to set document content', error as Error);
             return false;
         }
     }
@@ -521,7 +481,7 @@ export class EditorService {
             this.logger.debug('Undo executed', { actionType: action.type });
             return true;
         } catch (error) {
-            this.logger.error('Failed to execute undo', this.normalizeError(error));
+            this.logger.error('Failed to execute undo', error as Error);
             return false;
         }
     }
@@ -573,7 +533,7 @@ export class EditorService {
             this.logger.debug('Redo executed', { actionType: action.type });
             return true;
         } catch (error) {
-            this.logger.error('Failed to execute redo', this.normalizeError(error));
+            this.logger.error('Failed to execute redo', error as Error);
             return false;
         }
     }
@@ -610,7 +570,7 @@ export class EditorService {
             
             return true;
         } catch (error) {
-            this.logger.error('Failed to create and open note', this.normalizeError(error));
+            this.logger.error('Failed to create and open note', error as Error);
             new Notice('Failed to create new note');
             return false;
         }
@@ -627,7 +587,7 @@ export class EditorService {
             editor.setCursor(position);
             return true;
         } catch (error) {
-            this.logger.error('Failed to set cursor position', this.normalizeError(error));
+            this.logger.error('Failed to set cursor position', error as Error);
             return false;
         }
     }
@@ -643,7 +603,7 @@ export class EditorService {
             editor.setSelection(from, to);
             return true;
         } catch (error) {
-            this.logger.error('Failed to select range', this.normalizeError(error));
+            this.logger.error('Failed to select range', error as Error);
             return false;
         }
     }
@@ -659,7 +619,7 @@ export class EditorService {
             editor.focus();
             return true;
         } catch (error) {
-            this.logger.error('Failed to focus editor', this.normalizeError(error));
+            this.logger.error('Failed to focus editor', error as Error);
             return false;
         }
     }

@@ -337,30 +337,28 @@ export class EventHandlers {
     /**
      * 디바운스된 이벤트 핸들러 생성
      */
-    debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
-        let timeout: NodeJS.Timeout | null = null;
+    debounce<T extends Function>(func: T, wait: number): T {
+        let timeout: NodeJS.Timeout;
         
-        return (...args: Parameters<T>) => {
-            if (timeout) {
-                clearTimeout(timeout);
-            }
+        return ((...args: any[]) => {
+            clearTimeout(timeout);
             timeout = setTimeout(() => func(...args), wait);
-        };
+        }) as any;
     }
 
     /**
      * 쓰로틀된 이벤트 핸들러 생성
      */
-    throttle<T extends (...args: any[]) => void>(func: T, limit: number): (...args: Parameters<T>) => void {
-        let inThrottle = false;
+    throttle<T extends Function>(func: T, limit: number): T {
+        let inThrottle: boolean;
         
-        return (...args: Parameters<T>) => {
+        return ((...args: any[]) => {
             if (!inThrottle) {
                 func(...args);
                 inThrottle = true;
                 setTimeout(() => inThrottle = false, limit);
             }
-        };
+        }) as any;
     }
 }
 

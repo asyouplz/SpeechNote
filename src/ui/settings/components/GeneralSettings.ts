@@ -31,10 +31,8 @@ export class GeneralSettings {
                 .addOption('beginning', '노트 시작')
                 .setValue(this.plugin.settings.insertPosition)
                 .onChange(async (value: string) => {
-                    if (this.isInsertPosition(value)) {
-                        this.plugin.settings.insertPosition = value;
-                        await this.plugin.saveSettings();
-                    }
+                    this.plugin.settings.insertPosition = value as InsertPosition;
+                    await this.plugin.saveSettings();
                 }));
 
         // 텍스트 포맷 설정
@@ -51,10 +49,8 @@ export class GeneralSettings {
                 .addOption('callout', '콜아웃')
                 .setValue(this.plugin.settings.textFormat || 'plain')
                 .onChange(async (value) => {
-                    if (this.isTextFormat(value)) {
-                        this.plugin.settings.textFormat = value;
-                        await this.plugin.saveSettings();
-                    }
+                    this.plugin.settings.textFormat = value as any;
+                    await this.plugin.saveSettings();
                 }));
 
         // 타임스탬프 추가
@@ -79,10 +75,8 @@ export class GeneralSettings {
                     .addOption('sidebar', '사이드바')
                     .setValue(this.plugin.settings.timestampFormat)
                     .onChange(async (value: string) => {
-                        if (this.isTimestampFormat(value)) {
-                            this.plugin.settings.timestampFormat = value;
-                            await this.plugin.saveSettings();
-                        }
+                        this.plugin.settings.timestampFormat = value as TimestampFormat;
+                        await this.plugin.saveSettings();
                     }));
         }
 
@@ -147,27 +141,5 @@ export class GeneralSettings {
                     // 사운드 설정 저장
                     await this.plugin.saveSettings();
                 }));
-    }
-
-    private isInsertPosition(value: string): value is InsertPosition {
-        return value === 'cursor' || value === 'end' || value === 'beginning';
-    }
-
-    private isTextFormat(
-        value: string
-    ): value is 'plain' | 'markdown' | 'quote' | 'bullet' | 'heading' | 'code' | 'callout' {
-        return (
-            value === 'plain' ||
-            value === 'markdown' ||
-            value === 'quote' ||
-            value === 'bullet' ||
-            value === 'heading' ||
-            value === 'code' ||
-            value === 'callout'
-        );
-    }
-
-    private isTimestampFormat(value: string): value is TimestampFormat {
-        return value === 'none' || value === 'inline' || value === 'sidebar';
     }
 }

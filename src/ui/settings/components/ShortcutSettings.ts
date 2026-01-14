@@ -195,7 +195,7 @@ export class ShortcutSettings {
      */
     private loadShortcuts(): void {
         // 저장된 단축키 로드 또는 기본값 사용
-        const saved = this.getSavedShortcuts();
+        const saved = (this.plugin.settings as any).shortcuts || {};
         
         this.defaultShortcuts.forEach((defaultKey, commandId) => {
             const key = saved[commandId] || defaultKey;
@@ -219,23 +219,8 @@ export class ShortcutSettings {
             }
         });
         
-        this.plugin.settings['shortcuts'] = shortcuts;
+        (this.plugin.settings as any).shortcuts = shortcuts;
         await this.plugin.saveSettings();
-    }
-
-    private getSavedShortcuts(): Record<string, string> {
-        const savedValue = this.plugin.settings['shortcuts'];
-        const saved: Record<string, string> = {};
-
-        if (savedValue && typeof savedValue === 'object') {
-            Object.entries(savedValue).forEach(([key, value]) => {
-                if (typeof value === 'string') {
-                    saved[key] = value;
-                }
-            });
-        }
-
-        return saved;
     }
 
     /**
@@ -304,7 +289,7 @@ export class ShortcutSettings {
             this.registerHotkey(commandId, key);
         });
         
-        this.plugin.settings['shortcuts'] = {};
+        (this.plugin.settings as any).shortcuts = {};
         await this.plugin.saveSettings();
         
         new Notice('단축키가 기본값으로 복원되었습니다');
@@ -431,11 +416,8 @@ class ShortcutModal extends Modal {
         });
         
         inputEl.addEventListener('input', (e) => {
-            const target = e.target;
-            if (target instanceof HTMLInputElement) {
-                this.currentKey = target.value;
-                keyDisplay.textContent = this.currentKey || '설정 안 됨';
-            }
+            this.currentKey = (e.target as HTMLInputElement).value;
+            keyDisplay.textContent = this.currentKey || '설정 안 됨';
         });
 
         // 버튼

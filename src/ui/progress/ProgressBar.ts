@@ -64,32 +64,32 @@ export class ProgressBar {
     }
 
     create(container: HTMLElement): HTMLElement {
-        this.element = createEl('div', {
-            cls: `progress-bar progress-bar--${this.options.size} progress-bar--${this.options.color}`
-        });
+        this.element = document.createElement('div');
+        this.element.className = `progress-bar progress-bar--${this.options.size} progress-bar--${this.options.color}`;
         this.element.setAttribute('role', 'progressbar');
         this.element.setAttribute('aria-valuemin', String(this.options.min));
         this.element.setAttribute('aria-valuemax', String(this.options.max));
         this.element.setAttribute('aria-valuenow', String(this.currentValue));
-
+        
         if (this.options.label) {
             this.element.setAttribute('aria-label', this.options.label);
         }
-
+        
         // 라벨
         if (this.options.label) {
-            this.labelElement = createEl('div', {
-                cls: 'progress-bar__label',
-                text: this.options.label
-            });
+            this.labelElement = document.createElement('div');
+            this.labelElement.className = 'progress-bar__label';
+            this.labelElement.textContent = this.options.label;
             this.element.appendChild(this.labelElement);
         }
-
+        
         // 진행률 바 컨테이너
-        const barContainer = createEl('div', { cls: 'progress-bar__container' });
-
+        const barContainer = document.createElement('div');
+        barContainer.className = 'progress-bar__container';
+        
         // 진행률 채우기
-        this.progressFill = createEl('div', { cls: 'progress-bar__fill' });
+        this.progressFill = document.createElement('div');
+        this.progressFill.className = 'progress-bar__fill';
         
         if (this.options.striped) {
             this.progressFill.classList.add('progress-bar__fill--striped');
@@ -103,25 +103,24 @@ export class ProgressBar {
         
         barContainer.appendChild(this.progressFill);
         this.element.appendChild(barContainer);
-
+        
         // 정보 표시 영역
-        const infoContainer = createEl('div', { cls: 'progress-bar__info' });
-
+        const infoContainer = document.createElement('div');
+        infoContainer.className = 'progress-bar__info';
+        
         // 퍼센트 표시
         if (this.options.showPercentage && !this.options.indeterminate) {
-            this.percentageElement = createEl('span', {
-                cls: 'progress-bar__percentage',
-                text: '0%'
-            });
+            this.percentageElement = document.createElement('span');
+            this.percentageElement.className = 'progress-bar__percentage';
+            this.percentageElement.textContent = '0%';
             infoContainer.appendChild(this.percentageElement);
         }
-
+        
         // 예상 시간 표시
         if (this.options.showTimeRemaining && !this.options.indeterminate) {
-            this.timeRemainingElement = createEl('span', {
-                cls: 'progress-bar__time-remaining',
-                text: '계산 중...'
-            });
+            this.timeRemainingElement = document.createElement('span');
+            this.timeRemainingElement.className = 'progress-bar__time-remaining';
+            this.timeRemainingElement.textContent = '계산 중...';
             infoContainer.appendChild(this.timeRemainingElement);
         }
         
@@ -300,10 +299,11 @@ export class ProgressBar {
      */
     setLabel(label: string) {
         if (!this.labelElement) {
-            this.labelElement = createEl('div', { cls: 'progress-bar__label' });
+            this.labelElement = document.createElement('div');
+            this.labelElement.className = 'progress-bar__label';
             this.element?.insertBefore(this.labelElement, this.element.firstChild);
         }
-
+        
         this.labelElement.textContent = label;
         this.element?.setAttribute('aria-label', label);
     }
@@ -379,41 +379,44 @@ export class MultiStepProgressBar {
     }
 
     create(container: HTMLElement): HTMLElement {
-        this.element = createEl('div', { cls: 'multi-step-progress' });
-
+        this.element = document.createElement('div');
+        this.element.className = 'multi-step-progress';
+        
         // 단계 표시
-        this.stepsContainer = createEl('div', { cls: 'multi-step-progress__steps' });
-
+        this.stepsContainer = document.createElement('div');
+        this.stepsContainer.className = 'multi-step-progress__steps';
+        
         this.steps.forEach((step, index) => {
-            const stepEl = createEl('div', { cls: 'step' });
+            const stepEl = document.createElement('div');
+            stepEl.className = 'step';
             stepEl.setAttribute('data-step-id', step.id);
-
-            const stepNumber = createEl('span', {
-                cls: 'step__number',
-                text: String(index + 1)
-            });
-
-            const stepLabel = createEl('span', {
-                cls: 'step__label',
-                text: step.label
-            });
-
+            
+            const stepNumber = document.createElement('span');
+            stepNumber.className = 'step__number';
+            stepNumber.textContent = String(index + 1);
+            
+            const stepLabel = document.createElement('span');
+            stepLabel.className = 'step__label';
+            stepLabel.textContent = step.label;
+            
             stepEl.appendChild(stepNumber);
             stepEl.appendChild(stepLabel);
-
+            
             this.stepsContainer!.appendChild(stepEl);
-
+            
             // 단계 사이 연결선
             if (index < this.steps.length - 1) {
-                const connector = createEl('div', { cls: 'step-connector' });
+                const connector = document.createElement('div');
+                connector.className = 'step-connector';
                 this.stepsContainer!.appendChild(connector);
             }
         });
-
+        
         this.element.appendChild(this.stepsContainer);
-
+        
         // 전체 진행률 바
-        const progressContainer = createEl('div', { cls: 'multi-step-progress__bar' });
+        const progressContainer = document.createElement('div');
+        progressContainer.className = 'multi-step-progress__bar';
         this.progressBar.create(progressContainer);
         this.element.appendChild(progressContainer);
         

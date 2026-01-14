@@ -21,8 +21,6 @@ export const SelectionStrategyValues = {
 
 export type SelectionStrategy = typeof SelectionStrategyValues[keyof typeof SelectionStrategyValues];
 
-const selectionStrategyValues = new Set<string>(Object.values(SelectionStrategyValues));
-
 /**
  * 전략 설정 타입
  */
@@ -123,7 +121,7 @@ export abstract class BaseStrategySelector implements IStrategySelector {
         providers: TranscriptionProvider[]
     ): Promise<TranscriptionProvider>;
     
-    evaluate(
+    async evaluate(
         provider: TranscriptionProvider,
         config: StrategyConfig
     ): Promise<StrategyEvaluation> {
@@ -136,12 +134,12 @@ export abstract class BaseStrategySelector implements IStrategySelector {
         
         const score = this.calculateScore(metrics, config.weights);
         
-        return Promise.resolve({
+        return {
             provider,
             score,
             metrics,
             reasoning: this.generateReasoning(metrics, config)
-        });
+        };
     }
     
     updateMetrics(
@@ -210,7 +208,7 @@ export abstract class BaseStrategySelector implements IStrategySelector {
  */
 export function isValidSelectionStrategy(value: unknown): value is SelectionStrategy {
     return typeof value === 'string' && 
-           selectionStrategyValues.has(value);
+           Object.values(SelectionStrategyValues).includes(value as SelectionStrategy);
 }
 
 /**

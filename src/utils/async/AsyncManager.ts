@@ -102,7 +102,7 @@ export class Semaphore {
     /**
      * 허가 획득
      */
-    acquire(): Promise<void> {
+    async acquire(): Promise<void> {
         if (this.permits > 0) {
             this.permits--;
             return Promise.resolve();
@@ -213,14 +213,16 @@ export function withTimeout<T>(
 /**
  * 디바운스된 비동기 함수
  */
-export function debounceAsync<Args extends unknown[], R>(
-    fn: (...args: Args) => Promise<R>,
-    delay: number
-): (...args: Args) => Promise<R> {
-    let timeoutId: number | null = null;
-    let lastPromise: Promise<R> | null = null;
+type AsyncReturn<T extends (...args: unknown[]) => Promise<unknown>> = Awaited<ReturnType<T>>;
 
-    return (...args: Args): Promise<R> => {
+export function debounceAsync<T extends (...args: unknown[]) => Promise<unknown>>(
+    fn: T,
+    delay: number
+): (...args: Parameters<T>) => Promise<AsyncReturn<T>> {
+    let timeoutId: number | null = null;
+    let lastPromise: Promise<AsyncReturn<T>> | null = null;
+
+    return (...args: Parameters<T>): Promise<AsyncReturn<T>> => {
         if (timeoutId) {
             clearTimeout(timeoutId);
         }
@@ -229,7 +231,7 @@ export function debounceAsync<Args extends unknown[], R>(
             timeoutId = window.setTimeout(async () => {
                 try {
                     const result = await fn(...args);
-                    resolve(result);
+                    resolve(result as AsyncReturn<T>);
                 } catch (error) {
                     reject(error);
                 }
@@ -243,19 +245,19 @@ export function debounceAsync<Args extends unknown[], R>(
 /**
  * 쓰로틀된 비동기 함수
  */
-export function throttleAsync<Args extends unknown[], R>(
-    fn: (...args: Args) => Promise<R>,
+export function throttleAsync<T extends (...args: unknown[]) => Promise<unknown>>(
+    fn: T,
     limit: number
-): (...args: Args) => Promise<R | undefined> {
+): (...args: Parameters<T>) => Promise<AsyncReturn<T> | undefined> {
     let inThrottle = false;
-    let lastResult: R | undefined;
+    let lastResult: AsyncReturn<T> | undefined;
 
-    return async (...args: Args): Promise<R | undefined> => {
+    return async (...args: Parameters<T>): Promise<AsyncReturn<T> | undefined> => {
         if (!inThrottle) {
             inThrottle = true;
             
             try {
-                lastResult = await fn(...args);
+                lastResult = (await fn(...args)) as AsyncReturn<T>;
                 return lastResult;
             } finally {
                 setTimeout(() => {
@@ -350,7 +352,7 @@ export class PromisePipeline<T> {
     /**
      * 최종 값 반환
      */
-    resolve(): Promise<T> {
+    async resolve(): Promise<T> {
         return this.value;
     }
 }
@@ -372,7 +374,7 @@ export type PromiseResult<T> =
 /**
  * 모든 Promise 결과 수집 (실패 포함)
  */
-export function allSettled<T>(
+export async function allSettled<T>(
     promises: Promise<T>[]
 ): Promise<PromiseResult<T>[]> {
     return Promise.allSettled(promises).then(results =>
@@ -424,7 +426,7 @@ export class AsyncQueue<T> {
     /**
      * 큐 실행
      */
-    private run(): void {
+    private async run(): Promise<void> {
         this.running = true;
 
         while (this.queue.length > 0 && this.active < this.concurrency) {

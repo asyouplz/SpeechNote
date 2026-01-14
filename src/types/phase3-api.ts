@@ -208,7 +208,6 @@ export interface ProgressData {
     overall: number;
     current: number;
     total: number;
-    percentage?: number;
     message?: string;
     eta?: number;
     speed?: number;

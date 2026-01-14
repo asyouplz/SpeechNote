@@ -22,10 +22,12 @@ export function isError(value: unknown): value is Error {
  * Promise 타입 가드
  */
 export function isPromise<T = unknown>(value: unknown): value is Promise<T> {
-    const then = typeof value === 'object' && value !== null ? Reflect.get(value, 'then') : undefined;
     return (
         value instanceof Promise ||
-        typeof then === 'function'
+        (typeof value === 'object' &&
+            value !== null &&
+            'then' in value &&
+            typeof (value as { then?: unknown }).then === 'function')
     );
 }
 
@@ -40,20 +42,22 @@ export function isArrayBuffer(value: unknown): value is ArrayBuffer {
  * Whisper Response 타입 가드
  */
 export function isWhisperResponse(value: unknown): value is WhisperResponse {
-    if (!isRecord(value)) {
+    if (typeof value !== 'object' || value === null) {
         return false;
     }
     
-    const text = Reflect.get(value, 'text');
-    const language = Reflect.get(value, 'language');
-    const duration = Reflect.get(value, 'duration');
-    const segments = Reflect.get(value, 'segments');
-
+    const response = value as {
+        text?: unknown;
+        language?: unknown;
+        duration?: unknown;
+        segments?: unknown;
+    };
+    
     return (
-        typeof text === 'string' &&
-        (language === undefined || typeof language === 'string') &&
-        (duration === undefined || typeof duration === 'number') &&
-        (segments === undefined || Array.isArray(segments))
+        typeof response.text === 'string' &&
+        (response.language === undefined || typeof response.language === 'string') &&
+        (response.duration === undefined || typeof response.duration === 'number') &&
+        (response.segments === undefined || Array.isArray(response.segments))
     );
 }
 
@@ -61,25 +65,27 @@ export function isWhisperResponse(value: unknown): value is WhisperResponse {
  * Whisper Options 타입 가드
  */
 export function isWhisperOptions(value: unknown): value is WhisperOptions {
-    if (!isRecord(value)) {
+    if (typeof value !== 'object' || value === null) {
         return false;
     }
     
-    const model = Reflect.get(value, 'model');
-    const prompt = Reflect.get(value, 'prompt');
-    const responseFormat = Reflect.get(value, 'responseFormat');
-    const temperature = Reflect.get(value, 'temperature');
-    const language = Reflect.get(value, 'language');
-
+    const options = value as {
+        model?: unknown;
+        prompt?: unknown;
+        responseFormat?: unknown;
+        temperature?: unknown;
+        language?: unknown;
+    };
+    
     return (
-        (model === undefined || typeof model === 'string') &&
-        (prompt === undefined || typeof prompt === 'string') &&
-        (responseFormat === undefined || 
-            (typeof responseFormat === 'string' &&
-                ['json', 'text', 'srt', 'verbose_json', 'vtt'].includes(responseFormat))) &&
-        (temperature === undefined || 
-            (typeof temperature === 'number' && temperature >= 0 && temperature <= 1)) &&
-        (language === undefined || typeof language === 'string')
+        (options.model === undefined || typeof options.model === 'string') &&
+        (options.prompt === undefined || typeof options.prompt === 'string') &&
+        (options.responseFormat === undefined || 
+            (typeof options.responseFormat === 'string' &&
+                ['json', 'text', 'srt', 'verbose_json', 'vtt'].includes(options.responseFormat))) &&
+        (options.temperature === undefined || 
+            (typeof options.temperature === 'number' && options.temperature >= 0 && options.temperature <= 1)) &&
+        (options.language === undefined || typeof options.language === 'string')
     );
 }
 
@@ -87,15 +93,22 @@ export function isWhisperOptions(value: unknown): value is WhisperOptions {
  * Logger 인터페이스 타입 가드
  */
 export function isLogger(value: unknown): value is ILogger {
-    if (!isRecord(value)) {
+    if (typeof value !== 'object' || value === null) {
         return false;
     }
     
+    const logger = value as {
+        debug?: unknown;
+        info?: unknown;
+        warn?: unknown;
+        error?: unknown;
+    };
+    
     return (
-        typeof Reflect.get(value, 'debug') === 'function' &&
-        typeof Reflect.get(value, 'info') === 'function' &&
-        typeof Reflect.get(value, 'warn') === 'function' &&
-        typeof Reflect.get(value, 'error') === 'function'
+        typeof logger.debug === 'function' &&
+        typeof logger.info === 'function' &&
+        typeof logger.warn === 'function' &&
+        typeof logger.error === 'function'
     );
 }
 
@@ -103,15 +116,22 @@ export function isLogger(value: unknown): value is ILogger {
  * Settings Manager 인터페이스 타입 가드
  */
 export function isSettingsManager(value: unknown): value is ISettingsManager {
-    if (!isRecord(value)) {
+    if (typeof value !== 'object' || value === null) {
         return false;
     }
     
+    const manager = value as {
+        load?: unknown;
+        save?: unknown;
+        get?: unknown;
+        set?: unknown;
+    };
+    
     return (
-        typeof Reflect.get(value, 'load') === 'function' &&
-        typeof Reflect.get(value, 'save') === 'function' &&
-        typeof Reflect.get(value, 'get') === 'function' &&
-        typeof Reflect.get(value, 'set') === 'function'
+        typeof manager.load === 'function' &&
+        typeof manager.save === 'function' &&
+        typeof manager.get === 'function' &&
+        typeof manager.set === 'function'
     );
 }
 
@@ -119,14 +139,20 @@ export function isSettingsManager(value: unknown): value is ISettingsManager {
  * Whisper Service 인터페이스 타입 가드
  */
 export function isWhisperService(value: unknown): value is IWhisperService {
-    if (!isRecord(value)) {
+    if (typeof value !== 'object' || value === null) {
         return false;
     }
     
+    const service = value as {
+        transcribe?: unknown;
+        cancel?: unknown;
+        validateApiKey?: unknown;
+    };
+    
     return (
-        typeof Reflect.get(value, 'transcribe') === 'function' &&
-        typeof Reflect.get(value, 'cancel') === 'function' &&
-        typeof Reflect.get(value, 'validateApiKey') === 'function'
+        typeof service.transcribe === 'function' &&
+        typeof service.cancel === 'function' &&
+        typeof service.validateApiKey === 'function'
     );
 }
 
@@ -156,7 +182,9 @@ export function isRecord<K extends string | number | symbol, V>(
         return false;
     }
     
-    for (const [key, val] of Object.entries(value)) {
+    const record = value as Record<string | number | symbol, unknown>;
+    
+    for (const [key, val] of Object.entries(record)) {
         if (keyGuard && !keyGuard(key)) {
             return false;
         }
@@ -166,13 +194,6 @@ export function isRecord<K extends string | number | symbol, V>(
     }
     
     return true;
-}
-
-/**
- * Plain record 타입 가드 (배열 제외)
- */
-export function isPlainRecord(value: unknown): value is Record<string, unknown> {
-    return isRecord(value) && !Array.isArray(value);
 }
 
 /**

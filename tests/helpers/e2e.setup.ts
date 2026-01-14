@@ -177,45 +177,28 @@ global.DataTransfer = class DataTransfer {
 
     constructor() {
         const filesArray: File[] = [];
-        const itemsArray: DataTransferItem[] = [];
+        this.files = {
+            length: 0,
+            item: (index: number) => filesArray[index],
+            ...filesArray
+        } as any;
 
-        const filesList = filesArray as unknown as FileList & {
-            item: (index: number) => File | null;
-        };
-        filesList.item = (index: number) => filesArray[index] ?? null;
-        this.files = filesList;
-
-        const itemsList = itemsArray as unknown as DataTransferItemList & {
-            add: (file: File) => DataTransferItem;
-            clear: () => void;
-            remove: (index: number) => void;
-        };
-
-        itemsList.add = (file: File) => {
-            const item = {
-                kind: 'file',
-                type: file.type,
-                getAsFile: () => file
-            } as DataTransferItem;
-            itemsArray.push(item);
-            filesArray.push(file);
-            this.types = ['Files'];
-            return item;
-        };
-        itemsList.clear = () => {
-            itemsArray.length = 0;
-            filesArray.length = 0;
-            this.types = [];
-        };
-        itemsList.remove = (index: number) => {
-            itemsArray.splice(index, 1);
-            filesArray.splice(index, 1);
-            if (itemsArray.length === 0) {
-                this.types = [];
+        this.items = {
+            length: 0,
+            add: (file: File) => {
+                filesArray.push(file);
+                (this.files as any).length = filesArray.length;
+                return null;
+            },
+            clear: () => {
+                filesArray.length = 0;
+                (this.files as any).length = 0;
+            },
+            remove: (index: number) => {
+                filesArray.splice(index, 1);
+                (this.files as any).length = filesArray.length;
             }
-        };
-
-        this.items = itemsList;
+        } as any;
     }
 
     clearData(format?: string): void {
@@ -232,16 +215,6 @@ global.DataTransfer = class DataTransfer {
 
     setDragImage(image: Element, x: number, y: number): void {
         // Implementation
-    }
-} as any;
-
-// DragEvent Mock
-global.DragEvent = class DragEvent extends Event {
-    dataTransfer: DataTransfer | null;
-
-    constructor(type: string, init: { dataTransfer?: DataTransfer } = {}) {
-        super(type);
-        this.dataTransfer = init.dataTransfer ?? null;
     }
 } as any;
 

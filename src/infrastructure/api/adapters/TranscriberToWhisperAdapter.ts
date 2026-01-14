@@ -11,10 +11,9 @@ export class TranscriberToWhisperAdapter implements IWhisperService {
         private logger?: ILogger
     ) {}
 
-    async transcribe(audio: ArrayBuffer | Blob, options?: WhisperOptions): Promise<WhisperResponse> {
-        const buffer = await this.resolveAudioBuffer(audio);
+    async transcribe(audio: ArrayBuffer, options?: WhisperOptions): Promise<WhisperResponse> {
         this.logger?.debug('=== TranscriberToWhisperAdapter.transcribe START ===', {
-            audioSize: buffer.byteLength,
+            audioSize: audio.byteLength,
             provider: this.transcriber.getProviderName(),
             options
         });
@@ -31,7 +30,7 @@ export class TranscriberToWhisperAdapter implements IWhisperService {
         };
 
         // Call the underlying transcriber
-        const response = await this.transcriber.transcribe(buffer, transcriptionOptions);
+        const response = await this.transcriber.transcribe(audio, transcriptionOptions);
         
         this.logger?.debug('Transcriber response received:', {
             hasText: !!response?.text,
@@ -68,21 +67,7 @@ export class TranscriberToWhisperAdapter implements IWhisperService {
         return whisperResponse;
     }
 
-    private async resolveAudioBuffer(audio: ArrayBuffer | Blob): Promise<ArrayBuffer> {
-        if (audio instanceof ArrayBuffer) {
-            return audio;
-        }
-        if (typeof audio.arrayBuffer === 'function') {
-            const buffer = await audio.arrayBuffer();
-            if (buffer instanceof ArrayBuffer) {
-                return buffer;
-            }
-        }
-        const size = typeof audio.size === 'number' ? audio.size : 0;
-        return new ArrayBuffer(size);
-    }
-
-    validateApiKey(key: string): Promise<boolean> {
+    async validateApiKey(key: string): Promise<boolean> {
         return this.transcriber.validateApiKey(key);
     }
 

@@ -6,7 +6,6 @@
  * - 사운드 알림
  */
 
-import type { App } from 'obsidian';
 import { EventManager } from '../../application/EventManager';
 import { StatusIcon } from '../progress/LoadingIndicators';
 
@@ -41,29 +40,18 @@ export class ToastNotification {
     private static notifications: Map<string, HTMLElement> = new Map();
     private static soundEnabled = true;
     private static defaultPosition: NotificationPosition = 'top-right';
-    private static app: App | null = null;
-
-    /**
-     * App 인스턴스 설정
-     */
-    static setApp(app: App): void {
-        this.app = app;
-    }
     
     /**
      * Toast 컨테이너 초기화
      */
     private static initContainer(position: NotificationPosition = 'top-right') {
         if (!this.container) {
-            this.container = createEl('div', {
-                cls: `toast-container toast-container--${position}`,
-                attr: {
-                    'role': 'region',
-                    'aria-label': '알림 영역',
-                    'aria-live': 'polite',
-                    'aria-atomic': 'false'
-                }
-            });
+            this.container = document.createElement('div');
+            this.container.className = `toast-container toast-container--${position}`;
+            this.container.setAttribute('role', 'region');
+            this.container.setAttribute('aria-label', '알림 영역');
+            this.container.setAttribute('aria-live', 'polite');
+            this.container.setAttribute('aria-atomic', 'false');
             document.body.appendChild(this.container);
         } else {
             // 위치 변경
@@ -81,61 +69,64 @@ export class ToastNotification {
         this.initContainer(position);
         
         // Toast 요소 생성
-        const toast = createEl('div', {
-            cls: `toast toast--${options.type}`,
-            attr: {
-                'role': 'alert',
-                'aria-live': options.type === 'error' ? 'assertive' : 'polite',
-                'id': id
-            }
-        });
+        const toast = document.createElement('div');
+        toast.className = `toast toast--${options.type}`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', options.type === 'error' ? 'assertive' : 'polite');
+        toast.id = id;
         
         // 아이콘
         if (options.icon !== false) {
-            const iconContainer = createEl('div', { cls: 'toast__icon' });
+            const iconContainer = document.createElement('div');
+            iconContainer.className = 'toast__icon';
             const statusIcon = new StatusIcon(options.type, undefined);
             iconContainer.appendChild(statusIcon.create());
             toast.appendChild(iconContainer);
         }
         
         // 콘텐츠
-        const content = createEl('div', { cls: 'toast__content' });
-
+        const content = document.createElement('div');
+        content.className = 'toast__content';
+        
         if (options.title) {
-            const title = createEl('div', { cls: 'toast__title', text: options.title });
+            const title = document.createElement('div');
+            title.className = 'toast__title';
+            title.textContent = options.title;
             content.appendChild(title);
         }
-
-        const message = createEl('div', { cls: 'toast__message', text: options.message });
+        
+        const message = document.createElement('div');
+        message.className = 'toast__message';
+        message.textContent = options.message;
         content.appendChild(message);
         
         // 진행률 바
         if (options.progress !== undefined) {
-            const progressBar = createEl('div', { cls: 'toast__progress' });
-            const progressFill = createEl('div', {
-                cls: 'toast__progress-fill',
-                attr: { 'style': `--sn-progress-width:${options.progress}%` }
-            });
+            const progressBar = document.createElement('div');
+            progressBar.className = 'toast__progress';
+            const progressFill = document.createElement('div');
+            progressFill.className = 'toast__progress-fill';
+            progressFill.setAttribute('style', `--sn-progress-width:${options.progress}%`);
             progressBar.appendChild(progressFill);
             content.appendChild(progressBar);
         }
         
         // 액션 버튼
         if (options.actions && options.actions.length > 0) {
-            const actions = createEl('div', { cls: 'toast__actions' });
-
+            const actions = document.createElement('div');
+            actions.className = 'toast__actions';
+            
             options.actions.forEach(action => {
-                const button = createEl('button', {
-                    cls: `toast__action toast__action--${action.style || 'link'}`,
-                    text: action.label
-                });
+                const button = document.createElement('button');
+                button.className = `toast__action toast__action--${action.style || 'link'}`;
+                button.textContent = action.label;
                 button.addEventListener('click', () => {
                     action.callback();
                     this.dismiss(id);
                 });
                 actions.appendChild(button);
             });
-
+            
             content.appendChild(actions);
         }
         
@@ -143,11 +134,10 @@ export class ToastNotification {
         
         // 닫기 버튼
         if (options.closable !== false) {
-            const closeBtn = createEl('button', {
-                cls: 'toast__close',
-                text: '×',
-                attr: { 'aria-label': '알림 닫기' }
-            });
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'toast__close';
+            closeBtn.setAttribute('aria-label', '알림 닫기');
+            closeBtn.setText('×');
             closeBtn.addEventListener('click', () => this.dismiss(id));
             toast.appendChild(closeBtn);
         }
@@ -219,8 +209,8 @@ export class ToastNotification {
         const toast = this.notifications.get(id);
         if (!toast) return;
         
-        const progressFill = toast.querySelector('.toast__progress-fill');
-        if (progressFill instanceof HTMLElement) {
+        const progressFill = toast.querySelector('.toast__progress-fill') as HTMLElement;
+        if (progressFill) {
             progressFill.setAttribute('style', `--sn-progress-width:${progress}%`);
         }
     }
@@ -261,32 +251,23 @@ export class ToastNotification {
      * 영구 저장
      */
     private static saveToStorage(id: string, options: NotificationOptions) {
-        if (!this.app) {
-            console.error('App instance not set for ToastNotification');
-            return;
-        }
         try {
-            const storedData = this.app.loadLocalStorage('notifications');
-            const notifications = storedData ? JSON.parse(storedData) : [];
+            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
             notifications.push({ id, options, timestamp: Date.now() });
-            this.app.saveLocalStorage('notifications', JSON.stringify(notifications));
+            localStorage.setItem('notifications', JSON.stringify(notifications));
         } catch (e) {
             console.error('Failed to save notification:', e);
         }
     }
-
+    
     /**
      * 저장소에서 제거
      */
     private static removeFromStorage(id: string) {
-        if (!this.app) {
-            return;
-        }
         try {
-            const storedData = this.app.loadLocalStorage('notifications');
-            const notifications = storedData ? JSON.parse(storedData) : [];
-            const filtered = notifications.filter((n: { id: string }) => n.id !== id);
-            this.app.saveLocalStorage('notifications', JSON.stringify(filtered));
+            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+            const filtered = notifications.filter((n: any) => n.id !== id);
+            localStorage.setItem('notifications', JSON.stringify(filtered));
         } catch (e) {
             console.error('Failed to remove notification:', e);
         }
@@ -325,74 +306,70 @@ export class ModalNotification {
             }
             
             // 오버레이 생성
-            this.overlay = createEl('div', { cls: 'modal-overlay' });
+            this.overlay = document.createElement('div');
+            this.overlay.className = 'modal-overlay';
             this.overlay.addEventListener('click', () => {
                 if (options.closable !== false) {
                     this.dismiss();
                     resolve(false);
                 }
             });
-
+            
             // 모달 생성
-            this.activeModal = createEl('div', {
-                cls: `modal-notification modal-notification--${options.type}`,
-                attr: {
-                    'role': 'alertdialog',
-                    'aria-modal': 'true',
-                    'aria-labelledby': 'modal-title',
-                    'aria-describedby': 'modal-message'
-                }
-            });
+            this.activeModal = document.createElement('div');
+            this.activeModal.className = `modal-notification modal-notification--${options.type}`;
+            this.activeModal.setAttribute('role', 'alertdialog');
+            this.activeModal.setAttribute('aria-modal', 'true');
+            this.activeModal.setAttribute('aria-labelledby', 'modal-title');
+            this.activeModal.setAttribute('aria-describedby', 'modal-message');
             
             // 헤더
-            const header = createEl('div', { cls: 'modal-notification__header' });
-
+            const header = document.createElement('div');
+            header.className = 'modal-notification__header';
+            
             if (options.icon !== false) {
                 const statusIcon = new StatusIcon(options.type, undefined);
                 header.appendChild(statusIcon.create());
             }
-
+            
             if (options.title) {
-                const title = createEl('h2', {
-                    cls: 'modal-notification__title',
-                    text: options.title,
-                    attr: { 'id': 'modal-title' }
-                });
+                const title = document.createElement('h2');
+                title.id = 'modal-title';
+                title.className = 'modal-notification__title';
+                title.textContent = options.title;
                 header.appendChild(title);
             }
-
+            
             if (options.closable !== false) {
-                const closeBtn = createEl('button', {
-                    cls: 'modal-notification__close',
-                    text: '×',
-                    attr: { 'aria-label': '닫기' }
-                });
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'modal-notification__close';
+                closeBtn.setAttribute('aria-label', '닫기');
+                closeBtn.setText('×');
                 closeBtn.addEventListener('click', () => {
                     this.dismiss();
                     resolve(false);
                 });
                 header.appendChild(closeBtn);
             }
-
+            
             this.activeModal.appendChild(header);
             
             // 본문
-            const body = createEl('div', {
-                cls: 'modal-notification__body',
-                text: options.message,
-                attr: { 'id': 'modal-message' }
-            });
+            const body = document.createElement('div');
+            body.className = 'modal-notification__body';
+            body.id = 'modal-message';
+            body.textContent = options.message;
             this.activeModal.appendChild(body);
             
             // 액션 버튼
             if (options.actions && options.actions.length > 0) {
-                const footer = createEl('div', { cls: 'modal-notification__footer' });
-
+                const footer = document.createElement('div');
+                footer.className = 'modal-notification__footer';
+                
                 options.actions.forEach(action => {
-                    const button = createEl('button', {
-                        cls: `modal-notification__action modal-notification__action--${action.style || 'secondary'}`,
-                        text: action.label
-                    });
+                    const button = document.createElement('button');
+                    button.className = `modal-notification__action modal-notification__action--${action.style || 'secondary'}`;
+                    button.textContent = action.label;
                     button.addEventListener('click', () => {
                         action.callback();
                         this.dismiss();
@@ -400,7 +377,7 @@ export class ModalNotification {
                     });
                     footer.appendChild(button);
                 });
-
+                
                 this.activeModal.appendChild(footer);
             }
             
@@ -410,8 +387,8 @@ export class ModalNotification {
             
             // 포커스 설정
             const firstButton = this.activeModal.querySelector('button');
-            if (firstButton instanceof HTMLElement) {
-                firstButton.focus();
+            if (firstButton) {
+                (firstButton as HTMLElement).focus();
             }
             
             // 애니메이션
@@ -468,13 +445,10 @@ export class StatusBarNotification {
      */
     private static initContainer() {
         if (!this.container) {
-            this.container = createEl('div', {
-                cls: 'statusbar-notification',
-                attr: {
-                    'role': 'status',
-                    'aria-live': 'polite'
-                }
-            });
+            this.container = document.createElement('div');
+            this.container.className = 'statusbar-notification';
+            this.container.setAttribute('role', 'status');
+            this.container.setAttribute('aria-live', 'polite');
             document.body.appendChild(this.container);
         }
     }
@@ -496,46 +470,43 @@ export class StatusBarNotification {
         }
         
         // 알림 생성
-        this.currentNotification = createEl('div', {
-            cls: `statusbar-notification__content statusbar-notification__content--${options.type}`
-        });
+        this.currentNotification = document.createElement('div');
+        this.currentNotification.className = `statusbar-notification__content statusbar-notification__content--${options.type}`;
         
         // 아이콘
         if (options.icon !== false) {
-            const iconContainer = createEl('span', { cls: 'statusbar-notification__icon' });
+            const iconContainer = document.createElement('span');
+            iconContainer.className = 'statusbar-notification__icon';
             const statusIcon = new StatusIcon(options.type, undefined);
             iconContainer.appendChild(statusIcon.create());
             this.currentNotification.appendChild(iconContainer);
         }
-
+        
         // 메시지
-        const message = createEl('span', {
-            cls: 'statusbar-notification__message',
-            text: options.message
-        });
+        const message = document.createElement('span');
+        message.className = 'statusbar-notification__message';
+        message.textContent = options.message;
         this.currentNotification.appendChild(message);
         
         // 액션
         if (options.actions && options.actions.length > 0) {
             const action = options.actions[0]; // 상태바는 하나의 액션만 지원
-            const button = createEl('button', {
-                cls: 'statusbar-notification__action',
-                text: action.label
-            });
+            const button = document.createElement('button');
+            button.className = 'statusbar-notification__action';
+            button.textContent = action.label;
             button.addEventListener('click', () => {
                 action.callback();
                 this.hide();
             });
             this.currentNotification.appendChild(button);
         }
-
+        
         // 닫기 버튼
         if (options.closable !== false) {
-            const closeBtn = createEl('button', {
-                cls: 'statusbar-notification__close',
-                text: '×',
-                attr: { 'aria-label': '닫기' }
-            });
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'statusbar-notification__close';
+            closeBtn.setAttribute('aria-label', '닫기');
+            closeBtn.setText('×');
             closeBtn.addEventListener('click', () => this.hide());
             this.currentNotification.appendChild(closeBtn);
         }
@@ -649,7 +620,7 @@ export class NotificationManager {
     /**
      * 확인 대화상자
      */
-    static confirm(message: string, title?: string): Promise<boolean> {
+    static async confirm(message: string, title?: string): Promise<boolean> {
         return ModalNotification.show({
             type: 'warning',
             title: title || '확인',

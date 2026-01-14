@@ -57,7 +57,7 @@ export class ProviderSettings {
         const headerEl = containerEl.createDiv({ cls: 'provider-settings-header' });
         
         headerEl.createEl('h3', { 
-            text: 'Transcription provider',
+            text: 'Transcription Provider',
             cls: 'setting-item-name' 
         });
         
@@ -75,25 +75,23 @@ export class ProviderSettings {
      */
     private renderProviderSelector(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Provider selection')
+            .setName('Provider Selection')
             .setDesc('Choose a specific provider or use automatic selection')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('auto', '🤖 Automatic (recommended)')
+                    .addOption('auto', '🤖 Automatic (Recommended)')
                     .addOption('whisper', '🎯 OpenAI Whisper')
                     .addOption('deepgram', '🚀 Deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
-                        if (this.isProviderValue(value)) {
-                            this.currentProvider = value;
-                            await this.saveProviderSelection(value);
-                            
-                            // UI 업데이트
-                            this.updateApiKeyVisibility(containerEl);
-                            
-                            // 사용자 피드백
-                            this.showProviderInfo(value);
-                        }
+                        this.currentProvider = value as TranscriptionProvider | 'auto';
+                        await this.saveProviderSelection(value);
+                        
+                        // UI 업데이트
+                        this.updateApiKeyVisibility(containerEl);
+                        
+                        // 사용자 피드백
+                        this.showProviderInfo(value);
                     });
             });
     }
@@ -110,7 +108,7 @@ export class ProviderSettings {
         this.renderSingleApiKey(
             apiKeysContainer,
             'whisper',
-            'OpenAI API key',
+            'OpenAI API Key',
             'Enter your OpenAI API key (starts with sk-)',
             'sk-...'
         );
@@ -119,7 +117,7 @@ export class ProviderSettings {
         this.renderSingleApiKey(
             apiKeysContainer,
             'deepgram',
-            'Deepgram API key',
+            'Deepgram API Key',
             'Enter your Deepgram API key',
             'your-deepgram-api-key'
         );
@@ -227,10 +225,8 @@ export class ProviderSettings {
                     .addOption(SelectionStrategy.AB_TEST, '🧪 A/B Testing')
                     .setValue(this.plugin.settings.selectionStrategy || SelectionStrategy.PERFORMANCE_OPTIMIZED)
                     .onChange(async (value) => {
-                        if (this.isSelectionStrategy(value)) {
-                            await this.saveStrategy(value);
-                            this.showStrategyInfo(value);
-                        }
+                        await this.saveStrategy(value as SelectionStrategy);
+                        this.showStrategyInfo(value);
                     });
             });
     }
@@ -329,7 +325,7 @@ export class ProviderSettings {
      */
     private renderMetricsToggle(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Show performance metrics')
+            .setName('Show Performance Metrics')
             .setDesc('Display real-time performance statistics')
             .addToggle(toggle => {
                 toggle
@@ -350,7 +346,7 @@ export class ProviderSettings {
     private renderMetrics(containerEl: HTMLElement): void {
         const metricsEl = containerEl.createDiv({ cls: 'metrics-container' });
         
-        metricsEl.createEl('h4', { text: '📊 Performance metrics' });
+        metricsEl.createEl('h4', { text: '📊 Performance Metrics' });
         
         // 각 Provider별 메트릭
         this.renderProviderMetrics(metricsEl, 'whisper');
@@ -373,20 +369,20 @@ export class ProviderSettings {
 
         const statItems = [
             {
-                label: 'Success rate:',
+                label: 'Success Rate:',
                 value: `${(stats.successRate * 100).toFixed(1)}%`,
                 className: this.getStatClass(stats.successRate)
             },
             {
-                label: 'Avg. latency:',
+                label: 'Avg. Latency:',
                 value: `${stats.avgLatency.toFixed(0)}ms`
             },
             {
-                label: 'Total requests:',
+                label: 'Total Requests:',
                 value: String(stats.totalRequests)
             },
             {
-                label: 'Est. cost:',
+                label: 'Est. Cost:',
                 value: `$${stats.estimatedCost.toFixed(2)}`
             }
         ];
@@ -406,7 +402,7 @@ export class ProviderSettings {
      */
     private renderComparisonChart(containerEl: HTMLElement): void {
         const chartEl = containerEl.createDiv({ cls: 'comparison-chart' });
-        chartEl.createEl('h5', { text: '📈 Provider comparison' });
+        chartEl.createEl('h5', { text: '📈 Provider Comparison' });
         
         // 간단한 막대 차트 (실제로는 Chart.js 등 사용 권장)
         const chartContent = chartEl.createDiv({ cls: 'chart-content' });
@@ -419,7 +415,7 @@ export class ProviderSettings {
         deepgramBar.createEl('span', { cls: 'bar-label', text: 'Deepgram' });
 
         const legend = chartContent.createDiv({ cls: 'chart-legend' });
-        legend.createEl('span', { text: 'Overall performance score' });
+        legend.createEl('span', { text: 'Overall Performance Score' });
     }
 
     /**
@@ -665,7 +661,7 @@ export class ProviderSettings {
     /**
      * API 키 검증
      */
-    private validateApiKey(provider: TranscriptionProvider, key: string): boolean {
+    private async validateApiKey(provider: TranscriptionProvider, key: string): Promise<boolean> {
         // TODO: 실제 API 검증 로직 구현
         return this.validateKeyFormat(provider, key);
     }
@@ -689,25 +685,8 @@ export class ProviderSettings {
     // === Save Methods ===
 
     private async saveProviderSelection(provider: string): Promise<void> {
-        if (this.isProviderValue(provider)) {
-            this.plugin.settings.provider = provider;
-            await this.plugin.saveSettings();
-        }
-    }
-
-    private isProviderValue(value: string): value is TranscriptionProvider | 'auto' {
-        return value === 'auto' || value === 'whisper' || value === 'deepgram';
-    }
-
-    private isSelectionStrategy(value: string): value is SelectionStrategy {
-        return (
-            value === SelectionStrategy.MANUAL ||
-            value === SelectionStrategy.COST_OPTIMIZED ||
-            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
-            value === SelectionStrategy.QUALITY_OPTIMIZED ||
-            value === SelectionStrategy.ROUND_ROBIN ||
-            value === SelectionStrategy.AB_TEST
-        );
+        this.plugin.settings.provider = provider as 'auto' | 'whisper' | 'deepgram';
+        await this.plugin.saveSettings();
     }
 
     private async saveApiKey(provider: TranscriptionProvider, key: string): Promise<void> {
