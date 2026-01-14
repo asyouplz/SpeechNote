@@ -282,9 +282,7 @@ export class WhisperService implements IWhisperService {
         return new ArrayBuffer(size);
     }
 
-    private async performFetchRequest(
-        formData: FormData
-    ): Promise<{
+    private async performFetchRequest(formData: FormData): Promise<{
         status: number;
         headers?: Record<string, string>;
         json?: unknown;
