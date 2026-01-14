@@ -140,13 +140,13 @@ const DEFAULT_CONFIG = {
             requiresPremium: false
         },
         'smartFormat': {
-            name: 'Smart Format',
+            name: 'Smart format',
             description: 'Format numbers, dates, and other entities',
             default: true,
             requiresPremium: false
         },
         'diarization': {
-            name: 'Speaker Diarization',
+            name: 'Speaker diarization',
             description: 'Identify different speakers',
             default: false,
             requiresPremium: false
@@ -158,7 +158,7 @@ const DEFAULT_CONFIG = {
             requiresPremium: false
         },
         'profanityFilter': {
-            name: 'Profanity Filter',
+            name: 'Profanity filter',
             description: 'Filter out profanity from transcript',
             default: false,
             requiresPremium: false

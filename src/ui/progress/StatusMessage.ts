@@ -307,70 +307,75 @@ export class StatusMessageDisplay {
         this.autoScroll = options.autoScroll !== false;
         this.eventManager = EventManager.getInstance();
     }
+
+    private isLanguage(value: string): value is Language {
+        return value === 'ko' || value === 'en' || value === 'ja' || value === 'zh';
+    }
     
     /**
      * 컴포넌트 생성
      */
     create(container: HTMLElement): HTMLElement {
-        this.element = document.createElement('div');
-        this.element.className = 'status-message-display';
+        this.element = createEl('div', { cls: 'status-message-display' });
         this.element.setAttribute('role', 'log');
         this.element.setAttribute('aria-label', '상태 메시지 로그');
         this.element.setAttribute('aria-live', 'polite');
-        
+
         // 헤더
-        const header = document.createElement('div');
-        header.className = 'status-message-display__header';
-        
-        const title = document.createElement('h3');
-        title.textContent = this.getLocalizedText('Status Messages', '상태 메시지');
+        const header = createEl('div', { cls: 'status-message-display__header' });
+
+        const title = createEl('h3', { text: this.getLocalizedText('Status Messages', '상태 메시지') });
         header.appendChild(title);
-        
+
         // 컨트롤
-        const controls = document.createElement('div');
-        controls.className = 'status-message-display__controls';
-        
+        const controls = createEl('div', { cls: 'status-message-display__controls' });
+
         // 언어 선택
-        const langSelect = document.createElement('select');
-        langSelect.className = 'status-message-display__lang-select';
+        const langSelect = createEl('select', { cls: 'status-message-display__lang-select' });
         langSelect.setAttribute('aria-label', '언어 선택');
-        
+
         const languages = [
             { value: 'ko', label: '한국어' },
             { value: 'en', label: 'English' },
             { value: 'ja', label: '日本語' },
             { value: 'zh', label: '中文' }
         ];
-        
-        languages.forEach(lang => {
-            const option = document.createElement('option');
-            option.value = lang.value;
-            option.textContent = lang.label;
-            if (lang.value === this.currentLanguage) {
-                option.selected = true;
-            }
-            langSelect.appendChild(option);
-        });
-        
-        langSelect.addEventListener('change', () => {
-            this.setLanguage(langSelect.value as Language);
-        });
-        
+
+        if (langSelect instanceof HTMLSelectElement) {
+            languages.forEach(lang => {
+                const option = createEl('option', { text: lang.label });
+                if (option instanceof HTMLOptionElement) {
+                    option.value = lang.value;
+                    if (lang.value === this.currentLanguage) {
+                        option.selected = true;
+                    }
+                    langSelect.appendChild(option);
+                }
+            });
+
+            langSelect.addEventListener('change', () => {
+                const value = langSelect.value;
+                if (this.isLanguage(value)) {
+                    this.setLanguage(value);
+                }
+            });
+        }
+
         controls.appendChild(langSelect);
-        
+
         // 클리어 버튼
-        const clearBtn = document.createElement('button');
-        clearBtn.className = 'status-message-display__clear';
-        clearBtn.textContent = this.getLocalizedText('Clear', '지우기');
+        const clearBtn = createEl('button', {
+            cls: 'status-message-display__clear',
+            text: this.getLocalizedText('Clear', '지우기')
+        });
         clearBtn.addEventListener('click', () => this.clear());
         controls.appendChild(clearBtn);
-        
+
         header.appendChild(controls);
         this.element.appendChild(header);
-        
+
         // 메시지 컨테이너
-        const messageContainer = document.createElement('div');
-        messageContainer.className = 'status-message-display__messages';
+        const messageContainer = createEl('div', { cls: 'status-message-display__messages' });
         this.element.appendChild(messageContainer);
         
         container.appendChild(this.element);
@@ -408,27 +413,29 @@ export class StatusMessageDisplay {
         const messageContainer = this.element.querySelector('.status-message-display__messages');
         if (!messageContainer) return;
         
-        const messageEl = document.createElement('div');
-        messageEl.className = `status-message status-message--${message.type}`;
-        
+        const messageEl = createEl('div', { cls: `status-message status-message--${message.type}` });
+
         // 타임스탬프
         if (this.showTimestamp && message.timestamp) {
-            const timestamp = document.createElement('span');
-            timestamp.className = 'status-message__timestamp';
-            timestamp.textContent = this.formatTimestamp(message.timestamp);
+            const timestamp = createEl('span', {
+                cls: 'status-message__timestamp',
+                text: this.formatTimestamp(message.timestamp)
+            });
             messageEl.appendChild(timestamp);
         }
-        
+
         // 아이콘
-        const icon = document.createElement('span');
-        icon.className = 'status-message__icon';
-        icon.textContent = this.getMessageIcon(message.type);
+        const icon = createEl('span', {
+            cls: 'status-message__icon',
+            text: this.getMessageIcon(message.type)
+        });
         messageEl.appendChild(icon);
-        
+
         // 메시지 텍스트
-        const text = document.createElement('span');
-        text.className = 'status-message__text';
-        text.textContent = MessageStore.getMessage(message.key, this.currentLanguage, message.params);
+        const text = createEl('span', {
+            cls: 'status-message__text',
+            text: MessageStore.getMessage(message.key, this.currentLanguage, message.params)
+        });
         messageEl.appendChild(text);
         
         messageContainer.appendChild(messageEl);

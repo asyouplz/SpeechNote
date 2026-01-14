@@ -110,6 +110,22 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
         return Date.now() - this.startTime;
     }
 
+    private isTranscriptionSegment(value: unknown): value is TranscriptionSegment {
+        if (!value || typeof value !== 'object') {
+            return false;
+        }
+
+        const id = Reflect.get(value, 'id');
+        const start = Reflect.get(value, 'start');
+        const end = Reflect.get(value, 'end');
+        const text = Reflect.get(value, 'text');
+
+        return typeof id === 'number' &&
+            typeof start === 'number' &&
+            typeof end === 'number' &&
+            typeof text === 'string';
+    }
+
     /**
      * Create a standardized transcription response
      */
@@ -128,8 +144,10 @@ export abstract class BaseTranscriptionAdapter implements ITranscriber {
         const wordCount = options?.wordCount ?? this.countWords(text);
         const processingTime = this.getElapsedTime();
 
-        const segments = Array.isArray(options?.segments)
-            ? (options?.segments as TranscriptionSegment[])
+        const segmentCandidates = options?.segments;
+        const segments = Array.isArray(segmentCandidates) &&
+            segmentCandidates.every(segment => this.isTranscriptionSegment(segment))
+            ? segmentCandidates
             : undefined;
 
         return {

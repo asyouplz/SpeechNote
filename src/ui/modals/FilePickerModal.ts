@@ -6,6 +6,7 @@ import { RecentFiles } from '../components/RecentFiles';
 import { ProgressIndicator } from '../components/ProgressIndicator';
 import { EventHandlers } from '../components/EventHandlers';
 import { ILogger } from '../../infrastructure/logging/Logger';
+import type { SpeechToTextSettings } from '../../domain/models/Settings';
 
 export interface FilePickerOptions {
     title?: string;
@@ -61,6 +62,7 @@ export class FilePickerModal extends Modal {
     private readonly onChoose: (files: FilePickerResult[]) => void;
     private readonly onCancel: () => void;
     private readonly logger?: ILogger;
+    private readonly legacyFileHandler?: (file: File) => Promise<void> | void;
 
     private validator: FileValidator;
     private fileBrowser: FileBrowser;
@@ -74,16 +76,33 @@ export class FilePickerModal extends Modal {
 
     constructor(
         app: App,
-        options: FilePickerOptions,
-        onChoose: (files: FilePickerResult[]) => void,
-        onCancel: () => void,
+        optionsOrHandler: FilePickerOptions | ((file: File) => Promise<void> | void),
+        onChooseOrSettings?: ((files: FilePickerResult[]) => void) | SpeechToTextSettings,
+        onCancel?: () => void,
         logger?: ILogger
     ) {
         super(app);
-        this.options = this.mergeOptions(options);
-        this.onChoose = onChoose;
-        this.onCancel = onCancel;
-        this.logger = logger;
+        if (typeof optionsOrHandler === 'function') {
+            const settings = onChooseOrSettings as SpeechToTextSettings | undefined;
+            const maxFileSizeMb = typeof settings?.maxFileSize === 'number' ? settings.maxFileSize : 25;
+            this.options = this.mergeOptions({
+                title: '오디오 파일 선택',
+                accept: ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm'],
+                maxFileSize: maxFileSizeMb * 1024 * 1024,
+                multiple: false,
+                showRecentFiles: false,
+                enableDragDrop: true
+            });
+            this.onChoose = () => undefined;
+            this.onCancel = () => undefined;
+            this.legacyFileHandler = optionsOrHandler;
+            this.logger = undefined;
+        } else {
+            this.options = this.mergeOptions(optionsOrHandler);
+            this.onChoose = onChooseOrSettings as (files: FilePickerResult[]) => void;
+            this.onCancel = onCancel ?? (() => undefined);
+            this.logger = logger;
+        }
 
         // 컴포넌트 초기화
         this.validator = new FileValidator(this.options.maxFileSize, this.options.accept);
@@ -100,8 +119,20 @@ export class FilePickerModal extends Modal {
         }
 
         // 모달 클래스 추가
-        this.modalEl.addClass('file-picker-modal');
-        this.modalEl.addClass('speech-to-text-modal');
+        this.modalEl?.classList?.add('file-picker-modal');
+        this.modalEl?.classList?.add('speech-to-text-modal');
+    }
+
+    async onChooseFile(file: File): Promise<void> {
+        if (this.legacyFileHandler) {
+            await this.legacyFileHandler(file);
+            return;
+        }
+        await this.handleDroppedFiles([file]);
+    }
+
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error('Unknown error');
     }
 
     onOpen() {
@@ -334,15 +365,16 @@ export class FilePickerModal extends Modal {
             const buffer = await this.app.vault.readBinary(file);
             return await this.validator.validate(file, buffer);
         } catch (error) {
-            this.logger?.error('File validation failed', error as Error);
+            const normalizedError = this.normalizeError(error);
+            this.logger?.error('File validation failed', normalizedError);
             return {
                 valid: false,
-                errors: [{ code: 'VALIDATION_ERROR', message: `검증 실패: ${(error as Error).message}` }]
+                errors: [{ code: 'VALIDATION_ERROR', message: `검증 실패: ${normalizedError.message}` }]
             };
         }
     }
 
-    private async processSelectedFiles() {
+    private processSelectedFiles() {
         if (this.selectedFiles.length === 0) {
             new Notice('선택된 파일이 없습니다');
             return;
@@ -440,13 +472,13 @@ export class FilePickerModal extends Modal {
 
     private refreshUI() {
         const selectedSection = this.modalEl.querySelector('.selected-files-list');
-        if (selectedSection) {
-            this.updateSelectedFilesList(selectedSection as HTMLElement);
+        if (selectedSection instanceof HTMLElement) {
+            this.updateSelectedFilesList(selectedSection);
         }
-
+        
         // 버튼 상태 업데이트
-        const submitBtn = this.modalEl.querySelector('.mod-cta') as HTMLButtonElement;
-        if (submitBtn) {
+        const submitBtn = this.modalEl.querySelector('.mod-cta');
+        if (submitBtn instanceof HTMLButtonElement) {
             submitBtn.disabled = this.selectedFiles.length === 0;
             submitBtn.setText(`선택 (${this.selectedFiles.length})`);
         }

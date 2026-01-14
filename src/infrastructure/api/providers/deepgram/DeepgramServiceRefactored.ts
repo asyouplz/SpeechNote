@@ -342,7 +342,7 @@ export class DeepgramServiceRefactored {
     /**
      * Handle API errors
      */
-    private async handleApiError(response: any): Promise<never> {
+    private handleApiError(response: any): never {
         const errorBody = response.json;
         const errorMessage = errorBody?.message ?? errorBody?.error ?? 'Unknown error';
 

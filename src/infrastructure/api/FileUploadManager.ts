@@ -62,6 +62,14 @@ export class FileUploadManager {
         private logger: ILogger
     ) {}
 
+    private normalizeError(error: unknown): Error {
+        return error instanceof Error ? error : new Error('Unknown error');
+    }
+
+    private isAudioContextCtor(value: unknown): value is new () => AudioContext {
+        return typeof value === 'function';
+    }
+
     /**
      * 오디오 파일 처리 및 준비
      */
@@ -170,7 +178,7 @@ export class FileUploadManager {
     /**
      * 파일 검증
      */
-    private async validateFile(file: TFile): Promise<void> {
+    private validateFile(file: TFile): void {
         const extension = file.extension.toLowerCase();
         
         // 확장자 검증
@@ -222,7 +230,7 @@ export class FileUploadManager {
                 const shouldWrap = /failed to read file/i.test(error.message);
                 if (shouldWrap) {
                     const wrappedError = new Error(`Failed to read file: ${error.message}`);
-                    (wrappedError as Error & { cause?: Error }).cause = error;
+                    Object.assign(wrappedError, { cause: error });
                     throw wrappedError;
                 }
                 throw error;
@@ -256,7 +264,7 @@ export class FileUploadManager {
             
             this.logger.debug('Audio metadata extracted', metadata);
         } catch (error) {
-            this.logger.warn('Failed to extract audio metadata', error as Error);
+            this.logger.warn('Failed to extract audio metadata', this.normalizeError(error));
             // 메타데이터 추출 실패는 치명적이지 않음
         }
         
@@ -335,7 +343,7 @@ export class FileUploadManager {
 
             return buffer.slice(0, fallbackTarget);
         } catch (error) {
-            this.logger.error('Audio compression failed, using original', error as Error);
+            this.logger.error('Audio compression failed, using original', this.normalizeError(error));
             if (buffer.byteLength > FILE_CONSTRAINTS.MAX_SIZE) {
                 const fallbackTarget = Math.min(
                     Math.floor(buffer.byteLength * 0.85),
@@ -406,11 +414,9 @@ export class FileUploadManager {
      */
     private async decodeAudioData(buffer: ArrayBuffer): Promise<AudioBuffer> {
         if (!this.audioContext) {
-            const globalObject = globalThis as unknown as {
-                AudioContext?: new () => AudioContext;
-                webkitAudioContext?: new () => AudioContext;
-            };
-            const AudioContextCtor = globalObject.AudioContext || globalObject.webkitAudioContext;
+            const audioContextCtor = Reflect.get(globalThis, 'AudioContext') ??
+                Reflect.get(globalThis, 'webkitAudioContext');
+            const AudioContextCtor = this.isAudioContextCtor(audioContextCtor) ? audioContextCtor : null;
             if (!AudioContextCtor) {
                 throw new Error('AudioContext is not available in this environment.');
             }
@@ -445,13 +451,17 @@ export class FileUploadManager {
      */
     private getMimeType(extension: string): string {
         const ext = extension.toLowerCase();
-        return FILE_CONSTRAINTS.SUPPORTED_FORMATS[ext as keyof typeof FILE_CONSTRAINTS.SUPPORTED_FORMATS] || 'audio/mpeg';
+        return this.isSupportedFormat(ext)
+            ? FILE_CONSTRAINTS.SUPPORTED_FORMATS[ext]
+            : 'audio/mpeg';
     }
 
     /**
      * 지원 형식 확인
      */
-    private isSupportedFormat(extension: string): boolean {
+    private isSupportedFormat(
+        extension: string
+    ): extension is keyof typeof FILE_CONSTRAINTS.SUPPORTED_FORMATS {
         return extension.toLowerCase() in FILE_CONSTRAINTS.SUPPORTED_FORMATS;
     }
 
@@ -530,7 +540,7 @@ export class FileUploadManager {
 
     private resolveErrorMessage(error: unknown): string {
         if (error instanceof Error) {
-            const cause = (error as Error & { cause?: unknown }).cause;
+            const cause = Reflect.get(error, 'cause');
             if (cause instanceof Error) {
                 return cause.message;
             }
