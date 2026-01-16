@@ -63,10 +63,57 @@ export class Encryptor implements IEncryptor {
      * 여러 요소를 조합하여 고유한 암호화 키 생성
      */
     private getSystemPassword(): string {
-        // Prevent using platform-specific APIs that might trigger lint errors or change unexpectedly
-        // specific to the machine/environment which causes decryption issues after updates.
-        // Using a fixed salt for the vault is safer and compliant.
+        // Using a fixed salt for the vault is safer and compliant with Obsidian plugin guidelines.
+        // Platform-specific APIs (navigator, screen) are removed to avoid lint issues.
         return 'ObsidianSpeechToText-FixedSalt-2024';
+    }
+
+    /**
+     * Legacy password generation for migration from older versions.
+     * Attempts to reconstruct the old system password for backward compatibility.
+     */
+    private getLegacySystemPassword(): string | null {
+        try {
+            // Attempt to reconstruct old password using platform APIs
+            // These may fail in some environments, hence the try-catch
+            const factors = [
+                typeof navigator !== 'undefined' ? navigator.userAgent : '',
+                typeof navigator !== 'undefined' ? navigator.language : '',
+                typeof screen !== 'undefined' ? `${screen.width}x${screen.height}` : '',
+                typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
+                'ObsidianSpeechToText2024',
+            ];
+            return factors.join('|');
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Attempt decryption with legacy password (for migration).
+     */
+    async decryptWithLegacy(encryptedData: EncryptedData): Promise<string> {
+        const legacyPassword = this.getLegacySystemPassword();
+        if (!legacyPassword) {
+            throw new Error('Legacy password generation failed');
+        }
+
+        const encryptedBuffer = this.base64ToBuffer(encryptedData.data);
+        const iv = this.base64ToBuffer(encryptedData.iv);
+        const salt = this.base64ToBuffer(encryptedData.salt);
+
+        const key = await this.deriveKey(legacyPassword, salt);
+
+        const decryptedBuffer = await crypto.subtle.decrypt(
+            {
+                name: this.algorithm,
+                iv,
+            },
+            key,
+            encryptedBuffer
+        );
+
+        return new TextDecoder().decode(decryptedBuffer);
     }
 
     /**
@@ -214,7 +261,28 @@ export class SecureApiKeyManager {
             }
 
             const encrypted: EncryptedData = JSON.parse(storedData);
-            return await this.encryptor.decrypt(encrypted);
+
+            try {
+                // Try new password first
+                return await this.encryptor.decrypt(encrypted);
+            } catch {
+                // Fall back to legacy password for migration
+                console.debug('Attempting legacy decryption for migration...');
+                if (this.encryptor instanceof Encryptor) {
+                    try {
+                        const decrypted = await this.encryptor.decryptWithLegacy(encrypted);
+                        // Re-encrypt with new password for future use
+                        console.debug('Legacy decryption successful, migrating to new encryption...');
+                        const reEncrypted = await this.encryptor.encrypt(decrypted);
+                        this.app.saveLocalStorage(this.storageKey, JSON.stringify(reEncrypted));
+                        return decrypted;
+                    } catch (legacyError) {
+                        console.error('Legacy decryption also failed:', legacyError);
+                        throw legacyError;
+                    }
+                }
+                throw new Error('Decryption failed');
+            }
         } catch (error) {
             console.error('Failed to retrieve API key:', error);
             // 손상된 데이터 제거

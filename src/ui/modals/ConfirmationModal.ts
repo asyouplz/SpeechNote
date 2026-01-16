@@ -26,7 +26,13 @@ export class ConfirmationModal extends Modal {
             .setButtonText(this.cancelText)
             .onClick(() => {
                 this.close();
-                if (this.onCancel) this.onCancel();
+                if (this.onCancel) {
+                    try {
+                        this.onCancel();
+                    } catch (error) {
+                        console.error('ConfirmationModal: onCancel callback error:', error);
+                    }
+                }
             });
 
         new ButtonComponent(buttonContainer)
@@ -34,7 +40,11 @@ export class ConfirmationModal extends Modal {
             .setCta()
             .onClick(() => {
                 this.close();
-                this.onConfirm();
+                try {
+                    this.onConfirm();
+                } catch (error) {
+                    console.error('ConfirmationModal: onConfirm callback error:', error);
+                }
             });
     }
 

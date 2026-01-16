@@ -321,19 +321,23 @@ export class SettingsAPI implements ISettingsAPI {
         if (!this.listeners.has(event)) {
             this.listeners.set(event, []);
         }
-        this.listeners.get(event)!.push(listener);
+        const listeners = this.listeners.get(event)!;
+        // Prevent duplicate listeners
+        if (!listeners.includes(listener)) {
+            listeners.push(listener);
+        }
         return () => {
-            const listeners = this.listeners.get(event);
-            if (listeners) {
-                const index = listeners.indexOf(listener);
+            const currentListeners = this.listeners.get(event);
+            if (currentListeners) {
+                const index = currentListeners.indexOf(listener);
                 if (index > -1) {
-                    listeners.splice(index, 1);
+                    currentListeners.splice(index, 1);
                 }
             }
         };
     }
 
-    private emit(event: string, ...args: any[]): void {
+    private emit(event: string, ...args: unknown[]): void {
         const listeners = this.listeners.get(event);
         if (listeners) {
             listeners.forEach((listener) => listener(...args));
