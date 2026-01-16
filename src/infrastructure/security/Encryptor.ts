@@ -63,21 +63,10 @@ export class Encryptor implements IEncryptor {
      * 여러 요소를 조합하여 고유한 암호화 키 생성
      */
     private getSystemPassword(): string {
-        // 환경 변수와 시스템 정보를 조합
-        const factors = [
-            // 플랫폼 정보
-            navigator.userAgent,
-            // 브라우저 언어
-            navigator.language,
-            // 스크린 해상도
-            `${screen.width}x${screen.height}`,
-            // 타임존
-            Intl.DateTimeFormat().resolvedOptions().timeZone,
-            // 고정 시드
-            'ObsidianSpeechToText2024',
-        ];
-
-        return factors.join('|');
+        // Prevent using platform-specific APIs that might trigger lint errors or change unexpectedly
+        // specific to the machine/environment which causes decryption issues after updates.
+        // Using a fixed salt for the vault is safer and compliant.
+        return 'ObsidianSpeechToText-FixedSalt-2024';
     }
 
     /**

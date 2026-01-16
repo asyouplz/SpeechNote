@@ -58,7 +58,7 @@ class ExponentialBackoffRetry implements RetryStrategy {
     private readonly baseDelay = 250;
     private readonly maxDelay = 2000;
 
-    constructor(private logger: ILogger) {}
+    constructor(private logger: ILogger) { }
 
     private normalizeError(error: unknown): Error {
         return error instanceof Error ? error : new Error('Unknown error');
@@ -92,8 +92,7 @@ class ExponentialBackoffRetry implements RetryStrategy {
         }
 
         throw new WhisperAPIError(
-            `Operation failed after ${this.maxRetries} attempts: ${
-                lastError?.message ?? 'Unknown error'
+            `Operation failed after ${this.maxRetries} attempts: ${lastError?.message ?? 'Unknown error'
             }`,
             'MAX_RETRIES_EXCEEDED',
             undefined,
@@ -135,7 +134,7 @@ class CircuitBreaker {
     private readonly successThreshold = 2;
     private readonly timeout = 60000; // 1분
 
-    constructor(private logger: ILogger) {}
+    constructor(private logger: ILogger) { }
 
     async execute<T>(operation: () => Promise<T>): Promise<T> {
         if (this.isOpen()) {
@@ -225,7 +224,6 @@ export class WhisperService implements IWhisperService {
     private readonly API_ENDPOINT = 'https://api.openai.com/v1/audio/transcriptions';
     private readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
     private timeoutMs = 30000; // 30 seconds
-    private useFetch = false;
 
     private apiKey: string;
     private logger: ILogger;
@@ -251,7 +249,6 @@ export class WhisperService implements IWhisperService {
             if (typeof config.timeout === 'number' && Number.isFinite(config.timeout)) {
                 this.timeoutMs = config.timeout;
             }
-            this.useFetch = true;
         }
         this.retryStrategy = new ExponentialBackoffRetry(this.logger);
         this.circuitBreaker = new CircuitBreaker(this.logger);
@@ -282,56 +279,7 @@ export class WhisperService implements IWhisperService {
         return new ArrayBuffer(size);
     }
 
-    private async performFetchRequest(formData: FormData): Promise<{
-        status: number;
-        headers?: Record<string, string>;
-        json?: unknown;
-        text?: string;
-    }> {
-        if (typeof fetch !== 'function') {
-            throw new Error('Fetch API is not available');
-        }
 
-        const response = await fetch(this.API_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${this.apiKey}`,
-            },
-            body: formData,
-        });
-
-        const status =
-            typeof response.status === 'number' ? response.status : response.ok ? 200 : 500;
-        const headers: Record<string, string> = {};
-        if (response.headers && typeof response.headers.forEach === 'function') {
-            response.headers.forEach((value, key) => {
-                headers[key.toLowerCase()] = value;
-            });
-        }
-
-        let json: unknown = undefined;
-        let text: string | undefined = undefined;
-        const hasJson = typeof response.json === 'function';
-        const hasText = typeof response.text === 'function';
-        if (response.ok) {
-            if (hasText) {
-                text = await response.text();
-            } else if (hasJson) {
-                json = await response.json();
-            }
-        } else if (hasJson) {
-            json = await response.json();
-        } else if (hasText) {
-            text = await response.text();
-        }
-
-        return {
-            status,
-            headers: Object.keys(headers).length > 0 ? headers : undefined,
-            json,
-            text,
-        };
-    }
 
     private normalizeError(error: unknown): Error {
         return error instanceof Error ? error : new Error('Unknown error');
@@ -458,9 +406,7 @@ export class WhisperService implements IWhisperService {
                 })
             );
 
-            const response = this.useFetch
-                ? await this.performFetchRequest(formData)
-                : await requestUrl(requestParams);
+            const response = await requestUrl(requestParams);
             const processingTime = Date.now() - startTime;
 
             this.logger.info(`Transcription completed in ${processingTime}ms`, {
