@@ -1,4 +1,4 @@
-import { App, Modal, Setting, ButtonComponent } from 'obsidian';
+import { App, Modal, ButtonComponent, Notice } from 'obsidian';
 
 export class ConfirmationModal extends Modal {
     constructor(
@@ -31,6 +31,7 @@ export class ConfirmationModal extends Modal {
                         this.onCancel();
                     } catch (error) {
                         console.error('ConfirmationModal: onCancel callback error:', error);
+                        new Notice('Action failed. Please check console for details.');
                     }
                 }
             });
@@ -44,6 +45,7 @@ export class ConfirmationModal extends Modal {
                     this.onConfirm();
                 } catch (error) {
                     console.error('ConfirmationModal: onConfirm callback error:', error);
+                    new Notice('Action failed. Please check console for details.');
                 }
             });
     }

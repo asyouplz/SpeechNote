@@ -3,7 +3,7 @@
  * Web Crypto API를 사용한 안전한 데이터 암호화/복호화
  */
 
-import type { App } from 'obsidian';
+import { type App, Notice } from 'obsidian';
 
 export interface EncryptedData {
     data: string; // Base64 encoded encrypted data
@@ -25,6 +25,35 @@ export class Encryptor implements IEncryptor {
     private readonly iterations = 100000;
     private readonly saltLength = 16;
     private readonly ivLength = 12;
+    private vaultSalt: string | null = null;
+    private app: App | null = null;
+
+    /**
+     * Set the App instance for vault-specific salt generation
+     */
+    setApp(app: App): void {
+        this.app = app;
+        this.initializeVaultSalt();
+    }
+
+    /**
+     * Initialize or load the per-vault unique salt
+     */
+    private initializeVaultSalt(): void {
+        if (!this.app) return;
+
+        const storedSalt = this.app.loadLocalStorage('encryption_vault_salt');
+        if (storedSalt) {
+            this.vaultSalt = storedSalt;
+        } else {
+            // Generate a unique salt for this vault
+            const randomBytes = crypto.getRandomValues(new Uint8Array(32));
+            this.vaultSalt = Array.from(randomBytes)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            this.app.saveLocalStorage('encryption_vault_salt', this.vaultSalt);
+        }
+    }
 
     /**
      * 시스템 파생 키 생성
@@ -63,8 +92,12 @@ export class Encryptor implements IEncryptor {
      * 여러 요소를 조합하여 고유한 암호화 키 생성
      */
     private getSystemPassword(): string {
-        // Using a fixed salt for the vault is safer and compliant with Obsidian plugin guidelines.
-        // Platform-specific APIs (navigator, screen) are removed to avoid lint issues.
+        // Use per-vault unique salt for security
+        // Each vault has its own unique encryption key
+        if (this.vaultSalt) {
+            return `ObsidianSpeechToText-${this.vaultSalt}`;
+        }
+        // Fallback for cases where vault salt isn't initialized yet
         return 'ObsidianSpeechToText-FixedSalt-2024';
     }
 
@@ -224,6 +257,10 @@ export class SecureApiKeyManager {
             throw new Error('App instance is required for SecureApiKeyManager');
         }
         this.app = app;
+        // Initialize encryptor with app for per-vault salt
+        if (this.encryptor instanceof Encryptor) {
+            this.encryptor.setApp(app);
+        }
     }
 
     /**
@@ -267,17 +304,17 @@ export class SecureApiKeyManager {
                 return await this.encryptor.decrypt(encrypted);
             } catch {
                 // Fall back to legacy password for migration
-                console.debug('Attempting legacy decryption for migration...');
                 if (this.encryptor instanceof Encryptor) {
                     try {
                         const decrypted = await this.encryptor.decryptWithLegacy(encrypted);
                         // Re-encrypt with new password for future use
-                        console.debug('Legacy decryption successful, migrating to new encryption...');
+                        new Notice('API key migrated to new encryption format.');
                         const reEncrypted = await this.encryptor.encrypt(decrypted);
                         this.app.saveLocalStorage(this.storageKey, JSON.stringify(reEncrypted));
                         return decrypted;
                     } catch (legacyError) {
                         console.error('Legacy decryption also failed:', legacyError);
+                        new Notice('Failed to decrypt API key. Please re-enter your API key in settings.', 10000);
                         throw legacyError;
                     }
                 }
@@ -285,7 +322,8 @@ export class SecureApiKeyManager {
             }
         } catch (error) {
             console.error('Failed to retrieve API key:', error);
-            // 손상된 데이터 제거
+            // Show notice before clearing corrupted data
+            new Notice('API key data is corrupted. Please re-enter your API key.', 10000);
             this.clearApiKey();
             return null;
         }

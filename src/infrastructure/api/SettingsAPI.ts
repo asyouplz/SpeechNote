@@ -345,6 +345,13 @@ export class SettingsAPI implements ISettingsAPI {
     }
 
     /**
+     * Cleanup all listeners to prevent memory leaks
+     */
+    destroy(): void {
+        this.listeners.clear();
+    }
+
+    /**
      * 설정 저장
      */
     private save(): Promise<void> {
