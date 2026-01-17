@@ -114,14 +114,25 @@ export class Encryptor implements IEncryptor {
      * DO NOT use these APIs in new code - they trigger Obsidian plugin review issues.
      */
     private getLegacySystemPassword(): string | null {
+        // Feature detection - check if required platform APIs are available
+        const hasNavigator = typeof navigator !== 'undefined';
+        const hasScreen = typeof screen !== 'undefined';
+        const hasIntl = typeof Intl !== 'undefined';
+
+        // If none of the platform APIs are available, migration is not possible
+        if (!hasNavigator && !hasScreen && !hasIntl) {
+            console.warn('Legacy migration not available: platform APIs not accessible in this environment');
+            return null;
+        }
+
         try {
             // LEGACY CODE - Required for migration from pre-3.1.0 versions only
             // Uses platform APIs that are deprecated for new functionality
             const factors = [
-                typeof navigator !== 'undefined' ? navigator.userAgent : '',
-                typeof navigator !== 'undefined' ? navigator.language : '',
-                typeof screen !== 'undefined' ? `${screen.width}x${screen.height}` : '',
-                typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
+                hasNavigator ? navigator.userAgent : '',
+                hasNavigator ? navigator.language : '',
+                hasScreen ? `${screen.width}x${screen.height}` : '',
+                hasIntl ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
                 'ObsidianSpeechToText2024',
             ];
             return factors.join('|');
@@ -254,12 +265,41 @@ export class Encryptor implements IEncryptor {
 
 /**
  * 보안 API 키 관리자
+ * 
+ * Manages encrypted storage and retrieval of API keys using the Obsidian localStorage API.
+ * 
+ * @example Default usage with built-in Encryptor:
+ * ```typescript
+ * const manager = new SecureApiKeyManager(undefined, app);
+ * await manager.storeApiKey('sk-...');
+ * ```
+ * 
+ * @example Custom encryptor usage:
+ * ```typescript
+ * // Custom encryptor must implement IEncryptor interface
+ * // and handle its own initialization (e.g., key derivation)
+ * const customEncryptor = new MyCustomEncryptor();
+ * const manager = new SecureApiKeyManager(customEncryptor, app);
+ * ```
+ * 
+ * @note When using a custom encryptor, ensure it handles initialization properly.
+ * The built-in Encryptor requires setApp() to be called for per-vault salt generation,
+ * which is done automatically. Custom implementations must handle this independently.
  */
 export class SecureApiKeyManager {
     private encryptor: IEncryptor;
     private storageKey = 'encrypted_api_key';
     private app: App;
 
+    /**
+     * Creates a new SecureApiKeyManager instance.
+     * 
+     * @param encryptor - Optional custom encryptor implementing IEncryptor interface.
+     *                    If not provided, uses the built-in Encryptor with per-vault salt.
+     *                    Note: Custom encryptors must handle their own key derivation/initialization.
+     * @param app - Required Obsidian App instance for localStorage access.
+     * @throws Error if app is not provided.
+     */
     constructor(encryptor?: IEncryptor, app?: App) {
         this.encryptor = encryptor || new Encryptor();
         if (!app) {
@@ -267,10 +307,12 @@ export class SecureApiKeyManager {
         }
         this.app = app;
         // Initialize encryptor with app for per-vault salt
+        // Note: Custom encryptors that don't extend Encryptor must handle initialization independently
         if (this.encryptor instanceof Encryptor) {
             this.encryptor.setApp(app);
         }
     }
+
 
     /**
      * API 키 암호화 저장

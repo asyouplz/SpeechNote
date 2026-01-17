@@ -1,6 +1,8 @@
 import { App, Modal, ButtonComponent, Notice } from 'obsidian';
 
 export class ConfirmationModal extends Modal {
+    private isProcessing = false;
+
     constructor(
         app: App,
         private title: string,
@@ -22,9 +24,14 @@ export class ConfirmationModal extends Modal {
 
         const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
 
-        new ButtonComponent(buttonContainer)
+        const cancelButton = new ButtonComponent(buttonContainer)
             .setButtonText(this.cancelText)
             .onClick(async () => {
+                if (this.isProcessing) return;
+                this.isProcessing = true;
+                cancelButton.setDisabled(true);
+                confirmButton.setDisabled(true);
+
                 this.close();
                 if (this.onCancel) {
                     try {
@@ -36,10 +43,15 @@ export class ConfirmationModal extends Modal {
                 }
             });
 
-        new ButtonComponent(buttonContainer)
+        const confirmButton = new ButtonComponent(buttonContainer)
             .setButtonText(this.confirmText)
             .setCta()
             .onClick(async () => {
+                if (this.isProcessing) return;
+                this.isProcessing = true;
+                cancelButton.setDisabled(true);
+                confirmButton.setDisabled(true);
+
                 this.close();
                 try {
                     await this.onConfirm();
@@ -53,6 +65,6 @@ export class ConfirmationModal extends Modal {
     onClose() {
         const { contentEl } = this;
         contentEl.empty();
+        this.isProcessing = false;
     }
 }
-

@@ -340,7 +340,13 @@ export class SettingsAPI implements ISettingsAPI {
     private emit(event: string, ...args: unknown[]): void {
         const listeners = this.listeners.get(event);
         if (listeners) {
-            listeners.forEach((listener) => listener(...args));
+            listeners.forEach((listener) => {
+                try {
+                    listener(...args);
+                } catch (error) {
+                    console.error(`Settings event listener error for '${event}':`, error);
+                }
+            });
         }
     }
 
