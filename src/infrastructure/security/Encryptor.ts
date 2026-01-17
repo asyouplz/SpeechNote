@@ -94,11 +94,14 @@ export class Encryptor implements IEncryptor {
     private getSystemPassword(): string {
         // Use per-vault unique salt for security
         // Each vault has its own unique encryption key
+        // SECURITY NOTE: This is defense-in-depth, not primary security.
+        // The encryption protects API keys from casual access but is not
+        // intended to protect against determined attackers with localStorage access.
         if (this.vaultSalt) {
             return `ObsidianSpeechToText-${this.vaultSalt}`;
         }
-        // Fallback for cases where vault salt isn't initialized yet
-        return 'ObsidianSpeechToText-FixedSalt-2024';
+        // Do not use a weak fallback - force initialization
+        throw new Error('Vault salt not initialized. Call setApp() first.');
     }
 
     /**
@@ -291,42 +294,63 @@ export class SecureApiKeyManager {
      * API 키 복호화 조회
      */
     async getApiKey(): Promise<string | null> {
-        try {
-            const storedData = this.app.loadLocalStorage(this.storageKey);
-            if (!storedData) {
-                return null;
-            }
+        const MAX_RETRIES = 2;
+        let lastError: Error | null = null;
 
-            const encrypted: EncryptedData = JSON.parse(storedData);
-
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
-                // Try new password first
-                return await this.encryptor.decrypt(encrypted);
-            } catch {
-                // Fall back to legacy password for migration
-                if (this.encryptor instanceof Encryptor) {
-                    try {
-                        const decrypted = await this.encryptor.decryptWithLegacy(encrypted);
-                        // Re-encrypt with new password for future use
-                        new Notice('API key migrated to new encryption format.');
-                        const reEncrypted = await this.encryptor.encrypt(decrypted);
-                        this.app.saveLocalStorage(this.storageKey, JSON.stringify(reEncrypted));
-                        return decrypted;
-                    } catch (legacyError) {
-                        console.error('Legacy decryption also failed:', legacyError);
-                        new Notice('Failed to decrypt API key. Please re-enter your API key in settings.', 10000);
-                        throw legacyError;
-                    }
+                const storedData = this.app.loadLocalStorage(this.storageKey);
+                if (!storedData) {
+                    return null;
                 }
-                throw new Error('Decryption failed');
+
+                const encrypted: EncryptedData = JSON.parse(storedData);
+
+                try {
+                    // Try new password first
+                    return await this.encryptor.decrypt(encrypted);
+                } catch {
+                    // Fall back to legacy password for migration
+                    if (this.encryptor instanceof Encryptor) {
+                        try {
+                            const decrypted = await this.encryptor.decryptWithLegacy(encrypted);
+                            // Re-encrypt with new password for future use
+                            new Notice('API key migrated to new encryption format.');
+                            const reEncrypted = await this.encryptor.encrypt(decrypted);
+                            this.app.saveLocalStorage(this.storageKey, JSON.stringify(reEncrypted));
+                            return decrypted;
+                        } catch (legacyError) {
+                            console.error('Legacy decryption also failed:', legacyError);
+                            new Notice('Failed to decrypt API key. Please re-enter your API key in settings.', 10000);
+                            throw legacyError;
+                        }
+                    }
+                    throw new Error('Decryption failed');
+                }
+            } catch (error) {
+                lastError = error instanceof Error ? error : new Error(String(error));
+                console.warn(`API key retrieval attempt ${attempt + 1} failed:`, error);
+                // Wait before retry
+                if (attempt < MAX_RETRIES - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
             }
-        } catch (error) {
-            console.error('Failed to retrieve API key:', error);
-            // Show notice before clearing corrupted data
-            new Notice('API key data is corrupted. Please re-enter your API key.', 10000);
-            this.clearApiKey();
-            return null;
         }
+
+        // All retries failed - backup then clear
+        console.error('Failed to retrieve API key after retries:', lastError);
+
+        // Backup corrupted data for potential recovery
+        const corruptedData = this.app.loadLocalStorage(this.storageKey);
+        if (corruptedData) {
+            const backupKey = `${this.storageKey}_backup_${Date.now()}`;
+            this.app.saveLocalStorage(backupKey, corruptedData);
+            console.debug(`Backed up corrupted API key data to: ${backupKey}`);
+        }
+
+        new Notice('API key data is corrupted. Please re-enter your API key. Backup saved.', 10000);
+        this.clearApiKey();
+        return null;
     }
 
     /**

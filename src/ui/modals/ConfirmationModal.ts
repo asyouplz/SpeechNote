@@ -5,8 +5,8 @@ export class ConfirmationModal extends Modal {
         app: App,
         private title: string,
         private message: string,
-        private onConfirm: () => void,
-        private onCancel?: () => void,
+        private onConfirm: () => void | Promise<void>,
+        private onCancel?: () => void | Promise<void>,
         private confirmText = 'Confirm',
         private cancelText = 'Cancel'
     ) {
@@ -24,11 +24,11 @@ export class ConfirmationModal extends Modal {
 
         new ButtonComponent(buttonContainer)
             .setButtonText(this.cancelText)
-            .onClick(() => {
+            .onClick(async () => {
                 this.close();
                 if (this.onCancel) {
                     try {
-                        this.onCancel();
+                        await this.onCancel();
                     } catch (error) {
                         console.error('ConfirmationModal: onCancel callback error:', error);
                         new Notice('Action failed. Please check console for details.');
@@ -39,10 +39,10 @@ export class ConfirmationModal extends Modal {
         new ButtonComponent(buttonContainer)
             .setButtonText(this.confirmText)
             .setCta()
-            .onClick(() => {
+            .onClick(async () => {
                 this.close();
                 try {
-                    this.onConfirm();
+                    await this.onConfirm();
                 } catch (error) {
                     console.error('ConfirmationModal: onConfirm callback error:', error);
                     new Notice('Action failed. Please check console for details.');
@@ -55,3 +55,4 @@ export class ConfirmationModal extends Modal {
         contentEl.empty();
     }
 }
+
