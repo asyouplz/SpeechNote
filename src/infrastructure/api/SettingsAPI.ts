@@ -22,7 +22,7 @@ import { SettingsValidator } from './SettingsValidator';
  * 설정 API 구현
  */
 export class SettingsAPI implements ISettingsAPI {
-    private listeners: Map<string, Array<(...args: any[]) => void>> = new Map();
+    private listeners: Map<string, Array<(...args: unknown[]) => void>> = new Map();
     private settings: SettingsSchema;
     private apiKeyManager: SecureApiKeyManager;
     private encryptor: SettingsEncryptor;
@@ -345,7 +345,17 @@ export class SettingsAPI implements ISettingsAPI {
     }
 
     /**
-     * Cleanup all listeners to prevent memory leaks
+     * Cleanup all listeners to prevent memory leaks.
+     * 
+     * LIFECYCLE: This method should be called when the plugin is unloaded.
+     * In your main plugin class, call this in the onunload() method:
+     * 
+     * @example
+     * ```typescript
+     * onunload() {
+     *     this.settingsAPI.destroy();
+     * }
+     * ```
      */
     destroy(): void {
         this.listeners.clear();

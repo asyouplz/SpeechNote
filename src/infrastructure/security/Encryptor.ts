@@ -107,11 +107,16 @@ export class Encryptor implements IEncryptor {
     /**
      * Legacy password generation for migration from older versions.
      * Attempts to reconstruct the old system password for backward compatibility.
+     * 
+     * @deprecated This method uses platform-specific APIs (navigator, screen, Intl)
+     * for backward compatibility only. It will be removed in a future version
+     * when migration is no longer needed (target: v4.0.0).
+     * DO NOT use these APIs in new code - they trigger Obsidian plugin review issues.
      */
     private getLegacySystemPassword(): string | null {
         try {
-            // Attempt to reconstruct old password using platform APIs
-            // These may fail in some environments, hence the try-catch
+            // LEGACY CODE - Required for migration from pre-3.1.0 versions only
+            // Uses platform APIs that are deprecated for new functionality
             const factors = [
                 typeof navigator !== 'undefined' ? navigator.userAgent : '',
                 typeof navigator !== 'undefined' ? navigator.language : '',
@@ -120,7 +125,8 @@ export class Encryptor implements IEncryptor {
                 'ObsidianSpeechToText2024',
             ];
             return factors.join('|');
-        } catch {
+        } catch (legacyError) {
+            console.warn('Legacy password generation failed:', legacyError);
             return null;
         }
     }
@@ -309,15 +315,19 @@ export class SecureApiKeyManager {
                 try {
                     // Try new password first
                     return await this.encryptor.decrypt(encrypted);
-                } catch {
+                } catch (newPasswordError) {
+                    // Log the error before attempting legacy migration
+                    console.debug('New password decryption failed, attempting legacy migration:', newPasswordError);
+
                     // Fall back to legacy password for migration
                     if (this.encryptor instanceof Encryptor) {
                         try {
                             const decrypted = await this.encryptor.decryptWithLegacy(encrypted);
                             // Re-encrypt with new password for future use
-                            new Notice('API key migrated to new encryption format.');
                             const reEncrypted = await this.encryptor.encrypt(decrypted);
                             this.app.saveLocalStorage(this.storageKey, JSON.stringify(reEncrypted));
+                            // Show notice only after successful save
+                            new Notice('API key migrated to new encryption format.');
                             return decrypted;
                         } catch (legacyError) {
                             console.error('Legacy decryption also failed:', legacyError);
