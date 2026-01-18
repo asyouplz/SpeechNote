@@ -44,8 +44,8 @@ jobs:
           echo "🔍 Running ESLint with Obsidian plugin review bot compatible rules..."
           npm run lint 2>&1 | tee lint-output.txt || true
           
-          # Check if there were any errors
-          if grep -q "error" lint-output.txt; then
+          # Check if there were any errors (exclude "0 errors" from matching)
+          if grep -E "[1-9][0-9]* error" lint-output.txt; then
             echo "❌ ESLint found errors"
             npm run lint
             exit 1
