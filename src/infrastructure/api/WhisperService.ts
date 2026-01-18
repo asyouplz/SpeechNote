@@ -58,7 +58,7 @@ class ExponentialBackoffRetry implements RetryStrategy {
     private readonly baseDelay = 250;
     private readonly maxDelay = 2000;
 
-    constructor(private logger: ILogger) { }
+    constructor(private logger: ILogger) {}
 
     private normalizeError(error: unknown): Error {
         return error instanceof Error ? error : new Error('Unknown error');
@@ -92,7 +92,8 @@ class ExponentialBackoffRetry implements RetryStrategy {
         }
 
         throw new WhisperAPIError(
-            `Operation failed after ${this.maxRetries} attempts: ${lastError?.message ?? 'Unknown error'
+            `Operation failed after ${this.maxRetries} attempts: ${
+                lastError?.message ?? 'Unknown error'
             }`,
             'MAX_RETRIES_EXCEEDED',
             undefined,
@@ -134,7 +135,7 @@ class CircuitBreaker {
     private readonly successThreshold = 2;
     private readonly timeout = 60000; // 1분
 
-    constructor(private logger: ILogger) { }
+    constructor(private logger: ILogger) {}
 
     async execute<T>(operation: () => Promise<T>): Promise<T> {
         if (this.isOpen()) {
@@ -278,8 +279,6 @@ export class WhisperService implements IWhisperService {
         const size = typeof audio.size === 'number' ? audio.size : 0;
         return new ArrayBuffer(size);
     }
-
-
 
     private normalizeError(error: unknown): Error {
         return error instanceof Error ? error : new Error('Unknown error');

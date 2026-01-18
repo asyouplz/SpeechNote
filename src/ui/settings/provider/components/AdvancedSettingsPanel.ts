@@ -103,7 +103,7 @@ export class AdvancedSettingsPanel {
                     .addOption(SelectionStrategy.AB_TEST, '🧪 A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
-                        SelectionStrategy.PERFORMANCE_OPTIMIZED
+                            SelectionStrategy.PERFORMANCE_OPTIMIZED
                     )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {
@@ -642,7 +642,9 @@ export class AdvancedSettingsPanel {
                     await this.plugin.saveSettings();
 
                     if (value && this.plugin.settings) {
-                        console.debug('Speech-to-Text debug mode enabled via AdvancedSettingsPanel');
+                        console.debug(
+                            'Speech-to-Text debug mode enabled via AdvancedSettingsPanel'
+                        );
                     }
                 });
             });
