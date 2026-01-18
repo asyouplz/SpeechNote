@@ -4,7 +4,7 @@
  * 계층적 진행 추적, ETA 예측, 취소 가능한 작업 관리를 제공합니다.
  */
 
-import { EventEmitter } from 'events';
+import { SimpleEventEmitter as EventEmitter } from '../../utils/SimpleEventEmitter';
 import {
     IProgressTracker,
     ProgressData,
@@ -452,6 +452,7 @@ export class ProgressTracker implements IProgressTracker {
     /**
      * 완료 처리
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Event result can be any type
     complete(result?: any): void {
         this.currentProgress = 100;
         this.status = 'completed';
@@ -462,6 +463,7 @@ export class ProgressTracker implements IProgressTracker {
         this.emitter.emit('complete', result);
         this.emitter.emit('progress', data);
         this.eventManager.emit('progress:update', data);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Event payload
         this.eventManager.emit('task:completed', { taskId: this.taskId, result });
     }
 
@@ -498,11 +500,13 @@ export class ProgressTracker implements IProgressTracker {
      * 이벤트 리스너 등록 (타입 안전한 구독)
      */
     on(event: 'progress', listener: (data: ProgressData) => void): Unsubscribe;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Event system requires flexible result type
     on(event: 'complete', listener: (result?: any) => void): Unsubscribe;
     on(event: 'error', listener: (error: Error) => void): Unsubscribe;
     on(event: 'pause', listener: () => void): Unsubscribe;
     on(event: 'resume', listener: () => void): Unsubscribe;
     on(event: 'cancel', listener: () => void): Unsubscribe;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Event system requires flexible args
     on(event: string, listener: (...args: any[]) => void): Unsubscribe {
         this.emitter.on(event, listener);
         return () => this.emitter.off(event, listener);
@@ -670,7 +674,9 @@ export class ProgressTrackingSystem {
     /**
      * 완료 표시
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Event result can be any type
     private showCompletion(taskId: string, result: any): void {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Event payload
         this.eventManager.emit('ui:task:complete', { taskId, result });
     }
 

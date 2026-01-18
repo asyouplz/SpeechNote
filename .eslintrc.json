@@ -12,7 +12,8 @@
     },
     "plugins": [
         "@typescript-eslint",
-        "unused-imports"
+        "unused-imports",
+        "obsidianmd"
     ],
     "extends": [
         "eslint:recommended",
