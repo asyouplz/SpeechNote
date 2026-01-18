@@ -2,7 +2,7 @@
  * Phase 3 설정 관리 API 구현
  */
 
-import { EventEmitter } from 'events';
+
 import type { App } from 'obsidian';
 import type {
     ISettingsAPI,
@@ -22,7 +22,7 @@ import { SettingsValidator } from './SettingsValidator';
  * 설정 API 구현
  */
 export class SettingsAPI implements ISettingsAPI {
-    private emitter = new EventEmitter();
+    private listeners: Map<string, Array<(...args: unknown[]) => void>> = new Map();
     private settings: SettingsSchema;
     private apiKeyManager: SecureApiKeyManager;
     private encryptor: SettingsEncryptor;
@@ -128,7 +128,7 @@ export class SettingsAPI implements ISettingsAPI {
         await this.save();
 
         // 이벤트 발생
-        this.emitter.emit('change', key, value, oldValue);
+        this.emit('change', key, value, oldValue);
     }
 
     /**
@@ -155,7 +155,7 @@ export class SettingsAPI implements ISettingsAPI {
         await this.save();
 
         // 이벤트 발생
-        this.emitter.emit('save');
+        this.emit('save');
     }
 
     /**
@@ -196,7 +196,7 @@ export class SettingsAPI implements ISettingsAPI {
     async migrate(fromVersion: string, toVersion: string): Promise<void> {
         this.settings = await this.migrator.migrate(this.settings, fromVersion, toVersion);
         await this.save();
-        this.emitter.emit('migrate', fromVersion, toVersion);
+        this.emit('migrate', fromVersion, toVersion);
     }
 
     /**
@@ -311,15 +311,60 @@ export class SettingsAPI implements ISettingsAPI {
         }
 
         await this.save();
-        this.emitter.emit('reset', scope);
+        this.emit('reset', scope);
     }
 
     /**
      * 이벤트 리스너 등록 - ISettingsAPI 인터페이스 구현
      */
     on(event: string, listener: (...args: unknown[]) => void): Unsubscribe {
-        this.emitter.on(event, listener);
-        return () => this.emitter.off(event, listener);
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, []);
+        }
+        const listeners = this.listeners.get(event)!;
+        // Prevent duplicate listeners
+        if (!listeners.includes(listener)) {
+            listeners.push(listener);
+        }
+        return () => {
+            const currentListeners = this.listeners.get(event);
+            if (currentListeners) {
+                const index = currentListeners.indexOf(listener);
+                if (index > -1) {
+                    currentListeners.splice(index, 1);
+                }
+            }
+        };
+    }
+
+    private emit(event: string, ...args: unknown[]): void {
+        const listeners = this.listeners.get(event);
+        if (listeners) {
+            listeners.forEach((listener) => {
+                try {
+                    listener(...args);
+                } catch (error) {
+                    console.error(`Settings event listener error for '${event}':`, error);
+                }
+            });
+        }
+    }
+
+    /**
+     * Cleanup all listeners to prevent memory leaks.
+     * 
+     * LIFECYCLE: This method should be called when the plugin is unloaded.
+     * In your main plugin class, call this in the onunload() method:
+     * 
+     * @example
+     * ```typescript
+     * onunload() {
+     *     this.settingsAPI.destroy();
+     * }
+     * ```
+     */
+    destroy(): void {
+        this.listeners.clear();
     }
 
     /**

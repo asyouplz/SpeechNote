@@ -132,7 +132,7 @@ export class FileValidator {
 
         // 4. 매직 바이트 검증 (버퍼가 제공된 경우)
         if (buffer && extensionResult.valid) {
-            const magicResult = await this.validateMagicBytes(file.extension, buffer);
+            const magicResult = this.validateMagicBytes(file.extension, buffer);
             if (!magicResult.valid) {
                 errors.push(magicResult.error!);
             }
@@ -263,10 +263,10 @@ export class FileValidator {
     private validateMagicBytes(
         extension: string,
         buffer: ArrayBuffer
-    ): Promise<{ valid: boolean; error?: ValidationError }> {
+    ): { valid: boolean; error?: ValidationError } {
         const format = this.SUPPORTED_FORMATS.get(extension.toLowerCase());
         if (!format || !format.magicBytes) {
-            return Promise.resolve({ valid: true }); // 매직 바이트 정보가 없으면 통과
+            return { valid: true }; // 매직 바이트 정보가 없으면 통과
         }
 
         const bytes = new Uint8Array(buffer);
@@ -274,14 +274,14 @@ export class FileValidator {
 
         // 버퍼가 너무 작은 경우
         if (bytes.length < offset + format.magicBytes.length) {
-            return Promise.resolve({
+            return {
                 valid: false,
                 error: {
                     code: 'INVALID_FILE_STRUCTURE',
                     message: '파일 구조가 올바르지 않습니다',
                     field: 'format',
                 },
-            });
+            };
         }
 
         // 매직 바이트 확인
@@ -296,23 +296,23 @@ export class FileValidator {
         }
 
         if (!magicMatch && !alternativeMatch) {
-            return Promise.resolve({
+            return {
                 valid: false,
                 error: {
                     code: 'INVALID_FORMAT',
                     message: `파일 내용이 예상된 ${extension.toUpperCase()} 형식과 일치하지 않습니다`,
                     field: 'format',
                 },
-            });
+            };
         }
 
-        return Promise.resolve({ valid: true });
+        return { valid: true };
     }
 
     /**
      * 메타데이터 추출
      */
-    private async extractMetadata(file: TFile, buffer?: ArrayBuffer): Promise<FileMetadata> {
+    private extractMetadata(file: TFile, buffer?: ArrayBuffer): FileMetadata {
         const metadata: FileMetadata = {
             path: file.path,
             name: file.name,
@@ -331,7 +331,7 @@ export class FileValidator {
 
         // 오디오 길이 추출 시도 (간단한 추정)
         if (buffer) {
-            metadata.duration = await this.estimateAudioDuration(file.extension, buffer);
+            metadata.duration = this.estimateAudioDuration(file.extension, buffer);
         }
 
         return metadata;
@@ -343,7 +343,7 @@ export class FileValidator {
     private estimateAudioDuration(
         extension: string,
         buffer: ArrayBuffer
-    ): Promise<number | undefined> {
+    ): number | undefined {
         // 실제 구현에서는 오디오 메타데이터 파서를 사용해야 함
         // 여기서는 대략적인 추정만 제공
 
@@ -360,10 +360,10 @@ export class FileValidator {
         const bitrate = avgBitrates[extension.toLowerCase()];
         if (bitrate) {
             // duration in seconds = (file size in KB * 8) / bitrate
-            return Promise.resolve(Math.round((fileSizeKB * 8) / bitrate));
+            return Math.round((fileSizeKB * 8) / bitrate);
         }
 
-        return Promise.resolve(undefined);
+        return undefined;
     }
 
     /**
