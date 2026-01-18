@@ -314,7 +314,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('OpenAI API endpoint (leave default unless using custom endpoint)')
+            .setDesc('Openai API endpoint (leave default unless using custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')
@@ -363,8 +363,8 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('OpenAI API key')
-            .setDesc('Enter your OpenAI API key for Whisper transcription')
+            .setName('Openai API key')
+            .setDesc('Enter your openai API key for whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -398,7 +398,7 @@ export class SettingsTab extends PluginSettingTab {
     private renderDeepgramApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('Deepgram API key')
-            .setDesc('Enter your Deepgram API key for transcription')
+            .setDesc('Enter your deepgram API key for transcription')
             .addText((text) => {
                 text.setPlaceholder('Enter Deepgram API key...')
                     .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))
@@ -522,7 +522,7 @@ export class SettingsTab extends PluginSettingTab {
         if (provider === 'whisper' || provider === 'auto') {
             new Setting(containerEl)
                 .setName('Whisper model')
-                .setDesc('Select the Whisper model to use')
+                .setDesc('Select the whisper model to use')
                 .addDropdown((dropdown) =>
                     dropdown
                         .addOption('whisper-1', 'Whisper v1 (default)')
@@ -538,7 +538,7 @@ export class SettingsTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName('Temperature')
             .setDesc(
-                'Sampling temperature (0-1). Lower values make output more focused and deterministic'
+                'Sampling temperature (0-1). lower values make output more focused and deterministic'
             )
             .addText((text) =>
                 text
@@ -646,7 +646,7 @@ export class SettingsTab extends PluginSettingTab {
             .setDesc('If you find this plugin helpful, consider buying me a coffee ☕')
             .addButton((button) =>
                 button
-                    .setButtonText('☕ Buy me a coffee')
+                    .setButtonText('☕ buy me a coffee')
                     .setCta()
                     .onClick(() => {
                         window.open('https://buymeacoffee.com/asyouplz', '_blank');

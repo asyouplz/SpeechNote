@@ -93,7 +93,7 @@ export class AdvancedSettingsPanel {
         // Primary Strategy
         new Setting(sectionEl)
             .setName('Primary strategy')
-            .setDesc('How the system selects providers when in Auto mode')
+            .setDesc('How the system selects providers when in auto mode')
             .addDropdown((dropdown) => {
                 dropdown
                     .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
@@ -206,7 +206,7 @@ export class AdvancedSettingsPanel {
         // Monthly Budget
         new Setting(sectionEl)
             .setName('Monthly budget')
-            .setDesc('Maximum monthly spending in USD (leave empty for unlimited)')
+            .setDesc('Maximum monthly spending in usd (leave empty for unlimited)')
             .addText((text) => {
                 text.setPlaceholder('50.00')
                     .setValue(this.plugin.settings.monthlyBudget?.toString() || '')
@@ -298,7 +298,7 @@ export class AdvancedSettingsPanel {
         // Post-processing
         new Setting(sectionEl)
             .setName('Enable post-processing')
-            .setDesc('Apply NLP corrections to improve accuracy')
+            .setDesc('Apply nlp corrections to improve accuracy')
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.enablePostProcessing || true)
@@ -325,7 +325,7 @@ export class AdvancedSettingsPanel {
 
         // Enable A/B Testing
         new Setting(sectionEl)
-            .setName('Enable A/B testing')
+            .setName('Enable a/b testing')
             .setDesc('Compare providers to find optimal configuration')
             .addToggle((toggle) => {
                 toggle.setValue(this.abTestEnabled).onChange(async (value) => {
@@ -360,7 +360,7 @@ export class AdvancedSettingsPanel {
             // Traffic Split
             new Setting(sectionEl)
                 .setName('Traffic split')
-                .setDesc('Percentage of requests for Provider A vs B')
+                .setDesc('Percentage of requests for provider a vs b')
                 .addSlider((slider) => {
                     slider
                         .setLimits(0, 100, 5)
@@ -399,7 +399,7 @@ export class AdvancedSettingsPanel {
             // Test Results Button
             new Setting(sectionEl)
                 .setName('View results')
-                .setDesc('See current A/B test results')
+                .setDesc('See current a/b test results')
                 .addButton((button) => {
                     button
                         .setButtonText('View results')

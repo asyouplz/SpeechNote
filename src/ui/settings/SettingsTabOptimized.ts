@@ -479,7 +479,7 @@ class ApiSettingsSection extends SectionRenderer {
 
     private createApiKeyInput(section: HTMLElement): void {
         const setting = new Setting(section)
-            .setName('API Key')
+            .setName('API key')
             .setDesc('OpenAI API 키를 입력하세요. (sk-로 시작)');
 
         const inputContainer = setting.controlEl.createDiv('api-key-container');
