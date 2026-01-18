@@ -39,8 +39,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Run ESLint
-        run: npm run lint
+      - name: Run ESLint (Obsidian plugin review bot compatible)
+        run: |
+          echo "🔍 Running ESLint with Obsidian plugin review bot compatible rules..."
+          npm run lint 2>&1 | tee lint-output.txt || true
+          
+          # Check if there were any errors
+          if grep -q "error" lint-output.txt; then
+            echo "❌ ESLint found errors"
+            npm run lint
+            exit 1
+          elif grep -q "warning" lint-output.txt; then
+            echo "⚠️ ESLint found warnings"
+            npm run lint
+          else
+            echo "✅ ESLint passed with no errors or warnings"
+          fi
         
       - name: Check formatting
         run: npm run format:check

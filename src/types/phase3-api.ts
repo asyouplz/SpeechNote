@@ -115,7 +115,7 @@ export interface ISettingsAPI {
 
 // 설정 관련 타입
 export type LanguageCode = 'en' | 'ko' | 'ja' | 'zh' | 'es' | 'fr' | 'de' | 'auto';
-export type ResetScope = 'all' | keyof SettingsSchema | Array<keyof SettingsSchema>;
+export type ResetScope = keyof SettingsSchema | Array<keyof SettingsSchema>;
 export type SettingsChangeListener = (key: string, newValue: unknown, oldValue: unknown) => void;
 export type Unsubscribe = () => void;
 
