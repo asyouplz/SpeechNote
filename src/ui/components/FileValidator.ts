@@ -340,10 +340,7 @@ export class FileValidator {
     /**
      * 오디오 길이 추정 (간단한 구현)
      */
-    private estimateAudioDuration(
-        extension: string,
-        buffer: ArrayBuffer
-    ): number | undefined {
+    private estimateAudioDuration(extension: string, buffer: ArrayBuffer): number | undefined {
         // 실제 구현에서는 오디오 메타데이터 파서를 사용해야 함
         // 여기서는 대략적인 추정만 제공
 

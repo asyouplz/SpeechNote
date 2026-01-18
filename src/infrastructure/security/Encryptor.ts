@@ -49,7 +49,7 @@ export class Encryptor implements IEncryptor {
             // Generate a unique salt for this vault
             const randomBytes = crypto.getRandomValues(new Uint8Array(32));
             this.vaultSalt = Array.from(randomBytes)
-                .map(b => b.toString(16).padStart(2, '0'))
+                .map((b) => b.toString(16).padStart(2, '0'))
                 .join('');
             this.app.saveLocalStorage('encryption_vault_salt', this.vaultSalt);
         }
@@ -107,7 +107,7 @@ export class Encryptor implements IEncryptor {
     /**
      * Legacy password generation for migration from older versions.
      * Attempts to reconstruct the old system password for backward compatibility.
-     * 
+     *
      * @deprecated This method uses platform-specific APIs (navigator, screen, Intl)
      * for backward compatibility only. It will be removed in a future version
      * when migration is no longer needed (target: v4.0.0).
@@ -121,7 +121,9 @@ export class Encryptor implements IEncryptor {
 
         // If none of the platform APIs are available, migration is not possible
         if (!hasNavigator && !hasScreen && !hasIntl) {
-            console.warn('Legacy migration not available: platform APIs not accessible in this environment');
+            console.warn(
+                'Legacy migration not available: platform APIs not accessible in this environment'
+            );
             return null;
         }
 
@@ -265,15 +267,15 @@ export class Encryptor implements IEncryptor {
 
 /**
  * 보안 API 키 관리자
- * 
+ *
  * Manages encrypted storage and retrieval of API keys using the Obsidian localStorage API.
- * 
+ *
  * @example Default usage with built-in Encryptor:
  * ```typescript
  * const manager = new SecureApiKeyManager(undefined, app);
  * await manager.storeApiKey('sk-...');
  * ```
- * 
+ *
  * @example Custom encryptor usage:
  * ```typescript
  * // Custom encryptor must implement IEncryptor interface
@@ -281,7 +283,7 @@ export class Encryptor implements IEncryptor {
  * const customEncryptor = new MyCustomEncryptor();
  * const manager = new SecureApiKeyManager(customEncryptor, app);
  * ```
- * 
+ *
  * @note When using a custom encryptor, ensure it handles initialization properly.
  * The built-in Encryptor requires setApp() to be called for per-vault salt generation,
  * which is done automatically. Custom implementations must handle this independently.
@@ -293,7 +295,7 @@ export class SecureApiKeyManager {
 
     /**
      * Creates a new SecureApiKeyManager instance.
-     * 
+     *
      * @param encryptor - Optional custom encryptor implementing IEncryptor interface.
      *                    If not provided, uses the built-in Encryptor with per-vault salt.
      *                    Note: Custom encryptors must handle their own key derivation/initialization.
@@ -312,7 +314,6 @@ export class SecureApiKeyManager {
             this.encryptor.setApp(app);
         }
     }
-
 
     /**
      * API 키 암호화 저장
@@ -359,7 +360,10 @@ export class SecureApiKeyManager {
                     return await this.encryptor.decrypt(encrypted);
                 } catch (newPasswordError) {
                     // Log the error before attempting legacy migration
-                    console.debug('New password decryption failed, attempting legacy migration:', newPasswordError);
+                    console.debug(
+                        'New password decryption failed, attempting legacy migration:',
+                        newPasswordError
+                    );
 
                     // Fall back to legacy password for migration
                     if (this.encryptor instanceof Encryptor) {
@@ -373,7 +377,10 @@ export class SecureApiKeyManager {
                             return decrypted;
                         } catch (legacyError) {
                             console.error('Legacy decryption also failed:', legacyError);
-                            new Notice('Failed to decrypt API key. Please re-enter your API key in settings.', 10000);
+                            new Notice(
+                                'Failed to decrypt API key. Please re-enter your API key in settings.',
+                                10000
+                            );
                             throw legacyError;
                         }
                     }
@@ -384,7 +391,7 @@ export class SecureApiKeyManager {
                 console.warn(`API key retrieval attempt ${attempt + 1} failed:`, error);
                 // Wait before retry
                 if (attempt < MAX_RETRIES - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await new Promise((resolve) => setTimeout(resolve, 100));
                 }
             }
         }

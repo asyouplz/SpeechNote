@@ -2,7 +2,6 @@
  * Phase 3 설정 관리 API 구현
  */
 
-
 import type { App } from 'obsidian';
 import type {
     ISettingsAPI,
@@ -352,10 +351,10 @@ export class SettingsAPI implements ISettingsAPI {
 
     /**
      * Cleanup all listeners to prevent memory leaks.
-     * 
+     *
      * LIFECYCLE: This method should be called when the plugin is unloaded.
      * In your main plugin class, call this in the onunload() method:
-     * 
+     *
      * @example
      * ```typescript
      * onunload() {
