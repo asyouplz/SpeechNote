@@ -16,7 +16,7 @@ import {
     IProgressNotification,
     Unsubscribe,
 } from '../../types/phase3-api';
-import { EventEmitter } from 'events';
+import { SimpleEventEmitter as EventEmitter } from '../../utils/SimpleEventEmitter';
 import { EventManager } from '../../application/EventManager';
 
 /**

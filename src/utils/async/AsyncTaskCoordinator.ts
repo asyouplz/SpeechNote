@@ -7,7 +7,7 @@
  */
 
 import { CancellablePromise, Semaphore, withTimeout, retryAsync } from './AsyncManager';
-import { EventEmitter } from 'events';
+import { SimpleEventEmitter as EventEmitter } from '../SimpleEventEmitter';
 
 /**
  * 작업 옵션
@@ -232,6 +232,7 @@ class AsyncTask<T> {
 
             // Create cancellable promise
             this.cancellablePromise = new CancellablePromise<T>(
+                // eslint-disable-next-line @typescript-eslint/no-misused-promises -- CancellablePromise executor requires async
                 async (resolve, reject, _signal) => {
                     try {
                         // Setup cancellation handler
@@ -347,7 +348,7 @@ export class ConcurrencyManager {
     private priorityQueue: PriorityQueue<() => void>;
     private activeCount = 0;
 
-    constructor(private maxConcurrency: number = 3) {
+    constructor(private maxConcurrency = 3) {
         this.semaphore = new Semaphore(maxConcurrency);
         this.priorityQueue = new PriorityQueue();
     }
