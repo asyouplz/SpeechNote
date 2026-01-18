@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/require-await -- Legacy callback patterns */
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison -- Type guard pattern */
+
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
 import { DeepgramSettings } from './components/DeepgramSettings';
@@ -46,8 +49,8 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         // Add main title
-        const titleEl = containerEl.createEl('h2', { text: 'Speech to text settings' });
-        this.debug('Title element created:', titleEl);
+        new Setting(containerEl).setName('Speech to text settings').setHeading();
+        this.debug('Title setting created');
 
         // Add debug info section at the top
         const debugSection = containerEl.createEl('details', { cls: 'speech-to-text-debug' });
@@ -104,7 +107,7 @@ export class SettingsTab extends PluginSettingTab {
             console.error('Error stack:', error instanceof Error ? error.stack : 'N/A');
 
             containerEl.empty();
-            containerEl.createEl('h2', { text: 'Settings error' });
+            new Setting(containerEl).setName('Settings error').setHeading();
             containerEl.createEl('p', {
                 text: 'Error loading settings. Please reload the plugin.',
                 cls: 'mod-warning',
@@ -117,7 +120,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createApiSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h3', { text: 'API configuration' });
+        new Setting(containerEl).setName('API configuration').setHeading();
 
         // Provider 선택 섹션
         const providerContainer = containerEl.createEl('div', { cls: 'provider-selection' });
@@ -248,7 +251,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private renderAutoProviderSettings(containerEl: HTMLElement): void {
-        containerEl.createEl('h4', { text: 'Automatic provider selection' });
+        new Setting(containerEl).setName('Automatic provider selection').setHeading();
 
         // Selection Strategy
         new Setting(containerEl)
@@ -292,7 +295,7 @@ export class SettingsTab extends PluginSettingTab {
             });
 
         // API Keys for both providers
-        containerEl.createEl('h5', { text: 'Provider API keys' });
+        new Setting(containerEl).setName('Provider API keys').setHeading();
         containerEl.createEl('p', {
             text: 'Configure API keys for each provider to enable automatic selection',
             cls: 'setting-item-description',
@@ -306,7 +309,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private renderWhisperSettings(containerEl: HTMLElement): void {
-        containerEl.createEl('h4', { text: 'OpenAI Whisper configuration' });
+        new Setting(containerEl).setName('OpenAI Whisper configuration').setHeading();
 
         // Whisper API Key
         this.renderWhisperApiKey(containerEl);
@@ -446,7 +449,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createGeneralSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h3', { text: 'General settings' });
+        new Setting(containerEl).setName('General settings').setHeading();
 
         // Language setting
         new Setting(containerEl)
@@ -515,7 +518,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createAudioSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h3', { text: 'Audio settings' });
+        new Setting(containerEl).setName('Audio settings').setHeading();
 
         // Model selection - Provider에 따라 다르게 표시
         const provider = this.plugin.settings.provider || 'auto';
@@ -568,7 +571,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createAdvancedSection(containerEl: HTMLElement): void {
-        containerEl.createEl('h3', { text: 'Advanced settings' });
+        new Setting(containerEl).setName('Advanced settings').setHeading();
 
         // Enable cache
         new Setting(containerEl)
@@ -632,7 +635,7 @@ export class SettingsTab extends PluginSettingTab {
         // 구분선 추가
         containerEl.createEl('hr', { cls: 'speech-to-text-separator' });
 
-        containerEl.createEl('h3', { text: 'Support' });
+        new Setting(containerEl).setName('Support').setHeading();
 
         // 감사 메시지
         containerEl.createEl('p', {

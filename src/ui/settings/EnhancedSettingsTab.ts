@@ -2,6 +2,9 @@
  * Phase 3 개선된 설정 탭 UI
  */
 
+/* eslint-disable @typescript-eslint/await-thenable -- Legacy patterns */
+/* eslint-disable @typescript-eslint/no-misused-promises -- Event handler patterns */
+
 import { App, PluginSettingTab, Setting, Notice, Modal, ButtonComponent } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
 import { SettingsAPI } from '../../infrastructure/api/SettingsAPI';
@@ -253,7 +256,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private showGeneralSettings(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        section.createEl('h3', { text: 'General settings' });
+        new Setting(section).setName('General settings').setHeading();
 
         // 언어 설정
         new Setting(section)
@@ -348,7 +351,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 알림 설정
         const notificationSection = section.createDiv({ cls: 'sub-section' });
-        notificationSection.createEl('h4', { text: 'Notifications' });
+        new Setting(notificationSection).setName('Notifications').setHeading();
 
         new Setting(notificationSection)
             .setName('Enable notifications')
@@ -387,7 +390,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showApiSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        section.createEl('h3', { text: 'API configuration' });
+        new Setting(section).setName('API configuration').setHeading();
 
         // API 프로바이더
         new Setting(section)
@@ -573,7 +576,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showAudioSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        section.createEl('h3', { text: 'Audio settings' });
+        new Setting(section).setName('Audio settings').setHeading();
 
         const audio = await this.settingsAPI.get('audio');
 
@@ -686,13 +689,13 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showAdvancedSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        section.createEl('h3', { text: 'Advanced settings' });
+        new Setting(section).setName('Advanced settings').setHeading();
 
         const advanced = await this.settingsAPI.get('advanced');
 
         // 캐시 설정
         const cacheSection = section.createDiv({ cls: 'sub-section' });
-        cacheSection.createEl('h4', { text: 'Cache settings' });
+        new Setting(cacheSection).setName('Cache settings').setHeading();
 
         new Setting(cacheSection)
             .setName('Enable cache')
@@ -737,7 +740,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 성능 설정
         const perfSection = section.createDiv({ cls: 'sub-section' });
-        perfSection.createEl('h4', { text: 'Performance settings' });
+        new Setting(perfSection).setName('Performance settings').setHeading();
 
         new Setting(perfSection)
             .setName('Max concurrency')
@@ -797,7 +800,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 디버그 설정
         const debugSection = section.createDiv({ cls: 'sub-section' });
-        debugSection.createEl('h4', { text: 'Debug settings' });
+        new Setting(debugSection).setName('Debug settings').setHeading();
 
         new Setting(debugSection)
             .setName('Enable debug mode')
@@ -847,7 +850,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showShortcutSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        section.createEl('h3', { text: 'Keyboard shortcuts' });
+        new Setting(section).setName('Keyboard shortcuts').setHeading();
 
         const shortcuts = await this.settingsAPI.get('shortcuts');
 
@@ -904,7 +907,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private showAbout(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'settings-section about-section' });
 
-        section.createEl('h3', { text: 'About speech to text' });
+        new Setting(section).setName('About speech to text').setHeading();
 
         // 버전 정보
         const versionInfo = section.createDiv({ cls: 'version-info' });
@@ -934,7 +937,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 통계
         const statsSection = section.createDiv({ cls: 'stats-section' });
-        statsSection.createEl('h4', { text: 'Usage statistics' });
+        new Setting(statsSection).setName('Usage statistics').setHeading();
 
         const stats = statsSection.createDiv({ cls: 'stats-grid' });
 
@@ -946,7 +949,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 캐시 관리
         const cacheSection = section.createDiv({ cls: 'cache-management' });
-        cacheSection.createEl('h4', { text: 'Cache management' });
+        new Setting(cacheSection).setName('Cache management').setHeading();
 
         new ButtonComponent(cacheSection)
             .setButtonText('Clear cache')
@@ -1167,7 +1170,7 @@ class ConfirmModal extends Modal {
     onOpen(): void {
         const { contentEl } = this;
 
-        contentEl.createEl('h2', { text: this.title });
+        new Setting(contentEl).setName(this.title).setHeading();
         contentEl.createEl('p', { text: this.message });
 
         const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
@@ -1199,12 +1202,12 @@ class HelpModal extends Modal {
     onOpen(): void {
         const { contentEl } = this;
 
-        contentEl.createEl('h2', { text: 'Speech to text help' });
+        new Setting(contentEl).setName('Speech to text help').setHeading();
 
         const helpContent = contentEl.createDiv({ cls: 'help-content' });
 
         // 도움말 내용
-        helpContent.createEl('h3', { text: 'Getting started' });
+        new Setting(helpContent).setName('Getting started').setHeading();
         helpContent.createEl('p', {
             text: '1. Configure your API key in the API settings tab',
         });
@@ -1215,13 +1218,13 @@ class HelpModal extends Modal {
             text: '3. Use the keyboard shortcuts or buttons to start transcription',
         });
 
-        helpContent.createEl('h3', { text: 'Keyboard shortcuts' });
+        new Setting(helpContent).setName('Keyboard shortcuts').setHeading();
         const shortcutList = helpContent.createEl('ul');
         shortcutList.createEl('li', { text: 'Ctrl+Shift+S: Start transcription' });
         shortcutList.createEl('li', { text: 'Ctrl+Shift+X: Stop transcription' });
         shortcutList.createEl('li', { text: 'Ctrl+Shift+P: Pause transcription' });
 
-        helpContent.createEl('h3', { text: 'Troubleshooting' });
+        new Setting(helpContent).setName('Troubleshooting').setHeading();
         helpContent.createEl('p', {
             text: 'If transcription is not working, check:',
         });
