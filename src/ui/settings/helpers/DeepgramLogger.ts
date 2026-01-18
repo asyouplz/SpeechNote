@@ -10,7 +10,7 @@ export class DeepgramLogger {
     private enabled = true;
     private minLevel: LogLevel = LOG_LEVEL.INFO;
 
-    private constructor() {}
+    private constructor() { }
 
     public static getInstance(): DeepgramLogger {
         if (!DeepgramLogger.instance) {
@@ -47,7 +47,7 @@ export class DeepgramLogger {
      */
     public info(message: string, ...args: any[]): void {
         if (this.shouldLog(LOG_LEVEL.INFO)) {
-            console.info(`${LOG_PREFIX} ${message}`, ...args);
+            console.debug(`${LOG_PREFIX} ${message}`, ...args);
         }
     }
 

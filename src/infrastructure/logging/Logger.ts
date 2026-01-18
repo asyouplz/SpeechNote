@@ -3,7 +3,7 @@ import type { ILogger } from '../../types';
 export { ILogger };
 
 export class Logger implements ILogger {
-    constructor(private prefix: string) {}
+    constructor(private prefix: string) { }
 
     debug(message: string, context?: any): void {
         if (process.env.NODE_ENV === 'development') {
@@ -12,7 +12,7 @@ export class Logger implements ILogger {
     }
 
     info(message: string, context?: any): void {
-        console.info(`[${this.prefix}] INFO:`, message, context || '');
+        console.debug(`[${this.prefix}] INFO:`, message, context || '');
     }
 
     warn(message: string, context?: any): void {
