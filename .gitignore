@@ -17,7 +17,9 @@ out/
 !tests/**/*.ts
 !test/**/*.js
 !test/**/*.ts
-!scripts/*.js
+
+# Scripts (internal tooling)
+scripts/
 
 # Testing
 coverage/

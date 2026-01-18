@@ -1,7 +1,6 @@
 import type { ILogger, WhisperOptions, WhisperResponse } from '../../../../types';
 import {
     ITranscriber,
-    TranscriptionProvider,
     TranscriptionOptions,
     TranscriptionResponse,
     ProviderCapabilities,
