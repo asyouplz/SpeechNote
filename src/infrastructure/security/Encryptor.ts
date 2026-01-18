@@ -3,6 +3,12 @@
  * Web Crypto API를 사용한 안전한 데이터 암호화/복호화
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Obsidian's loadLocalStorage returns any */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access -- Required for settings field access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument -- Required for JSON.parse results */
+/* eslint-disable @typescript-eslint/no-unsafe-return -- Required for settings object return */
+/* eslint-disable @typescript-eslint/no-explicit-any -- SettingsEncryptor handles dynamic settings */
+
 import { type App, Notice } from 'obsidian';
 
 export interface EncryptedData {
@@ -130,6 +136,8 @@ export class Encryptor implements IEncryptor {
         try {
             // LEGACY CODE - Required for migration from pre-3.1.0 versions only
             // Uses platform APIs that are deprecated for new functionality
+            // NOTE: navigator/screen API usage below is intentional for backward compatibility
+            // Will be removed in v4.0.0 when migration period ends
             const factors = [
                 hasNavigator ? navigator.userAgent : '',
                 hasNavigator ? navigator.language : '',
