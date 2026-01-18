@@ -1,13 +1,14 @@
 import { Setting } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
 import { Notice } from 'obsidian';
+import { ConfirmationModal } from '../../modals/ConfirmationModal';
 
 /**
  * 고급 설정 컴포넌트
  * 캐시, 로깅, 성능 관련 설정을 관리
  */
 export class AdvancedSettings {
-    constructor(private plugin: SpeechToTextPlugin) {}
+    constructor(private plugin: SpeechToTextPlugin) { }
 
     render(containerEl: HTMLElement): void {
         // 캐시 설정 섹션
@@ -40,10 +41,14 @@ export class AdvancedSettings {
 
                     if (!value) {
                         // 캐시 비활성화 시 기존 캐시 삭제 옵션
-                        const shouldClear = confirm('기존 캐시를 삭제하시겠습니까?');
-                        if (shouldClear) {
-                            await this.clearCache();
-                        }
+                        new ConfirmationModal(
+                            this.plugin.app,
+                            'Clear cache',
+                            '기존 캐시를 삭제하시겠습니까?',
+                            async () => {
+                                await this.clearCache();
+                            }
+                        ).open();
                     }
                 })
             );
@@ -400,11 +405,15 @@ export class AdvancedSettings {
      * 로그 삭제
      */
     private clearLogs(): void {
-        const confirmed = confirm('모든 로그를 삭제하시겠습니까?');
-        if (confirmed) {
-            // 로그 삭제 로직
-            new Notice('로그가 삭제되었습니다');
-        }
+        new ConfirmationModal(
+            this.plugin.app,
+            'Clear logs',
+            '모든 로그를 삭제하시겠습니까?',
+            () => {
+                // 로그 삭제 로직
+                new Notice('로그가 삭제되었습니다');
+            }
+        ).open();
     }
 
     /**

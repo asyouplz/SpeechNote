@@ -2,6 +2,7 @@ import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
 import { DeepgramSettings } from './components/DeepgramSettings';
 import { SelectionStrategy } from '../../infrastructure/api/providers/ITranscriber';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 
 /**
  * 간소화된 설정 탭 UI
@@ -262,7 +263,7 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('ab_test', 'A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
-                            SelectionStrategy.PERFORMANCE_OPTIMIZED
+                        SelectionStrategy.PERFORMANCE_OPTIMIZED
                     )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {
@@ -606,21 +607,23 @@ export class SettingsTab extends PluginSettingTab {
                     .setButtonText('Reset')
                     .setWarning()
                     .onClick(async () => {
-                        const confirmed = confirm(
-                            'Are you sure you want to reset all settings to defaults?'
-                        );
-                        if (confirmed) {
-                            // Import default settings
-                            const { DEFAULT_SETTINGS } = await import(
-                                '../../domain/models/Settings'
-                            );
-                            this.plugin.settings = { ...DEFAULT_SETTINGS };
-                            await this.plugin.saveSettings();
+                        new ConfirmationModal(
+                            this.app,
+                            'Reset settings',
+                            'Are you sure you want to reset all settings to defaults?',
+                            async () => {
+                                // Import default settings
+                                const { DEFAULT_SETTINGS } = await import(
+                                    '../../domain/models/Settings'
+                                );
+                                this.plugin.settings = { ...DEFAULT_SETTINGS };
+                                await this.plugin.saveSettings();
 
-                            // Refresh the display
-                            this.display();
-                            new Notice('Settings reset to defaults');
-                        }
+                                // Refresh the display
+                                this.display();
+                                new Notice('Settings reset to defaults');
+                            }
+                        ).open();
                     })
             );
     }
