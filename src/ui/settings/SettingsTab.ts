@@ -2,6 +2,7 @@ import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
 import { DeepgramSettings } from './components/DeepgramSettings';
 import { SelectionStrategy } from '../../infrastructure/api/providers/ITranscriber';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 
 /**
  * 간소화된 설정 탭 UI
@@ -313,7 +314,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('OpenAI API endpoint (leave default unless using custom endpoint)')
+            .setDesc('Openai API endpoint (leave default unless using custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')
@@ -362,8 +363,8 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('OpenAI API key')
-            .setDesc('Enter your OpenAI API key for Whisper transcription')
+            .setName('Openai API key')
+            .setDesc('Enter your openai API key for whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -397,7 +398,7 @@ export class SettingsTab extends PluginSettingTab {
     private renderDeepgramApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('Deepgram API key')
-            .setDesc('Enter your Deepgram API key for transcription')
+            .setDesc('Enter your deepgram API key for transcription')
             .addText((text) => {
                 text.setPlaceholder('Enter Deepgram API key...')
                     .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))
@@ -521,7 +522,7 @@ export class SettingsTab extends PluginSettingTab {
         if (provider === 'whisper' || provider === 'auto') {
             new Setting(containerEl)
                 .setName('Whisper model')
-                .setDesc('Select the Whisper model to use')
+                .setDesc('Select the whisper model to use')
                 .addDropdown((dropdown) =>
                     dropdown
                         .addOption('whisper-1', 'Whisper v1 (default)')
@@ -537,7 +538,7 @@ export class SettingsTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName('Temperature')
             .setDesc(
-                'Sampling temperature (0-1). Lower values make output more focused and deterministic'
+                'Sampling temperature (0-1). lower values make output more focused and deterministic'
             )
             .addText((text) =>
                 text
@@ -606,21 +607,23 @@ export class SettingsTab extends PluginSettingTab {
                     .setButtonText('Reset')
                     .setWarning()
                     .onClick(async () => {
-                        const confirmed = confirm(
-                            'Are you sure you want to reset all settings to defaults?'
-                        );
-                        if (confirmed) {
-                            // Import default settings
-                            const { DEFAULT_SETTINGS } = await import(
-                                '../../domain/models/Settings'
-                            );
-                            this.plugin.settings = { ...DEFAULT_SETTINGS };
-                            await this.plugin.saveSettings();
+                        new ConfirmationModal(
+                            this.app,
+                            'Reset settings',
+                            'Are you sure you want to reset all settings to defaults?',
+                            async () => {
+                                // Import default settings
+                                const { DEFAULT_SETTINGS } = await import(
+                                    '../../domain/models/Settings'
+                                );
+                                this.plugin.settings = { ...DEFAULT_SETTINGS };
+                                await this.plugin.saveSettings();
 
-                            // Refresh the display
-                            this.display();
-                            new Notice('Settings reset to defaults');
-                        }
+                                // Refresh the display
+                                this.display();
+                                new Notice('Settings reset to defaults');
+                            }
+                        ).open();
                     })
             );
     }
@@ -643,7 +646,7 @@ export class SettingsTab extends PluginSettingTab {
             .setDesc('If you find this plugin helpful, consider buying me a coffee ☕')
             .addButton((button) =>
                 button
-                    .setButtonText('☕ Buy me a coffee')
+                    .setButtonText('☕ buy me a coffee')
                     .setCta()
                     .onClick(() => {
                         window.open('https://buymeacoffee.com/asyouplz', '_blank');

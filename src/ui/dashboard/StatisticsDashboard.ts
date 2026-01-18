@@ -8,6 +8,8 @@
 
 import type { App } from 'obsidian';
 import { EventManager } from '../../application/EventManager';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
+import { Notice } from 'obsidian';
 
 export interface TranscriptionRecord {
     id: string;
@@ -693,10 +695,22 @@ export class StatisticsDashboard {
      * 데이터 초기화
      */
     private clearData() {
-        if (confirm('모든 통계 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-            StatisticsStore.clear();
-            this.refresh();
+        // StatisticsStore에 app이 설정되어 있어야 함
+        const app = StatisticsStore['app']; // private 필드 접근
+        if (!app) {
+            new Notice('앱 인스턴스를 찾을 수 없습니다');
+            return;
         }
+
+        new ConfirmationModal(
+            app,
+            'Clear statistics',
+            '모든 통계 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+            () => {
+                StatisticsStore.clear();
+                this.refresh();
+            }
+        ).open();
     }
 
     /**

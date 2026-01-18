@@ -173,7 +173,7 @@ export class ProviderSettings {
      */
     private renderAdvancedToggle(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Advanced Settings')
+            .setName('Advanced settings')
             .setDesc('Show advanced configuration options')
             .addToggle((toggle) => {
                 toggle.setValue(this.isAdvancedMode).onChange((value) => {
@@ -215,7 +215,7 @@ export class ProviderSettings {
      */
     private renderSelectionStrategy(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Selection Strategy')
+            .setName('Selection strategy')
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
@@ -242,8 +242,8 @@ export class ProviderSettings {
      */
     private renderCostSettings(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Monthly Cost Limit')
-            .setDesc('Set a maximum monthly spending limit (USD)')
+            .setName('Monthly cost limit')
+            .setDesc('Set a maximum monthly spending limit (usd)')
             .addText((text) => {
                 text.setPlaceholder('50.00')
                     .setValue(this.plugin.settings.costLimit?.toString() || '')
@@ -262,7 +262,7 @@ export class ProviderSettings {
      */
     private renderQualitySettings(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Minimum Quality Threshold')
+            .setName('Minimum quality threshold')
             .setDesc('Minimum acceptable transcription accuracy (0-100%)')
             .addSlider((slider) => {
                 slider
@@ -282,7 +282,7 @@ export class ProviderSettings {
         const abTestEl = containerEl.createDiv({ cls: 'ab-test-settings' });
 
         new Setting(abTestEl)
-            .setName('Enable A/B Testing')
+            .setName('Enable a/b testing')
             .setDesc('Compare providers to find the best one for your use case')
             .addToggle((toggle) => {
                 toggle
@@ -305,8 +305,8 @@ export class ProviderSettings {
      */
     private renderABTestDetails(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Traffic Split')
-            .setDesc('Percentage of requests to send to Whisper vs Deepgram')
+            .setName('Traffic split')
+            .setDesc('Percentage of requests to send to whisper vs deepgram')
             .addSlider((slider) => {
                 const currentSplit = this.plugin.settings.abTestSplit || 50;
 

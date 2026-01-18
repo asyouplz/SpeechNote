@@ -12,7 +12,7 @@ export class Logger implements ILogger {
     }
 
     info(message: string, context?: any): void {
-        console.info(`[${this.prefix}] INFO:`, message, context || '');
+        console.debug(`[${this.prefix}] INFO:`, message, context || '');
     }
 
     warn(message: string, context?: any): void {

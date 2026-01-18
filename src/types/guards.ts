@@ -22,8 +22,10 @@ export function isError(value: unknown): value is Error {
  * Promise 타입 가드
  */
 export function isPromise<T = unknown>(value: unknown): value is Promise<T> {
-    const then =
-        typeof value === 'object' && value !== null ? Reflect.get(value, 'then') : undefined;
+    if (!(typeof value === 'object' && value !== null)) {
+        return false;
+    }
+    const then: unknown = Reflect.get(value, 'then');
     return value instanceof Promise || typeof then === 'function';
 }
 

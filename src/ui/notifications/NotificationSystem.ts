@@ -81,7 +81,7 @@ export class ToastNotification {
      * Toast 알림 표시
      */
     static show(options: NotificationOptions): string {
-        const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
         const position = options.position || this.defaultPosition;
 
         this.initContainer(position);

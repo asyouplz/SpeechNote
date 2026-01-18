@@ -61,8 +61,8 @@ export class SimpleSettingsTab extends PluginSettingTab {
             // Auto 모드일 때는 양쪽 API 키 모두 표시
             if (provider === 'auto' || provider === 'whisper') {
                 new Setting(containerEl)
-                    .setName('OpenAI API key')
-                    .setDesc('Enter your OpenAI API key for Whisper')
+                    .setName('Openai API key')
+                    .setDesc('Enter your openai API key for whisper')
                     .addText((text) =>
                         text
                             .setPlaceholder('sk-...')
@@ -78,7 +78,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             if (provider === 'auto' || provider === 'deepgram') {
                 new Setting(containerEl)
                     .setName('Deepgram API key')
-                    .setDesc('Enter your Deepgram API key')
+                    .setDesc('Enter your deepgram API key')
                     .addText((text) =>
                         text
                             .setPlaceholder('Enter Deepgram API key...')
@@ -93,7 +93,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 if (provider === 'deepgram') {
                     new Setting(containerEl)
                         .setName('Deepgram model')
-                        .setDesc('Select the Deepgram model to use')
+                        .setDesc('Select the deepgram model to use')
                         .addDropdown((dropdown) =>
                             dropdown
                                 .addOption('nova-2', 'Nova 2 (premium)')
