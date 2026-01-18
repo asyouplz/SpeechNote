@@ -61,9 +61,9 @@ class NoopChannel implements NotificationChannel {
         return Promise.resolve();
     }
 
-    dismiss(): void {}
+    dismiss(): void { }
 
-    dismissAll(): void {}
+    dismissAll(): void { }
 }
 
 /**
@@ -386,7 +386,7 @@ class ToastChannel implements NotificationChannel {
     }
 
     private generateId(): string {
-        return `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return `toast-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     }
 }
 

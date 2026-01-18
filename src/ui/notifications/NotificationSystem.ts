@@ -81,7 +81,7 @@ export class ToastNotification {
      * Toast 알림 표시
      */
     static show(options: NotificationOptions): string {
-        const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
         const position = options.position || this.defaultPosition;
 
         this.initContainer(position);
@@ -398,9 +398,8 @@ export class ModalNotification {
 
                 options.actions.forEach((action) => {
                     const button = createEl('button', {
-                        cls: `modal-notification__action modal-notification__action--${
-                            action.style || 'secondary'
-                        }`,
+                        cls: `modal-notification__action modal-notification__action--${action.style || 'secondary'
+                            }`,
                         text: action.label,
                     });
                     button.addEventListener('click', () => {
@@ -665,8 +664,8 @@ export class NotificationManager {
             title: title || '확인',
             message,
             actions: [
-                { label: '취소', callback: () => {}, style: 'secondary' },
-                { label: '확인', callback: () => {}, style: 'primary' },
+                { label: '취소', callback: () => { }, style: 'secondary' },
+                { label: '확인', callback: () => { }, style: 'primary' },
             ],
         });
     }
