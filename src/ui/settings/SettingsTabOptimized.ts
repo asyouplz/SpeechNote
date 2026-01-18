@@ -9,6 +9,7 @@ import { EventListenerManager } from '../../utils/memory/MemoryManager';
 import { debounceAsync } from '../../utils/async/AsyncManager';
 import { GlobalErrorManager, ErrorType, ErrorSeverity } from '../../utils/error/ErrorManager';
 import { DEFAULT_SETTINGS } from '../../domain/models/Settings';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 
 /**
  * 최적화된 설정 탭 컴포넌트
@@ -408,7 +409,7 @@ interface SettingsState {
  * 섹션 렌더러 기본 클래스
  */
 abstract class SectionRenderer {
-    constructor(protected container: HTMLElement, protected eventManager?: EventListenerManager) {}
+    constructor(protected container: HTMLElement, protected eventManager?: EventListenerManager) { }
 
     abstract render(): void;
 
@@ -540,7 +541,7 @@ class SecureApiKeyInput {
         private container: HTMLElement,
         private initialValue: string,
         private eventManager: EventListenerManager
-    ) {}
+    ) { }
 
     render(): void {
         // Create masked input
@@ -730,22 +731,25 @@ class SettingsFooter extends SectionRenderer {
     }
 
     private async resetSettings(): Promise<void> {
-        if (!confirm('모든 설정을 기본값으로 재설정하시겠습니까?')) {
-            return;
-        }
+        new ConfirmationModal(
+            this.plugin.app,
+            'Reset settings',
+            '모든 설정을 기본값으로 재설정하시겠습니까?',
+            async () => {
+                try {
+                    // Reset to defaults
+                    this.plugin.settings = { ...DEFAULT_SETTINGS };
+                    await this.plugin.saveSettings();
 
-        try {
-            // Reset to defaults
-            this.plugin.settings = { ...DEFAULT_SETTINGS };
-            await this.plugin.saveSettings();
+                    new Notice('설정을 재설정했습니다');
 
-            new Notice('설정을 재설정했습니다');
-
-            // Refresh UI
-            // Note: We need to refresh the main settings tab, not from within footer
-            // This should be handled by the parent component
-        } catch (error) {
-            new Notice('설정 재설정 실패');
-        }
+                    // Refresh UI
+                    // Note: We need to refresh the main settings tab, not from within footer
+                    // This should be handled by the parent component
+                } catch (error) {
+                    new Notice('설정 재설정 실패');
+                }
+            }
+        ).open();
     }
 }
