@@ -8,7 +8,7 @@ import { ConfirmationModal } from '../../modals/ConfirmationModal';
  * 캐시, 로깅, 성능 관련 설정을 관리
  */
 export class AdvancedSettings {
-    constructor(private plugin: SpeechToTextPlugin) { }
+    constructor(private plugin: SpeechToTextPlugin) {}
 
     render(containerEl: HTMLElement): void {
         // 캐시 설정 섹션

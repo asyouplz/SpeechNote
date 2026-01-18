@@ -409,7 +409,7 @@ interface SettingsState {
  * 섹션 렌더러 기본 클래스
  */
 abstract class SectionRenderer {
-    constructor(protected container: HTMLElement, protected eventManager?: EventListenerManager) { }
+    constructor(protected container: HTMLElement, protected eventManager?: EventListenerManager) {}
 
     abstract render(): void;
 
@@ -541,7 +541,7 @@ class SecureApiKeyInput {
         private container: HTMLElement,
         private initialValue: string,
         private eventManager: EventListenerManager
-    ) { }
+    ) {}
 
     render(): void {
         // Create masked input

@@ -398,8 +398,9 @@ export class ModalNotification {
 
                 options.actions.forEach((action) => {
                     const button = createEl('button', {
-                        cls: `modal-notification__action modal-notification__action--${action.style || 'secondary'
-                            }`,
+                        cls: `modal-notification__action modal-notification__action--${
+                            action.style || 'secondary'
+                        }`,
                         text: action.label,
                     });
                     button.addEventListener('click', () => {
@@ -664,8 +665,8 @@ export class NotificationManager {
             title: title || '확인',
             message,
             actions: [
-                { label: '취소', callback: () => { }, style: 'secondary' },
-                { label: '확인', callback: () => { }, style: 'primary' },
+                { label: '취소', callback: () => {}, style: 'secondary' },
+                { label: '확인', callback: () => {}, style: 'primary' },
             ],
         });
     }

@@ -61,9 +61,9 @@ class NoopChannel implements NotificationChannel {
         return Promise.resolve();
     }
 
-    dismiss(): void { }
+    dismiss(): void {}
 
-    dismissAll(): void { }
+    dismissAll(): void {}
 }
 
 /**
