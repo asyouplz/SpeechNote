@@ -1,0 +1,82 @@
+{
+    "root": true,
+    "env": {
+        "node": true,
+        "es2021": true
+    },
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": 2021,
+        "sourceType": "module",
+        "project": "./tsconfig.json"
+    },
+    "plugins": [
+        "@typescript-eslint",
+        "unused-imports"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/recommended-type-checked",
+        "prettier"
+    ],
+    "ignorePatterns": [
+        "main.js",
+        "*.cjs",
+        ".*.js",
+        "esbuild.config.mjs",
+        "node_modules/**",
+        "dist/**",
+        "build/**",
+        "src/testing/**"
+    ],
+    "rules": {
+        "unused-imports/no-unused-imports": "error",
+        "unused-imports/no-unused-vars": [
+            "error",
+            {
+                "vars": "all",
+                "varsIgnorePattern": "^_",
+                "args": "after-used",
+                "argsIgnorePattern": "^_",
+                "ignoreRestSiblings": true
+            }
+        ],
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/require-await": "error",
+        "@typescript-eslint/no-unnecessary-type-assertion": "error",
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/await-thenable": "error",
+        "@typescript-eslint/no-misused-promises": "error",
+        "@typescript-eslint/ban-types": [
+            "error",
+            {
+                "types": {
+                    "{}": {
+                        "message": "Use 'object' or 'unknown' instead of the empty object type '{}'",
+                        "fixWith": "object"
+                    }
+                },
+                "extendDefaults": true
+            }
+        ],
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/no-non-null-assertion": "warn",
+        "@typescript-eslint/no-empty-function": "warn",
+        "@typescript-eslint/no-var-requires": "warn",
+        "@typescript-eslint/no-inferrable-types": "warn",
+        "no-console": [
+            "error",
+            {
+                "allow": [
+                    "warn",
+                    "error",
+                    "debug"
+                ]
+            }
+        ],
+        "prefer-const": "error",
+        "no-var": "error",
+        "no-case-declarations": "off"
+    }
+}

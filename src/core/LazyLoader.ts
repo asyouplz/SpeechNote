@@ -155,9 +155,9 @@ export class LazyLoader {
 
         // Idle 시간에 백그라운드 로드
         if ('requestIdleCallback' in window) {
-            requestIdleCallback(() => this.processPreloadQueue());
+            requestIdleCallback(() => void this.processPreloadQueue());
         } else {
-            setTimeout(() => this.processPreloadQueue(), 1000);
+            setTimeout(() => void this.processPreloadQueue(), 1000);
         }
     }
 

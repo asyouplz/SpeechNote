@@ -1,0 +1,173 @@
+name: Version Bump
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      custom_version:
+        description: 'Custom version (e.g., 3.1.0, overrides bump_type)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    name: Bump Version
+    runs-on: ubuntu-latest
+    # PR이 merge되었고 특정 라벨이 있거나, workflow_dispatch인 경우에만 실행
+    if: |
+      (github.event.pull_request.merged == true && 
+       (contains(github.event.pull_request.labels.*.name, 'bump:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'bump:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'bump:major'))) ||
+      github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+      - name: Determine version bump type
+        id: bump-type
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ -n "${{ github.event.inputs.custom_version }}" ]]; then
+              echo "bump_type=custom" >> $GITHUB_OUTPUT
+              echo "custom_version=${{ github.event.inputs.custom_version }}" >> $GITHUB_OUTPUT
+            else
+              echo "bump_type=${{ github.event.inputs.bump_type }}" >> $GITHUB_OUTPUT
+            fi
+          else
+            # PR 라벨에서 bump type 결정
+            if [[ "${{ contains(github.event.pull_request.labels.*.name, 'bump:major') }}" == "true" ]]; then
+              echo "bump_type=major" >> $GITHUB_OUTPUT
+            elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'bump:minor') }}" == "true" ]]; then
+              echo "bump_type=minor" >> $GITHUB_OUTPUT
+            else
+              echo "bump_type=patch" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+      - name: Get current version
+        id: current-version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./manifest.json').version")
+          echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $CURRENT_VERSION"
+          
+      - name: Calculate new version
+        id: new-version
+        run: |
+          CURRENT="${{ steps.current-version.outputs.current }}"
+          BUMP_TYPE="${{ steps.bump-type.outputs.bump_type }}"
+          
+          if [[ "$BUMP_TYPE" == "custom" ]]; then
+            NEW_VERSION="${{ steps.bump-type.outputs.custom_version }}"
+          else
+            # 현재 버전을 major.minor.patch로 분리
+            IFS='.' read -r -a parts <<< "$CURRENT"
+            major="${parts[0]}"
+            minor="${parts[1]}"
+            patch="${parts[2]}"
+            
+            case "$BUMP_TYPE" in
+              major)
+                major=$((major + 1))
+                minor=0
+                patch=0
+                ;;
+              minor)
+                minor=$((minor + 1))
+                patch=0
+                ;;
+              patch)
+                patch=$((patch + 1))
+                ;;
+            esac
+            
+            NEW_VERSION="${major}.${minor}.${patch}"
+          fi
+          
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 New version: $NEW_VERSION (from $CURRENT via $BUMP_TYPE)"
+          
+      - name: Update version files
+        run: |
+          NEW_VERSION="${{ steps.new-version.outputs.version }}"
+          
+          # manifest.json 업데이트
+          node -e "
+            const fs = require('fs');
+            const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+            manifest.version = '$NEW_VERSION';
+            fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, '\\t') + '\\n');
+          "
+          
+          # package.json 업데이트
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '$NEW_VERSION';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, '\\t') + '\\n');
+          "
+          
+          # versions.json 업데이트
+          MIN_APP_VERSION=$(node -p "require('./manifest.json').minAppVersion")
+          node -e "
+            const fs = require('fs');
+            const versions = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
+            versions['$NEW_VERSION'] = '$MIN_APP_VERSION';
+            fs.writeFileSync('versions.json', JSON.stringify(versions, null, '\\t') + '\\n');
+          "
+          
+          echo "✅ Updated manifest.json, package.json, and versions.json"
+          
+      - name: Commit version bump
+        run: |
+          NEW_VERSION="${{ steps.new-version.outputs.version }}"
+          git add manifest.json package.json versions.json
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git push origin main
+          
+      - name: Create and push tag
+        run: |
+          TAG="${{ steps.new-version.outputs.tag }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "✅ Created and pushed tag: $TAG"
+          
+      - name: Summary
+        run: |
+          echo "## 🎉 Version Bump Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous version**: ${{ steps.current-version.outputs.current }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **New version**: ${{ steps.new-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ steps.new-version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bump type**: ${{ steps.bump-type.outputs.bump_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The tag has been created and pushed. Release workflow will trigger automatically." >> $GITHUB_STEP_SUMMARY

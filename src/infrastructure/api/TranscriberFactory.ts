@@ -6,7 +6,6 @@ import {
     SelectionStrategy,
     ProviderMetrics,
     ProviderUnavailableError,
-    ABTestConfig,
 } from './providers/ITranscriber';
 import { WhisperService } from './WhisperService';
 import { WhisperAdapter } from './providers/whisper/WhisperAdapter';

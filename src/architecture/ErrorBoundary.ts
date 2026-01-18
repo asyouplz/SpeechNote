@@ -112,16 +112,30 @@ export class ErrorBoundary {
         // 처리되지 않은 Promise rejection 처리
         if (typeof window !== 'undefined') {
             window.addEventListener('unhandledrejection', (event) => {
-                void this.handleError(
-                    new Error(event.reason?.message || 'Unhandled Promise rejection'),
-                    { component: 'Global', operation: 'Promise' }
-                );
+                let errorMessage = 'Unhandled Promise rejection';
+
+                // Type guard for error-like objects
+                const reason: unknown = event.reason;
+                if (
+                    typeof reason === 'object' &&
+                    reason !== null &&
+                    'message' in reason &&
+                    typeof (reason as { message: unknown }).message === 'string'
+                ) {
+                    errorMessage = (reason as { message: string }).message;
+                }
+
+                void this.handleError(new Error(errorMessage), {
+                    component: 'Global',
+                    operation: 'Promise',
+                });
                 event.preventDefault();
             });
 
             // 전역 에러 처리
             window.addEventListener('error', (event) => {
-                void this.handleError(event.error || new Error(event.message), {
+                const error = event.error instanceof Error ? event.error : new Error(event.message);
+                void this.handleError(error, {
                     component: 'Global',
                     operation: 'Runtime',
                 });

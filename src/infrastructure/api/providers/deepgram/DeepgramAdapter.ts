@@ -1,9 +1,5 @@
 import type { ILogger, ISettingsManager } from '../../../../types';
-import type {
-    DeepgramFeatures,
-    DeepgramSettings,
-    TranscriptionSettings as SettingsStoreTranscriptionSettings,
-} from '../../../../types/DeepgramTypes';
+import type { TranscriptionSettings as SettingsStoreTranscriptionSettings } from '../../../../types/DeepgramTypes';
 import {
     ITranscriber,
     TranscriptionOptions,

@@ -509,7 +509,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         if (api.provider === 'openai') {
             new Setting(section)
                 .setName('Model')
-                .setDesc('Select the OpenAI model')
+                .setDesc('Select the openai model')
                 .addDropdown((dropdown) => {
                     dropdown.addOption('whisper-1', 'Whisper v1');
                     dropdown.setValue(api.model);
@@ -620,7 +620,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         // 샘플 레이트
         new Setting(section)
             .setName('Sample rate')
-            .setDesc('Audio sample rate in Hz')
+            .setDesc('Audio sample rate in hz')
             .addDropdown((dropdown) => {
                 const rates = [8000, 16000, 22050, 44100, 48000];
                 rates.forEach((rate) => {
@@ -707,7 +707,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         new Setting(cacheSection)
             .setName('Max cache size')
-            .setDesc('Maximum cache size in MB')
+            .setDesc('Maximum cache size in mb')
             .addSlider((slider) => {
                 slider
                     .setLimits(10, 500, 10)
@@ -756,7 +756,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         new Setting(perfSection)
             .setName('Chunk size')
-            .setDesc('File chunk size in MB')
+            .setDesc('File chunk size in mb')
             .addSlider((slider) => {
                 slider
                     .setLimits(0.5, 10, 0.5)
@@ -981,11 +981,11 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         // Import/Export 섹션
         const portSection = footerEl.createDiv({ cls: 'port-section' });
 
-        new ButtonComponent(portSection).setButtonText('📤 Export settings').onClick(async () => {
+        new ButtonComponent(portSection).setButtonText('📤 export settings').onClick(async () => {
             await this.exportSettings();
         });
 
-        new ButtonComponent(portSection).setButtonText('📥 Import settings').onClick(async () => {
+        new ButtonComponent(portSection).setButtonText('📥 import settings').onClick(async () => {
             await this.importSettings();
         });
 

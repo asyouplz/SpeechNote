@@ -265,13 +265,13 @@ export class ProviderSettingsContainer {
         const actionsEl = apiKeySection.createDiv({ cls: 'api-key-actions' });
 
         new ButtonComponent(actionsEl)
-            .setButtonText('Verify All Keys')
+            .setButtonText('Verify all keys')
             .setCta()
             .onClick(async () => {
                 await this.verifyAllApiKeys();
             });
 
-        new ButtonComponent(actionsEl).setButtonText('Import Keys').onClick(async () => {
+        new ButtonComponent(actionsEl).setButtonText('Import keys').onClick(async () => {
             await this.importApiKeys();
         });
     }
@@ -306,18 +306,18 @@ export class ProviderSettingsContainer {
         const actionsEl = containerEl.createDiv({ cls: 'provider-actions' });
 
         // 테스트 버튼
-        new ButtonComponent(actionsEl).setButtonText('Test Connection').onClick(async () => {
+        new ButtonComponent(actionsEl).setButtonText('Test connection').onClick(async () => {
             await this.testCurrentProvider();
         });
 
         // 설정 내보내기
-        new ButtonComponent(actionsEl).setButtonText('Export Config').onClick(async () => {
+        new ButtonComponent(actionsEl).setButtonText('Export config').onClick(async () => {
             await this.exportConfiguration();
         });
 
         // 설정 초기화
         new ButtonComponent(actionsEl)
-            .setButtonText('Reset to Defaults')
+            .setButtonText('Reset to defaults')
             .setWarning()
             .onClick(async () => {
                 if (await this.confirmReset()) {
@@ -769,7 +769,7 @@ class ProviderDetailsModal extends Modal {
         const actionsEl = contentEl.createDiv({ cls: 'modal-button-container' });
 
         new ButtonComponent(actionsEl)
-            .setButtonText('Test Connection')
+            .setButtonText('Test connection')
             .setCta()
             .onClick(async () => {
                 await this.testConnection();

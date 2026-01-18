@@ -299,11 +299,17 @@ export class DeepgramModelRegistry {
         } catch (error) {
             // Return a minimal instance rather than throw
             if (!DeepgramModelRegistry.instance) {
-                const fallbackInstance = Object.create(DeepgramModelRegistry.prototype);
-                fallbackInstance.models = new Map();
-                fallbackInstance.features = new Map();
+                const fallbackInstance = Object.create(
+                    DeepgramModelRegistry.prototype
+                ) as DeepgramModelRegistry;
+                fallbackInstance.models = new Map<string, DeepgramModel>();
+                fallbackInstance.features = new Map<string, DeepgramFeature>();
                 fallbackInstance.logger = DeepgramLogger.getInstance();
-                fallbackInstance.logger.error('Failed to create instance, using fallback', error);
+                const errorObj = error instanceof Error ? error : new Error(String(error));
+                fallbackInstance.logger.error(
+                    'Failed to create instance, using fallback',
+                    errorObj
+                );
                 DeepgramModelRegistry.instance = fallbackInstance;
             }
             return DeepgramModelRegistry.instance;

@@ -135,7 +135,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         }
 
         // 부모 클래스의 emit 호출
-        super.emit(event, data as AppEventMap[keyof AppEventMap]);
+        super.emit(event, data);
     }
 
     /**
@@ -156,7 +156,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
         }
 
         // 부모 클래스의 emitAsync 호출
-        await super.emitAsync(event, data as AppEventMap[keyof AppEventMap]);
+        await super.emitAsync(event, data);
     }
 
     /**
@@ -169,10 +169,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
             this.logger.debug(`Listener registered for: ${String(event)}`);
         }
 
-        return super.on(
-            event as keyof AppEventMap,
-            listener as EventListener<AppEventMap[keyof AppEventMap]>
-        );
+        return super.on(event as keyof AppEventMap, listener);
     }
 
     /**
@@ -188,10 +185,7 @@ export class EventManager extends EventEmitter<AppEventMap> {
             this.logger.debug(`Once listener registered for: ${String(event)}`);
         }
 
-        return super.once(
-            event as keyof AppEventMap,
-            listener as EventListener<AppEventMap[keyof AppEventMap]>
-        );
+        return super.once(event as keyof AppEventMap, listener);
     }
 
     /**

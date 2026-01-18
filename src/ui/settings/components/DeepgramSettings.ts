@@ -488,7 +488,7 @@ export class DeepgramSettings {
      */
     private renderLanguagePreference(container: HTMLElement): void {
         new Setting(container)
-            .setName('Preferred Language')
+            .setName('Preferred language')
             .setDesc('Set preferred language for better accuracy')
             .addDropdown((dropdown) => {
                 LANGUAGE_OPTIONS.forEach((option) => {
@@ -508,7 +508,7 @@ export class DeepgramSettings {
      */
     private renderTimeoutSetting(container: HTMLElement): void {
         new Setting(container)
-            .setName('Request Timeout')
+            .setName('Request timeout')
             .setDesc('Maximum time to wait for transcription (in seconds)')
             .addText((text) => {
                 const currentTimeout =
@@ -531,7 +531,7 @@ export class DeepgramSettings {
      */
     private renderRetrySetting(container: HTMLElement): void {
         new Setting(container)
-            .setName('Max Retries')
+            .setName('Max retries')
             .setDesc('Number of retry attempts on failure')
             .addDropdown((dropdown) => {
                 for (let i = 0; i <= CONFIG_CONSTANTS.RETRIES.MAX; i++) {
@@ -556,9 +556,9 @@ export class DeepgramSettings {
     private renderChunkingSettings(container: HTMLElement): void {
         // Auto-chunking toggle
         new Setting(container)
-            .setName('Automatic File Chunking')
+            .setName('Automatic file chunking')
             .setDesc(
-                'Automatically split large audio files (>50MB) into smaller chunks for reliable processing'
+                'Automatically split large audio files (>50mb) into smaller chunks for reliable processing'
             )
             .addToggle((toggle) => {
                 toggle
@@ -578,7 +578,7 @@ export class DeepgramSettings {
         // Maximum chunk size
         const chunkSizeSetting = new Setting(container)
             .setName('Maximum chunk size')
-            .setDesc('Maximum size per chunk in MB (recommended: 50MB)')
+            .setDesc('Maximum size per chunk in mb (recommended: 50mb)')
             .addSlider((slider) => {
                 slider
                     .setLimits(10, 100, 10)

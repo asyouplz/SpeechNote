@@ -182,9 +182,9 @@ export class FormatOptionsModal extends Modal {
         if (this.options.addTimestamp) {
             new Setting(container)
                 .setName('Timestamp format')
-                .setDesc('Format for the timestamp (YYYY-MM-DD HH:mm:ss)')
+                .setDesc('Format for the timestamp (yyyy-mm-dd hh:mm:ss)')
                 .addText((text) => {
-                    text.setPlaceholder('YYYY-MM-DD HH:mm:ss')
+                    text.setPlaceholder('Yyyy-mm-dd hh:mm:ss')
                         .setValue(this.options.timestampFormat || '')
                         .onChange((value) => {
                             this.options.timestampFormat = value;
@@ -379,7 +379,7 @@ export class FormatOptionsModal extends Modal {
                 .setName('Note title')
                 .setDesc('Title for the new note')
                 .addText((text) => {
-                    text.setPlaceholder('Transcription-YYYY-MM-DD')
+                    text.setPlaceholder('Transcription-yyyy-mm-dd')
                         .setValue(this.options.noteTitle || '')
                         .onChange((value) => {
                             this.options.noteTitle = value;
@@ -441,7 +441,7 @@ export class FormatOptionsModal extends Modal {
             .setName('Custom template')
             .setDesc('Use {{content}} for the text placeholder')
             .addTextArea((text) => {
-                text.setPlaceholder('## {{date}}\n\n{{content}}\n\n---\nTranscribed at {{time}}')
+                text.setPlaceholder('## {{date}}\n\n{{content}}\n\n---\ntranscribed at {{time}}')
                     .setValue(this.options.template || '')
                     .onChange((value) => {
                         this.options.template = value;
