@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { SettingsAPI } from '../../src/infrastructure/api/SettingsAPI';
-import { SecureApiKeyManager, AESEncryptor } from '../../src/infrastructure/security/Encryptor';
+import { SecureApiKeyManager, Encryptor } from '../../src/infrastructure/security/Encryptor';
 import { SettingsValidator } from '../../src/infrastructure/api/SettingsValidator';
 import { SettingsMigrator } from '../../src/infrastructure/api/SettingsMigrator';
 import type { SettingsSchema } from '../../src/types/phase3-api';
@@ -12,7 +12,7 @@ import type { SettingsSchema } from '../../src/types/phase3-api';
 // localStorage 모킹
 const localStorageMock = (() => {
     let store: Record<string, string> = {};
-    
+
     return {
         getItem: (key: string) => store[key] || null,
         setItem: (key: string, value: string) => {
@@ -54,7 +54,7 @@ describe('SettingsAPI', () => {
     describe('초기화', () => {
         it('기본 설정으로 초기화되어야 함', async () => {
             const settings = await settingsAPI.getAll();
-            
+
             expect(settings.version).toBe('3.0.0');
             expect(settings.general.language).toBe('auto');
             expect(settings.api.provider).toBe('openai');
@@ -76,12 +76,12 @@ describe('SettingsAPI', () => {
                     }
                 }
             };
-            
+
             localStorageMock.setItem('speech-to-text-settings', JSON.stringify(savedSettings));
-            
+
             const newAPI = new SettingsAPI();
             await newAPI.initialize();
-            
+
             const general = await newAPI.get('general');
             expect(general.language).toBe('ko');
             expect(general.theme).toBe('dark');
@@ -92,7 +92,7 @@ describe('SettingsAPI', () => {
     describe('설정 조회', () => {
         it('개별 설정을 조회할 수 있어야 함', async () => {
             const general = await settingsAPI.get('general');
-            
+
             expect(general).toBeDefined();
             expect(general.language).toBe('auto');
             expect(general.autoSave).toBe(true);
@@ -100,7 +100,7 @@ describe('SettingsAPI', () => {
 
         it('전체 설정을 조회할 수 있어야 함', async () => {
             const allSettings = await settingsAPI.getAll();
-            
+
             expect(allSettings).toBeDefined();
             expect(allSettings.version).toBe('3.0.0');
             expect(allSettings.general).toBeDefined();
@@ -114,9 +114,9 @@ describe('SettingsAPI', () => {
             // API 키 설정
             const api = await settingsAPI.get('api');
             api.apiKey = 'sk-test1234567890abcdef';
-            
+
             const allSettings = await settingsAPI.getAll();
-            
+
             if (allSettings.api.apiKey) {
                 expect(allSettings.api.apiKey).toContain('*');
                 expect(allSettings.api.apiKey).not.toBe('sk-test1234567890abcdef');
@@ -129,9 +129,9 @@ describe('SettingsAPI', () => {
             const newGeneral = await settingsAPI.get('general');
             newGeneral.language = 'ko';
             newGeneral.theme = 'dark';
-            
+
             await settingsAPI.set('general', newGeneral);
-            
+
             const saved = await settingsAPI.get('general');
             expect(saved.language).toBe('ko');
             expect(saved.theme).toBe('dark');
@@ -151,7 +151,7 @@ describe('SettingsAPI', () => {
                     }
                 }
             });
-            
+
             const general = await settingsAPI.get('general');
             expect(general.language).toBe('en');
             expect(general.theme).toBe('light');
@@ -161,11 +161,11 @@ describe('SettingsAPI', () => {
         it('변경 이벤트가 발생해야 함', async () => {
             const changeHandler = jest.fn();
             settingsAPI.on('change', changeHandler);
-            
+
             const general = await settingsAPI.get('general');
             general.language = 'ja';
             await settingsAPI.set('general', general);
-            
+
             expect(changeHandler).toHaveBeenCalled();
             expect(changeHandler).toHaveBeenCalledWith('general', expect.any(Object), expect.any(Object));
         });
@@ -186,7 +186,7 @@ describe('SettingsAPI', () => {
                     }
                 }
             });
-            
+
             expect(result.valid).toBe(true);
             expect(result.errors).toBeUndefined();
         });
@@ -205,7 +205,7 @@ describe('SettingsAPI', () => {
                     }
                 }
             });
-            
+
             expect(result.valid).toBe(false);
             expect(result.errors).toBeDefined();
             expect(result.errors?.length).toBeGreaterThan(0);
@@ -218,7 +218,7 @@ describe('SettingsAPI', () => {
                 maxTokens: -100,
                 temperature: 3
             });
-            
+
             expect(result.valid).toBe(false);
             expect(result.errors).toBeDefined();
         });
@@ -229,14 +229,14 @@ describe('SettingsAPI', () => {
             localStorageMock.setItem('speech-to-text-settings', JSON.stringify({
                 version: '2.0.0'
             }));
-            
+
             const needsMigration = settingsAPI.needsMigration();
             expect(needsMigration).toBe(true);
         });
 
         it('설정을 마이그레이션할 수 있어야 함', async () => {
             await settingsAPI.migrate('2.0.0', '3.0.0');
-            
+
             const settings = await settingsAPI.getAll();
             expect(settings.version).toBe('3.0.0');
         });
@@ -244,9 +244,9 @@ describe('SettingsAPI', () => {
         it('마이그레이션 이벤트가 발생해야 함', async () => {
             const migrateHandler = jest.fn();
             settingsAPI.on('migrate', migrateHandler);
-            
+
             await settingsAPI.migrate('2.0.0', '3.0.0');
-            
+
             expect(migrateHandler).toHaveBeenCalledWith('2.0.0', '3.0.0');
         });
     });
@@ -254,13 +254,13 @@ describe('SettingsAPI', () => {
     describe('설정 내보내기/가져오기', () => {
         it('설정을 내보낼 수 있어야 함', async () => {
             const blob = await settingsAPI.export();
-            
+
             expect(blob).toBeInstanceOf(Blob);
             expect(blob.type).toBe('application/json');
-            
+
             const text = await blob.text();
             const exported = JSON.parse(text);
-            
+
             expect(exported.version).toBe('3.0.0');
             expect(exported.api.apiKey).toBeUndefined(); // API 키 제외
         });
@@ -269,11 +269,11 @@ describe('SettingsAPI', () => {
             const api = await settingsAPI.get('api');
             api.apiKey = 'sk-test-key';
             await settingsAPI.set('api', api);
-            
+
             const blob = await settingsAPI.export({ includeApiKeys: true });
             const text = await blob.text();
             const exported = JSON.parse(text);
-            
+
             expect(exported.api.apiKey).toBeDefined();
         });
 
@@ -292,17 +292,17 @@ describe('SettingsAPI', () => {
                     }
                 }
             };
-            
+
             const file = new File(
                 [JSON.stringify(importData)],
                 'settings.json',
                 { type: 'application/json' }
             );
-            
+
             const result = await settingsAPI.import(file, { merge: true });
-            
+
             expect(result.success).toBe(true);
-            
+
             const general = await settingsAPI.get('general');
             expect(general.language).toBe('ja');
             expect(general.theme).toBe('light');
@@ -315,9 +315,9 @@ describe('SettingsAPI', () => {
                 'invalid.json',
                 { type: 'application/json' }
             );
-            
+
             const result = await settingsAPI.import(file, { validate: true });
-            
+
             expect(result.success).toBe(false);
             expect(result.errors).toBeDefined();
         });
@@ -329,10 +329,10 @@ describe('SettingsAPI', () => {
             const general = await settingsAPI.get('general');
             general.language = 'ko';
             await settingsAPI.set('general', general);
-            
+
             // 초기화
             await settingsAPI.reset('all');
-            
+
             const resetGeneral = await settingsAPI.get('general');
             expect(resetGeneral.language).toBe('auto'); // 기본값
         });
@@ -342,17 +342,17 @@ describe('SettingsAPI', () => {
             const general = await settingsAPI.get('general');
             general.language = 'ko';
             await settingsAPI.set('general', general);
-            
+
             const api = await settingsAPI.get('api');
             api.maxTokens = 8192;
             await settingsAPI.set('api', api);
-            
+
             // general만 초기화
             await settingsAPI.reset('general');
-            
+
             const resetGeneral = await settingsAPI.get('general');
             const resetApi = await settingsAPI.get('api');
-            
+
             expect(resetGeneral.language).toBe('auto'); // 초기화됨
             expect(resetApi.maxTokens).toBe(8192); // 유지됨
         });
@@ -360,9 +360,9 @@ describe('SettingsAPI', () => {
         it('초기화 이벤트가 발생해야 함', async () => {
             const resetHandler = jest.fn();
             settingsAPI.on('reset', resetHandler);
-            
+
             await settingsAPI.reset('all');
-            
+
             expect(resetHandler).toHaveBeenCalledWith('all');
         });
     });
@@ -379,13 +379,13 @@ describe('SecureApiKeyManager', () => {
     describe('API 키 저장', () => {
         it('API 키를 암호화하여 저장해야 함', async () => {
             const apiKey = 'sk-test1234567890abcdef';
-            
+
             await manager.storeApiKey(apiKey);
-            
+
             const stored = localStorageMock.getItem('encrypted_api_key');
             expect(stored).toBeDefined();
             expect(stored).not.toBe(apiKey); // 암호화됨
-            
+
             const parsed = JSON.parse(stored!);
             expect(parsed.data).toBeDefined();
             expect(parsed.iv).toBeDefined();
@@ -394,7 +394,7 @@ describe('SecureApiKeyManager', () => {
 
         it('유효하지 않은 API 키를 거부해야 함', async () => {
             const invalidKey = 'invalid-key';
-            
+
             await expect(manager.storeApiKey(invalidKey)).rejects.toThrow('Invalid API key format');
         });
     });
@@ -402,16 +402,16 @@ describe('SecureApiKeyManager', () => {
     describe('API 키 조회', () => {
         it('저장된 API 키를 복호화하여 반환해야 함', async () => {
             const apiKey = 'sk-test1234567890abcdef';
-            
+
             await manager.storeApiKey(apiKey);
             const retrieved = await manager.getApiKey();
-            
+
             expect(retrieved).toBe(apiKey);
         });
 
         it('API 키가 없으면 null을 반환해야 함', async () => {
             const retrieved = await manager.getApiKey();
-            
+
             expect(retrieved).toBeNull();
         });
     });
@@ -420,7 +420,7 @@ describe('SecureApiKeyManager', () => {
         it('API 키를 올바르게 마스킹해야 함', () => {
             const apiKey = 'sk-test1234567890abcdef';
             const masked = SecureApiKeyManager.maskApiKey(apiKey);
-            
+
             expect(masked).toContain('sk-test');
             expect(masked).toContain('*');
             expect(masked).toContain('cdef');
@@ -430,7 +430,7 @@ describe('SecureApiKeyManager', () => {
         it('짧은 API 키도 마스킹해야 함', () => {
             const shortKey = 'sk-123';
             const masked = SecureApiKeyManager.maskApiKey(shortKey);
-            
+
             expect(masked).toContain('*');
             expect(masked.length).toBeGreaterThan(0);
         });
@@ -439,36 +439,36 @@ describe('SecureApiKeyManager', () => {
     describe('API 키 관리', () => {
         it('API 키 존재 여부를 확인할 수 있어야 함', async () => {
             expect(manager.hasApiKey()).toBe(false);
-            
+
             await manager.storeApiKey('sk-test1234567890abcdef');
-            
+
             expect(manager.hasApiKey()).toBe(true);
         });
 
         it('API 키를 삭제할 수 있어야 함', async () => {
             await manager.storeApiKey('sk-test1234567890abcdef');
             expect(manager.hasApiKey()).toBe(true);
-            
+
             manager.clearApiKey();
-            
+
             expect(manager.hasApiKey()).toBe(false);
             expect(await manager.getApiKey()).toBeNull();
         });
     });
 });
 
-describe('AESEncryptor', () => {
-    let encryptor: AESEncryptor;
+describe('Encryptor', () => {
+    let encryptor: Encryptor;
 
     beforeEach(() => {
-        encryptor = new AESEncryptor();
+        encryptor = new Encryptor();
     });
 
     it('텍스트를 암호화할 수 있어야 함', async () => {
         const plainText = 'This is a secret message';
-        
+
         const encrypted = await encryptor.encrypt(plainText);
-        
+
         expect(encrypted.data).toBeDefined();
         expect(encrypted.iv).toBeDefined();
         expect(encrypted.salt).toBeDefined();
@@ -477,19 +477,19 @@ describe('AESEncryptor', () => {
 
     it('암호화된 텍스트를 복호화할 수 있어야 함', async () => {
         const plainText = 'This is a secret message';
-        
+
         const encrypted = await encryptor.encrypt(plainText);
         const decrypted = await encryptor.decrypt(encrypted);
-        
+
         expect(decrypted).toBe(plainText);
     });
 
     it('다른 salt/iv로 암호화하면 다른 결과가 나와야 함', async () => {
         const plainText = 'Same message';
-        
+
         const encrypted1 = await encryptor.encrypt(plainText);
         const encrypted2 = await encryptor.encrypt(plainText);
-        
+
         expect(encrypted1.data).not.toBe(encrypted2.data);
         expect(encrypted1.iv).not.toBe(encrypted2.iv);
         expect(encrypted1.salt).not.toBe(encrypted2.salt);
@@ -497,10 +497,10 @@ describe('AESEncryptor', () => {
 
     it('유니코드 텍스트를 처리할 수 있어야 함', async () => {
         const unicodeText = '한글 テスト 🚀 Unicode!';
-        
+
         const encrypted = await encryptor.encrypt(unicodeText);
         const decrypted = await encryptor.decrypt(encrypted);
-        
+
         expect(decrypted).toBe(unicodeText);
     });
 });
@@ -525,7 +525,7 @@ describe('SettingsValidator', () => {
                     position: 'top-right'
                 }
             });
-            
+
             expect(result.valid).toBe(true);
         });
 
@@ -533,7 +533,7 @@ describe('SettingsValidator', () => {
             const result = validator.validateField('general', {
                 language: 'invalid-lang'
             });
-            
+
             expect(result.valid).toBe(false);
             expect(result.errors?.[0].code).toBe('INVALID_LANGUAGE');
         });
@@ -542,7 +542,7 @@ describe('SettingsValidator', () => {
             const result = validator.validateField('general', {
                 saveInterval: 5000
             });
-            
+
             expect(result.valid).toBe(true);
             expect(result.warnings).toBeDefined();
         });
@@ -556,7 +556,7 @@ describe('SettingsValidator', () => {
                 maxTokens: 4096,
                 temperature: 0.7
             });
-            
+
             expect(result.valid).toBe(true);
         });
 
@@ -564,7 +564,7 @@ describe('SettingsValidator', () => {
             const result = validator.validateField('api', {
                 provider: 'custom'
             });
-            
+
             expect(result.valid).toBe(false);
             expect(result.errors?.[0].code).toBe('MISSING_ENDPOINT');
         });
@@ -573,7 +573,7 @@ describe('SettingsValidator', () => {
             const result = validator.validateField('api', {
                 temperature: 3
             });
-            
+
             expect(result.valid).toBe(false);
             expect(result.errors?.[0].code).toBe('INVALID_TEMPERATURE');
         });
@@ -582,20 +582,20 @@ describe('SettingsValidator', () => {
     describe('API 키 검증', () => {
         it('유효한 OpenAI API 키를 통과시켜야 함', () => {
             const result = SettingsValidator.validateApiKey('sk-test1234567890abcdefghijklmnopqrstuvwxyz');
-            
+
             expect(result.valid).toBe(true);
         });
 
         it('너무 짧은 API 키를 거부해야 함', () => {
             const result = SettingsValidator.validateApiKey('sk-short');
-            
+
             expect(result.valid).toBe(false);
             expect(result.errors?.[0].code).toBe('INVALID_API_KEY_LENGTH');
         });
 
         it('빈 API 키를 거부해야 함', () => {
             const result = SettingsValidator.validateApiKey('');
-            
+
             expect(result.valid).toBe(false);
             expect(result.errors?.[0].code).toBe('MISSING_API_KEY');
         });
@@ -632,9 +632,9 @@ describe('SettingsMigrator', () => {
                 model: 'whisper-1'
             }
         };
-        
+
         const migrated = await migrator.migrate(oldSettings, '2.0.0', '3.0.0');
-        
+
         expect(migrated.version).toBe('3.0.0');
         expect(migrated.shortcuts).toBeDefined(); // 새로 추가된 필드
         expect(migrated.advanced.debug).toBeDefined(); // 새로 추가된 필드
@@ -645,9 +645,9 @@ describe('SettingsMigrator', () => {
             version: '3.0.0',
             general: { language: 'ko' }
         };
-        
+
         const backupKey = await migrator.createBackup(settings);
-        
+
         expect(backupKey).toContain('settings_backup_');
         expect(localStorageMock.getItem(backupKey)).toBeDefined();
     });
@@ -657,10 +657,10 @@ describe('SettingsMigrator', () => {
             version: '3.0.0',
             general: { language: 'ko' }
         };
-        
+
         const backupKey = await migrator.createBackup(settings);
         const restored = await migrator.restoreBackup(backupKey);
-        
+
         expect(restored.version).toBe('3.0.0');
         expect(restored.general.language).toBe('ko');
     });

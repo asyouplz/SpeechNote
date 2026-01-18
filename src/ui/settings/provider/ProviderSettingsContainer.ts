@@ -242,7 +242,7 @@ export class ProviderSettingsContainer {
                     .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round Robin')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
-                            SelectionStrategy.PERFORMANCE_OPTIMIZED
+                        SelectionStrategy.PERFORMANCE_OPTIMIZED
                     )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {
@@ -472,7 +472,7 @@ export class ProviderSettingsContainer {
 
         for (const provider of providers) {
             if (this.hasApiKey(provider)) {
-                const isConnected = await this.checkProviderConnection(provider);
+                const isConnected = this.checkProviderConnection(provider);
                 this.connectionStatus.set(provider, isConnected);
                 this.lastValidation.set(provider, new Date());
             }
@@ -856,7 +856,7 @@ class ProviderDetailsModal extends Modal {
  * Provider 메트릭 표시 컴포넌트
  */
 class ProviderMetricsDisplay {
-    constructor(private plugin: SpeechToTextPlugin) {}
+    constructor(private plugin: SpeechToTextPlugin) { }
 
     render(containerEl: HTMLElement): void {
         containerEl.createEl('h4', { text: '📊 Performance metrics' });

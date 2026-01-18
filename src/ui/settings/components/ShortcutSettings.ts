@@ -1,4 +1,5 @@
 import { App, Setting, Notice, Modal, ButtonComponent } from 'obsidian';
+import { ConfirmationModal } from '../../modals/ConfirmationModal';
 import type SpeechToTextPlugin from '../../../main';
 
 /**
@@ -40,11 +41,15 @@ export class ShortcutSettings {
                     .setButtonText('기본값 복원')
                     .setWarning()
                     .onClick(async () => {
-                        const confirmed = confirm('모든 단축키를 기본값으로 복원하시겠습니까?');
-                        if (confirmed) {
-                            await this.resetToDefaults();
-                            this.render(containerEl); // UI 새로고침
-                        }
+                        new ConfirmationModal(
+                            this.app,
+                            '단축키 초기화',
+                            '모든 단축키를 기본값으로 복원하시겠습니까?',
+                            async () => {
+                                await this.resetToDefaults();
+                                this.render(containerEl); // UI 새로고침
+                            }
+                        ).open();
                     })
             );
 
@@ -173,14 +178,17 @@ export class ShortcutSettings {
                     // 충돌 검사
                     const existingCommand = this.findCommandByShortcut(key);
                     if (existingCommand && existingCommand !== commandId) {
-                        const confirmOverride = confirm(
-                            `"${key}"는 이미 다른 명령에 할당되어 있습니다. 덮어쓰시겠습니까?`
-                        );
-                        if (!confirmOverride) {
-                            return;
-                        }
-                        // 기존 단축키 제거
-                        void this.removeShortcut(existingCommand);
+                        new ConfirmationModal(
+                            this.app,
+                            '단축키 충돌',
+                            `"${key}"는 이미 다른 명령에 할당되어 있습니다. 덮어쓰시겠습니까?`,
+                            () => {
+                                // 기존 단축키 제거
+                                void this.removeShortcut(existingCommand);
+                                onSubmit(key);
+                            }
+                        ).open();
+                        return;
                     }
                 }
                 onSubmit(key);
