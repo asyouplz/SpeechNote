@@ -7,6 +7,8 @@ node_modules/
 dist/
 build/
 out/
+main.js
+styles.css
 *.js
 *.js.map
 *.d.ts

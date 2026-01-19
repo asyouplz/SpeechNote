@@ -469,11 +469,11 @@ export class TranscriptionService implements ITranscriptionService {
         const settings = isPlainRecord(this.settings) ? this.settings : {};
         const responseFormat =
             typeof settings.responseFormat === 'string' ? settings.responseFormat : undefined;
-        if (responseFormat === 'text' && typeof response.text === 'string') {
+        if (responseFormat === 'text' && response && typeof response.text === 'string') {
             return { text: response.text ?? '' };
         }
 
-        if (response.json !== undefined) {
+        if (response && response.json !== undefined) {
             const json = response.json;
             if (isPlainRecord(json)) {
                 const text = typeof json.text === 'string' ? json.text : '';
@@ -482,7 +482,7 @@ export class TranscriptionService implements ITranscriptionService {
             }
         }
 
-        if (typeof response.text === 'string') {
+        if (response && typeof response.text === 'string') {
             return { text: response.text ?? '' };
         }
 
@@ -495,7 +495,7 @@ export class TranscriptionService implements ITranscriptionService {
         json?: unknown;
         text?: string;
     }): string {
-        if (response.json !== undefined) {
+        if (response && response.json !== undefined) {
             const json = response.json;
             if (isPlainRecord(json)) {
                 const error = isPlainRecord(json.error) ? json.error : undefined;
@@ -508,14 +508,14 @@ export class TranscriptionService implements ITranscriptionService {
             }
         }
 
-        if (typeof response.text === 'string') {
+        if (response && typeof response.text === 'string') {
             const text = response.text;
             if (text) {
                 return text;
             }
         }
 
-        if (response.statusText) {
+        if (response && response.statusText) {
             return response.statusText;
         }
 
