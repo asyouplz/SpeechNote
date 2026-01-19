@@ -166,8 +166,8 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             currentProvider === 'auto'
                 ? Array.from(this.providerConfigs.keys())
                 : this.isTranscriptionProvider(currentProvider)
-                    ? [currentProvider]
-                    : [];
+                ? [currentProvider]
+                : [];
 
         providers.forEach((provider) => {
             this.renderSingleApiKeyInput(inputsSection, provider);

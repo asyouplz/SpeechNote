@@ -3,7 +3,7 @@ import type { ILogger } from '../../types';
 export { ILogger };
 
 export class Logger implements ILogger {
-    constructor(private prefix: string) { }
+    constructor(private prefix: string) {}
 
     debug(message: string, context?: unknown): void {
         if (process.env.NODE_ENV === 'development') {

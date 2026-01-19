@@ -2,7 +2,6 @@
  * Phase 3 개선된 설정 탭 UI
  */
 
-
 import { App, PluginSettingTab, Setting, Notice, Modal, ButtonComponent } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
 import { SettingsAPI } from '../../infrastructure/api/SettingsAPI';

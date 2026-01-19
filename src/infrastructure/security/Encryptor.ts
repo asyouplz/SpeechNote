@@ -3,7 +3,6 @@
  * Web Crypto API를 사용한 안전한 데이터 암호화/복호화
  */
 
-
 import { type App, Notice, Platform } from 'obsidian';
 
 export interface EncryptedData {
@@ -133,12 +132,15 @@ export class Encryptor implements IEncryptor {
             // Uses platform APIs that are deprecated for new functionality
             // NOTE: navigator/screen API usage below is intentional for backward compatibility
             // Will be removed in v4.0.0 when migration period ends
-            const platformInfo = Platform.isDesktopApp ? 'desktop' : 'mobile';
-            const osInfo = Platform.isMacOS ? 'macos' : Platform.isWin ? 'windows' : Platform.isLinux ? 'linux' : 'other';
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const nav = navigator as any;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const scr = screen as any;
 
             const factors = [
-                platformInfo,
-                osInfo,
+                hasNavigator ? nav.userAgent : '',
+                hasNavigator ? nav.language : '',
+                hasScreen ? `${scr.width}x${scr.height}` : '',
                 hasIntl ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
                 'ObsidianSpeechToText2024',
             ];
@@ -491,7 +493,9 @@ export class SettingsEncryptor {
     /**
      * 민감한 설정 암호화
      */
-    async encryptSensitiveSettings(settings: Record<string, unknown>): Promise<Record<string, unknown>> {
+    async encryptSensitiveSettings(
+        settings: Record<string, unknown>
+    ): Promise<Record<string, unknown>> {
         const sensitiveFields = ['apiKey', 'tokens', 'credentials'];
         const encryptedSettings: Record<string, any> = { ...settings };
 
@@ -509,7 +513,9 @@ export class SettingsEncryptor {
     /**
      * 민감한 설정 복호화
      */
-    async decryptSensitiveSettings(encryptedSettings: Record<string, unknown>): Promise<Record<string, unknown>> {
+    async decryptSensitiveSettings(
+        encryptedSettings: Record<string, unknown>
+    ): Promise<Record<string, unknown>> {
         const settings: Record<string, any> = { ...encryptedSettings };
         const sensitiveFields = ['apiKey', 'tokens', 'credentials'];
 
