@@ -438,19 +438,24 @@ export class APIKeyManager {
         // 포커스 아웃시 저장
         inputEl.addEventListener('blur', () => {
             void (async () => {
-                const value = inputEl.value;
+                try {
+                    const value = inputEl.value;
 
-                // 마스킹된 값이거나 빈 값이면 무시
-                if (value.includes('*') || !value) return;
+                    // 마스킹된 값이거나 빈 값이면 무시
+                    if (value.includes('*') || !value) return;
 
-                if (validationRegex.test(value)) {
-                    await this.saveApiKey(provider, value);
-                    inputEl.classList.add('has-value');
+                    if (validationRegex.test(value)) {
+                        await this.saveApiKey(provider, value);
+                        inputEl.classList.add('has-value');
 
-                    // 자동 검증 (옵션)
-                    if (this.plugin.settings.autoValidateKeys) {
-                        await this.validateApiKey(provider, value, validateBtn);
+                        // 자동 검증 (옵션)
+                        if (this.plugin.settings.autoValidateKeys) {
+                            await this.validateApiKey(provider, value, validateBtn);
+                        }
                     }
+                } catch (error) {
+                    console.error('APIKeyManager: Error saving API key on blur:', error);
+                    new Notice('Failed to save API key. Please check console for details.');
                 }
             })();
         });

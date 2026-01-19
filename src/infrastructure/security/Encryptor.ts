@@ -73,7 +73,7 @@ export class Encryptor implements IEncryptor {
         return crypto.subtle.deriveKey(
             {
                 name: 'PBKDF2',
-                salt: salt as any,
+                salt: salt.buffer as ArrayBuffer,
                 iterations: this.iterations,
                 hash: 'SHA-256',
             },
@@ -172,10 +172,10 @@ export class Encryptor implements IEncryptor {
         const decryptedBuffer = await crypto.subtle.decrypt(
             {
                 name: this.algorithm,
-                iv: iv as any,
+                iv: iv.buffer as ArrayBuffer,
             },
             key,
-            encryptedBuffer as any
+            encryptedBuffer.buffer as ArrayBuffer
         );
 
         return new TextDecoder().decode(decryptedBuffer);
@@ -198,10 +198,10 @@ export class Encryptor implements IEncryptor {
             const encryptedBuffer = await crypto.subtle.encrypt(
                 {
                     name: this.algorithm,
-                    iv: iv as any,
+                    iv: iv.buffer as ArrayBuffer,
                 },
                 key,
-                encodedText as any
+                encodedText.buffer as ArrayBuffer
             );
 
             // Base64 인코딩
@@ -233,10 +233,10 @@ export class Encryptor implements IEncryptor {
             const decryptedBuffer = await crypto.subtle.decrypt(
                 {
                     name: this.algorithm,
-                    iv: iv as any,
+                    iv: iv.buffer as ArrayBuffer,
                 },
                 key,
-                encryptedBuffer as any
+                encryptedBuffer.buffer as ArrayBuffer
             );
 
             // 텍스트 디코딩
