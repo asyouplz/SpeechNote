@@ -282,7 +282,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
                         .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ 품질 우선')
                         .setValue(
                             this.plugin.settings.selectionStrategy ||
-                            SelectionStrategy.PERFORMANCE_OPTIMIZED
+                                SelectionStrategy.PERFORMANCE_OPTIMIZED
                         )
                         .onChange((value) => this.handleStrategyChange(value));
                 }

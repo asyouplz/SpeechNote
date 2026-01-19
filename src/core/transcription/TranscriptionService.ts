@@ -93,9 +93,9 @@ export class TranscriptionService implements ITranscriptionService {
 
             const response = hasTranscribeOptions
                 ? await this.whisperService.transcribe(processedAudio.buffer, {
-                    language: languagePreference,
-                    model: modelPreference,
-                })
+                      language: languagePreference,
+                      model: modelPreference,
+                  })
                 : await this.whisperService.transcribe(processedAudio.buffer);
 
             this.logger.debug('WhisperService response:', {
@@ -405,9 +405,9 @@ export class TranscriptionService implements ITranscriptionService {
         const effectiveFetchPromise =
             this.isTestEnvironment() && delayForAbort
                 ? responsePromise.then(async (response) => {
-                    await this.sleep(150);
-                    return response;
-                })
+                      await this.sleep(150);
+                      return response;
+                  })
                 : responsePromise;
 
         if (!signal) {
@@ -449,7 +449,12 @@ export class TranscriptionService implements ITranscriptionService {
                 text?: string;
             };
         } finally {
-            if (abortHandler && signal && 'removeEventListener' in signal && typeof signal.removeEventListener === 'function') {
+            if (
+                abortHandler &&
+                signal &&
+                'removeEventListener' in signal &&
+                typeof signal.removeEventListener === 'function'
+            ) {
                 (signal as AbortSignal).removeEventListener('abort', abortHandler);
             }
             if (restoreOnAbort) {
@@ -599,8 +604,8 @@ export class TranscriptionService implements ITranscriptionService {
             typeof settings.timeout === 'number'
                 ? settings.timeout
                 : typeof settings.requestTimeout === 'number'
-                    ? settings.requestTimeout
-                    : 0;
+                ? settings.requestTimeout
+                : 0;
         return Number.isFinite(timeout) && timeout > 0 ? timeout : 0;
     }
 
@@ -630,7 +635,12 @@ export class TranscriptionService implements ITranscriptionService {
         if (!effectiveTimeout) {
             return promise;
         }
-        if (this.isTestEnvironment() && 'mock' in setTimeout && typeof (setTimeout as any).mock === 'object' && !signal) {
+        if (
+            this.isTestEnvironment() &&
+            'mock' in setTimeout &&
+            typeof (setTimeout as any).mock === 'object' &&
+            !signal
+        ) {
             return promise;
         }
 

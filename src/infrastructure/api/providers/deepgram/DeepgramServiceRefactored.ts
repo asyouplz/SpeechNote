@@ -336,7 +336,11 @@ export class DeepgramServiceRefactored {
     /**
      * Handle API errors
      */
-    private handleApiError(response: { status: number; json: any; headers?: Record<string, string> }): never {
+    private handleApiError(response: {
+        status: number;
+        json: any;
+        headers?: Record<string, string>;
+    }): never {
         const errorBody = response.json;
         const errorMessage = errorBody?.message ?? errorBody?.error ?? 'Unknown error';
 
@@ -358,7 +362,10 @@ export class DeepgramServiceRefactored {
                 ),
             429: () => {
                 const retryAfter = response.headers?.['retry-after'];
-                return new ProviderRateLimitError('deepgram', retryAfter ? parseInt(retryAfter, 10) : undefined);
+                return new ProviderRateLimitError(
+                    'deepgram',
+                    retryAfter ? parseInt(retryAfter, 10) : undefined
+                );
             },
             500: () => new ProviderUnavailableError('deepgram'),
             502: () => new ProviderUnavailableError('deepgram'),
@@ -382,7 +389,15 @@ export class DeepgramServiceRefactored {
     /**
      * Create segments from words
      */
-    private createSegments(words?: Array<{ word: string; confidence: number; start: number; end: number; speaker?: number }>): TranscriptionSegment[] {
+    private createSegments(
+        words?: Array<{
+            word: string;
+            confidence: number;
+            start: number;
+            end: number;
+            speaker?: number;
+        }>
+    ): TranscriptionSegment[] {
         if (!words?.length) {
             return [];
         }
@@ -403,7 +418,16 @@ export class DeepgramServiceRefactored {
     /**
      * Create a single segment from words
      */
-    private createSegment(words: Array<{ word: string; confidence: number; start: number; end: number; speaker?: number }>, id: number): TranscriptionSegment {
+    private createSegment(
+        words: Array<{
+            word: string;
+            confidence: number;
+            start: number;
+            end: number;
+            speaker?: number;
+        }>,
+        id: number
+    ): TranscriptionSegment {
         const text = words.map((w) => w.word).join(' ');
         const totalConfidence = words.reduce((acc, w) => acc + w.confidence, 0);
 
