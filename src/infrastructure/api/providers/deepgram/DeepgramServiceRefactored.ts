@@ -302,7 +302,7 @@ export class DeepgramServiceRefactored {
             punctuate: options?.punctuate !== false,
             smart_format: options?.smartFormat,
             diarize: options?.diarize,
-            utterances: (options as any)?.utterances,
+            utterances: options?.utterances,
             numerals: options?.numerals,
             profanity_filter: options?.profanityFilter,
         };
@@ -336,7 +336,11 @@ export class DeepgramServiceRefactored {
     /**
      * Handle API errors
      */
-    private handleApiError(response: any): never {
+    private handleApiError(response: {
+        status: number;
+        json: any;
+        headers?: Record<string, string>;
+    }): never {
         const errorBody = response.json;
         const errorMessage = errorBody?.message ?? errorBody?.error ?? 'Unknown error';
 
@@ -356,7 +360,13 @@ export class DeepgramServiceRefactored {
                     false,
                     402
                 ),
-            429: () => new ProviderRateLimitError('deepgram', response.headers?.['retry-after']),
+            429: () => {
+                const retryAfter = response.headers?.['retry-after'];
+                return new ProviderRateLimitError(
+                    'deepgram',
+                    retryAfter ? parseInt(retryAfter, 10) : undefined
+                );
+            },
             500: () => new ProviderUnavailableError('deepgram'),
             502: () => new ProviderUnavailableError('deepgram'),
             503: () => new ProviderUnavailableError('deepgram'),
@@ -379,7 +389,15 @@ export class DeepgramServiceRefactored {
     /**
      * Create segments from words
      */
-    private createSegments(words?: any[]): TranscriptionSegment[] {
+    private createSegments(
+        words?: Array<{
+            word: string;
+            confidence: number;
+            start: number;
+            end: number;
+            speaker?: number;
+        }>
+    ): TranscriptionSegment[] {
         if (!words?.length) {
             return [];
         }
@@ -400,7 +418,16 @@ export class DeepgramServiceRefactored {
     /**
      * Create a single segment from words
      */
-    private createSegment(words: any[], id: number): TranscriptionSegment {
+    private createSegment(
+        words: Array<{
+            word: string;
+            confidence: number;
+            start: number;
+            end: number;
+            speaker?: number;
+        }>,
+        id: number
+    ): TranscriptionSegment {
         const text = words.map((w) => w.word).join(' ');
         const totalConfidence = words.reduce((acc, w) => acc + w.confidence, 0);
 
@@ -410,7 +437,7 @@ export class DeepgramServiceRefactored {
             end: words[words.length - 1].end,
             text,
             confidence: totalConfidence / words.length,
-            speaker: words[0].speaker,
+            speaker: words[0].speaker !== undefined ? String(words[0].speaker) : undefined,
         };
     }
 

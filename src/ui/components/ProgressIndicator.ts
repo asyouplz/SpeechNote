@@ -43,7 +43,7 @@ export class ProgressIndicator {
         this.progressElement.addClass('sn-fade-hidden');
 
         // 오버레이
-        const _overlay = this.progressElement.createDiv('progress-overlay');
+        this.progressElement.createDiv('progress-overlay');
 
         // 컨테이너
         const content = this.progressElement.createDiv('progress-content');
@@ -58,7 +58,7 @@ export class ProgressIndicator {
 
         // 진행률 바
         const progressBar = barContainer.createDiv('progress-bar');
-        const _progressFill = progressBar.createDiv('progress-fill');
+        progressBar.createDiv('progress-fill');
         const progressText = progressBar.createDiv('progress-text');
         progressText.setText('0%');
 
