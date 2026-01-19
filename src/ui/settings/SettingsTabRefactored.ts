@@ -490,11 +490,9 @@ export class SettingsTabRefactored extends PluginSettingTab {
      * 설정 내보내기
      */
     private exportSettings(): Promise<void> {
-        const {
-            apiKey: _apiKey,
-            encryptedApiKey: _encryptedApiKey,
-            ...exportSettings
-        } = this.plugin.settings;
+        const exportSettings = { ...this.plugin.settings };
+        delete (exportSettings as any).apiKey;
+        delete (exportSettings as any).encryptedApiKey;
 
         const json = JSON.stringify(exportSettings, null, 2);
         const blob = new Blob([json], { type: 'application/json' });

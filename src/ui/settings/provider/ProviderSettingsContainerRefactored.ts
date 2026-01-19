@@ -282,7 +282,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
                         .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ 품질 우선')
                         .setValue(
                             this.plugin.settings.selectionStrategy ||
-                                SelectionStrategy.PERFORMANCE_OPTIMIZED
+                            SelectionStrategy.PERFORMANCE_OPTIMIZED
                         )
                         .onChange((value) => this.handleStrategyChange(value));
                 }
@@ -309,13 +309,13 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         );
 
         // Provider 선택 UI
-        this.renderProviderSelectionContent(contentEl);
+        this.renderProviderSelectionContent();
     }
 
     /**
      * Provider 선택 내용
      */
-    private renderProviderSelectionContent(_containerEl: HTMLElement): void {
+    private renderProviderSelectionContent(): void {
         // 여기에 기존 Provider 선택 UI 로직
         // 코드 간결성을 위해 생략
     }
@@ -353,13 +353,13 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         const metrics = this.memoized('metrics', () => this.calculateMetrics());
 
         // 차트나 그래프로 표시
-        this.renderMetricsCharts(section, metrics);
+        this.renderMetricsCharts();
     }
 
     /**
      * 메트릭 차트 렌더링
      */
-    private renderMetricsCharts(_containerEl: HTMLElement, _metrics: any): void {
+    private renderMetricsCharts(): void {
         // 여기에 차트 렌더링 로직
         // 실제 구현은 차트 라이브러리 사용
     }
