@@ -105,85 +105,6 @@ export class Encryptor implements IEncryptor {
     }
 
     /**
-     * Legacy password generation for migration from older versions.
-     * Attempts to reconstruct the old system password for backward compatibility.
-     *
-     * @deprecated This method uses platform-specific APIs (navigator, screen, Intl)
-     * for backward compatibility only. It will be removed in a future version
-     * when migration is no longer needed (target: v4.0.0).
-     * DO NOT use these APIs in new code - they trigger Obsidian plugin review issues.
-     */
-    private getLegacySystemPassword(): string | null {
-        // Feature detection - check if required platform APIs are available
-        const hasNavigator = typeof navigator !== 'undefined';
-        const hasScreen = typeof screen !== 'undefined';
-        const hasIntl = typeof Intl !== 'undefined';
-
-        // If none of the platform APIs are available, migration is not possible
-        if (!hasNavigator && !hasScreen && !hasIntl) {
-            console.warn(
-                'Legacy migration not available: platform APIs not accessible in this environment'
-            );
-            return null;
-        }
-
-        try {
-            // LEGACY CODE - Required for migration from pre-3.1.0 versions only
-            // Uses Obsidian Platform API to comply with security guidelines
-            // NOTE: Using Platform.isDesktopApp instead of navigator/screen to pass Obsidian review
-            // This is a deliberate trade-off: compliance is prioritized over perfect backward compatibility
-            // for the few users remaining on pre-3.1.0 versions during the migration period.
-            // Will be removed in v4.0.0 when migration period ends
-            const platformInfo = Platform.isDesktopApp ? 'desktop' : 'mobile';
-            const osInfo = Platform.isMacOS
-                ? 'macos'
-                : Platform.isWin
-                ? 'windows'
-                : Platform.isLinux
-                ? 'linux'
-                : 'other';
-
-            const factors = [
-                platformInfo,
-                osInfo,
-                hasIntl ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
-                'ObsidianSpeechToText2024',
-            ];
-            return factors.join('|');
-        } catch (legacyError) {
-            console.warn('Legacy password generation failed:', legacyError);
-            return null;
-        }
-    }
-
-    /**
-     * Attempt decryption with legacy password (for migration).
-     */
-    async decryptWithLegacy(encryptedData: EncryptedData): Promise<string> {
-        const legacyPassword = this.getLegacySystemPassword();
-        if (!legacyPassword) {
-            throw new Error('Legacy password generation failed');
-        }
-
-        const encryptedBuffer = this.base64ToBuffer(encryptedData.data);
-        const iv = this.base64ToBuffer(encryptedData.iv);
-        const salt = this.base64ToBuffer(encryptedData.salt);
-
-        const key = await this.deriveKey(legacyPassword, salt);
-
-        const decryptedBuffer = await crypto.subtle.decrypt(
-            {
-                name: this.algorithm,
-                iv: iv.buffer as ArrayBuffer,
-            },
-            key,
-            encryptedBuffer.buffer as ArrayBuffer
-        );
-
-        return new TextDecoder().decode(decryptedBuffer);
-    }
-
-    /**
      * 텍스트 암호화
      */
     async encrypt(plainText: string): Promise<EncryptedData> {
@@ -377,35 +298,10 @@ export class SecureApiKeyManager {
                 const encrypted: EncryptedData = JSON.parse(storedData) as EncryptedData;
 
                 try {
-                    // Try new password first
                     return await this.encryptor.decrypt(encrypted);
-                } catch (newPasswordError) {
-                    // Log the error before attempting legacy migration
-                    console.debug(
-                        'New password decryption failed, attempting legacy migration:',
-                        newPasswordError
-                    );
-
-                    // Fall back to legacy password for migration
-                    if (this.encryptor instanceof Encryptor) {
-                        try {
-                            const decrypted = await this.encryptor.decryptWithLegacy(encrypted);
-                            // Re-encrypt with new password for future use
-                            const reEncrypted = await this.encryptor.encrypt(decrypted);
-                            this.app.saveLocalStorage(this.storageKey, JSON.stringify(reEncrypted));
-                            // Show notice only after successful save
-                            new Notice('API key migrated to new encryption format.');
-                            return decrypted;
-                        } catch (legacyError) {
-                            console.error('Legacy decryption also failed:', legacyError);
-                            new Notice(
-                                'Failed to decrypt API key. Please re-enter your API key in settings.',
-                                10000
-                            );
-                            throw legacyError;
-                        }
-                    }
-                    throw new Error('Decryption failed');
+                } catch (decryptionError) {
+                    console.error('Decryption failed:', decryptionError);
+                    throw decryptionError;
                 }
             } catch (error) {
                 lastError = error instanceof Error ? error : new Error(String(error));
