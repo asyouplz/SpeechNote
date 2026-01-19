@@ -265,7 +265,7 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('ab_test', 'A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
-                            SelectionStrategy.PERFORMANCE_OPTIMIZED
+                        SelectionStrategy.PERFORMANCE_OPTIMIZED
                     )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {
@@ -448,7 +448,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createGeneralSection(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('General settings').setHeading();
+        new Setting(containerEl).setName('Configuration').setHeading();
 
         // Language setting
         new Setting(containerEl)
@@ -517,7 +517,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createAudioSection(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('Audio settings').setHeading();
+        new Setting(containerEl).setName('Audio').setHeading();
 
         // Model selection - Provider에 따라 다르게 표시
         const provider = this.plugin.settings.provider || 'auto';
@@ -570,7 +570,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createAdvancedSection(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('Advanced settings').setHeading();
+        new Setting(containerEl).setName('Advanced').setHeading();
 
         // Enable cache
         new Setting(containerEl)
@@ -608,6 +608,7 @@ export class SettingsTab extends PluginSettingTab {
                 button
                     .setButtonText('Reset')
                     .setWarning()
+                    // eslint-disable-next-line @typescript-eslint/require-await
                     .onClick(async () => {
                         new ConfirmationModal(
                             this.app,

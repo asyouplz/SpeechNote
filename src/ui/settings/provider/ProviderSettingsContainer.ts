@@ -43,12 +43,12 @@ export class ProviderSettingsContainer {
     /**
      * 초기화
      */
-    private async initialize(): Promise<void> {
+    private initialize(): void {
         // 현재 설정 로드
-        await this.loadSettings();
+        this.loadSettings();
 
         // 연결 상태 확인
-        await this.checkAllConnections();
+        this.checkAllConnections();
 
         // 실시간 상태 업데이트 시작
         this.startStatusMonitoring();
@@ -95,10 +95,7 @@ export class ProviderSettingsContainer {
 
         // 타이틀
         const titleEl = headerEl.createDiv({ cls: 'provider-title' });
-        titleEl.createEl('h3', {
-            text: '🎯 Transcription provider configuration',
-            cls: 'provider-title-text',
-        });
+        new Setting(titleEl).setName('🎯 Transcription provider Configuration').setHeading();
 
         // 확장/축소 토글
         const toggleBtn = headerEl.createEl('button', {
@@ -236,13 +233,13 @@ export class ProviderSettingsContainer {
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance First')
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost Optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality First')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round Robin')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
-                            SelectionStrategy.PERFORMANCE_OPTIMIZED
+                        SelectionStrategy.PERFORMANCE_OPTIMIZED
                     )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {
@@ -271,8 +268,8 @@ export class ProviderSettingsContainer {
                 await this.verifyAllApiKeys();
             });
 
-        new ButtonComponent(actionsEl).setButtonText('Import keys').onClick(async () => {
-            await this.importApiKeys();
+        new ButtonComponent(actionsEl).setButtonText('Import keys').onClick(() => {
+            this.importApiKeys();
         });
     }
 
@@ -311,8 +308,8 @@ export class ProviderSettingsContainer {
         });
 
         // 설정 내보내기
-        new ButtonComponent(actionsEl).setButtonText('Export config').onClick(async () => {
-            await this.exportConfiguration();
+        new ButtonComponent(actionsEl).setButtonText('Export config').onClick(() => {
+            this.exportConfiguration();
         });
 
         // 설정 초기화
@@ -414,14 +411,14 @@ export class ProviderSettingsContainer {
      */
     private showProviderHelp(): void {
         const modal = new Modal(this.app);
-        modal.titleEl.setText('Provider Selection Guide');
+        modal.titleEl.setText('Provider selection guide');
 
         const contentEl = modal.contentEl;
         const helpContainer = contentEl.createDiv('provider-help');
 
         const sections = [
             {
-                title: '🤖 Automatic Mode',
+                title: '🤖 Automatic mode',
                 description: 'The system intelligently selects the best provider based on:',
                 bullets: [
                     'Current availability and response times',
@@ -448,7 +445,7 @@ export class ProviderSettingsContainer {
         ];
 
         sections.forEach((section) => {
-            helpContainer.createEl('h4', { text: section.title });
+            new Setting(helpContainer).setName(section.title).setHeading();
             if (section.description) {
                 helpContainer.createEl('p', { text: section.description });
             }
@@ -467,7 +464,7 @@ export class ProviderSettingsContainer {
     /**
      * 모든 연결 확인
      */
-    private async checkAllConnections(): Promise<void> {
+    private checkAllConnections(): void {
         const providers: TranscriptionProvider[] = ['whisper', 'deepgram'];
 
         for (const provider of providers) {
@@ -497,8 +494,8 @@ export class ProviderSettingsContainer {
      */
     private startStatusMonitoring(): void {
         // 5분마다 상태 업데이트
-        this.statusUpdateInterval = window.setInterval(async () => {
-            await this.checkAllConnections();
+        this.statusUpdateInterval = window.setInterval(() => {
+            this.checkAllConnections();
         }, 5 * 60 * 1000);
     }
 
@@ -631,7 +628,7 @@ export class ProviderSettingsContainer {
     private confirmReset(): Promise<boolean> {
         return new Promise((resolve) => {
             const modal = new Modal(this.app);
-            modal.titleEl.setText('Reset Provider Settings?');
+            modal.titleEl.setText('Reset provider settings?');
 
             modal.contentEl.createEl('p', {
                 text: 'This will reset all provider settings to defaults. API keys will be preserved.',
@@ -717,12 +714,12 @@ export class ProviderSettingsContainer {
 
     private isSelectionStrategy(value: string): value is SelectionStrategy {
         return (
-            value === SelectionStrategy.MANUAL ||
-            value === SelectionStrategy.COST_OPTIMIZED ||
-            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
-            value === SelectionStrategy.QUALITY_OPTIMIZED ||
-            value === SelectionStrategy.ROUND_ROBIN ||
-            value === SelectionStrategy.AB_TEST
+            value === (SelectionStrategy.MANUAL as string) ||
+            value === (SelectionStrategy.COST_OPTIMIZED as string) ||
+            value === (SelectionStrategy.PERFORMANCE_OPTIMIZED as string) ||
+            value === (SelectionStrategy.QUALITY_OPTIMIZED as string) ||
+            value === (SelectionStrategy.ROUND_ROBIN as string) ||
+            value === (SelectionStrategy.AB_TEST as string)
         );
     }
 
@@ -751,7 +748,7 @@ class ProviderDetailsModal extends Modal {
     onOpen(): void {
         const { contentEl, titleEl } = this;
 
-        titleEl.setText(`${this.getProviderName()} Details`);
+        titleEl.setText(`${this.getProviderName()} details`);
 
         // 상태 정보
         const statusEl = contentEl.createDiv({ cls: 'provider-details-status' });
@@ -856,10 +853,10 @@ class ProviderDetailsModal extends Modal {
  * Provider 메트릭 표시 컴포넌트
  */
 class ProviderMetricsDisplay {
-    constructor(private plugin: SpeechToTextPlugin) {}
+    constructor(private plugin: SpeechToTextPlugin) { }
 
     render(containerEl: HTMLElement): void {
-        containerEl.createEl('h4', { text: '📊 Performance metrics' });
+        new Setting(containerEl).setName('📊 Performance metrics').setHeading();
 
         // TODO: 실제 메트릭 구현
         const metricsEl = containerEl.createDiv({ cls: 'metrics-display' });

@@ -47,19 +47,20 @@ export class SettingsAPI implements ISettingsAPI {
     async initialize(): Promise<void> {
         try {
             // Obsidian API를 통해 설정 로드
-            const stored = this.app.loadLocalStorage(this.storageKey);
+            const stored = this.app.loadLocalStorage(this.storageKey) as string | null;
             if (stored) {
-                const parsed = JSON.parse(stored);
+                const parsed = JSON.parse(stored) as unknown;
 
                 // 마이그레이션 확인
                 if (this.needsMigration()) {
+                    const parsedObj = parsed as Record<string, unknown>;
                     this.settings = await this.migrator.migrate(
-                        parsed,
-                        parsed.version || '1.0.0',
+                        parsedObj as any,
+                        (parsedObj.version as string) || '1.0.0',
                         this.defaultSettings.version
                     );
                 } else {
-                    this.settings = parsed;
+                    this.settings = parsed as SettingsSchema;
                 }
             }
 
@@ -182,8 +183,8 @@ export class SettingsAPI implements ISettingsAPI {
         if (!stored) return false;
 
         try {
-            const parsed = JSON.parse(stored);
-            return parsed.version !== this.defaultSettings.version;
+            const parsed = JSON.parse(stored) as Record<string, unknown>;
+            return parsed.version !== (this.defaultSettings.version as unknown as string);
         } catch {
             return false;
         }
@@ -223,10 +224,10 @@ export class SettingsAPI implements ISettingsAPI {
             const encoder = new TextEncoder();
             const data = encoder.encode(json);
             const compressed = await this.compress(data);
-            return new Blob([compressed], { type: 'application/gzip' });
+            return new Blob([compressed as any], { type: 'application/gzip' });
         }
 
-        return new Blob([json], { type: 'application/json' });
+        return new Blob([json as any], { type: 'application/json' });
     }
 
     /**
@@ -245,11 +246,13 @@ export class SettingsAPI implements ISettingsAPI {
                 data = await file.text();
             }
 
-            let importedSettings = JSON.parse(data);
+            let importedSettings = JSON.parse(data) as Record<string, unknown>;
 
             // 암호화된 파일 처리
             if (options.password) {
-                importedSettings = await this.encryptor.decryptSensitiveSettings(importedSettings);
+                importedSettings = (await this.encryptor.decryptSensitiveSettings(
+                    importedSettings as any
+                )) as any as Record<string, unknown>;
             }
 
             // 검증
@@ -280,7 +283,7 @@ export class SettingsAPI implements ISettingsAPI {
 
             return {
                 success: true,
-                imported: importedSettings,
+                imported: importedSettings as unknown as SettingsSchema,
                 warnings: validation?.warnings?.map((w) => w.message),
             };
         } catch (error) {
@@ -298,7 +301,7 @@ export class SettingsAPI implements ISettingsAPI {
     async reset(scope: ResetScope = 'all'): Promise<void> {
         if (scope === 'all') {
             this.settings = { ...this.defaultSettings };
-            await this.apiKeyManager.clearApiKey();
+            this.apiKeyManager.clearApiKey();
         } else if (Array.isArray(scope)) {
             scope.forEach((key) => {
                 const typedKey = key;

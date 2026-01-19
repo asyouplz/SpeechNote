@@ -39,7 +39,7 @@ export interface ProviderStatus {
 /**
  * 검증 결과
  */
-export interface ValidationResult<T = any> {
+export interface ValidationResult<T = unknown> {
     isValid: boolean;
     errors: string[];
     warnings: string[];
@@ -49,7 +49,7 @@ export interface ValidationResult<T = any> {
 /**
  * 설정 변경 이벤트
  */
-export interface SettingsChangeEvent<T = any> {
+export interface SettingsChangeEvent<T = unknown> {
     key: string;
     oldValue: T;
     newValue: T;
@@ -80,8 +80,6 @@ export type SettingValue =
     | number
     | boolean
     | Date
-    | TranscriptionProvider
-    | SelectionStrategy
     | Record<string, unknown>
     | unknown[];
 
@@ -186,14 +184,14 @@ export type DeepReadonly<T> = {
  * Required Keys 타입
  */
 export type RequiredKeys<T> = {
-    [K in keyof T]-?: {} extends Pick<T, K> ? never : K;
+    [K in keyof T]-?: object extends Pick<T, K> ? never : K;
 }[keyof T];
 
 /**
  * Optional Keys 타입
  */
 export type OptionalKeys<T> = {
-    [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
+    [K in keyof T]-?: object extends Pick<T, K> ? K : never;
 }[keyof T];
 
 /**
@@ -214,7 +212,7 @@ export type NonNullableObject<T> = {
  * 타입 안전한 설정 접근자
  */
 export class TypeSafeSettings<T extends Record<string, unknown>> {
-    constructor(private settings: T) {}
+    constructor(private settings: T) { }
 
     /**
      * 타입 안전한 getter
@@ -288,8 +286,10 @@ export class SettingsChangeTracker<T extends Record<string, unknown>> {
                 new: newValue,
             });
         } else {
-            const change = this.changes.get(key)!;
-            change.new = newValue;
+            const change = this.changes.get(key);
+            if (change) {
+                change.new = newValue;
+            }
         }
     }
 
@@ -337,7 +337,10 @@ export class SettingsValidator<T extends Record<string, unknown>> {
         if (!this.rules.has(fieldKey)) {
             this.rules.set(fieldKey, []);
         }
-        this.rules.get(fieldKey)!.push((value: unknown) => validator(value as T[K]));
+        const fieldRules = this.rules.get(fieldKey);
+        if (fieldRules) {
+            fieldRules.push((value: unknown) => validator(value as T[K]));
+        }
         return this;
     }
 
@@ -400,7 +403,7 @@ export function safeJsonParse<T>(json: string, defaultValue: T): T {
 /**
  * 깊은 병합
  */
-export function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
+export function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
     const result = { ...target };
 
     for (const key in source) {
@@ -408,9 +411,9 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Part
         if (sourceValue !== undefined) {
             const targetValue = target[key];
             if (isPlainRecord(sourceValue) && isPlainRecord(targetValue)) {
-                result[key] = deepMerge(targetValue as T[typeof key], sourceValue as T[typeof key]);
+                result[key] = deepMerge(targetValue as Record<string, unknown>, sourceValue as Record<string, unknown>) as T[Extract<keyof T, string>];
             } else {
-                result[key] = sourceValue as T[typeof key];
+                result[key] = sourceValue as T[Extract<keyof T, string>];
             }
         }
     }

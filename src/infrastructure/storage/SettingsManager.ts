@@ -12,11 +12,11 @@ export interface PluginSettings {
     whisperApiKey?: string;
     deepgramApiKey?: string;
     selectionStrategy?:
-        | 'cost_optimized'
-        | 'performance_optimized'
-        | 'quality_optimized'
-        | 'round_robin'
-        | 'ab_test';
+    | 'cost_optimized'
+    | 'performance_optimized'
+    | 'quality_optimized'
+    | 'round_robin'
+    | 'ab_test';
 
     // Provider optimization settings
     costLimit?: number;
@@ -172,7 +172,7 @@ export class SettingsManager implements ISettingsManager {
             if (settings.apiKey) {
                 settings.encryptedApiKey = this.encryption.encrypt(settings.apiKey);
                 // 원본 API 키는 저장하지 않음
-                const { apiKey: _apiKey, ...saveData } = settings;
+                const { apiKey: _, ...saveData } = settings;
                 await this.plugin.saveData(saveData);
             } else {
                 await this.plugin.saveData(settings);
@@ -232,7 +232,7 @@ export class SettingsManager implements ISettingsManager {
         this.settings.encryptedApiKey = this.encryption.encrypt(apiKey);
 
         // 저장 시 API 키는 제외
-        const { apiKey: _apiKey, ...saveData } = this.settings;
+        const { apiKey: _, ...saveData } = this.settings;
 
         await this.plugin.saveData(saveData);
         this.logger?.debug('API key encrypted and saved', {
@@ -249,14 +249,14 @@ export class SettingsManager implements ISettingsManager {
 
     // 설정 내보내기 (민감한 정보 제외)
     exportSettings(): Partial<PluginSettings> {
-        const { apiKey: _apiKey, encryptedApiKey: _encryptedApiKey, ...exported } = this.settings;
+        const { apiKey: _, encryptedApiKey: __, ...exported } = this.settings;
         return exported;
     }
 
     // 설정 가져오기
     async importSettings(imported: Partial<PluginSettings>): Promise<void> {
         // API 키는 가져오지 않음
-        const { apiKey: _apiKey, encryptedApiKey: _encryptedApiKey, ...safeImported } = imported;
+        const { apiKey: _, encryptedApiKey: __, ...safeImported } = imported;
 
         this.settings = { ...this.settings, ...safeImported };
         await this.save(this.settings);

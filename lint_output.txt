@@ -1,0 +1,10 @@
+
+> obsidian-speech-to-text@3.0.11 lint
+> eslint src/**/*.ts
+
+
+/Users/taesunlee/Documents/program/SpeechNote/src/testing/TestingFramework.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to override
+
+✖ 1 problem (0 errors, 1 warning)
+
