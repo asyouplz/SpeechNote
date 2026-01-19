@@ -232,7 +232,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         providers.forEach((provider) => {
             const hasKey = this.hasApiKey(provider);
             const isConnected = state.connectionStatus.get(provider) || false;
-            const _lastValidated = state.lastValidation.get(provider);
+            state.lastValidation.get(provider);
 
             UIComponentFactory.createCard(
                 containerEl,
@@ -282,7 +282,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
                         .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ 품질 우선')
                         .setValue(
                             this.plugin.settings.selectionStrategy ||
-                                SelectionStrategy.PERFORMANCE_OPTIMIZED
+                            SelectionStrategy.PERFORMANCE_OPTIMIZED
                         )
                         .onChange((value) => this.handleStrategyChange(value));
                 }

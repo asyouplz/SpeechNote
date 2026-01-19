@@ -1,7 +1,7 @@
 import { Setting, Notice, ButtonComponent, Modal, requestUrl } from 'obsidian';
 import type SpeechToTextPlugin from '../../../../main';
 import { TranscriptionProvider } from '../../../../infrastructure/api/providers/ITranscriber';
-import { Encryptor } from '../../../../infrastructure/security/Encryptor';
+import { Encryptor, isEncryptedData } from '../../../../infrastructure/security/Encryptor';
 
 /**
  * API Key Manager Component
@@ -142,7 +142,7 @@ export class APIKeyManager {
         }
 
         // 가시성 토글 버튼
-        const _visibilityBtn = this.createVisibilityToggle(inputContainer, inputEl, provider);
+        this.createVisibilityToggle(inputContainer, inputEl, provider);
 
         // 검증 버튼
         const validateBtn = this.createValidationButton(
@@ -153,10 +153,10 @@ export class APIKeyManager {
         );
 
         // 복사 버튼
-        const _copyBtn = this.createCopyButton(inputContainer, provider);
+        this.createCopyButton(inputContainer, provider);
 
         // 삭제 버튼
-        const _deleteBtn = this.createDeleteButton(inputContainer, provider);
+        this.createDeleteButton(inputContainer, provider);
 
         // 입력 이벤트 핸들러
         this.attachInputHandlers(inputEl, provider, validationRegex, validateBtn);
@@ -424,33 +424,35 @@ export class APIKeyManager {
 
             if (value && !value.includes('*')) {
                 if (validationRegex.test(value)) {
-                    inputEl.removeClass('invalid');
-                    inputEl.addClass('valid-format');
+                    inputEl.classList.remove('invalid');
+                    inputEl.classList.add('valid-format');
                     validateBtn.disabled = false;
                 } else {
-                    inputEl.removeClass('valid-format');
-                    inputEl.addClass('invalid');
+                    inputEl.classList.remove('valid-format');
+                    inputEl.classList.add('invalid');
                     validateBtn.disabled = true;
                 }
             }
         });
 
         // 포커스 아웃시 저장
-        inputEl.addEventListener('blur', async () => {
-            const value = inputEl.value;
+        inputEl.addEventListener('blur', () => {
+            void (async () => {
+                const value = inputEl.value;
 
-            // 마스킹된 값이거나 빈 값이면 무시
-            if (value.includes('*') || !value) return;
+                // 마스킹된 값이거나 빈 값이면 무시
+                if (value.includes('*') || !value) return;
 
-            if (validationRegex.test(value)) {
-                await this.saveApiKey(provider, value);
-                inputEl.addClass('has-value');
+                if (validationRegex.test(value)) {
+                    await this.saveApiKey(provider, value);
+                    inputEl.classList.add('has-value');
 
-                // 자동 검증 (옵션)
-                if (this.plugin.settings.autoValidateKeys) {
-                    await this.validateApiKey(provider, value, validateBtn);
+                    // 자동 검증 (옵션)
+                    if (this.plugin.settings.autoValidateKeys) {
+                        await this.validateApiKey(provider, value, validateBtn);
+                    }
                 }
-            }
+            })();
         });
 
         // Enter 키로 검증
@@ -467,7 +469,7 @@ export class APIKeyManager {
     private renderLastValidation(containerEl: HTMLElement, provider: TranscriptionProvider): void {
         const status = this.validationStatus.get(provider);
         if (status && status.lastValidated) {
-            const _timeEl = containerEl.createEl('div', {
+            containerEl.createEl('div', {
                 cls: 'last-validation-time',
                 text: `Last verified: ${this.formatTime(status.lastValidated)}`,
             });
@@ -788,7 +790,7 @@ export class APIKeyManager {
         modal.titleEl.setText('Environment variable setup');
 
         const contentEl = modal.contentEl;
-        const instructions = contentEl.createDiv('env-var-instructions');
+        const instructions = contentEl.createDiv('env-var-instructions') as HTMLDivElement;
         instructions.createEl('p', { text: 'To use environment variables for API keys:' });
 
         const orderedList = instructions.createEl('ol');
@@ -896,9 +898,11 @@ export class APIKeyManager {
         if (this.plugin.settings.apiKey || this.plugin.settings.whisperApiKey) {
             try {
                 const key = this.plugin.settings.whisperApiKey || this.plugin.settings.apiKey;
-                const encryptedData = JSON.parse(key!);
-                const decrypted = await this.encryptor.decrypt(encryptedData);
-                this.apiKeys.set('whisper', decrypted);
+                const encryptedData = JSON.parse(key!) as unknown;
+                if (isEncryptedData(encryptedData)) {
+                    const decrypted = await this.encryptor.decrypt(encryptedData);
+                    this.apiKeys.set('whisper', decrypted);
+                }
             } catch (error) {
                 // 암호화되지 않은 키일 수 있음 (마이그레이션)
                 const key = this.plugin.settings.apiKey;
@@ -910,9 +914,11 @@ export class APIKeyManager {
 
         if (this.plugin.settings.deepgramApiKey) {
             try {
-                const encryptedData = JSON.parse(this.plugin.settings.deepgramApiKey);
-                const decrypted = await this.encryptor.decrypt(encryptedData);
-                this.apiKeys.set('deepgram', decrypted);
+                const encryptedData = JSON.parse(this.plugin.settings.deepgramApiKey) as unknown;
+                if (isEncryptedData(encryptedData)) {
+                    const decrypted = await this.encryptor.decrypt(encryptedData);
+                    this.apiKeys.set('deepgram', decrypted);
+                }
             } catch (error) {
                 // 암호화되지 않은 키일 수 있음
                 const key = this.plugin.settings.deepgramApiKey;

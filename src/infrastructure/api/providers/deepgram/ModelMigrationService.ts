@@ -456,13 +456,11 @@ export class ModelMigrationService {
                 return false; // 기본적으로 사용자 동의 필요
 
             case 'cost_threshold': {
-                const _maxIncrease = condition.parameters.maxIncrease || 20;
                 // 비용 증가율 계산 로직
                 return true; // 임시 구현
             }
 
             case 'feature_compatible': {
-                const _requiredFeatures = condition.parameters.requiredFeatures || [];
                 // 기능 호환성 체크
                 return true; // 임시 구현
             }

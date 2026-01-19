@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/require-await -- Legacy callback patterns */
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison -- Type guard pattern */
 
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
@@ -54,8 +53,8 @@ export class SettingsTab extends PluginSettingTab {
 
         // Add debug info section at the top
         const debugSection = containerEl.createEl('details', { cls: 'speech-to-text-debug' });
-        const _debugSummary = debugSection.createEl('summary', { text: 'Debug information' });
-        const _debugContent = debugSection.createEl('pre', {
+        debugSection.createEl('summary', { text: 'Debug information' });
+        debugSection.createEl('pre', {
             text: JSON.stringify(
                 {
                     pluginExists: !!this.plugin,
@@ -266,7 +265,7 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('ab_test', 'A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
-                            SelectionStrategy.PERFORMANCE_OPTIMIZED
+                        SelectionStrategy.PERFORMANCE_OPTIMIZED
                     )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {
@@ -366,8 +365,8 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Openai API key')
-            .setDesc('Enter your openai API key for whisper transcription')
+            .setName('OpenAI API key')
+            .setDesc('Enter your OpenAI API key for Whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -401,7 +400,7 @@ export class SettingsTab extends PluginSettingTab {
     private renderDeepgramApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('Deepgram API key')
-            .setDesc('Enter your deepgram API key for transcription')
+            .setDesc('Enter your Deepgram API key for transcription')
             .addText((text) => {
                 text.setPlaceholder('Enter Deepgram API key...')
                     .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))

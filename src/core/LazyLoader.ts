@@ -15,6 +15,8 @@ export interface LazyLoadOptions {
     onLoad?: (module: unknown) => void;
 }
 
+import { requestUrl } from 'obsidian';
+
 export interface LoadingState {
     isLoading: boolean;
     error?: Error;
@@ -184,7 +186,7 @@ export class LazyLoader {
         }
 
         resources.forEach((resource) => {
-            void fetch(resource, { cache: 'force-cache', mode: 'no-cors' }).catch((error) => {
+            void requestUrl({ url: resource, method: 'GET' }).catch((error) => {
                 console.warn(`Failed to preload resource: ${resource}`, error);
             });
         });

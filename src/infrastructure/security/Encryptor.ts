@@ -3,13 +3,8 @@
  * Web Crypto API를 사용한 안전한 데이터 암호화/복호화
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment -- Obsidian's loadLocalStorage returns any */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access -- Required for settings field access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument -- Required for JSON.parse results */
-/* eslint-disable @typescript-eslint/no-unsafe-return -- Required for settings object return */
-/* eslint-disable @typescript-eslint/no-explicit-any -- SettingsEncryptor handles dynamic settings */
 
-import { type App, Notice } from 'obsidian';
+import { type App, Notice, Platform } from 'obsidian';
 
 export interface EncryptedData {
     data: string; // Base64 encoded encrypted data
@@ -48,7 +43,7 @@ export class Encryptor implements IEncryptor {
     private initializeVaultSalt(): void {
         if (!this.app) return;
 
-        const storedSalt = this.app.loadLocalStorage('encryption_vault_salt');
+        const storedSalt = this.app.loadLocalStorage('encryption_vault_salt') as string | null;
         if (storedSalt) {
             this.vaultSalt = storedSalt;
         } else {
@@ -79,7 +74,7 @@ export class Encryptor implements IEncryptor {
         return crypto.subtle.deriveKey(
             {
                 name: 'PBKDF2',
-                salt,
+                salt: salt as any,
                 iterations: this.iterations,
                 hash: 'SHA-256',
             },
@@ -138,10 +133,12 @@ export class Encryptor implements IEncryptor {
             // Uses platform APIs that are deprecated for new functionality
             // NOTE: navigator/screen API usage below is intentional for backward compatibility
             // Will be removed in v4.0.0 when migration period ends
+            const platformInfo = Platform.isDesktopApp ? 'desktop' : 'mobile';
+            const osInfo = Platform.isMacOS ? 'macos' : Platform.isWin ? 'windows' : Platform.isLinux ? 'linux' : 'other';
+
             const factors = [
-                hasNavigator ? navigator.userAgent : '',
-                hasNavigator ? navigator.language : '',
-                hasScreen ? `${screen.width}x${screen.height}` : '',
+                platformInfo,
+                osInfo,
                 hasIntl ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
                 'ObsidianSpeechToText2024',
             ];
@@ -170,10 +167,10 @@ export class Encryptor implements IEncryptor {
         const decryptedBuffer = await crypto.subtle.decrypt(
             {
                 name: this.algorithm,
-                iv,
+                iv: iv as any,
             },
             key,
-            encryptedBuffer
+            encryptedBuffer as any
         );
 
         return new TextDecoder().decode(decryptedBuffer);
@@ -196,10 +193,10 @@ export class Encryptor implements IEncryptor {
             const encryptedBuffer = await crypto.subtle.encrypt(
                 {
                     name: this.algorithm,
-                    iv,
+                    iv: iv as any,
                 },
                 key,
-                encodedText
+                encodedText as any
             );
 
             // Base64 인코딩
@@ -231,10 +228,10 @@ export class Encryptor implements IEncryptor {
             const decryptedBuffer = await crypto.subtle.decrypt(
                 {
                     name: this.algorithm,
-                    iv,
+                    iv: iv as any,
                 },
                 key,
-                encryptedBuffer
+                encryptedBuffer as any
             );
 
             // 텍스트 디코딩
@@ -271,6 +268,15 @@ export class Encryptor implements IEncryptor {
 
         return bytes;
     }
+}
+
+/**
+ * EncryptedData 타입 가드
+ */
+export function isEncryptedData(data: unknown): data is EncryptedData {
+    if (!data || typeof data !== 'object') return false;
+    const d = data as Record<string, unknown>;
+    return typeof d.data === 'string' && typeof d.iv === 'string' && typeof d.salt === 'string';
 }
 
 /**
@@ -356,12 +362,12 @@ export class SecureApiKeyManager {
 
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
-                const storedData = this.app.loadLocalStorage(this.storageKey);
+                const storedData = this.app.loadLocalStorage(this.storageKey) as string | null;
                 if (!storedData) {
                     return null;
                 }
 
-                const encrypted: EncryptedData = JSON.parse(storedData);
+                const encrypted: EncryptedData = JSON.parse(storedData) as EncryptedData;
 
                 try {
                     // Try new password first
@@ -408,7 +414,7 @@ export class SecureApiKeyManager {
         console.error('Failed to retrieve API key after retries:', lastError);
 
         // Backup corrupted data for potential recovery
-        const corruptedData = this.app.loadLocalStorage(this.storageKey);
+        const corruptedData = this.app.loadLocalStorage(this.storageKey) as string | null;
         if (corruptedData) {
             const backupKey = `${this.storageKey}_backup_${Date.now()}`;
             this.app.saveLocalStorage(backupKey, corruptedData);
@@ -424,7 +430,7 @@ export class SecureApiKeyManager {
      * API 키 존재 여부 확인
      */
     hasApiKey(): boolean {
-        return this.app.loadLocalStorage(this.storageKey) !== null;
+        return (this.app.loadLocalStorage(this.storageKey) as string | null) !== null;
     }
 
     /**
@@ -485,9 +491,9 @@ export class SettingsEncryptor {
     /**
      * 민감한 설정 암호화
      */
-    async encryptSensitiveSettings(settings: any): Promise<any> {
+    async encryptSensitiveSettings(settings: Record<string, unknown>): Promise<Record<string, unknown>> {
         const sensitiveFields = ['apiKey', 'tokens', 'credentials'];
-        const encryptedSettings = { ...settings };
+        const encryptedSettings: Record<string, any> = { ...settings };
 
         for (const field of sensitiveFields) {
             if (settings[field]) {
@@ -503,14 +509,15 @@ export class SettingsEncryptor {
     /**
      * 민감한 설정 복호화
      */
-    async decryptSensitiveSettings(encryptedSettings: any): Promise<any> {
-        const settings = { ...encryptedSettings };
+    async decryptSensitiveSettings(encryptedSettings: Record<string, unknown>): Promise<Record<string, unknown>> {
+        const settings: Record<string, any> = { ...encryptedSettings };
         const sensitiveFields = ['apiKey', 'tokens', 'credentials'];
 
         for (const field of sensitiveFields) {
-            if (encryptedSettings[field] && typeof encryptedSettings[field] === 'object') {
+            const fieldValue = encryptedSettings[field];
+            if (fieldValue && typeof fieldValue === 'object' && isEncryptedData(fieldValue)) {
                 try {
-                    const decrypted = await this.encryptor.decrypt(encryptedSettings[field]);
+                    const decrypted = await this.encryptor.decrypt(fieldValue);
                     settings[field] = JSON.parse(decrypted);
                 } catch (error) {
                     console.error(`Failed to decrypt ${field}:`, error);

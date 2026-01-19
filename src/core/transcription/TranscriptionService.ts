@@ -1,4 +1,4 @@
-import { TFile } from 'obsidian';
+import { TFile, requestUrl } from 'obsidian';
 import type {
     ITranscriptionService,
     TranscriptionResult,
@@ -93,9 +93,9 @@ export class TranscriptionService implements ITranscriptionService {
 
             const response = hasTranscribeOptions
                 ? await this.whisperService.transcribe(processedAudio.buffer, {
-                      language: languagePreference,
-                      model: modelPreference,
-                  })
+                    language: languagePreference,
+                    model: modelPreference,
+                })
                 : await this.whisperService.transcribe(processedAudio.buffer);
 
             this.logger.debug('WhisperService response:', {
@@ -382,35 +382,33 @@ export class TranscriptionService implements ITranscriptionService {
         json?: () => Promise<unknown>;
         text?: () => Promise<string>;
     }> {
-        if (typeof fetch !== 'function') {
-            throw new Error('Fetch API is not available');
-        }
-
         const headers: Record<string, string> = {};
         const apiKey = this.getApiKey();
         if (apiKey) {
             headers['Authorization'] = `Bearer ${apiKey}`;
         }
 
-        const fetchPromise = fetch(url, {
+        const responsePromise = requestUrl({
+            url,
             method: 'POST',
             headers,
-            body,
-            signal,
-        }) as Promise<{
-            ok?: boolean;
-            status?: number;
-            statusText?: string;
-            json?: () => Promise<unknown>;
-            text?: () => Promise<string>;
-        }>;
+            body: body as any,
+            throw: false,
+        }).then((response) => ({
+            ok: response.status >= 200 && response.status < 300,
+            status: response.status,
+            statusText: String(response.status),
+            json: async () => response.json,
+            text: async () => response.text,
+        }));
+
         const effectiveFetchPromise =
             this.isTestEnvironment() && delayForAbort
-                ? fetchPromise.then(async (response) => {
-                      await this.sleep(150);
-                      return response;
-                  })
-                : fetchPromise;
+                ? responsePromise.then(async (response) => {
+                    await this.sleep(150);
+                    return response;
+                })
+                : responsePromise;
 
         if (!signal) {
             return await effectiveFetchPromise;
@@ -424,28 +422,28 @@ export class TranscriptionService implements ITranscriptionService {
         let restoreOnAbort: (() => void) | undefined;
         const abortPromise = new Promise<never>((_, reject) => {
             abortHandler = () => reject(this.createAbortError());
-            if (typeof signal.addEventListener === 'function') {
-                signal.addEventListener('abort', abortHandler, { once: true });
+            if (typeof (signal as any).addEventListener === 'function') {
+                (signal as any).addEventListener('abort', abortHandler, { once: true });
             }
             if ('onabort' in signal) {
-                const previous = signal.onabort;
-                signal.onabort = (event) => {
+                const previous = (signal as any).onabort;
+                (signal as any).onabort = (event: any) => {
                     if (typeof previous === 'function') {
                         previous.call(signal, event);
                     }
                     abortHandler?.();
                 };
                 restoreOnAbort = () => {
-                    signal.onabort = previous;
+                    (signal as any).onabort = previous;
                 };
             }
         });
 
         try {
-            return await Promise.race([effectiveFetchPromise, abortPromise]);
+            return (await Promise.race([effectiveFetchPromise, abortPromise])) as any;
         } finally {
-            if (abortHandler && typeof signal.removeEventListener === 'function') {
-                signal.removeEventListener('abort', abortHandler);
+            if (abortHandler && typeof (signal as any).removeEventListener === 'function') {
+                (signal as any).removeEventListener('abort', abortHandler);
             }
             if (restoreOnAbort) {
                 restoreOnAbort();
@@ -607,8 +605,8 @@ export class TranscriptionService implements ITranscriptionService {
             typeof settings.timeout === 'number'
                 ? settings.timeout
                 : typeof settings.requestTimeout === 'number'
-                ? settings.requestTimeout
-                : 0;
+                    ? settings.requestTimeout
+                    : 0;
         return Number.isFinite(timeout) && timeout > 0 ? timeout : 0;
     }
 

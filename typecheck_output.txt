@@ -1,0 +1,4 @@
+
+> obsidian-speech-to-text@3.0.9 typecheck
+> npx tsc -noEmit
+

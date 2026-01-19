@@ -2,8 +2,6 @@
  * Phase 3 개선된 설정 탭 UI
  */
 
-/* eslint-disable @typescript-eslint/await-thenable -- Legacy patterns */
-/* eslint-disable @typescript-eslint/no-misused-promises -- Event handler patterns */
 
 import { App, PluginSettingTab, Setting, Notice, Modal, ButtonComponent } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
@@ -114,7 +112,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         this.createHeader(containerEl);
 
         // 탭 네비게이션
-        const _tabContainer = this.createTabNavigation(containerEl);
+        this.createTabNavigation(containerEl);
 
         // 섹션 컨테이너
         const contentContainer = containerEl.createDiv({ cls: 'settings-content' });
@@ -201,7 +199,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
             tabEl.setAttribute('data-tab', tab.id);
 
-            tabEl.addEventListener('click', () => {
+            tabEl.addEventListener('click', async () => {
                 // 활성 탭 업데이트
                 tabContainer.querySelectorAll('.settings-tab').forEach((el) => {
                     el.removeClass('active');
@@ -211,7 +209,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 // 콘텐츠 표시
                 const contentContainer = containerEl.querySelector('.settings-content');
                 if (contentContainer instanceof HTMLElement) {
-                    this.showTabContent(contentContainer, tab.id);
+                    await this.showTabContent(contentContainer, tab.id);
                 }
             });
         });
@@ -225,7 +223,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     /**
      * 탭 콘텐츠 표시
      */
-    private showTabContent(container: HTMLElement, tabId: string): void {
+    private async showTabContent(container: HTMLElement, tabId: string): Promise<void> {
         container.empty();
 
         switch (tabId) {
@@ -233,16 +231,16 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 this.showGeneralSettings(container);
                 break;
             case 'api':
-                void this.showApiSettings(container);
+                await this.showApiSettings(container);
                 break;
             case 'audio':
-                void this.showAudioSettings(container);
+                await this.showAudioSettings(container);
                 break;
             case 'advanced':
-                void this.showAdvancedSettings(container);
+                await this.showAdvancedSettings(container);
                 break;
             case 'shortcuts':
-                void this.showShortcutSettings(container);
+                await this.showShortcutSettings(container);
                 break;
             case 'about':
                 this.showAbout(container);
@@ -413,7 +411,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                         await this.settingsAPI.set('api', api);
 
                         // UI 업데이트
-                        void this.showApiSettings(container);
+                        await this.showApiSettings(container);
                     }
                 });
             });

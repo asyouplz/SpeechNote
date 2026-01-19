@@ -1,0 +1,13 @@
+
+> obsidian-speech-to-text@3.0.9 lint:obsidian
+> eslint src/**/*.ts --format=stylish
+
+
+/Users/taesunlee/Documents/program/SpeechNote/src/testing/TestingFramework.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to override
+
+/Users/taesunlee/Documents/program/SpeechNote/src/utils/SimpleEventEmitter.ts
+  18:9  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+✖ 2 problems (0 errors, 2 warnings)
+

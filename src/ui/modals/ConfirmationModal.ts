@@ -32,7 +32,6 @@ export class ConfirmationModal extends Modal {
                 cancelButton.setDisabled(true);
                 confirmButton.setDisabled(true);
 
-                this.close();
                 if (this.onCancel) {
                     try {
                         await this.onCancel();
@@ -41,6 +40,7 @@ export class ConfirmationModal extends Modal {
                         new Notice('Action failed. Please check console for details.');
                     }
                 }
+                this.close();
             });
 
         const confirmButton = new ButtonComponent(buttonContainer)
@@ -52,12 +52,15 @@ export class ConfirmationModal extends Modal {
                 cancelButton.setDisabled(true);
                 confirmButton.setDisabled(true);
 
-                this.close();
                 try {
                     await this.onConfirm();
+                    this.close();
                 } catch (error) {
                     console.error('ConfirmationModal: onConfirm callback error:', error);
                     new Notice('Action failed. Please check console for details.');
+                    this.isProcessing = false;
+                    cancelButton.setDisabled(false);
+                    confirmButton.setDisabled(false);
                 }
             });
     }

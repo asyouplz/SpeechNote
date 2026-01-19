@@ -1,7 +1,7 @@
 import { App, Setting, Notice, ButtonComponent, Modal, requestUrl } from 'obsidian';
 import type SpeechToTextPlugin from '../../../../main';
 import { TranscriptionProvider } from '../../../../infrastructure/api/providers/ITranscriber';
-import { Encryptor } from '../../../../infrastructure/security/Encryptor';
+import { Encryptor, isEncryptedData } from '../../../../infrastructure/security/Encryptor';
 import { BaseSettingsComponent } from '../../base/BaseSettingsComponent';
 import { UIComponentFactory } from '../../base/CommonUIComponents';
 import { isPlainRecord } from '../../../../types/guards';
@@ -166,8 +166,8 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             currentProvider === 'auto'
                 ? Array.from(this.providerConfigs.keys())
                 : this.isTranscriptionProvider(currentProvider)
-                ? [currentProvider]
-                : [];
+                    ? [currentProvider]
+                    : [];
 
         providers.forEach((provider) => {
             this.renderSingleApiKeyInput(inputsSection, provider);
@@ -274,13 +274,13 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             if (value.includes('*')) return;
 
             // 디바운스된 검증
-            setTimeout(() => {
+            window.setTimeout(() => {
                 this.validateInputFormat(inputEl, value, config.pattern);
             }, 500);
         });
 
         // 포커스 아웃시 저장
-        inputEl.addEventListener('blur', async (e) => {
+        inputEl.addEventListener('blur', (e) => {
             const target = e.target;
             if (!(target instanceof HTMLInputElement)) {
                 return;
@@ -288,7 +288,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             const value = target.value;
 
             if (value && !value.includes('*') && config.pattern.test(value)) {
-                await this.saveApiKey(provider, value);
+                void this.saveApiKey(provider, value);
             }
         });
 
@@ -434,8 +434,8 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             },
         });
 
-        btn.onclick = async () => {
-            await this.deleteApiKey(provider);
+        btn.onclick = () => {
+            void this.deleteApiKey(provider);
         };
 
         return btn;
@@ -456,7 +456,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         const status = state?.status || 'unverified';
         const config = statusMap[status];
 
-        const _statusEl = containerEl.createSpan({
+        containerEl.createSpan({
             cls: `key-status ${config.class}`,
             text: `${config.icon} ${config.text}`,
             attr: {
@@ -472,7 +472,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
     private renderValidationMessage(containerEl: HTMLElement, state: ValidationState): void {
         if (!state.message) return;
 
-        const _messageEl = containerEl.createDiv({
+        containerEl.createDiv({
             cls: `validation-message message-${state.status}`,
             text: state.message,
             attr: {
@@ -486,7 +486,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
      * 최근 검증 시간 렌더링
      */
     private renderLastValidated(containerEl: HTMLElement, date: Date): void {
-        const _timeEl = containerEl.createDiv({
+        containerEl.createDiv({
             cls: 'last-validated',
             text: `최근 검증: ${this.formatRelativeTime(date)}`,
             attr: {
@@ -533,7 +533,9 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         const actions = [
             {
                 text: '모든 키 검증',
-                onClick: () => this.verifyAllKeys(),
+                onClick: () => {
+                    void this.verifyAllKeys();
+                },
                 primary: true,
             },
             {
@@ -542,7 +544,9 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
             },
             {
                 text: '키 내보내기',
-                onClick: () => this.exportKeys(),
+                onClick: () => {
+                    void this.exportKeys();
+                },
             },
         ];
 
@@ -812,7 +816,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
 
             await this.withErrorHandling(async () => {
                 const content = await file.text();
-                const parsed = JSON.parse(content);
+                const parsed = JSON.parse(content) as unknown;
                 const keys: Record<string, string> = {};
                 if (isPlainRecord(parsed)) {
                     Object.entries(parsed).forEach(([key, value]) => {
@@ -951,13 +955,15 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         for (const { provider, key } of providers) {
             if (key) {
                 try {
-                    const encryptedData = JSON.parse(key);
-                    const decrypted = await this.encryptor.decrypt(encryptedData);
-                    this.apiKeys.set(provider, {
-                        provider,
-                        key: decrypted,
-                        isValid: false,
-                    });
+                    const encryptedData = JSON.parse(key) as unknown;
+                    if (isEncryptedData(encryptedData)) {
+                        const decrypted = await this.encryptor.decrypt(encryptedData);
+                        this.apiKeys.set(provider, {
+                            provider,
+                            key: decrypted,
+                            isValid: false,
+                        });
+                    }
                 } catch (error) {
                     // 암호화되지 않은 키일 수 있음
                     if (!key.includes('*')) {
