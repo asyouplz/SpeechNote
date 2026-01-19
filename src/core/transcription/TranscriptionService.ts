@@ -1,4 +1,4 @@
-import { TFile, requestUrl } from 'obsidian';
+import { TFile, requestUrl, Notice } from 'obsidian';
 import type {
     ITranscriptionService,
     TranscriptionResult,
@@ -355,14 +355,14 @@ export class TranscriptionService implements ITranscriptionService {
                 externalSignal
             );
             if (!this.isResponseOk(response)) {
-                const message = await this.extractErrorMessage(response);
+                const message = this.extractErrorMessage(response);
                 const error = new Error(message);
                 if (typeof response.status === 'number') {
                     (error as { status?: number }).status = response.status;
                 }
                 throw error;
             }
-            return await this.extractSuccessResponse(response);
+            return this.extractSuccessResponse(response);
         } finally {
             if (this.abortController === controller) {
                 this.abortController = undefined;
@@ -372,15 +372,15 @@ export class TranscriptionService implements ITranscriptionService {
 
     private async fetchWithSignal(
         url: string,
-        body: FormData,
+        body: FormData | string | ArrayBuffer,
         signal?: AbortSignal,
         delayForAbort = false
     ): Promise<{
-        ok?: boolean;
-        status?: number;
+        ok: boolean;
+        status: number;
         statusText?: string;
-        json?: () => Promise<unknown>;
-        text?: () => Promise<string>;
+        json?: unknown;
+        text?: string;
     }> {
         const headers: Record<string, string> = {};
         const apiKey = this.getApiKey();
@@ -398,8 +398,8 @@ export class TranscriptionService implements ITranscriptionService {
             ok: response.status >= 200 && response.status < 300,
             status: response.status,
             statusText: String(response.status),
-            json: async () => response.json,
-            text: async () => response.text,
+            json: response.json,
+            text: response.text,
         }));
 
         const effectiveFetchPromise =
@@ -422,25 +422,32 @@ export class TranscriptionService implements ITranscriptionService {
         let restoreOnAbort: (() => void) | undefined;
         const abortPromise = new Promise<never>((_, reject) => {
             abortHandler = () => reject(this.createAbortError());
-            if (typeof (signal as any).addEventListener === 'function') {
-                (signal as any).addEventListener('abort', abortHandler, { once: true });
+            if (signal && typeof signal.addEventListener === 'function') {
+                signal.addEventListener('abort', abortHandler, { once: true });
             }
-            if ('onabort' in signal) {
-                const previous = (signal as any).onabort;
-                (signal as any).onabort = (event: any) => {
+            if (signal && 'onabort' in signal) {
+                const sig = signal as any;
+                const previous = sig.onabort;
+                sig.onabort = (event: Event) => {
                     if (typeof previous === 'function') {
                         previous.call(signal, event);
                     }
                     abortHandler?.();
                 };
                 restoreOnAbort = () => {
-                    (signal as any).onabort = previous;
+                    sig.onabort = previous;
                 };
             }
         });
 
         try {
-            return (await Promise.race([effectiveFetchPromise, abortPromise])) as any;
+            return (await Promise.race([effectiveFetchPromise, abortPromise])) as {
+                ok: boolean;
+                status: number;
+                statusText?: string;
+                json?: unknown;
+                text?: string;
+            };
         } finally {
             if (abortHandler && typeof (signal as any).removeEventListener === 'function') {
                 (signal as any).removeEventListener('abort', abortHandler);
@@ -451,35 +458,23 @@ export class TranscriptionService implements ITranscriptionService {
         }
     }
 
-    private isResponseOk(response: { ok?: boolean; status?: number }): boolean {
-        if (typeof response.ok === 'boolean') {
-            return response.ok;
-        }
-        if (typeof response.status === 'number') {
-            return response.status >= 200 && response.status < 300;
-        }
-        return true;
+    private isResponseOk(response: { ok: boolean; status: number }): boolean {
+        return response.ok;
     }
 
-    private async extractSuccessResponse(response: {
-        json?: () => Promise<unknown>;
-        text?: () => Promise<string>;
-    }): Promise<{ text: string; language?: string }> {
+    private extractSuccessResponse(response: { json?: unknown; text?: string }): {
+        text: string;
+        language?: string;
+    } {
         const settings = isPlainRecord(this.settings) ? this.settings : {};
         const responseFormat =
             typeof settings.responseFormat === 'string' ? settings.responseFormat : undefined;
-        const textFn = response.text;
-        const jsonFn = response.json;
-        const hasText = typeof textFn === 'function';
-        const hasJson = typeof jsonFn === 'function';
-
-        if (responseFormat === 'text' && hasText) {
-            const text = await textFn();
-            return { text: text ?? '' };
+        if (responseFormat === 'text' && typeof response.text === 'string') {
+            return { text: response.text ?? '' };
         }
 
-        if (hasJson) {
-            const json = await jsonFn();
+        if (response.json !== undefined) {
+            const json = response.json;
             if (isPlainRecord(json)) {
                 const text = typeof json.text === 'string' ? json.text : '';
                 const language = typeof json.language === 'string' ? json.language : undefined;
@@ -487,22 +482,21 @@ export class TranscriptionService implements ITranscriptionService {
             }
         }
 
-        if (hasText) {
-            const text = await textFn();
-            return { text: text ?? '' };
+        if (typeof response.text === 'string') {
+            return { text: response.text ?? '' };
         }
 
         return { text: '' };
     }
 
-    private async extractErrorMessage(response: {
+    private extractErrorMessage(response: {
         status?: number;
         statusText?: string;
-        json?: () => Promise<unknown>;
-        text?: () => Promise<string>;
-    }): Promise<string> {
-        if (typeof response.json === 'function') {
-            const json = await response.json();
+        json?: unknown;
+        text?: string;
+    }): string {
+        if (response.json !== undefined) {
+            const json = response.json;
             if (isPlainRecord(json)) {
                 const error = isPlainRecord(json.error) ? json.error : undefined;
                 if (typeof error?.message === 'string') {
@@ -514,8 +508,8 @@ export class TranscriptionService implements ITranscriptionService {
             }
         }
 
-        if (typeof response.text === 'function') {
-            const text = await response.text();
+        if (typeof response.text === 'string') {
+            const text = response.text;
             if (text) {
                 return text;
             }

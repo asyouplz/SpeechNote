@@ -132,15 +132,18 @@ export class Encryptor implements IEncryptor {
             // Uses platform APIs that are deprecated for new functionality
             // NOTE: navigator/screen API usage below is intentional for backward compatibility
             // Will be removed in v4.0.0 when migration period ends
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const nav = navigator as any;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const scr = screen as any;
+            const platformInfo = Platform.isDesktopApp ? 'desktop' : 'mobile';
+            const osInfo = Platform.isMacOS
+                ? 'macos'
+                : Platform.isWin
+                ? 'windows'
+                : Platform.isLinux
+                ? 'linux'
+                : 'other';
 
             const factors = [
-                hasNavigator ? nav.userAgent : '',
-                hasNavigator ? nav.language : '',
-                hasScreen ? `${scr.width}x${scr.height}` : '',
+                platformInfo,
+                osInfo,
                 hasIntl ? Intl.DateTimeFormat().resolvedOptions().timeZone : '',
                 'ObsidianSpeechToText2024',
             ];
