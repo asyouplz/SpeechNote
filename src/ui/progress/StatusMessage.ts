@@ -192,13 +192,13 @@ export class MessageStore {
         },
         'step.file_selection': {
             ko: '파일 선택',
-            en: 'File Selection',
+            en: 'File selection',
             ja: 'ファイル選択',
             zh: '文件选择',
         },
         'step.file_validation': {
             ko: '파일 검증',
-            en: 'File Validation',
+            en: 'File validation',
             ja: 'ファイル検証',
             zh: '文件验证',
         },
@@ -210,7 +210,7 @@ export class MessageStore {
         },
         'step.processing': {
             ko: 'API 처리',
-            en: 'API Processing',
+            en: 'API processing',
             ja: 'API処理',
             zh: 'API处理',
         },

@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { Notice, Platform } from 'obsidian';
 import type { App } from 'obsidian';
 
 /**
@@ -381,7 +381,7 @@ export class ErrorBoundary {
             message: this.getSafeErrorMessage(error),
             type: error instanceof SettingsError ? error.type : 'UNKNOWN',
             timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent,
+            platform: Platform.isDesktopApp ? 'desktop' : 'mobile',
         };
 
         // 로컬 스토리지에 에러 로그 저장

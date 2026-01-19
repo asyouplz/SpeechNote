@@ -30,7 +30,7 @@ export interface CacheStats {
     hitRate: number;
 }
 
-export class MemoryCache<T = any> {
+export class MemoryCache<T = unknown> {
     private cache = new Map<string, CacheEntry<T>>();
     private accessOrder: string[] = [];
     private stats: CacheStats = {
@@ -208,8 +208,8 @@ export class MemoryCache<T = any> {
     /**
      * 캐시 상태 덤프 (디버깅용)
      */
-    dump(): Record<string, any> {
-        const entries: Record<string, any> = {};
+    dump(): Record<string, unknown> {
+        const entries: Record<string, unknown> = {};
 
         for (const [key, entry] of this.cache.entries()) {
             entries[key] = {
@@ -281,7 +281,7 @@ export class MemoryCache<T = any> {
     /**
      * 데이터 크기 추정
      */
-    private estimateSize(data: any): number {
+    private estimateSize(data: unknown): number {
         try {
             const str = JSON.stringify(data);
             return str.length * 2; // UTF-16 기준
@@ -335,10 +335,10 @@ export const globalCache = new MemoryCache({
  * 캐시 데코레이터
  */
 export function Cacheable(options: { ttl?: number; key?: string } = {}) {
-    return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+    return function (target: object, propertyName: string, descriptor: PropertyDescriptor) {
         const originalMethod = descriptor.value;
 
-        descriptor.value = async function (...args: any[]) {
+        descriptor.value = async function (...args: unknown[]) {
             const cacheKey =
                 options.key || `${target.constructor.name}.${propertyName}:${JSON.stringify(args)}`;
 

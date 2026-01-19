@@ -45,10 +45,10 @@ export interface DeepgramSpecificOptions {
     punctuate?: boolean;
     smartFormat?: boolean;
     diarize?: boolean;
-    utterances?: boolean;
     numerals?: boolean;
     profanityFilter?: boolean;
     redact?: string[];
+    utterances?: boolean;
     keywords?: string[];
     detectLanguage?: boolean;
 }

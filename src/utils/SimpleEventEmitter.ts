@@ -12,10 +12,12 @@ export class SimpleEventEmitter {
      * Register an event listener
      */
     on(event: string, callback: EventCallback): this {
-        if (!this.events.has(event)) {
-            this.events.set(event, new Set());
+        let set = this.events.get(event);
+        if (!set) {
+            set = new Set();
+            this.events.set(event, set);
         }
-        this.events.get(event)!.add(callback);
+        set.add(callback);
         return this;
     }
 
