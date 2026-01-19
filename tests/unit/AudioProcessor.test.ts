@@ -8,7 +8,7 @@ import type { ILogger } from '../../src/types';
 import {
     createMockAudioFile,
     createMockArrayBuffer,
-    createMockVault
+    createMockVault,
 } from '../helpers/mockDataFactory';
 import '../helpers/testSetup';
 
@@ -23,7 +23,7 @@ describe('AudioProcessor', () => {
             debug: jest.fn(),
             info: jest.fn(),
             warn: jest.fn(),
-            error: jest.fn()
+            error: jest.fn(),
         };
 
         audioProcessor = new AudioProcessor(mockVault as Vault, mockLogger);
@@ -41,7 +41,7 @@ describe('AudioProcessor', () => {
                 const file = createMockAudioFile({
                     name: `test.${format}`,
                     extension: format,
-                    size: 5 * 1024 * 1024 // 5MB
+                    size: 5 * 1024 * 1024, // 5MB
                 });
 
                 const result = await audioProcessor.validate(file);
@@ -57,7 +57,7 @@ describe('AudioProcessor', () => {
             for (const format of invalidFormats) {
                 const file = createMockAudioFile({
                     name: `test.${format}`,
-                    extension: format
+                    extension: format,
                 });
 
                 const result = await audioProcessor.validate(file);
@@ -70,7 +70,7 @@ describe('AudioProcessor', () => {
 
         it('should reject files exceeding maximum size', async () => {
             const file = createMockAudioFile({
-                size: 30 * 1024 * 1024 // 30MB
+                size: 30 * 1024 * 1024, // 30MB
             });
 
             const result = await audioProcessor.validate(file);
@@ -82,7 +82,7 @@ describe('AudioProcessor', () => {
 
         it('should add warning for large files', async () => {
             const file = createMockAudioFile({
-                size: 15 * 1024 * 1024 // 15MB
+                size: 15 * 1024 * 1024, // 15MB
             });
 
             const result = await audioProcessor.validate(file);
@@ -95,7 +95,7 @@ describe('AudioProcessor', () => {
         it('should handle edge case file sizes', async () => {
             // Exactly at limit
             const fileAtLimit = createMockAudioFile({
-                size: 25 * 1024 * 1024 // 25MB
+                size: 25 * 1024 * 1024, // 25MB
             });
 
             const resultAtLimit = await audioProcessor.validate(fileAtLimit);
@@ -103,7 +103,7 @@ describe('AudioProcessor', () => {
 
             // Just over limit
             const fileOverLimit = createMockAudioFile({
-                size: 25 * 1024 * 1024 + 1 // 25MB + 1 byte
+                size: 25 * 1024 * 1024 + 1, // 25MB + 1 byte
             });
 
             const resultOverLimit = await audioProcessor.validate(fileOverLimit);
@@ -117,7 +117,7 @@ describe('AudioProcessor', () => {
                 const file = createMockAudioFile({
                     name: `test.${format}`,
                     extension: format,
-                    size: 1024 * 1024
+                    size: 1024 * 1024,
                 });
 
                 const result = await audioProcessor.validate(file);
@@ -128,7 +128,7 @@ describe('AudioProcessor', () => {
         describe('provider-specific file size limits', () => {
             it('should use default 25MB limit by default', async () => {
                 const file = createMockAudioFile({
-                    size: 30 * 1024 * 1024 // 30MB
+                    size: 30 * 1024 * 1024, // 30MB
                 });
 
                 const result = await audioProcessor.validate(file);
@@ -141,11 +141,11 @@ describe('AudioProcessor', () => {
             it('should accept larger files when Deepgram capabilities are set', async () => {
                 // Set Deepgram capabilities (2GB limit)
                 audioProcessor.setProviderCapabilities({
-                    maxFileSize: 2 * 1024 * 1024 * 1024 // 2GB
+                    maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
                 });
 
                 const file = createMockAudioFile({
-                    size: 100 * 1024 * 1024 // 100MB
+                    size: 100 * 1024 * 1024, // 100MB
                 });
 
                 const result = await audioProcessor.validate(file);
@@ -157,11 +157,11 @@ describe('AudioProcessor', () => {
             it('should reject files exceeding Deepgram 2GB limit', async () => {
                 // Set Deepgram capabilities (2GB limit)
                 audioProcessor.setProviderCapabilities({
-                    maxFileSize: 2 * 1024 * 1024 * 1024 // 2GB
+                    maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
                 });
 
                 const file = createMockAudioFile({
-                    size: 2.5 * 1024 * 1024 * 1024 // 2.5GB
+                    size: 2.5 * 1024 * 1024 * 1024, // 2.5GB
                 });
 
                 const result = await audioProcessor.validate(file);
@@ -173,7 +173,7 @@ describe('AudioProcessor', () => {
 
             it('should log capability updates', () => {
                 audioProcessor.setProviderCapabilities({
-                    maxFileSize: 2 * 1024 * 1024 * 1024 // 2GB
+                    maxFileSize: 2 * 1024 * 1024 * 1024, // 2GB
                 });
 
                 expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -181,7 +181,7 @@ describe('AudioProcessor', () => {
                     expect.objectContaining({
                         previousLimit: 25,
                         newLimit: 2048,
-                        provider: 'Deepgram'
+                        provider: 'Deepgram',
                     })
                 );
             });
@@ -189,11 +189,11 @@ describe('AudioProcessor', () => {
             it('should maintain Whisper 25MB limit when set', async () => {
                 // Set Whisper capabilities (25MB limit)
                 audioProcessor.setProviderCapabilities({
-                    maxFileSize: 25 * 1024 * 1024 // 25MB
+                    maxFileSize: 25 * 1024 * 1024, // 25MB
                 });
 
                 const file = createMockAudioFile({
-                    size: 30 * 1024 * 1024 // 30MB
+                    size: 30 * 1024 * 1024, // 30MB
                 });
 
                 const result = await audioProcessor.validate(file);
@@ -209,7 +209,7 @@ describe('AudioProcessor', () => {
         it('should process valid audio file', async () => {
             const file = createMockAudioFile();
             const mockBuffer = createMockArrayBuffer(1024);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             const result = await audioProcessor.process(file);
@@ -224,7 +224,7 @@ describe('AudioProcessor', () => {
         it('should handle file read errors', async () => {
             const file = createMockAudioFile();
             const error = new Error('Failed to read file');
-            
+
             (mockVault.readBinary as jest.Mock).mockRejectedValue(error);
 
             await expect(audioProcessor.process(file)).rejects.toThrow(error);
@@ -233,7 +233,7 @@ describe('AudioProcessor', () => {
         it('should extract metadata from audio buffer', async () => {
             const file = createMockAudioFile();
             const mockBuffer = createMockArrayBuffer(2048);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             const result = await audioProcessor.process(file);
@@ -258,7 +258,7 @@ describe('AudioProcessor', () => {
                 channels: undefined,
                 codec: undefined,
                 format: undefined,
-                fileSize: 1024
+                fileSize: 1024,
             });
         });
 
@@ -276,7 +276,7 @@ describe('AudioProcessor', () => {
         it('should handle files with special characters in name', async () => {
             const file = createMockAudioFile({
                 name: 'test file (2024) [edited].mp3',
-                path: 'folder/test file (2024) [edited].mp3'
+                path: 'folder/test file (2024) [edited].mp3',
             });
 
             const result = await audioProcessor.validate(file);
@@ -286,7 +286,7 @@ describe('AudioProcessor', () => {
         it('should handle files with multiple dots in name', async () => {
             const file = createMockAudioFile({
                 name: 'test.audio.file.mp3',
-                extension: 'mp3'
+                extension: 'mp3',
             });
 
             const result = await audioProcessor.validate(file);
@@ -295,11 +295,11 @@ describe('AudioProcessor', () => {
 
         it('should handle zero-size files', async () => {
             const file = createMockAudioFile({
-                size: 0
+                size: 0,
             });
 
             const result = await audioProcessor.validate(file);
-            
+
             // Zero-size files should be invalid
             expect(result.valid).toBe(true); // Current implementation doesn't check minimum size
         });
@@ -308,10 +308,10 @@ describe('AudioProcessor', () => {
     describe('performance', () => {
         it('should process files efficiently', async () => {
             const file = createMockAudioFile({
-                size: 10 * 1024 * 1024 // 10MB
+                size: 10 * 1024 * 1024, // 10MB
             });
             const mockBuffer = createMockArrayBuffer(10 * 1024 * 1024);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             const startTime = Date.now();
@@ -323,19 +323,19 @@ describe('AudioProcessor', () => {
         });
 
         it('should validate files quickly', async () => {
-            const files = Array.from({ length: 100 }, (_, i) => 
+            const files = Array.from({ length: 100 }, (_, i) =>
                 createMockAudioFile({
                     name: `test${i}.mp3`,
-                    size: Math.random() * 30 * 1024 * 1024
+                    size: Math.random() * 30 * 1024 * 1024,
                 })
             );
 
             const startTime = Date.now();
-            
+
             for (const file of files) {
                 await audioProcessor.validate(file);
             }
-            
+
             const endTime = Date.now();
 
             // Validation of 100 files should be fast (less than 50ms)

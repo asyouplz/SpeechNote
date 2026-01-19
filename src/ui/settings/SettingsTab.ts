@@ -265,7 +265,7 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('ab_test', 'A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
-                        SelectionStrategy.PERFORMANCE_OPTIMIZED
+                            SelectionStrategy.PERFORMANCE_OPTIMIZED
                     )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {

@@ -3,42 +3,42 @@
  */
 
 import { requestUrl } from 'obsidian';
-import { 
-    WhisperService, 
+import {
+    WhisperService,
     WhisperAPIError,
     AuthenticationError,
     RateLimitError,
     FileTooLargeError,
-    ServerError
+    ServerError,
 } from '../../src/infrastructure/api/WhisperService';
 import type { ILogger, WhisperOptions } from '../../src/types';
 import {
     createMockArrayBuffer,
     createMockWhisperResponse,
-    createMockAPIErrorResponse
+    createMockAPIErrorResponse,
 } from '../helpers/mockDataFactory';
 import '../helpers/testSetup';
 
 // Mock Obsidian's requestUrl
 jest.mock('obsidian', () => ({
-    requestUrl: jest.fn()
+    requestUrl: jest.fn(),
 }));
 
 // Mock helper functions
 jest.mock('../../src/utils/common/helpers', () => ({
     retry: jest.fn((fn) => fn()),
     sleep: jest.fn(() => Promise.resolve()),
-    withTimeout: jest.fn((promise) => promise)
+    withTimeout: jest.fn((promise) => promise),
 }));
 
 jest.mock('../../src/utils/common/validators', () => ({
     validateApiKey: jest.fn(() => ({ valid: true })),
-    validateRange: jest.fn((value) => ({ valid: value >= 0 && value <= 1, value }))
+    validateRange: jest.fn((value) => ({ valid: value >= 0 && value <= 1, value })),
 }));
 
 jest.mock('../../src/utils/common/formatters', () => ({
     formatFileSize: jest.fn((size) => `${(size / 1024 / 1024).toFixed(2)}MB`),
-    truncateText: jest.fn((text, maxLength) => text.substring(0, maxLength))
+    truncateText: jest.fn((text, maxLength) => text.substring(0, maxLength)),
 }));
 
 describe('WhisperService', () => {
@@ -51,7 +51,7 @@ describe('WhisperService', () => {
             debug: jest.fn(),
             info: jest.fn(),
             warn: jest.fn(),
-            error: jest.fn()
+            error: jest.fn(),
         };
 
         whisperService = new WhisperService(mockApiKey, mockLogger);
@@ -62,10 +62,10 @@ describe('WhisperService', () => {
         it('should successfully transcribe audio', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
             const mockResponse = createMockWhisperResponse();
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: mockResponse
+                json: mockResponse,
             });
 
             const result = await whisperService.transcribe(audioBuffer);
@@ -77,8 +77,8 @@ describe('WhisperService', () => {
                     url: 'https://api.openai.com/v1/audio/transcriptions',
                     method: 'POST',
                     headers: expect.objectContaining({
-                        Authorization: `Bearer ${mockApiKey}`
-                    })
+                        Authorization: `Bearer ${mockApiKey}`,
+                    }),
                 })
             );
         });
@@ -90,19 +90,19 @@ describe('WhisperService', () => {
                 model: 'whisper-1',
                 temperature: 0.2,
                 prompt: 'Test prompt',
-                responseFormat: 'verbose_json'
+                responseFormat: 'verbose_json',
             };
 
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             await whisperService.transcribe(audioBuffer, options);
 
             const callArgs = (requestUrl as jest.Mock).mock.calls[0][0];
             const formData = callArgs.body as FormData;
-            
+
             // Verify FormData append was called with correct parameters
             expect(formData.append).toHaveBeenCalledWith('model', 'whisper-1');
             expect(formData.append).toHaveBeenCalledWith('language', 'ko');
@@ -120,14 +120,14 @@ describe('WhisperService', () => {
         it('should handle text response format', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
             const textResponse = 'Transcribed text only';
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: textResponse
+                json: textResponse,
             });
 
             const result = await whisperService.transcribe(audioBuffer, {
-                responseFormat: 'text'
+                responseFormat: 'text',
             });
 
             expect(result.text).toBe(textResponse);
@@ -142,17 +142,17 @@ describe('WhisperService', () => {
                 duration: 10.5,
                 segments: [
                     { start: 0, end: 5, text: 'First segment' },
-                    { start: 5, end: 10.5, text: 'Second segment' }
-                ]
+                    { start: 5, end: 10.5, text: 'Second segment' },
+                ],
             };
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: mockResponse
+                json: mockResponse,
             });
 
             const result = await whisperService.transcribe(audioBuffer, {
-                responseFormat: 'verbose_json'
+                responseFormat: 'verbose_json',
             });
 
             expect(result.text).toBe(mockResponse.text);
@@ -162,34 +162,34 @@ describe('WhisperService', () => {
 
         it('should skip language parameter when set to auto', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             await whisperService.transcribe(audioBuffer, {
-                language: 'auto'
+                language: 'auto',
             });
 
             const callArgs = (requestUrl as jest.Mock).mock.calls[0][0];
             const formData = callArgs.body as FormData;
-            
+
             // Should not append language when set to 'auto'
             expect(formData.append).not.toHaveBeenCalledWith('language', 'auto');
         });
 
         it('should validate and clamp temperature value', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             // Test invalid temperature (> 1)
             await whisperService.transcribe(audioBuffer, {
-                temperature: 1.5
+                temperature: 1.5,
             });
 
             expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -201,19 +201,19 @@ describe('WhisperService', () => {
         it('should truncate long prompts', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
             const longPrompt = 'Very long prompt '.repeat(100); // > 224 tokens
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             await whisperService.transcribe(audioBuffer, {
-                prompt: longPrompt
+                prompt: longPrompt,
             });
 
             const callArgs = (requestUrl as jest.Mock).mock.calls[0][0];
             const formData = callArgs.body as FormData;
-            
+
             // Verify prompt was truncated
             expect(formData.append).toHaveBeenCalledWith(
                 'prompt',
@@ -225,22 +225,24 @@ describe('WhisperService', () => {
     describe('error handling', () => {
         it('should handle 401 authentication error', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 401,
-                json: { error: { message: 'Invalid API key' } }
+                json: { error: { message: 'Invalid API key' } },
             });
 
-            await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(AuthenticationError);
+            await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(
+                AuthenticationError
+            );
         });
 
         it('should handle 429 rate limit error', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 429,
                 json: { error: { message: 'Rate limit exceeded' } },
-                headers: { 'retry-after': '60' }
+                headers: { 'retry-after': '60' },
             });
 
             await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(RateLimitError);
@@ -248,10 +250,10 @@ describe('WhisperService', () => {
 
         it('should handle 413 file too large error', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 413,
-                json: { error: { message: 'Request entity too large' } }
+                json: { error: { message: 'Request entity too large' } },
             });
 
             await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(FileTooLargeError);
@@ -259,10 +261,10 @@ describe('WhisperService', () => {
 
         it('should handle 500 server error', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 500,
-                json: { error: { message: 'Internal server error' } }
+                json: { error: { message: 'Internal server error' } },
             });
 
             await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(ServerError);
@@ -270,7 +272,7 @@ describe('WhisperService', () => {
 
         it('should handle network errors', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockRejectedValue(new Error('Network error'));
 
             await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow('Network error');
@@ -280,23 +282,23 @@ describe('WhisperService', () => {
             const audioBuffer = createMockArrayBuffer(1024);
             const abortError = new Error('Aborted');
             abortError.name = 'AbortError';
-            
+
             (requestUrl as jest.Mock).mockRejectedValue(abortError);
 
             await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(
                 expect.objectContaining({
                     code: 'CANCELLED',
-                    message: 'Transcription cancelled'
+                    message: 'Transcription cancelled',
                 })
             );
         });
 
         it('should handle malformed response', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: null
+                json: null,
             });
 
             const result = await whisperService.transcribe(audioBuffer);
@@ -329,7 +331,7 @@ describe('WhisperService', () => {
         it('should validate valid API key', async () => {
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: { text: 'Test' }
+                json: { text: 'Test' },
             });
 
             const isValid = await whisperService.validateApiKey('sk-valid-key');
@@ -340,7 +342,7 @@ describe('WhisperService', () => {
         it('should reject invalid API key', async () => {
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 401,
-                json: { error: { message: 'Invalid API key' } }
+                json: { error: { message: 'Invalid API key' } },
             });
 
             const isValid = await whisperService.validateApiKey('invalid-key');
@@ -352,7 +354,7 @@ describe('WhisperService', () => {
         it('should handle non-auth errors during validation', async () => {
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 500,
-                json: { error: { message: 'Server error' } }
+                json: { error: { message: 'Server error' } },
             });
 
             const isValid = await whisperService.validateApiKey('sk-test-key');
@@ -365,10 +367,10 @@ describe('WhisperService', () => {
         it('should restore original API key after validation', async () => {
             const originalKey = mockApiKey;
             const testKey = 'sk-test-key';
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: { text: 'Test' }
+                json: { text: 'Test' },
             });
 
             await whisperService.validateApiKey(testKey);
@@ -391,7 +393,7 @@ describe('WhisperService', () => {
             const buffers = [
                 createMockArrayBuffer(1024),
                 createMockArrayBuffer(2048),
-                createMockArrayBuffer(3072)
+                createMockArrayBuffer(3072),
             ];
 
             let callCount = 0;
@@ -399,12 +401,12 @@ describe('WhisperService', () => {
                 callCount++;
                 return Promise.resolve({
                     status: 200,
-                    json: createMockWhisperResponse({ text: `Response ${callCount}` })
+                    json: createMockWhisperResponse({ text: `Response ${callCount}` }),
                 });
             });
 
             const results = await Promise.all(
-                buffers.map(buffer => whisperService.transcribe(buffer))
+                buffers.map((buffer) => whisperService.transcribe(buffer))
             );
 
             expect(results).toHaveLength(3);
@@ -414,20 +416,17 @@ describe('WhisperService', () => {
         });
 
         it('should continue queue processing after error', async () => {
-            const buffers = [
-                createMockArrayBuffer(1024),
-                createMockArrayBuffer(2048)
-            ];
+            const buffers = [createMockArrayBuffer(1024), createMockArrayBuffer(2048)];
 
             (requestUrl as jest.Mock)
                 .mockRejectedValueOnce(new Error('First request failed'))
                 .mockResolvedValueOnce({
                     status: 200,
-                    json: createMockWhisperResponse({ text: 'Second request success' })
+                    json: createMockWhisperResponse({ text: 'Second request success' }),
                 });
 
             const results = await Promise.allSettled(
-                buffers.map(buffer => whisperService.transcribe(buffer))
+                buffers.map((buffer) => whisperService.transcribe(buffer))
             );
 
             expect(results[0].status).toBe('rejected');
@@ -441,9 +440,9 @@ describe('WhisperService', () => {
     describe('performance', () => {
         it('should handle timeout correctly', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockImplementation(
-                () => new Promise(resolve => setTimeout(resolve, 60000))
+                () => new Promise((resolve) => setTimeout(resolve, 60000))
             );
 
             // This should timeout (30s timeout configured)
@@ -456,10 +455,10 @@ describe('WhisperService', () => {
 
         it('should log processing time', async () => {
             const audioBuffer = createMockArrayBuffer(1024);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             await whisperService.transcribe(audioBuffer);

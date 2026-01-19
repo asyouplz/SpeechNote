@@ -75,13 +75,7 @@ export interface MetricsData {
 /**
  * 설정 값 타입
  */
-export type SettingValue =
-    | string
-    | number
-    | boolean
-    | Date
-    | Record<string, unknown>
-    | unknown[];
+export type SettingValue = string | number | boolean | Date | Record<string, unknown> | unknown[];
 
 /**
  * 설정 키 타입 (type-safe keys)
@@ -212,7 +206,7 @@ export type NonNullableObject<T> = {
  * 타입 안전한 설정 접근자
  */
 export class TypeSafeSettings<T extends Record<string, unknown>> {
-    constructor(private settings: T) { }
+    constructor(private settings: T) {}
 
     /**
      * 타입 안전한 getter
@@ -411,7 +405,10 @@ export function deepMerge<T extends Record<string, unknown>>(target: T, source: 
         if (sourceValue !== undefined) {
             const targetValue = target[key];
             if (isPlainRecord(sourceValue) && isPlainRecord(targetValue)) {
-                result[key] = deepMerge(targetValue as Record<string, unknown>, sourceValue as Record<string, unknown>) as T[Extract<keyof T, string>];
+                result[key] = deepMerge(
+                    targetValue as Record<string, unknown>,
+                    sourceValue as Record<string, unknown>
+                ) as T[Extract<keyof T, string>];
             } else {
                 result[key] = sourceValue as T[Extract<keyof T, string>];
             }

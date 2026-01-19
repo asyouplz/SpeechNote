@@ -272,7 +272,7 @@ export class SettingsAPI implements ISettingsAPI {
             if (options.merge) {
                 Object.assign(this.settings, importedSettings);
             } else if (options.overwrite) {
-                this.settings = importedSettings;
+                this.settings = importedSettings as unknown as SettingsSchema;
             } else {
                 // 기본: 안전한 병합 (API 키 제외)
                 const { api, ...safeSettings } = importedSettings;

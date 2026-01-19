@@ -1,8 +1,8 @@
 ## Project Work Principles
 
-- If you have existing code, first check if it's workable by modifying it.
-- Always find and update related documentation after code modifications are complete.
-- Actively collaborate with other agents.
+-   If you have existing code, first check if it's workable by modifying it.
+-   Always find and update related documentation after code modifications are complete.
+-   Actively collaborate with other agents.
 
 ## Code and Script Work Principles
 

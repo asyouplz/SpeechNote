@@ -11,28 +11,30 @@ import type {
     ValidationResult,
     ProcessedAudio,
     AudioMetadata,
-    FormatOptions
+    FormatOptions,
 } from '../../src/types';
 import type { SpeechToTextSettings } from '../../src/domain/models/Settings';
 
 /**
  * Mock 오디오 파일 생성
  */
-export function createMockAudioFile(options: {
-    name?: string;
-    path?: string;
-    extension?: string;
-    size?: number;
-    mtime?: number;
-    ctime?: number;
-} = {}): TFile {
+export function createMockAudioFile(
+    options: {
+        name?: string;
+        path?: string;
+        extension?: string;
+        size?: number;
+        mtime?: number;
+        ctime?: number;
+    } = {}
+): TFile {
     const defaults = {
         name: 'test-audio.mp3',
         path: 'test-audio.mp3',
         extension: 'mp3',
         size: 1024 * 1024, // 1MB
         mtime: Date.now(),
-        ctime: Date.now()
+        ctime: Date.now(),
     };
 
     const config = { ...defaults, ...options };
@@ -42,7 +44,7 @@ export function createMockAudioFile(options: {
     const stat: FileStats = {
         size: config.size,
         mtime: config.mtime,
-        ctime: config.ctime
+        ctime: config.ctime,
     };
 
     const vaultStub = Object.create<Vault>(Object.prototype);
@@ -53,7 +55,7 @@ export function createMockAudioFile(options: {
         extension: config.extension,
         stat,
         vault: vaultStub,
-        basename: config.name.replace(/\.[^/.]+$/, '')
+        basename: config.name.replace(/\.[^/.]+$/, ''),
     });
 
     return file;
@@ -65,28 +67,30 @@ export function createMockAudioFile(options: {
 export function createMockArrayBuffer(size: number = 1024): ArrayBuffer {
     const buffer = new ArrayBuffer(size);
     const view = new Uint8Array(buffer);
-    
+
     // 간단한 패턴으로 채우기
     for (let i = 0; i < size; i++) {
         view[i] = i % 256;
     }
-    
+
     return buffer;
 }
 
 /**
  * Mock Whisper API 응답 생성
  */
-export function createMockWhisperResponse(options: {
-    text?: string;
-    language?: string;
-    duration?: number;
-    segments?: Array<{ start: number; end: number; text: string }>;
-} = {}): WhisperResponse {
+export function createMockWhisperResponse(
+    options: {
+        text?: string;
+        language?: string;
+        duration?: number;
+        segments?: Array<{ start: number; end: number; text: string }>;
+    } = {}
+): WhisperResponse {
     const defaults = {
         text: '안녕하세요. 테스트 변환 텍스트입니다.',
         language: 'ko',
-        duration: 5.5
+        duration: 5.5,
     };
 
     const config = { ...defaults, ...options };
@@ -94,7 +98,7 @@ export function createMockWhisperResponse(options: {
     const response: WhisperResponse = {
         text: config.text,
         language: config.language,
-        duration: config.duration
+        duration: config.duration,
     };
 
     if (config.segments) {
@@ -107,14 +111,16 @@ export function createMockWhisperResponse(options: {
 /**
  * Mock TranscriptionResult 생성
  */
-export function createMockTranscriptionResult(options: {
-    text?: string;
-    language?: string;
-    segments?: TranscriptionSegment[];
-} = {}): TranscriptionResult {
+export function createMockTranscriptionResult(
+    options: {
+        text?: string;
+        language?: string;
+        segments?: TranscriptionSegment[];
+    } = {}
+): TranscriptionResult {
     const defaults = {
         text: '변환된 텍스트입니다.',
-        language: 'ko'
+        language: 'ko',
     };
 
     const config = { ...defaults, ...options };
@@ -122,14 +128,16 @@ export function createMockTranscriptionResult(options: {
     return {
         text: config.text,
         language: config.language,
-        segments: config.segments
+        segments: config.segments,
     };
 }
 
 /**
  * Mock Settings 생성
  */
-export function createMockSettings(overrides: Partial<SpeechToTextSettings> = {}): SpeechToTextSettings {
+export function createMockSettings(
+    overrides: Partial<SpeechToTextSettings> = {}
+): SpeechToTextSettings {
     return {
         apiKey: 'test-api-key',
         apiEndpoint: 'https://api.openai.com/v1/audio/transcriptions',
@@ -147,14 +155,14 @@ export function createMockSettings(overrides: Partial<SpeechToTextSettings> = {}
         shortcuts: {
             startRecording: 'Ctrl+Shift+R',
             stopRecording: 'Ctrl+Shift+S',
-            insertTranscription: 'Ctrl+Shift+I'
+            insertTranscription: 'Ctrl+Shift+I',
         },
         ui: {
             showNotifications: true,
             notificationDuration: 5000,
             confirmBeforeInsert: false,
             showProgressBar: true,
-            theme: 'auto'
+            theme: 'auto',
         },
         advanced: {
             enableDebugMode: false,
@@ -162,22 +170,24 @@ export function createMockSettings(overrides: Partial<SpeechToTextSettings> = {}
             retryDelay: 1000,
             timeout: 30000,
             enableCache: true,
-            cacheExpiration: 3600000
+            cacheExpiration: 3600000,
         },
-        ...overrides
+        ...overrides,
     };
 }
 
 /**
  * Mock ValidationResult 생성
  */
-export function createMockValidationResult(options: {
-    valid?: boolean;
-    errors?: string[];
-    warnings?: string[];
-} = {}): ValidationResult {
+export function createMockValidationResult(
+    options: {
+        valid?: boolean;
+        errors?: string[];
+        warnings?: string[];
+    } = {}
+): ValidationResult {
     const defaults = {
-        valid: true
+        valid: true,
     };
 
     const config = { ...defaults, ...options };
@@ -185,24 +195,26 @@ export function createMockValidationResult(options: {
     return {
         valid: config.valid,
         errors: config.errors,
-        warnings: config.warnings
+        warnings: config.warnings,
     };
 }
 
 /**
  * Mock ProcessedAudio 생성
  */
-export function createMockProcessedAudio(options: {
-    buffer?: ArrayBuffer;
-    metadata?: Partial<AudioMetadata>;
-    originalFile?: TFile;
-    compressed?: boolean;
-} = {}): ProcessedAudio {
+export function createMockProcessedAudio(
+    options: {
+        buffer?: ArrayBuffer;
+        metadata?: Partial<AudioMetadata>;
+        originalFile?: TFile;
+        compressed?: boolean;
+    } = {}
+): ProcessedAudio {
     const defaults = {
         buffer: createMockArrayBuffer(1024),
         metadata: createMockAudioMetadata(),
         originalFile: createMockAudioFile(),
-        compressed: false
+        compressed: false,
     };
 
     const config = { ...defaults, ...options };
@@ -211,7 +223,7 @@ export function createMockProcessedAudio(options: {
         buffer: config.buffer,
         metadata: { ...defaults.metadata, ...config.metadata },
         originalFile: config.originalFile,
-        compressed: config.compressed
+        compressed: config.compressed,
     };
 }
 
@@ -225,7 +237,7 @@ export function createMockAudioMetadata(overrides: Partial<AudioMetadata> = {}):
         sampleRate: 44100,
         channels: 2,
         codec: 'mp3',
-        ...overrides
+        ...overrides,
     };
 }
 
@@ -238,7 +250,7 @@ export function createMockFormatOptions(overrides: Partial<FormatOptions> = {}):
         timestampFormat: 'inline',
         cleanupText: true,
         paragraphBreaks: true,
-        ...overrides
+        ...overrides,
     };
 }
 
@@ -263,52 +275,56 @@ export function createMockAPIErrorResponse(status: number, message: string) {
             error: {
                 message,
                 type: 'error',
-                code: `error_${status}`
-            }
+                code: `error_${status}`,
+            },
         },
-        headers: {}
+        headers: {},
     };
 }
 
 /**
  * Mock File 객체 생성 (브라우저 File API)
  */
-export function createMockFile(options: {
-    name?: string;
-    size?: number;
-    type?: string;
-    lastModified?: number;
-} = {}): File {
+export function createMockFile(
+    options: {
+        name?: string;
+        size?: number;
+        type?: string;
+        lastModified?: number;
+    } = {}
+): File {
     const defaults = {
         name: 'test.mp3',
         size: 1024 * 1024,
         type: 'audio/mp3',
-        lastModified: Date.now()
+        lastModified: Date.now(),
     };
 
     const config = { ...defaults, ...options };
     const buffer = new ArrayBuffer(config.size);
-    
+
     return new File([buffer], config.name, {
         type: config.type,
-        lastModified: config.lastModified
+        lastModified: config.lastModified,
     });
 }
 
 /**
  * Mock TranscriptionSegment 생성
  */
-export function createMockTranscriptionSegment(options: {
-    id?: number;
-    start?: number;
-    end?: number;
-    text?: string;
-} = {}): TranscriptionSegment {
+export function createMockTranscriptionSegment(
+    options: {
+        id?: number;
+        start?: number;
+        end?: number;
+        text?: string;
+    } = {}
+): TranscriptionSegment {
     const defaults = {
         id: 0,
         start: 0,
         end: 5,
-        text: '테스트 세그먼트 텍스트'
+        text: '테스트 세그먼트 텍스트',
     };
 
     const config = { ...defaults, ...options };
@@ -317,7 +333,7 @@ export function createMockTranscriptionSegment(options: {
         id: config.id,
         start: config.start,
         end: config.end,
-        text: config.text
+        text: config.text,
     };
 }
 
@@ -334,7 +350,7 @@ export function createMockSegments(count: number = 3): TranscriptionSegment[] {
             id: i,
             start: currentTime,
             end: currentTime + duration,
-            text: `세그먼트 ${i + 1} 텍스트입니다.`
+            text: `세그먼트 ${i + 1} 텍스트입니다.`,
         });
         currentTime += duration;
     }
@@ -352,7 +368,7 @@ export function createMockVault(): Partial<Vault> {
         modify: jest.fn().mockResolvedValue(undefined),
         create: jest.fn().mockResolvedValue(createMockAudioFile()),
         delete: jest.fn().mockResolvedValue(undefined),
-        rename: jest.fn().mockResolvedValue(undefined)
+        rename: jest.fn().mockResolvedValue(undefined),
     };
 }
 
@@ -392,8 +408,8 @@ export function createMockWAVBuffer(sampleRate: number = 44100, duration: number
     let offset = 44;
     const frequency = 440; // A4
     for (let i = 0; i < numSamples; i++) {
-        const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate);
-        const value = sample * 0x7FFF;
+        const sample = Math.sin((2 * Math.PI * frequency * i) / sampleRate);
+        const value = sample * 0x7fff;
         view.setInt16(offset, value, true);
         offset += 2;
     }

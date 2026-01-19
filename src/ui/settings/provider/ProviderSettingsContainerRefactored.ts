@@ -205,7 +205,11 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 상태 대시보드 렌더링 (최적화)
      */
     private renderStatusDashboard(containerEl: HTMLElement): void {
-        const dashboardEl = this.createSection(containerEl, 'Status dashboard', 'System overall status');
+        const dashboardEl = this.createSection(
+            containerEl,
+            'Status dashboard',
+            'System overall status'
+        );
 
         // 메모이제이션된 상태 가져오기
         const overallStatus = this.memoized('overallStatus', () => this.calculateOverallStatus());
@@ -264,18 +268,20 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         const section = this.createSection(containerEl, 'Quick settings');
 
         // Provider 모드
-        this.createSetting(section, 'Provider mode', 'Select how to choose the transcription provider').addDropdown(
-            (dropdown) => {
-                dropdown
-                    .addOption('auto', '🤖 Automatic')
-                    .addOption('whisper', '🎯 Whisper')
-                    .addOption('deepgram', '🚀 Deepgram')
-                    .setValue(this.state.get().currentProvider)
-                    .onChange((value) => {
-                        void this.handleProviderChange(value);
-                    });
-            }
-        );
+        this.createSetting(
+            section,
+            'Provider mode',
+            'Select how to choose the transcription provider'
+        ).addDropdown((dropdown) => {
+            dropdown
+                .addOption('auto', '🤖 Automatic')
+                .addOption('whisper', '🎯 Whisper')
+                .addOption('deepgram', '🚀 Deepgram')
+                .setValue(this.state.get().currentProvider)
+                .onChange((value) => {
+                    void this.handleProviderChange(value);
+                });
+        });
 
         // 자동 모드 전략
         if (this.state.get().currentProvider === 'auto') {
@@ -287,7 +293,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
                         .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
                         .setValue(
                             this.plugin.settings.selectionStrategy ||
-                            SelectionStrategy.PERFORMANCE_OPTIMIZED
+                                SelectionStrategy.PERFORMANCE_OPTIMIZED
                         )
                         .onChange((value) => {
                             void this.handleStrategyChange(value);
@@ -337,7 +343,11 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
             { text: 'Verify all keys', onClick: () => void this.verifyAllApiKeys(), primary: true },
             { text: 'Test connection', onClick: () => void this.testAllConnections() },
             { text: 'Export config', onClick: () => void this.exportConfiguration() },
-            { text: 'Reset settings', onClick: () => void this.resetProviderSettings(), danger: true },
+            {
+                text: 'Reset settings',
+                onClick: () => void this.resetProviderSettings(),
+                danger: true,
+            },
         ];
 
         actions.forEach((action) => {

@@ -239,7 +239,7 @@ export class ProviderSettingsContainer {
                     .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
-                        SelectionStrategy.PERFORMANCE_OPTIMIZED
+                            SelectionStrategy.PERFORMANCE_OPTIMIZED
                     )
                     .onChange(async (value) => {
                         if (this.isSelectionStrategy(value)) {
@@ -853,7 +853,7 @@ class ProviderDetailsModal extends Modal {
  * Provider 메트릭 표시 컴포넌트
  */
 class ProviderMetricsDisplay {
-    constructor(private plugin: SpeechToTextPlugin) { }
+    constructor(private plugin: SpeechToTextPlugin) {}
 
     render(containerEl: HTMLElement): void {
         new Setting(containerEl).setName('📊 Performance metrics').setHeading();

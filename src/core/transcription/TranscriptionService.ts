@@ -94,9 +94,9 @@ export class TranscriptionService implements ITranscriptionService {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const response = hasTranscribeOptions
                 ? await (this.whisperService as any).transcribe(processedAudio.buffer, {
-                    language: languagePreference,
-                    model: modelPreference,
-                })
+                      language: languagePreference,
+                      model: modelPreference,
+                  })
                 : await (this.whisperService as any).transcribe(processedAudio.buffer);
 
             this.logger.debug('WhisperService response:', {
@@ -110,7 +110,11 @@ export class TranscriptionService implements ITranscriptionService {
             }
 
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            const text = (response as any).text || '';
+            const text = (response as any).text;
+            if (!text || typeof text !== 'string' || text.trim() === '') {
+                throw new Error('Transcription service returned empty or invalid text');
+            }
+
             const _language = (response as any).language || languagePreference;
 
             // Format text
@@ -414,9 +418,9 @@ export class TranscriptionService implements ITranscriptionService {
         const effectiveFetchPromise =
             this.isTestEnvironment() && delayForAbort
                 ? responsePromise.then(async (response) => {
-                    await this.sleep(150);
-                    return response;
-                })
+                      await this.sleep(150);
+                      return response;
+                  })
                 : responsePromise;
 
         if (!signal) {
@@ -613,8 +617,8 @@ export class TranscriptionService implements ITranscriptionService {
             typeof settings.timeout === 'number'
                 ? settings.timeout
                 : typeof settings.requestTimeout === 'number'
-                    ? settings.requestTimeout
-                    : 0;
+                ? settings.requestTimeout
+                : 0;
         return Number.isFinite(timeout) && timeout > 0 ? timeout : 0;
     }
 

@@ -12,11 +12,11 @@ export interface PluginSettings {
     whisperApiKey?: string;
     deepgramApiKey?: string;
     selectionStrategy?:
-    | 'cost_optimized'
-    | 'performance_optimized'
-    | 'quality_optimized'
-    | 'round_robin'
-    | 'ab_test';
+        | 'cost_optimized'
+        | 'performance_optimized'
+        | 'quality_optimized'
+        | 'round_robin'
+        | 'ab_test';
 
     // Provider optimization settings
     costLimit?: number;

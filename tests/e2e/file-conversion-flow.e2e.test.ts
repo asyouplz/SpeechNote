@@ -1,6 +1,6 @@
 /**
  * E2E Test: 파일 선택 → 변환 → 삽입 전체 플로우
- * 
+ *
  * 테스트 시나리오:
  * 1. 파일 선택 모달 열기
  * 2. 오디오 파일 선택
@@ -45,17 +45,17 @@ describe('E2E: 파일 변환 플로우', () => {
                         setCursor: jest.fn(),
                         getLine: jest.fn().mockReturnValue(''),
                         lastLine: jest.fn().mockReturnValue(0),
-                        getSelection: jest.fn().mockReturnValue('')
-                    }
-                })
+                        getSelection: jest.fn().mockReturnValue(''),
+                    },
+                }),
             },
             vault: {
                 adapter: {
                     read: jest.fn(),
                     write: jest.fn(),
-                    exists: jest.fn().mockResolvedValue(true)
-                }
-            }
+                    exists: jest.fn().mockResolvedValue(true),
+                },
+            },
         } as any;
 
         editor = app.workspace.getActiveViewOfType(null).editor;
@@ -78,7 +78,7 @@ describe('E2E: 파일 변환 플로우', () => {
             retryAttempts: 3,
             retryDelay: 1000,
             timeout: 30000,
-            concurrentLimit: 3
+            concurrentLimit: 3,
         };
 
         // 서비스 초기화
@@ -88,12 +88,12 @@ describe('E2E: 파일 변환 플로우', () => {
         progressTracker = new ProgressTracker('file-conversion', stateManager);
         editorService = new EditorService(app);
         transcriptionService = new TranscriptionService(settings);
-        
+
         // Mock API 응답
         global.fetch = jest.fn().mockResolvedValue({
             ok: true,
             json: jest.fn().mockResolvedValue({ text: '변환된 텍스트' }),
-            text: jest.fn().mockResolvedValue('변환된 텍스트')
+            text: jest.fn().mockResolvedValue('변환된 텍스트'),
         });
     });
 
@@ -132,7 +132,7 @@ describe('E2E: 파일 변환 플로우', () => {
                     await editorService.insertText(result.text, {
                         position: settings.insertPosition,
                         addTimestamp: settings.addTimestamp,
-                        timestampFormat: settings.timestampFormat
+                        timestampFormat: settings.timestampFormat,
                     });
                     progressTracker.increment();
 
@@ -149,11 +149,7 @@ describe('E2E: 파일 변환 플로우', () => {
             );
 
             // 테스트용 파일 생성
-            const mockFile = new File(
-                ['mock audio data'],
-                'test-audio.mp3',
-                { type: 'audio/mp3' }
-            );
+            const mockFile = new File(['mock audio data'], 'test-audio.mp3', { type: 'audio/mp3' });
 
             // 파일 선택 시뮬레이션
             await filePickerModal.onChooseFile(mockFile);
@@ -164,8 +160,8 @@ describe('E2E: 파일 변환 플로우', () => {
                 expect.objectContaining({
                     method: 'POST',
                     headers: expect.objectContaining({
-                        'Authorization': `Bearer ${settings.apiKey}`
-                    })
+                        Authorization: `Bearer ${settings.apiKey}`,
+                    }),
                 })
             );
         });
@@ -177,7 +173,7 @@ describe('E2E: 파일 변환 플로우', () => {
 
             // 드래그 이벤트 시뮬레이션
             const dragEnterEvent = new DragEvent('dragenter', {
-                dataTransfer: new DataTransfer()
+                dataTransfer: new DataTransfer(),
             });
             dropZone.dispatchEvent(dragEnterEvent);
             expect(dropZone.classList.contains('drag-over')).toBe(false); // 실제 구현에서 추가 필요
@@ -186,16 +182,16 @@ describe('E2E: 파일 변환 플로우', () => {
             const mockFile = new File(['mock audio'], 'audio.wav', { type: 'audio/wav' });
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(mockFile);
-            
+
             const dropEvent = new DragEvent('drop', {
-                dataTransfer: dataTransfer
+                dataTransfer: dataTransfer,
             });
 
             // 드롭 핸들러 등록
             dropZone.addEventListener('drop', async (e: DragEvent) => {
                 e.preventDefault();
                 const files = Array.from(e.dataTransfer?.files || []);
-                
+
                 for (const file of files) {
                     // 변환 프로세스 시작
                     const result = await transcriptionService.transcribe(file);
@@ -207,11 +203,11 @@ describe('E2E: 파일 변환 플로우', () => {
             dropZone.dispatchEvent(dropEvent);
 
             // 변환 완료 대기
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
 
             // 검증
             expect(global.fetch).toHaveBeenCalled();
-            
+
             document.body.removeChild(dropZone);
         });
 
@@ -219,7 +215,7 @@ describe('E2E: 파일 변환 플로우', () => {
             const files = [
                 new File(['audio1'], 'file1.mp3', { type: 'audio/mp3' }),
                 new File(['audio2'], 'file2.wav', { type: 'audio/wav' }),
-                new File(['audio3'], 'file3.m4a', { type: 'audio/m4a' })
+                new File(['audio3'], 'file3.m4a', { type: 'audio/m4a' }),
             ];
 
             let processedCount = 0;
@@ -230,7 +226,7 @@ describe('E2E: 파일 변환 플로우', () => {
                 processedCount++;
                 return Promise.resolve({
                     ok: true,
-                    text: () => Promise.resolve(`변환된 텍스트 ${processedCount}`)
+                    text: () => Promise.resolve(`변환된 텍스트 ${processedCount}`),
                 });
             });
 
@@ -238,10 +234,10 @@ describe('E2E: 파일 변환 플로우', () => {
             for (const file of files) {
                 progressTracker.start(files.length);
                 progressTracker.updateMessage(`${file.name} 처리 중...`);
-                
+
                 const result = await transcriptionService.transcribe(file);
                 results.push(result.text);
-                
+
                 await editorService.insertText(result.text);
                 progressTracker.increment();
             }
@@ -250,11 +246,7 @@ describe('E2E: 파일 변환 플로우', () => {
 
             // 검증
             expect(results).toHaveLength(3);
-            expect(results).toEqual([
-                '변환된 텍스트 1',
-                '변환된 텍스트 2',
-                '변환된 텍스트 3'
-            ]);
+            expect(results).toEqual(['변환된 텍스트 1', '변환된 텍스트 2', '변환된 텍스트 3']);
             expect(editor.replaceSelection).toHaveBeenCalledTimes(3);
         });
     });
@@ -266,8 +258,9 @@ describe('E2E: 파일 변환 플로우', () => {
 
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
 
-            await expect(transcriptionService.transcribe(mockFile))
-                .rejects.toThrow('API key is required');
+            await expect(transcriptionService.transcribe(mockFile)).rejects.toThrow(
+                'API key is required'
+            );
 
             // 에러 알림 확인
             const errorSpy = jest.spyOn(notificationManager, 'error');
@@ -282,8 +275,9 @@ describe('E2E: 파일 변환 플로우', () => {
                 { type: 'audio/mp3' }
             );
 
-            await expect(transcriptionService.transcribe(largeFile))
-                .rejects.toThrow(`File size exceeds maximum limit of ${settings.maxFileSize}MB`);
+            await expect(transcriptionService.transcribe(largeFile)).rejects.toThrow(
+                `File size exceeds maximum limit of ${settings.maxFileSize}MB`
+            );
         });
 
         test('네트워크 에러 처리 및 재시도', async () => {
@@ -295,7 +289,7 @@ describe('E2E: 파일 변환 플로우', () => {
                 }
                 return Promise.resolve({
                     ok: true,
-                    text: () => Promise.resolve('변환된 텍스트')
+                    text: () => Promise.resolve('변환된 텍스트'),
                 });
             });
 
@@ -308,26 +302,27 @@ describe('E2E: 파일 변환 플로우', () => {
 
         test('타임아웃 처리', async () => {
             (global.fetch as jest.Mock).mockImplementation(
-                () => new Promise(resolve => {
-                    setTimeout(resolve, settings.timeout + 1000);
-                })
+                () =>
+                    new Promise((resolve) => {
+                        setTimeout(resolve, settings.timeout + 1000);
+                    })
             );
 
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
 
-            await expect(transcriptionService.transcribe(mockFile))
-                .rejects.toThrow('Request timeout');
+            await expect(transcriptionService.transcribe(mockFile)).rejects.toThrow(
+                'Request timeout'
+            );
         });
 
         test('잘못된 파일 형식', async () => {
-            const invalidFile = new File(
-                ['not audio'],
-                'document.pdf',
-                { type: 'application/pdf' }
-            );
+            const invalidFile = new File(['not audio'], 'document.pdf', {
+                type: 'application/pdf',
+            });
 
-            await expect(transcriptionService.transcribe(invalidFile))
-                .rejects.toThrow('Unsupported file type');
+            await expect(transcriptionService.transcribe(invalidFile)).rejects.toThrow(
+                'Unsupported file type'
+            );
         });
     });
 
@@ -355,12 +350,11 @@ describe('E2E: 파일 변환 플로우', () => {
             let isCancelled = false;
 
             const abortController = new AbortController();
-            
+
             // 변환 시작
-            const transcribePromise = transcriptionService.transcribe(
-                mockFile,
-                { signal: abortController.signal }
-            );
+            const transcribePromise = transcriptionService.transcribe(mockFile, {
+                signal: abortController.signal,
+            });
 
             // 취소
             setTimeout(() => {

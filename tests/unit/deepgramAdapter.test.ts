@@ -2,7 +2,7 @@ import { DeepgramAdapter } from '../../src/infrastructure/api/providers/deepgram
 import {
     TranscriptionError,
     type DeepgramSpecificOptions,
-    type TranscriptionOptions
+    type TranscriptionOptions,
 } from '../../src/infrastructure/api/providers/ITranscriber';
 import type { DeepgramService } from '../../src/infrastructure/api/providers/deepgram/DeepgramService';
 import type { ILogger, ISettingsManager } from '../../src/types';
@@ -11,26 +11,31 @@ const createLogger = (): ILogger => ({
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
-    error: jest.fn()
+    error: jest.fn(),
 });
 
 const createSettingsManager = (overrides?: Record<string, unknown>): ISettingsManager => ({
     load: jest.fn(),
     save: jest.fn(),
     get: jest.fn((key: string) => overrides?.[key]),
-    set: jest.fn()
+    set: jest.fn(),
 });
 
-const createService = (): DeepgramService => ({
-    transcribe: jest.fn(),
-    parseResponse: jest.fn(),
-    validateApiKey: jest.fn(),
-    cancel: jest.fn()
-}) as unknown as DeepgramService;
+const createService = (): DeepgramService =>
+    ({
+        transcribe: jest.fn(),
+        parseResponse: jest.fn(),
+        validateApiKey: jest.fn(),
+        cancel: jest.fn(),
+    } as unknown as DeepgramService);
 
 const createAdapter = (settingsOverrides?: Record<string, unknown>) => {
     const service = createService();
-    const adapter = new DeepgramAdapter(service, createLogger(), createSettingsManager(settingsOverrides));
+    const adapter = new DeepgramAdapter(
+        service,
+        createLogger(),
+        createSettingsManager(settingsOverrides)
+    );
     return { adapter, service };
 };
 
@@ -48,10 +53,10 @@ describe('DeepgramAdapter', () => {
                         smartFormat: false,
                         diarization: true,
                         utterances: false,
-                        numerals: true
-                    }
-                }
-            }
+                        numerals: true,
+                    },
+                },
+            },
         });
 
         const options = (
