@@ -155,3 +155,17 @@ requirment*.md
 
 # Local review notes
 REVIEW_NOTES_PR8004.md
+
+# Lint and typecheck output files
+lint-output.txt
+lint_output.txt
+lint_obsidian_output.txt
+typecheck_output.txt
+
+# Claude Code settings
+.claude/
+
+# Agent documentation (not needed for plugin distribution)
+AGENTS.ko.md
+AGENTS.md
+CODE_OF_CONDUCT.md
