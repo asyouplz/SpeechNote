@@ -3,11 +3,11 @@
  */
 
 import { TextFormatter } from '../../src/core/transcription/TextFormatter';
-import { 
+import {
     createMockSettings,
     createMockFormatOptions,
     createMockTranscriptionSegment,
-    createMockSegments
+    createMockSegments,
 } from '../helpers/mockDataFactory';
 import '../helpers/testSetup';
 
@@ -63,7 +63,7 @@ describe('TextFormatter', () => {
             const input = '테스트 텍스트';
             const options = createMockFormatOptions({
                 includeTimestamps: true,
-                cleanupText: false
+                cleanupText: false,
             });
 
             const result = textFormatter.format(input, options);
@@ -88,7 +88,7 @@ describe('TextFormatter', () => {
 
             const segments = [
                 createMockTranscriptionSegment({ start: 0, end: 5, text: '첫 번째 세그먼트' }),
-                createMockTranscriptionSegment({ start: 5, end: 10, text: '두 번째 세그먼트' })
+                createMockTranscriptionSegment({ start: 5, end: 10, text: '두 번째 세그먼트' }),
             ];
 
             const result = textFormatter.insertTimestamps('', segments);
@@ -103,7 +103,7 @@ describe('TextFormatter', () => {
             textFormatter = new TextFormatter(mockSettings);
 
             const segments = [
-                createMockTranscriptionSegment({ start: 30, end: 35, text: '텍스트' })
+                createMockTranscriptionSegment({ start: 30, end: 35, text: '텍스트' }),
             ];
 
             const result = textFormatter.insertTimestamps('', segments);
@@ -121,7 +121,7 @@ describe('TextFormatter', () => {
             // Should not contain timestamp markers
             expect(result).not.toContain('[');
             expect(result).not.toContain('|');
-            segments.forEach(segment => {
+            segments.forEach((segment) => {
                 expect(result).toContain(segment.text);
             });
         });
@@ -145,11 +145,11 @@ describe('TextFormatter', () => {
             textFormatter = new TextFormatter(mockSettings);
 
             const segments = [
-                createMockTranscriptionSegment({ 
+                createMockTranscriptionSegment({
                     start: 3665, // 1:01:05
-                    end: 3670, 
-                    text: '1시간 넘은 세그먼트' 
-                })
+                    end: 3670,
+                    text: '1시간 넘은 세그먼트',
+                }),
             ];
 
             const result = textFormatter.insertTimestamps('', segments);
@@ -162,11 +162,11 @@ describe('TextFormatter', () => {
             textFormatter = new TextFormatter(mockSettings);
 
             const segments = [
-                createMockTranscriptionSegment({ 
+                createMockTranscriptionSegment({
                     start: 65.7, // Should be 01:05
-                    end: 70, 
-                    text: '소수점 초' 
-                })
+                    end: 70,
+                    text: '소수점 초',
+                }),
             ];
 
             const result = textFormatter.insertTimestamps('', segments);
@@ -261,7 +261,7 @@ describe('TextFormatter', () => {
             const segments = [
                 createMockTranscriptionSegment({ start: 0, end: 5, text: '첫 번째' }),
                 createMockTranscriptionSegment({ start: 3, end: 8, text: '겹치는' }), // Overlapping
-                createMockTranscriptionSegment({ start: 8, end: 12, text: '세 번째' })
+                createMockTranscriptionSegment({ start: 8, end: 12, text: '세 번째' }),
             ];
 
             const result = textFormatter.insertTimestamps('', segments);
@@ -273,9 +273,7 @@ describe('TextFormatter', () => {
 
     describe('performance', () => {
         it('should format large text efficiently', () => {
-            const largeText = Array.from({ length: 10000 }, () => 
-                '문장입니다. '
-            ).join('\n');
+            const largeText = Array.from({ length: 10000 }, () => '문장입니다. ').join('\n');
 
             const startTime = Date.now();
             const result = textFormatter.format(largeText);
@@ -303,17 +301,19 @@ describe('TextFormatter', () => {
 
     describe('configuration variations', () => {
         it('should respect different timestamp formats', () => {
-            const segments = [createMockTranscriptionSegment({ start: 10, end: 15, text: '테스트' })];
+            const segments = [
+                createMockTranscriptionSegment({ start: 10, end: 15, text: '테스트' }),
+            ];
 
             // Test each format
             const formats = ['none', 'inline', 'sidebar'] as const;
-            
+
             for (const format of formats) {
                 mockSettings.timestampFormat = format;
                 textFormatter = new TextFormatter(mockSettings);
-                
+
                 const result = textFormatter.insertTimestamps('', segments);
-                
+
                 if (format === 'none') {
                     expect(result).toBe('테스트');
                 } else if (format === 'inline') {

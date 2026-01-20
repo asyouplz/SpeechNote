@@ -1,6 +1,6 @@
 /**
  * E2E Test Setup
- * 
+ *
  * E2E 테스트 환경 설정
  * - DOM 환경 초기화
  * - 전역 Mock 설정
@@ -26,7 +26,7 @@ const localStorageMock = {
     removeItem: jest.fn(),
     clear: jest.fn(),
     length: 0,
-    key: jest.fn()
+    key: jest.fn(),
 };
 global.localStorage = localStorageMock as any;
 
@@ -38,8 +38,8 @@ const indexedDBMock = {
     open: jest.fn().mockReturnValue({
         onsuccess: jest.fn(),
         onerror: jest.fn(),
-        onupgradeneeded: jest.fn()
-    })
+        onupgradeneeded: jest.fn(),
+    }),
 };
 global.indexedDB = indexedDBMock as any;
 
@@ -59,10 +59,10 @@ global.File = class File {
         this.name = name;
         this.type = options?.type || '';
         this.lastModified = options?.lastModified || Date.now();
-        
+
         // 콘텐츠 크기 계산
         let totalSize = 0;
-        bits.forEach(bit => {
+        bits.forEach((bit) => {
             if (typeof bit === 'string') {
                 totalSize += new TextEncoder().encode(bit).length;
             } else if (bit instanceof ArrayBuffer) {
@@ -72,7 +72,7 @@ global.File = class File {
             }
         });
         this.size = totalSize;
-        
+
         // 실제 콘텐츠 저장
         this.content = new ArrayBuffer(totalSize);
     }
@@ -101,11 +101,11 @@ global.Blob = class Blob {
         options?: BlobPropertyBag
     ) {
         this.type = options?.type || '';
-        
+
         // 콘텐츠 크기 계산
         let totalSize = 0;
         if (bits) {
-            bits.forEach(bit => {
+            bits.forEach((bit) => {
                 if (typeof bit === 'string') {
                     totalSize += new TextEncoder().encode(bit).length;
                 } else if (bit instanceof ArrayBuffer) {
@@ -195,7 +195,7 @@ global.DataTransfer = class DataTransfer {
             const item = {
                 kind: 'file',
                 type: file.type,
-                getAsFile: () => file
+                getAsFile: () => file,
             } as DataTransferItem;
             itemsArray.push(item);
             filesArray.push(file);
@@ -249,17 +249,17 @@ global.DragEvent = class DragEvent extends Event {
 if (!global.AbortController) {
     global.AbortController = class AbortController {
         signal: AbortSignal;
-        
+
         constructor() {
             this.signal = {
                 aborted: false,
                 onabort: null,
                 addEventListener: jest.fn(),
                 removeEventListener: jest.fn(),
-                dispatchEvent: jest.fn()
+                dispatchEvent: jest.fn(),
             } as any;
         }
-        
+
         abort(): void {
             (this.signal as any).aborted = true;
             if ((this.signal as any).onabort) {
@@ -277,26 +277,25 @@ global.performance = {
     clearMarks: jest.fn(),
     clearMeasures: jest.fn(),
     getEntriesByName: jest.fn(() => []),
-    getEntriesByType: jest.fn(() => [])
+    getEntriesByType: jest.fn(() => []),
 } as any;
 
 // IntersectionObserver Mock
 global.IntersectionObserver = class IntersectionObserver {
-    constructor(
-        callback: IntersectionObserverCallback,
-        options?: IntersectionObserverInit
-    ) {}
-    
+    constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {}
+
     observe(target: Element): void {}
     unobserve(target: Element): void {}
     disconnect(): void {}
-    takeRecords(): IntersectionObserverEntry[] { return []; }
+    takeRecords(): IntersectionObserverEntry[] {
+        return [];
+    }
 } as any;
 
 // ResizeObserver Mock
 global.ResizeObserver = class ResizeObserver {
     constructor(callback: ResizeObserverCallback) {}
-    
+
     observe(target: Element, options?: ResizeObserverOptions): void {}
     unobserve(target: Element): void {}
     disconnect(): void {}
@@ -305,15 +304,17 @@ global.ResizeObserver = class ResizeObserver {
 // MutationObserver Mock
 global.MutationObserver = class MutationObserver {
     constructor(callback: MutationCallback) {}
-    
+
     observe(target: Node, options?: MutationObserverInit): void {}
     disconnect(): void {}
-    takeRecords(): MutationRecord[] { return []; }
+    takeRecords(): MutationRecord[] {
+        return [];
+    }
 } as any;
 
 // 테스트 유틸리티 함수
-export const waitFor = (ms: number): Promise<void> => 
-    new Promise(resolve => setTimeout(resolve, ms));
+export const waitFor = (ms: number): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
 export const mockApiResponse = (data: any, status = 200): void => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -322,7 +323,7 @@ export const mockApiResponse = (data: any, status = 200): void => {
         statusText: status === 200 ? 'OK' : 'Error',
         json: () => Promise.resolve(data),
         text: () => Promise.resolve(JSON.stringify(data)),
-        headers: new Headers()
+        headers: new Headers(),
     });
 };
 
@@ -330,20 +331,12 @@ export const mockApiError = (error: string, status = 500): void => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(new Error(error));
 };
 
-export const createMockFile = (
-    name: string,
-    size: number,
-    type: string
-): File => {
+export const createMockFile = (name: string, size: number, type: string): File => {
     const content = new ArrayBuffer(size);
     return new File([content], name, { type });
 };
 
-export const dispatchCustomEvent = (
-    element: Element,
-    eventName: string,
-    detail?: any
-): void => {
+export const dispatchCustomEvent = (element: Element, eventName: string, detail?: any): void => {
     const event = new CustomEvent(eventName, { detail, bubbles: true });
     element.dispatchEvent(event);
 };

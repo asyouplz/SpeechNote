@@ -13,6 +13,7 @@ import type {
     ResetScope,
 } from '../../types/phase3-api';
 import type { Unsubscribe } from '../../types/events';
+import { isPlainRecord } from '../../types/guards';
 import { SecureApiKeyManager, SettingsEncryptor } from '../security/Encryptor';
 import { SettingsMigrator } from './SettingsMigrator';
 import { SettingsValidator } from './SettingsValidator';
@@ -47,19 +48,20 @@ export class SettingsAPI implements ISettingsAPI {
     async initialize(): Promise<void> {
         try {
             // Obsidian API를 통해 설정 로드
-            const stored = this.app.loadLocalStorage(this.storageKey);
+            const stored = this.app.loadLocalStorage(this.storageKey) as string | null;
             if (stored) {
-                const parsed = JSON.parse(stored);
+                const parsed = JSON.parse(stored) as unknown;
 
                 // 마이그레이션 확인
                 if (this.needsMigration()) {
+                    const parsedObj = isPlainRecord(parsed) ? parsed : {};
                     this.settings = await this.migrator.migrate(
-                        parsed,
-                        parsed.version || '1.0.0',
+                        parsedObj as unknown as SettingsSchema,
+                        (parsedObj.version as string) || '1.0.0',
                         this.defaultSettings.version
                     );
                 } else {
-                    this.settings = parsed;
+                    this.settings = parsed as SettingsSchema;
                 }
             }
 
@@ -178,12 +180,13 @@ export class SettingsAPI implements ISettingsAPI {
      * 마이그레이션 필요 여부
      */
     needsMigration(): boolean {
-        const stored = this.app.loadLocalStorage(this.storageKey);
-        if (!stored) return false;
+        const stored = this.app.loadLocalStorage(this.storageKey) as unknown;
+        if (typeof stored !== 'string') return false;
 
         try {
-            const parsed = JSON.parse(stored);
-            return parsed.version !== this.defaultSettings.version;
+            const parsed = JSON.parse(stored) as unknown;
+            const parsedObj = isPlainRecord(parsed) ? parsed : {};
+            return parsedObj.version !== (this.defaultSettings.version as unknown as string);
         } catch {
             return false;
         }
@@ -223,10 +226,10 @@ export class SettingsAPI implements ISettingsAPI {
             const encoder = new TextEncoder();
             const data = encoder.encode(json);
             const compressed = await this.compress(data);
-            return new Blob([compressed], { type: 'application/gzip' });
+            return new Blob([compressed as any], { type: 'application/gzip' });
         }
 
-        return new Blob([json], { type: 'application/json' });
+        return new Blob([json as any], { type: 'application/json' });
     }
 
     /**
@@ -245,11 +248,17 @@ export class SettingsAPI implements ISettingsAPI {
                 data = await file.text();
             }
 
-            let importedSettings = JSON.parse(data);
+            const parsed = JSON.parse(data) as unknown;
+            if (!isPlainRecord(parsed)) {
+                throw new Error('Invalid settings file: expected an object');
+            }
+            let importedSettings = parsed as unknown as Partial<SettingsSchema>;
 
             // 암호화된 파일 처리
             if (options.password) {
-                importedSettings = await this.encryptor.decryptSensitiveSettings(importedSettings);
+                importedSettings = (await this.encryptor.decryptSensitiveSettings(
+                    importedSettings as Record<string, unknown>
+                )) as unknown as Partial<SettingsSchema>;
             }
 
             // 검증
@@ -269,10 +278,10 @@ export class SettingsAPI implements ISettingsAPI {
             if (options.merge) {
                 Object.assign(this.settings, importedSettings);
             } else if (options.overwrite) {
-                this.settings = importedSettings;
+                this.settings = importedSettings as SettingsSchema;
             } else {
                 // 기본: 안전한 병합 (API 키 제외)
-                const { api, ...safeSettings } = importedSettings;
+                const { api: _api, ...safeSettings } = importedSettings;
                 Object.assign(this.settings, safeSettings);
             }
 
@@ -280,7 +289,7 @@ export class SettingsAPI implements ISettingsAPI {
 
             return {
                 success: true,
-                imported: importedSettings,
+                imported: importedSettings as unknown as SettingsSchema,
                 warnings: validation?.warnings?.map((w) => w.message),
             };
         } catch (error) {
@@ -298,7 +307,7 @@ export class SettingsAPI implements ISettingsAPI {
     async reset(scope: ResetScope = 'all'): Promise<void> {
         if (scope === 'all') {
             this.settings = { ...this.defaultSettings };
-            await this.apiKeyManager.clearApiKey();
+            this.apiKeyManager.clearApiKey();
         } else if (Array.isArray(scope)) {
             scope.forEach((key) => {
                 const typedKey = key;
@@ -320,7 +329,10 @@ export class SettingsAPI implements ISettingsAPI {
         if (!this.listeners.has(event)) {
             this.listeners.set(event, []);
         }
-        const listeners = this.listeners.get(event)!;
+        const listeners = this.listeners.get(event) ?? [];
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, listeners);
+        }
         // Prevent duplicate listeners
         if (!listeners.includes(listener)) {
             listeners.push(listener);
@@ -450,7 +462,7 @@ export class SettingsAPI implements ISettingsAPI {
         if ('CompressionStream' in window) {
             const cs = new (
                 window as typeof window & { CompressionStream: new (type: string) => unknown }
-            ).CompressionStream('gzip') as unknown as {
+            ).CompressionStream('gzip') as {
                 writable: WritableStream<Uint8Array>;
                 readable: ReadableStream<Uint8Array>;
             };
@@ -495,7 +507,7 @@ export class SettingsAPI implements ISettingsAPI {
         if ('DecompressionStream' in window) {
             const ds = new (
                 window as typeof window & { DecompressionStream: new (type: string) => unknown }
-            ).DecompressionStream('gzip') as unknown as {
+            ).DecompressionStream('gzip') as {
                 writable: WritableStream<Uint8Array>;
                 readable: ReadableStream<Uint8Array>;
             };

@@ -2,14 +2,18 @@
  * FileUploadManager 단위 테스트
  */
 
-import { FileUploadManager, UploadProgress, ProcessedAudioFile } from '../../src/infrastructure/api/FileUploadManager';
+import {
+    FileUploadManager,
+    UploadProgress,
+    ProcessedAudioFile,
+} from '../../src/infrastructure/api/FileUploadManager';
 import { Vault } from 'obsidian';
 import type { ILogger } from '../../src/types';
 import {
     createMockAudioFile,
     createMockArrayBuffer,
     createMockVault,
-    createMockWAVBuffer
+    createMockWAVBuffer,
 } from '../helpers/mockDataFactory';
 import '../helpers/testSetup';
 
@@ -24,7 +28,7 @@ describe('FileUploadManager', () => {
             debug: jest.fn(),
             info: jest.fn(),
             warn: jest.fn(),
-            error: jest.fn()
+            error: jest.fn(),
         };
 
         fileUploadManager = new FileUploadManager(mockVault as Vault, mockLogger);
@@ -40,10 +44,10 @@ describe('FileUploadManager', () => {
             const file = createMockAudioFile({
                 name: 'test.mp3',
                 extension: 'mp3',
-                size: 5 * 1024 * 1024 // 5MB
+                size: 5 * 1024 * 1024, // 5MB
             });
             const mockBuffer = createMockArrayBuffer(5 * 1024 * 1024);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             const progressUpdates: UploadProgress[] = [];
@@ -68,7 +72,7 @@ describe('FileUploadManager', () => {
         it('should reject unsupported file formats', async () => {
             const file = createMockAudioFile({
                 name: 'test.txt',
-                extension: 'txt'
+                extension: 'txt',
             });
 
             await expect(fileUploadManager.prepareAudioFile(file)).rejects.toThrow(
@@ -78,7 +82,7 @@ describe('FileUploadManager', () => {
 
         it('should reject files that are too small', async () => {
             const file = createMockAudioFile({
-                size: 50 // Too small
+                size: 50, // Too small
             });
 
             await expect(fileUploadManager.prepareAudioFile(file)).rejects.toThrow(
@@ -88,7 +92,7 @@ describe('FileUploadManager', () => {
 
         it('should reject files that are too large', async () => {
             const file = createMockAudioFile({
-                size: 60 * 1024 * 1024 // 60MB - too large even for compression
+                size: 60 * 1024 * 1024, // 60MB - too large even for compression
             });
 
             await expect(fileUploadManager.prepareAudioFile(file)).rejects.toThrow(
@@ -98,10 +102,10 @@ describe('FileUploadManager', () => {
 
         it('should compress large files', async () => {
             const file = createMockAudioFile({
-                size: 30 * 1024 * 1024 // 30MB - needs compression
+                size: 30 * 1024 * 1024, // 30MB - needs compression
             });
             const mockBuffer = createMockWAVBuffer(44100, 700); // Large WAV file
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             // Mock AudioContext for compression
@@ -110,12 +114,12 @@ describe('FileUploadManager', () => {
                 sampleRate: 44100,
                 numberOfChannels: 2,
                 length: 44100 * 700,
-                getChannelData: jest.fn().mockReturnValue(new Float32Array(44100 * 700))
+                getChannelData: jest.fn().mockReturnValue(new Float32Array(44100 * 700)),
             };
-            
+
             (global.AudioContext as jest.Mock).mockImplementation(() => ({
                 decodeAudioData: jest.fn().mockResolvedValue(mockAudioBuffer),
-                close: jest.fn()
+                close: jest.fn(),
             }));
 
             const progressUpdates: UploadProgress[] = [];
@@ -130,7 +134,7 @@ describe('FileUploadManager', () => {
             );
 
             // Check that compression progress was reported
-            const compressionProgress = progressUpdates.find(p => 
+            const compressionProgress = progressUpdates.find((p) =>
                 p.message?.includes('Compressing audio')
             );
             expect(compressionProgress).toBeDefined();
@@ -139,7 +143,7 @@ describe('FileUploadManager', () => {
         it('should handle file read errors', async () => {
             const file = createMockAudioFile();
             const error = new Error('Failed to read file');
-            
+
             (mockVault.readBinary as jest.Mock).mockRejectedValue(error);
 
             await expect(fileUploadManager.prepareAudioFile(file)).rejects.toThrow(
@@ -150,19 +154,19 @@ describe('FileUploadManager', () => {
         it('should extract metadata from audio buffer', async () => {
             const file = createMockAudioFile();
             const mockBuffer = createMockWAVBuffer(44100, 10);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             const mockAudioBuffer = {
                 duration: 10,
                 sampleRate: 44100,
                 numberOfChannels: 2,
-                length: 441000
+                length: 441000,
             };
-            
+
             (global.AudioContext as jest.Mock).mockImplementation(() => ({
                 decodeAudioData: jest.fn().mockResolvedValue(mockAudioBuffer),
-                close: jest.fn()
+                close: jest.fn(),
             }));
 
             const result = await fileUploadManager.prepareAudioFile(file);
@@ -176,12 +180,12 @@ describe('FileUploadManager', () => {
         it('should handle metadata extraction failure gracefully', async () => {
             const file = createMockAudioFile();
             const mockBuffer = createMockArrayBuffer(1024);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
-            
+
             (global.AudioContext as jest.Mock).mockImplementation(() => ({
                 decodeAudioData: jest.fn().mockRejectedValue(new Error('Decode failed')),
-                close: jest.fn()
+                close: jest.fn(),
             }));
 
             const result = await fileUploadManager.prepareAudioFile(file);
@@ -197,10 +201,10 @@ describe('FileUploadManager', () => {
 
         it('should validate magic bytes for known formats', async () => {
             const file = createMockAudioFile({
-                extension: 'wav'
+                extension: 'wav',
             });
             const mockBuffer = createMockWAVBuffer();
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             await fileUploadManager.prepareAudioFile(file);
@@ -214,10 +218,10 @@ describe('FileUploadManager', () => {
 
         it('should warn about invalid magic bytes', async () => {
             const file = createMockAudioFile({
-                extension: 'wav'
+                extension: 'wav',
             });
             const mockBuffer = createMockArrayBuffer(1024); // Not a real WAV
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             await fileUploadManager.prepareAudioFile(file);
@@ -225,7 +229,7 @@ describe('FileUploadManager', () => {
             expect(mockLogger.warn).toHaveBeenCalledWith(
                 'File content does not match expected format',
                 expect.objectContaining({
-                    extension: 'wav'
+                    extension: 'wav',
                 })
             );
         });
@@ -267,10 +271,10 @@ describe('FileUploadManager', () => {
 
             // Start iteration
             const iterator = fileUploadManager.uploadInChunks(buffer, chunkSize);
-            
+
             // Get first chunk
             await iterator.next();
-            
+
             // Cancel
             fileUploadManager.cancel();
 
@@ -301,7 +305,7 @@ describe('FileUploadManager', () => {
         it('should close audio context if exists', () => {
             const mockClose = jest.fn();
             (fileUploadManager as any).audioContext = {
-                close: mockClose
+                close: mockClose,
             };
 
             fileUploadManager.cleanup();
@@ -322,15 +326,15 @@ describe('FileUploadManager', () => {
     describe('supported formats', () => {
         const supportedFormats = ['m4a', 'mp3', 'wav', 'mp4', 'mpeg', 'mpga', 'webm', 'ogg'];
 
-        supportedFormats.forEach(format => {
+        supportedFormats.forEach((format) => {
             it(`should support ${format} format`, async () => {
                 const file = createMockAudioFile({
                     name: `test.${format}`,
                     extension: format,
-                    size: 1024 * 1024
+                    size: 1024 * 1024,
                 });
                 const mockBuffer = createMockArrayBuffer(1024 * 1024);
-                
+
                 (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
                 const result = await fileUploadManager.prepareAudioFile(file);
@@ -344,10 +348,10 @@ describe('FileUploadManager', () => {
     describe('edge cases', () => {
         it('should handle exactly 25MB file', async () => {
             const file = createMockAudioFile({
-                size: 25 * 1024 * 1024 // Exactly 25MB
+                size: 25 * 1024 * 1024, // Exactly 25MB
             });
             const mockBuffer = createMockArrayBuffer(25 * 1024 * 1024);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             const result = await fileUploadManager.prepareAudioFile(file);
@@ -357,10 +361,10 @@ describe('FileUploadManager', () => {
 
         it('should compress file just over 25MB', async () => {
             const file = createMockAudioFile({
-                size: 25 * 1024 * 1024 + 1 // 25MB + 1 byte
+                size: 25 * 1024 * 1024 + 1, // 25MB + 1 byte
             });
             const mockBuffer = createMockArrayBuffer(25 * 1024 * 1024 + 1);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             const progressUpdates: UploadProgress[] = [];
@@ -374,7 +378,7 @@ describe('FileUploadManager', () => {
         it('should handle empty progress callback', async () => {
             const file = createMockAudioFile();
             const mockBuffer = createMockArrayBuffer(1024);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             // No progress callback provided
@@ -386,11 +390,11 @@ describe('FileUploadManager', () => {
         it('should report error in progress', async () => {
             const file = createMockAudioFile();
             const error = new Error('Test error');
-            
+
             (mockVault.readBinary as jest.Mock).mockRejectedValue(error);
 
             const progressUpdates: UploadProgress[] = [];
-            
+
             await expect(
                 fileUploadManager.prepareAudioFile(file, (progress) => {
                     progressUpdates.push(progress);
@@ -398,7 +402,7 @@ describe('FileUploadManager', () => {
             ).rejects.toThrow(error);
 
             // Check that error was reported in progress
-            const errorProgress = progressUpdates.find(p => p.status === 'error');
+            const errorProgress = progressUpdates.find((p) => p.status === 'error');
             expect(errorProgress).toBeDefined();
             expect(errorProgress?.message).toBe('Test error');
         });
@@ -407,10 +411,10 @@ describe('FileUploadManager', () => {
     describe('performance', () => {
         it('should process large files efficiently', async () => {
             const file = createMockAudioFile({
-                size: 20 * 1024 * 1024 // 20MB
+                size: 20 * 1024 * 1024, // 20MB
             });
             const mockBuffer = createMockArrayBuffer(20 * 1024 * 1024);
-            
+
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
 
             const startTime = Date.now();
@@ -427,11 +431,11 @@ describe('FileUploadManager', () => {
 
             const startTime = Date.now();
             const chunks: ArrayBuffer[] = [];
-            
+
             for await (const chunk of fileUploadManager.uploadInChunks(buffer, chunkSize)) {
                 chunks.push(chunk);
             }
-            
+
             const endTime = Date.now();
 
             expect(chunks.length).toBe(10);

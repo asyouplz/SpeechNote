@@ -16,7 +16,7 @@ const obsidianMock = {
     Notice: fn(),
     DropdownComponent: fn(),
     ToggleComponent: fn(),
-    TextComponent: fn()
+    TextComponent: fn(),
 };
 
 export = obsidianMock;

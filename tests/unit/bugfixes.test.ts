@@ -1,6 +1,6 @@
 /**
  * Phase 4 - Task 4.4 버그 수정 회귀 테스트
- * 
+ *
  * 수정된 버그들이 다시 발생하지 않도록 보장하는 테스트 모음
  */
 
@@ -30,11 +30,11 @@ describe('Critical Bug Fixes - 플러그인 크래시 방지', () => {
             const path = require('path');
             const tsconfigPath = path.resolve(__dirname, '../../tsconfig.json');
             const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf8'));
-            
+
             // sourceMap과 inlineSourceMap이 동시에 설정되지 않았는지 확인
             const hasSourceMap = tsconfig.compilerOptions.sourceMap === true;
             const hasInlineSourceMap = tsconfig.compilerOptions.inlineSourceMap === true;
-            
+
             expect(hasSourceMap && hasInlineSourceMap).toBe(false);
         });
     });
@@ -50,17 +50,16 @@ describe('Critical Bug Fixes - 플러그인 크래시 방지', () => {
 
         it('should use valid test audio size for API key validation', async () => {
             // validateApiKey 메서드가 1KB 크기의 테스트 오디오를 사용하는지 확인
-            const performTranscriptionSpy = jest.spyOn(
-                whisperService as any,
-                'performTranscription'
-            ).mockResolvedValue({ text: 'test' });
+            const performTranscriptionSpy = jest
+                .spyOn(whisperService as any, 'performTranscription')
+                .mockResolvedValue({ text: 'test' });
 
             await whisperService.validateApiKey('test-key');
 
             expect(performTranscriptionSpy).toHaveBeenCalled();
             const callArgs = performTranscriptionSpy.mock.calls[0];
             const testAudioBuffer = callArgs[0] as ArrayBuffer;
-            
+
             // 테스트 오디오가 1KB (1024 bytes)인지 확인
             expect(testAudioBuffer.byteLength).toBe(1024);
         });
@@ -84,7 +83,7 @@ describe('High Priority Bug Fixes - 기능 동작 실패', () => {
                 stat: { size: 1000 },
                 extension: 'mp3',
                 name: 'test.mp3',
-                path: 'test.mp3'
+                path: 'test.mp3',
             };
 
             // Mock readBinary
@@ -107,14 +106,12 @@ describe('High Priority Bug Fixes - 기능 동작 실패', () => {
                 stat: { size: 30 * 1024 * 1024 }, // 30MB - 제한 초과
                 extension: 'mp3',
                 name: 'test.mp3',
-                path: 'test.mp3'
+                path: 'test.mp3',
             };
 
             const cleanupSpy = jest.spyOn(fileUploadManager, 'cleanup');
 
-            await expect(
-                fileUploadManager.prepareAudioFile(mockFile as any)
-            ).rejects.toThrow();
+            await expect(fileUploadManager.prepareAudioFile(mockFile as any)).rejects.toThrow();
 
             // 에러가 발생해도 cleanup이 호출되어야 함
             expect(cleanupSpy).toHaveBeenCalled();
@@ -130,7 +127,7 @@ describe('Medium Priority Bug Fixes - UX 개선', () => {
             jest.useFakeTimers();
             notificationManager = new NotificationManager({
                 defaultDuration: 5000,
-                soundEnabled: false
+                soundEnabled: false,
             });
         });
 
@@ -142,7 +139,7 @@ describe('Medium Priority Bug Fixes - UX 개선', () => {
             const message = 'Test notification';
             const options = {
                 type: 'info' as const,
-                message
+                message,
             };
 
             // 첫 번째 알림
@@ -163,11 +160,11 @@ describe('Medium Priority Bug Fixes - UX 개선', () => {
         it('should allow different messages immediately', () => {
             const options1 = {
                 type: 'info' as const,
-                message: 'Message 1'
+                message: 'Message 1',
             };
             const options2 = {
                 type: 'info' as const,
-                message: 'Message 2'
+                message: 'Message 2',
             };
 
             const id1 = notificationManager.show(options1);
@@ -180,15 +177,15 @@ describe('Medium Priority Bug Fixes - UX 개선', () => {
 
         it('should differentiate by notification type', () => {
             const message = 'Same message';
-            
+
             const id1 = notificationManager.show({
                 type: 'info',
-                message
+                message,
             });
-            
+
             const id2 = notificationManager.show({
                 type: 'error',
-                message
+                message,
             });
 
             expect(id1).toBeTruthy();
@@ -219,12 +216,12 @@ describe('Performance and Memory Tests', () => {
 
     it('should not accumulate notification messages in memory', () => {
         const notificationManager = new NotificationManager();
-        
+
         // 100개의 알림 생성
         for (let i = 0; i < 100; i++) {
             notificationManager.show({
                 type: 'info',
-                message: `Message ${i}`
+                message: `Message ${i}`,
             });
             jest.advanceTimersByTime(2100); // 각 알림 사이 2.1초 경과
         }
@@ -233,9 +230,9 @@ describe('Performance and Memory Tests', () => {
         // (private 멤버이므로 간접적으로 확인)
         const duplicateId = notificationManager.show({
             type: 'info',
-            message: 'Message 0' // 첫 번째 메시지와 동일
+            message: 'Message 0', // 첫 번째 메시지와 동일
         });
-        
+
         // 오래 전 메시지이므로 중복으로 처리되지 않아야 함
         expect(duplicateId).not.toBe('');
     });
@@ -249,9 +246,7 @@ describe('Integration Tests', () => {
         // Mock fetch to simulate API error
         global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
-        await expect(
-            whisperService.transcribe(new ArrayBuffer(1000))
-        ).rejects.toThrow();
+        await expect(whisperService.transcribe(new ArrayBuffer(1000))).rejects.toThrow();
 
         // 플러그인이 크래시하지 않고 에러를 처리했는지 확인
         expect(mockLogger.error).toHaveBeenCalled();

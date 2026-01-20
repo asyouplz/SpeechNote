@@ -40,19 +40,19 @@ global.AudioContext = jest.fn().mockImplementation(() => ({
         sampleRate: 44100,
         numberOfChannels: 2,
         length: 441000,
-        getChannelData: jest.fn().mockReturnValue(new Float32Array(441000))
+        getChannelData: jest.fn().mockReturnValue(new Float32Array(441000)),
     }),
     createBufferSource: jest.fn().mockReturnValue({
         buffer: null,
         connect: jest.fn(),
         start: jest.fn(),
-        stop: jest.fn()
+        stop: jest.fn(),
     }),
     createChannelMerger: jest.fn().mockReturnValue({
-        connect: jest.fn()
+        connect: jest.fn(),
     }),
     destination: {},
-    close: jest.fn()
+    close: jest.fn(),
 }));
 
 // OfflineAudioContext 모킹
@@ -63,10 +63,10 @@ global.OfflineAudioContext = jest.fn().mockImplementation((channels, length, sam
     createBufferSource: jest.fn().mockReturnValue({
         buffer: null,
         connect: jest.fn(),
-        start: jest.fn()
+        start: jest.fn(),
     }),
     createChannelMerger: jest.fn().mockReturnValue({
-        connect: jest.fn()
+        connect: jest.fn(),
     }),
     destination: {},
     startRendering: jest.fn().mockResolvedValue({
@@ -74,8 +74,8 @@ global.OfflineAudioContext = jest.fn().mockImplementation((channels, length, sam
         sampleRate,
         numberOfChannels: channels,
         length,
-        getChannelData: jest.fn().mockReturnValue(new Float32Array(length))
-    })
+        getChannelData: jest.fn().mockReturnValue(new Float32Array(length)),
+    }),
 }));
 
 // FormData 모킹
@@ -89,7 +89,7 @@ global.FormData = jest.fn().mockImplementation(() => ({
     entries: jest.fn(),
     keys: jest.fn(),
     values: jest.fn(),
-    forEach: jest.fn()
+    forEach: jest.fn(),
 }));
 
 // Blob 모킹
@@ -106,7 +106,7 @@ global.Blob = jest.fn().mockImplementation(function (parts, options) {
         slice: jest.fn(),
         stream: jest.fn(),
         text: jest.fn(),
-        arrayBuffer: jest.fn()
+        arrayBuffer: jest.fn(),
     };
 });
 
@@ -116,7 +116,7 @@ global.File = jest.fn().mockImplementation(function (parts, name, options) {
         ...new Blob(parts, options),
         name,
         lastModified: options?.lastModified || Date.now(),
-        webkitRelativePath: ''
+        webkitRelativePath: '',
     };
 });
 
@@ -126,11 +126,11 @@ global.DataTransfer = jest.fn().mockImplementation(function () {
     const items = {
         add: (file) => {
             files.push(file);
-        }
+        },
     };
     return {
         files,
-        items
+        items,
     };
 });
 
@@ -148,48 +148,49 @@ global.AbortController = jest.fn().mockImplementation(() => ({
         aborted: false,
         onabort: null,
         addEventListener: jest.fn(),
-        removeEventListener: jest.fn()
+        removeEventListener: jest.fn(),
     },
     abort: jest.fn(function () {
         this.signal.aborted = true;
         if (this.signal.onabort) this.signal.onabort();
-    })
+    }),
 }));
 
 // 커스텀 매처 추가
 expect.extend({
     toBeValidArrayBuffer(received) {
         const pass = received instanceof ArrayBuffer && received.byteLength > 0;
-        
+
         if (pass) {
             return {
                 message: () => `expected ${received} not to be a valid ArrayBuffer`,
-                pass: true
+                pass: true,
             };
         } else {
             return {
                 message: () => `expected ${received} to be a valid ArrayBuffer with byteLength > 0`,
-                pass: false
+                pass: false,
             };
         }
     },
-    
+
     toContainTimestamp(received) {
         const timestampRegex = /\[\d{2}:\d{2}(:\d{2})?\]/;
         const pass = timestampRegex.test(received);
-        
+
         if (pass) {
             return {
                 message: () => `expected "${received}" not to contain timestamp`,
-                pass: true
+                pass: true,
             };
         } else {
             return {
-                message: () => `expected "${received}" to contain timestamp in format [MM:SS] or [HH:MM:SS]`,
-                pass: false
+                message: () =>
+                    `expected "${received}" to contain timestamp in format [MM:SS] or [HH:MM:SS]`,
+                pass: false,
             };
         }
-    }
+    },
 });
 
 // 테스트 타임아웃 설정
@@ -203,7 +204,11 @@ if (typeof jest !== 'undefined' && typeof jest.advanceTimersByTime === 'function
         try {
             return originalAdvanceTimersByTime(...args);
         } catch (error) {
-            if (error && typeof error.message === 'string' && error.message.includes('not replaced with fake timers')) {
+            if (
+                error &&
+                typeof error.message === 'string' &&
+                error.message.includes('not replaced with fake timers')
+            ) {
                 // continue to update mock time for compatibility
             } else {
                 throw error;

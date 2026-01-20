@@ -30,12 +30,12 @@ const localStorageMock = (() => {
         key: (index: number) => {
             const keys = Object.keys(store);
             return keys[index] || null;
-        }
+        },
     };
 })();
 
 Object.defineProperty(window, 'localStorage', {
-    value: localStorageMock
+    value: localStorageMock,
 });
 
 describe('SettingsAPI', () => {
@@ -72,9 +72,9 @@ describe('SettingsAPI', () => {
                     notifications: {
                         enabled: false,
                         sound: true,
-                        position: 'bottom-right' as const
-                    }
-                }
+                        position: 'bottom-right' as const,
+                    },
+                },
             };
 
             localStorageMock.setItem('speech-to-text-settings', JSON.stringify(savedSettings));
@@ -147,9 +147,9 @@ describe('SettingsAPI', () => {
                     notifications: {
                         enabled: false,
                         sound: false,
-                        position: 'top-left'
-                    }
-                }
+                        position: 'top-left',
+                    },
+                },
             });
 
             const general = await settingsAPI.get('general');
@@ -167,7 +167,11 @@ describe('SettingsAPI', () => {
             await settingsAPI.set('general', general);
 
             expect(changeHandler).toHaveBeenCalled();
-            expect(changeHandler).toHaveBeenCalledWith('general', expect.any(Object), expect.any(Object));
+            expect(changeHandler).toHaveBeenCalledWith(
+                'general',
+                expect.any(Object),
+                expect.any(Object)
+            );
         });
     });
 
@@ -182,9 +186,9 @@ describe('SettingsAPI', () => {
                     notifications: {
                         enabled: true,
                         sound: false,
-                        position: 'top-right'
-                    }
-                }
+                        position: 'top-right',
+                    },
+                },
             });
 
             expect(result.valid).toBe(true);
@@ -201,9 +205,9 @@ describe('SettingsAPI', () => {
                     notifications: {
                         enabled: true,
                         sound: false,
-                        position: 'top-right'
-                    }
-                }
+                        position: 'top-right',
+                    },
+                },
             });
 
             expect(result.valid).toBe(false);
@@ -216,7 +220,7 @@ describe('SettingsAPI', () => {
                 provider: 'invalid-provider',
                 model: 'whisper-1',
                 maxTokens: -100,
-                temperature: 3
+                temperature: 3,
             });
 
             expect(result.valid).toBe(false);
@@ -226,9 +230,12 @@ describe('SettingsAPI', () => {
 
     describe('설정 마이그레이션', () => {
         it('버전 마이그레이션이 필요한지 확인해야 함', () => {
-            localStorageMock.setItem('speech-to-text-settings', JSON.stringify({
-                version: '2.0.0'
-            }));
+            localStorageMock.setItem(
+                'speech-to-text-settings',
+                JSON.stringify({
+                    version: '2.0.0',
+                })
+            );
 
             const needsMigration = settingsAPI.needsMigration();
             expect(needsMigration).toBe(true);
@@ -288,16 +295,14 @@ describe('SettingsAPI', () => {
                     notifications: {
                         enabled: false,
                         sound: true,
-                        position: 'bottom-left' as const
-                    }
-                }
+                        position: 'bottom-left' as const,
+                    },
+                },
             };
 
-            const file = new File(
-                [JSON.stringify(importData)],
-                'settings.json',
-                { type: 'application/json' }
-            );
+            const file = new File([JSON.stringify(importData)], 'settings.json', {
+                type: 'application/json',
+            });
 
             const result = await settingsAPI.import(file, { merge: true });
 
@@ -310,11 +315,9 @@ describe('SettingsAPI', () => {
 
         it('유효하지 않은 파일 가져오기를 거부해야 함', async () => {
             const invalidData = { invalid: 'data' };
-            const file = new File(
-                [JSON.stringify(invalidData)],
-                'invalid.json',
-                { type: 'application/json' }
-            );
+            const file = new File([JSON.stringify(invalidData)], 'invalid.json', {
+                type: 'application/json',
+            });
 
             const result = await settingsAPI.import(file, { validate: true });
 
@@ -522,8 +525,8 @@ describe('SettingsValidator', () => {
                 notifications: {
                     enabled: true,
                     sound: false,
-                    position: 'top-right'
-                }
+                    position: 'top-right',
+                },
             });
 
             expect(result.valid).toBe(true);
@@ -531,7 +534,7 @@ describe('SettingsValidator', () => {
 
         it('유효하지 않은 언어 코드를 거부해야 함', () => {
             const result = validator.validateField('general', {
-                language: 'invalid-lang'
+                language: 'invalid-lang',
             });
 
             expect(result.valid).toBe(false);
@@ -540,7 +543,7 @@ describe('SettingsValidator', () => {
 
         it('너무 짧은 저장 간격에 대해 경고해야 함', () => {
             const result = validator.validateField('general', {
-                saveInterval: 5000
+                saveInterval: 5000,
             });
 
             expect(result.valid).toBe(true);
@@ -554,7 +557,7 @@ describe('SettingsValidator', () => {
                 provider: 'openai',
                 model: 'whisper-1',
                 maxTokens: 4096,
-                temperature: 0.7
+                temperature: 0.7,
             });
 
             expect(result.valid).toBe(true);
@@ -562,7 +565,7 @@ describe('SettingsValidator', () => {
 
         it('커스텀 프로바이더에 엔드포인트가 없으면 거부해야 함', () => {
             const result = validator.validateField('api', {
-                provider: 'custom'
+                provider: 'custom',
             });
 
             expect(result.valid).toBe(false);
@@ -571,7 +574,7 @@ describe('SettingsValidator', () => {
 
         it('유효하지 않은 temperature를 거부해야 함', () => {
             const result = validator.validateField('api', {
-                temperature: 3
+                temperature: 3,
             });
 
             expect(result.valid).toBe(false);
@@ -581,7 +584,9 @@ describe('SettingsValidator', () => {
 
     describe('API 키 검증', () => {
         it('유효한 OpenAI API 키를 통과시켜야 함', () => {
-            const result = SettingsValidator.validateApiKey('sk-test1234567890abcdefghijklmnopqrstuvwxyz');
+            const result = SettingsValidator.validateApiKey(
+                'sk-test1234567890abcdefghijklmnopqrstuvwxyz'
+            );
 
             expect(result.valid).toBe(true);
         });
@@ -625,12 +630,12 @@ describe('SettingsMigrator', () => {
             version: '2.0.0',
             general: {
                 language: 'ko',
-                autoSave: true
+                autoSave: true,
             },
             api: {
                 apiKey: 'sk-old-key',
-                model: 'whisper-1'
-            }
+                model: 'whisper-1',
+            },
         };
 
         const migrated = await migrator.migrate(oldSettings, '2.0.0', '3.0.0');
@@ -643,7 +648,7 @@ describe('SettingsMigrator', () => {
     it('백업을 생성할 수 있어야 함', async () => {
         const settings = {
             version: '3.0.0',
-            general: { language: 'ko' }
+            general: { language: 'ko' },
         };
 
         const backupKey = await migrator.createBackup(settings);
@@ -655,7 +660,7 @@ describe('SettingsMigrator', () => {
     it('백업을 복원할 수 있어야 함', async () => {
         const settings = {
             version: '3.0.0',
-            general: { language: 'ko' }
+            general: { language: 'ko' },
         };
 
         const backupKey = await migrator.createBackup(settings);

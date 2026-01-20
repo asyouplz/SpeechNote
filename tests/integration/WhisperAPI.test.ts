@@ -3,7 +3,12 @@
  * OpenAI Whisper API와의 통합을 테스트합니다.
  */
 
-import { WhisperService, WhisperAPIError, AuthenticationError, RateLimitError } from '../../src/infrastructure/api/WhisperService';
+import {
+    WhisperService,
+    WhisperAPIError,
+    AuthenticationError,
+    RateLimitError,
+} from '../../src/infrastructure/api/WhisperService';
 import { SettingsManager, PluginSettings } from '../../src/infrastructure/storage/SettingsManager';
 import type { ILogger, WhisperOptions, WhisperResponse } from '../../src/types';
 import { requestUrl } from 'obsidian';
@@ -13,8 +18,8 @@ jest.mock('obsidian', () => ({
     requestUrl: jest.fn(),
     Plugin: jest.fn().mockImplementation(() => ({
         loadData: jest.fn(),
-        saveData: jest.fn()
-    }))
+        saveData: jest.fn(),
+    })),
 }));
 
 // Mock Logger
@@ -43,12 +48,12 @@ describe('WhisperService Integration Tests', () => {
             const expectedResponse = {
                 text: '안녕하세요, 테스트입니다.',
                 language: 'ko',
-                duration: 2.5
+                duration: 2.5,
             };
 
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: expectedResponse
+                json: expectedResponse,
             });
 
             // Act
@@ -59,7 +64,7 @@ describe('WhisperService Integration Tests', () => {
             expect(logger.debug).toHaveBeenCalledWith(
                 expect.stringContaining('Starting transcription request'),
                 expect.objectContaining({
-                    fileSize: 1000
+                    fileSize: 1000,
                 })
             );
             expect(logger.info).toHaveBeenCalledWith(
@@ -86,7 +91,7 @@ describe('WhisperService Integration Tests', () => {
                         temperature: 0.0,
                         avg_logprob: -0.5,
                         compression_ratio: 1.2,
-                        no_speech_prob: 0.01
+                        no_speech_prob: 0.01,
                     },
                     {
                         id: 1,
@@ -98,19 +103,19 @@ describe('WhisperService Integration Tests', () => {
                         temperature: 0.0,
                         avg_logprob: -0.3,
                         compression_ratio: 1.1,
-                        no_speech_prob: 0.02
-                    }
-                ]
+                        no_speech_prob: 0.02,
+                    },
+                ],
             };
 
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: verboseResponse
+                json: verboseResponse,
             });
 
             // Act
             const result = await whisperService.transcribe(audioBuffer, {
-                responseFormat: 'verbose_json'
+                responseFormat: 'verbose_json',
             });
 
             // Assert
@@ -126,12 +131,12 @@ describe('WhisperService Integration Tests', () => {
 
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: textResponse // text 형식은 string으로 반환
+                json: textResponse, // text 형식은 string으로 반환
             });
 
             // Act
             const result = await whisperService.transcribe(audioBuffer, {
-                responseFormat: 'text'
+                responseFormat: 'text',
             });
 
             // Assert
@@ -144,17 +149,17 @@ describe('WhisperService Integration Tests', () => {
         it('401 에러를 AuthenticationError로 변환해야 함', async () => {
             // Arrange
             const audioBuffer = new ArrayBuffer(1000);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 401,
-                json: { error: { message: 'Invalid API key' } }
+                json: { error: { message: 'Invalid API key' } },
             });
 
             // Act & Assert
-            await expect(whisperService.transcribe(audioBuffer))
-                .rejects
-                .toThrow(AuthenticationError);
-            
+            await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(
+                AuthenticationError
+            );
+
             expect(logger.error).toHaveBeenCalledWith(
                 expect.stringContaining('API Error: 401'),
                 undefined,
@@ -165,17 +170,15 @@ describe('WhisperService Integration Tests', () => {
         it('429 에러를 RateLimitError로 변환해야 함', async () => {
             // Arrange
             const audioBuffer = new ArrayBuffer(1000);
-            
+
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 429,
                 json: { error: { message: 'Rate limit exceeded' } },
-                headers: { 'retry-after': '60' }
+                headers: { 'retry-after': '60' },
             });
 
             // Act & Assert
-            await expect(whisperService.transcribe(audioBuffer))
-                .rejects
-                .toThrow(RateLimitError);
+            await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(RateLimitError);
         });
 
         it('파일 크기 제한을 검증해야 함', async () => {
@@ -183,9 +186,9 @@ describe('WhisperService Integration Tests', () => {
             const largeBuffer = new ArrayBuffer(26 * 1024 * 1024); // 26MB
 
             // Act & Assert
-            await expect(whisperService.transcribe(largeBuffer))
-                .rejects
-                .toThrow('File size exceeds API limit (25MB)');
+            await expect(whisperService.transcribe(largeBuffer)).rejects.toThrow(
+                'File size exceeds API limit (25MB)'
+            );
         });
 
         it('네트워크 에러를 재시도해야 함', async () => {
@@ -200,7 +203,7 @@ describe('WhisperService Integration Tests', () => {
                 }
                 return Promise.resolve({
                     status: 200,
-                    json: { text: 'Success after retry' }
+                    json: { text: 'Success after retry' },
                 });
             });
 
@@ -210,9 +213,7 @@ describe('WhisperService Integration Tests', () => {
             // Assert
             expect(result.text).toBe('Success after retry');
             expect(attempts).toBe(3);
-            expect(logger.debug).toHaveBeenCalledWith(
-                expect.stringContaining('Retrying after')
-            );
+            expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('Retrying after'));
         });
 
         it('최대 재시도 횟수 초과 시 에러를 발생시켜야 함', async () => {
@@ -222,9 +223,9 @@ describe('WhisperService Integration Tests', () => {
             (requestUrl as jest.Mock).mockRejectedValue(new Error('Network error'));
 
             // Act & Assert
-            await expect(whisperService.transcribe(audioBuffer))
-                .rejects
-                .toThrow('Operation failed after 3 attempts');
+            await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(
+                'Operation failed after 3 attempts'
+            );
         });
     });
 
@@ -233,7 +234,7 @@ describe('WhisperService Integration Tests', () => {
             // Arrange
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: { text: 'Test' }
+                json: { text: 'Test' },
             });
 
             // Act
@@ -247,7 +248,7 @@ describe('WhisperService Integration Tests', () => {
             // Arrange
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 401,
-                json: { error: { message: 'Invalid API key' } }
+                json: { error: { message: 'Invalid API key' } },
             });
 
             // Act
@@ -255,9 +256,7 @@ describe('WhisperService Integration Tests', () => {
 
             // Assert
             expect(isValid).toBe(false);
-            expect(logger.warn).toHaveBeenCalledWith(
-                'API key validation failed: Invalid key'
-            );
+            expect(logger.warn).toHaveBeenCalledWith('API key validation failed: Invalid key');
         });
     });
 
@@ -265,7 +264,7 @@ describe('WhisperService Integration Tests', () => {
         it('진행 중인 요청을 취소할 수 있어야 함', async () => {
             // Arrange
             const audioBuffer = new ArrayBuffer(1000);
-            
+
             (requestUrl as jest.Mock).mockImplementation(() => {
                 // AbortError 시뮬레이션
                 const error = new Error('Aborted');
@@ -291,7 +290,7 @@ describe('WhisperService Integration Tests', () => {
                 language: 'ko',
                 prompt: '이것은 한국어 음성입니다.',
                 temperature: 0.7,
-                responseFormat: 'verbose_json'
+                responseFormat: 'verbose_json',
             };
 
             let capturedFormData: FormData | null = null;
@@ -299,7 +298,7 @@ describe('WhisperService Integration Tests', () => {
                 capturedFormData = params.body;
                 return Promise.resolve({
                     status: 200,
-                    json: { text: 'Test' }
+                    json: { text: 'Test' },
                 });
             });
 
@@ -313,8 +312,8 @@ describe('WhisperService Integration Tests', () => {
                 expect.objectContaining({
                     method: 'POST',
                     headers: expect.objectContaining({
-                        Authorization: `Bearer ${mockApiKey}`
-                    })
+                        Authorization: `Bearer ${mockApiKey}`,
+                    }),
                 })
             );
         });
@@ -326,12 +325,12 @@ describe('WhisperService Integration Tests', () => {
 
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: { text: 'Test' }
+                json: { text: 'Test' },
             });
 
             // Act
             await whisperService.transcribe(audioBuffer, {
-                prompt: longPrompt
+                prompt: longPrompt,
             });
 
             // Assert
@@ -346,22 +345,22 @@ describe('WhisperService Integration Tests', () => {
             const audioBuffer = new ArrayBuffer(1000);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 500,
-                json: { error: { message: 'Server error' } }
+                json: { error: { message: 'Server error' } },
             });
 
             // Act & Assert
             // 5번 실패 시도
             for (let i = 0; i < 5; i++) {
-                await expect(whisperService.transcribe(audioBuffer))
-                    .rejects
-                    .toThrow(WhisperAPIError);
+                await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(
+                    WhisperAPIError
+                );
             }
 
             // Circuit이 열린 후 요청 시도
-            await expect(whisperService.transcribe(audioBuffer))
-                .rejects
-                .toThrow('Circuit breaker is open');
-            
+            await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow(
+                'Circuit breaker is open'
+            );
+
             expect(logger.warn).toHaveBeenCalledWith(
                 expect.stringContaining('Circuit breaker opened')
             );
@@ -370,17 +369,15 @@ describe('WhisperService Integration Tests', () => {
         it('Circuit을 수동으로 리셋할 수 있어야 함', async () => {
             // Arrange
             const audioBuffer = new ArrayBuffer(1000);
-            
+
             // Circuit을 열기 위해 실패 유도
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 500,
-                json: { error: { message: 'Server error' } }
+                json: { error: { message: 'Server error' } },
             });
 
             for (let i = 0; i < 5; i++) {
-                await expect(whisperService.transcribe(audioBuffer))
-                    .rejects
-                    .toThrow();
+                await expect(whisperService.transcribe(audioBuffer)).rejects.toThrow();
             }
 
             // Circuit 리셋
@@ -389,7 +386,7 @@ describe('WhisperService Integration Tests', () => {
             // 성공 응답 설정
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: { text: 'Success after reset' }
+                json: { text: 'Success after reset' },
             });
 
             // Act
@@ -411,7 +408,7 @@ describe('SettingsManager Integration Tests', () => {
         logger = new MockLogger();
         mockPlugin = {
             loadData: jest.fn(),
-            saveData: jest.fn()
+            saveData: jest.fn(),
         };
         settingsManager = new SettingsManager(mockPlugin, logger);
     });
@@ -428,12 +425,12 @@ describe('SettingsManager Integration Tests', () => {
             expect(result).toBe(true);
             expect(mockPlugin.saveData).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    encryptedApiKey: expect.any(String)
+                    encryptedApiKey: expect.any(String),
                 })
             );
             expect(mockPlugin.saveData).toHaveBeenCalledWith(
                 expect.not.objectContaining({
-                    apiKey: apiKey
+                    apiKey: apiKey,
                 })
             );
         });
@@ -478,7 +475,7 @@ describe('SettingsManager Integration Tests', () => {
                 enableCache: false,
                 cacheTTL: 7200000,
                 enableDebugLogging: true,
-                responseFormat: 'verbose_json'
+                responseFormat: 'verbose_json',
             };
 
             mockPlugin.loadData.mockResolvedValue(settings);
@@ -490,7 +487,7 @@ describe('SettingsManager Integration Tests', () => {
             expect(loaded).toMatchObject({
                 language: 'ko',
                 autoInsert: false,
-                insertPosition: 'end'
+                insertPosition: 'end',
             });
         });
 
@@ -498,7 +495,7 @@ describe('SettingsManager Integration Tests', () => {
             // Arrange
             const apiKey = 'sk-test1234567890abcdefghijklmnopqrstuvwxyz';
             await settingsManager.setApiKey(apiKey);
-            
+
             const savedData = mockPlugin.saveData.mock.calls[0][0];
             mockPlugin.loadData.mockResolvedValue(savedData);
 
@@ -538,7 +535,9 @@ describe('SettingsManager Integration Tests', () => {
             // Assert
             expect(validation.valid).toBe(false);
             expect(validation.errors).toContain('API key is not configured');
-            expect(validation.errors).toContain('Invalid max file size (must be between 0 and 25MB)');
+            expect(validation.errors).toContain(
+                'Invalid max file size (must be between 0 and 25MB)'
+            );
             expect(validation.errors).toContain('Invalid temperature (must be between 0 and 1)');
         });
     });
@@ -565,7 +564,7 @@ describe('SettingsManager Integration Tests', () => {
 
             const imported = {
                 apiKey: 'sk-imported9876543210zyxwvutsrqponmlkjihgfedcba',
-                language: 'en'
+                language: 'en',
             };
 
             // Act

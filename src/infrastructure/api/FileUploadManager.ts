@@ -87,7 +87,7 @@ export class FileUploadManager {
                 message: 'Validating file...',
             });
 
-            await this.validateFile(file);
+            this.validateFile(file);
             this.ensureNotCancelled();
 
             // 2. 파일 읽기

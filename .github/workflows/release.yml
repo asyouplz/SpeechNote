@@ -1,222 +1,222 @@
 name: Release Pipeline
 
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Release version (e.g., v3.1.0)'
-        required: true
-        type: string
+    push:
+        tags:
+            - 'v*'
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Release version (e.g., v3.1.0)'
+                required: true
+                type: string
 
 permissions:
-  contents: write
-  packages: write
+    contents: write
+    packages: write
 
 jobs:
-  # 버전 검증
-  validate-release:
-    name: Validate Release
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.get-version.outputs.version }}
-      
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          
-      - name: Get version from tag or input
-        id: get-version
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="${GITHUB_REF#refs/tags/}"
-          fi
-          
-          echo "Version: $VERSION"
-          
-          # Validate version format (v0.0.0)
-          if ! [[ $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
-            echo "❌ Invalid version format: $VERSION"
-            echo "Expected format: v0.0.0 or v0.0.0-beta"
-            exit 1
-          fi
-          
-          echo "✅ Version format valid: $VERSION"
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+    # 버전 검증
+    validate-release:
+        name: Validate Release
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.get-version.outputs.version }}
 
-  # CI에서 빌드한 artifacts 다운로드 (CI 성공 확인)
-  download-ci-artifacts:
-    name: Download CI Artifacts
-    runs-on: ubuntu-latest
-    needs: validate-release
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.validate-release.outputs.version }}
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Build production bundle
-        run: npm run build
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Get version from tag or input
+              id: get-version
+              run: |
+                  if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+                    VERSION="${{ github.event.inputs.version }}"
+                  else
+                    VERSION="${GITHUB_REF#refs/tags/}"
+                  fi
+
+                  echo "Version: $VERSION"
+
+                  # Validate version format (v0.0.0)
+                  if ! [[ $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+                    echo "❌ Invalid version format: $VERSION"
+                    echo "Expected format: v0.0.0 or v0.0.0-beta"
+                    exit 1
+                  fi
+
+                  echo "✅ Version format valid: $VERSION"
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    # CI에서 빌드한 artifacts 다운로드 (CI 성공 확인)
+    download-ci-artifacts:
+        name: Download CI Artifacts
+        runs-on: ubuntu-latest
+        needs: validate-release
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ needs.validate-release.outputs.version }}
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '18'
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build production bundle
+              run: npm run build
+              env:
+                  NODE_ENV: production
+
+            - name: Verify required files
+              run: |
+                  if [ ! -f main.js ]; then
+                    echo "❌ main.js not found"
+                    exit 1
+                  fi
+                  if [ ! -f manifest.json ]; then
+                    echo "❌ manifest.json not found"
+                    exit 1
+                  fi
+                  echo "✅ All required files present"
+
+            - name: Create release archive
+              run: |
+                  mkdir -p release
+                  cp main.js manifest.json README.md release/
+                  if [ -f LICENSE ]; then cp LICENSE release/; fi
+                  if [ -f styles.css ]; then cp styles.css release/; fi
+
+                  VERSION="${{ needs.validate-release.outputs.version }}"
+                  zip -r "obsidian-speech-to-text-${VERSION}.zip" release/
+
+            - name: Upload release artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: release-artifacts
+                  path: |
+                      obsidian-speech-to-text-*.zip
+                      main.js
+                      manifest.json
+                      styles.css
+                  retention-days: 7
+
+    # 릴리즈 노트 생성
+    generate-release-notes:
+        name: Generate Release Notes
+        runs-on: ubuntu-latest
+        needs: validate-release
+        outputs:
+            release_notes: ${{ steps.notes.outputs.notes }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  ref: ${{ needs.validate-release.outputs.version }}
+
+            - name: Generate changelog
+              id: notes
+              run: |
+                  VERSION="${{ needs.validate-release.outputs.version }}"
+                  PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+                  echo "## What's Changed" > release-notes.md
+                  echo "" >> release-notes.md
+
+                  if [[ -n "$PREVIOUS_TAG" ]]; then
+                    echo "### 🚀 Features" >> release-notes.md
+                    git log ${PREVIOUS_TAG}..HEAD --grep="feat:" --pretty="- %s (%h)" >> release-notes.md || echo "- No new features" >> release-notes.md
+                    
+                    echo "" >> release-notes.md
+                    echo "### 🐛 Bug Fixes" >> release-notes.md
+                    git log ${PREVIOUS_TAG}..HEAD --grep="fix:" --pretty="- %s (%h)" >> release-notes.md || echo "- No bug fixes" >> release-notes.md
+                    
+                    echo "" >> release-notes.md
+                    echo "### 🔧 Maintenance" >> release-notes.md
+                    git log ${PREVIOUS_TAG}..HEAD --grep="chore:" --pretty="- %s (%h)" >> release-notes.md || echo "- No maintenance updates" >> release-notes.md
+                    
+                    echo "" >> release-notes.md
+                    echo "### 📝 Documentation" >> release-notes.md
+                    git log ${PREVIOUS_TAG}..HEAD --grep="docs:" --pretty="- %s (%h)" >> release-notes.md || echo "- No documentation changes" >> release-notes.md
+                  else
+                    echo "🎉 Initial release" >> release-notes.md
+                  fi
+
+                  echo "" >> release-notes.md
+                  if [[ -n "$PREVIOUS_TAG" ]]; then
+                    echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${VERSION}" >> release-notes.md
+                  fi
+
+                  {
+                    echo 'notes<<EOF'
+                    cat release-notes.md
+                    echo 'EOF'
+                  } >> $GITHUB_OUTPUT
+
+    # GitHub 릴리스 생성
+    create-release:
+        name: Create GitHub Release
+        runs-on: ubuntu-latest
+        needs: [validate-release, download-ci-artifacts, generate-release-notes]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Download release artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  name: release-artifacts
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: ${{ needs.validate-release.outputs.version }}
+                  name: Release ${{ needs.validate-release.outputs.version }}
+                  body: ${{ needs.generate-release-notes.outputs.release_notes }}
+                  draft: false
+                  prerelease: ${{ contains(needs.validate-release.outputs.version, '-') }}
+                  files: |
+                      obsidian-speech-to-text-*.zip
+                      main.js
+                      manifest.json
+                      styles.css
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # 알림 발송
+    notify-release:
+        name: Send Release Notifications
+        runs-on: ubuntu-latest
+        needs: [validate-release, create-release]
+        if: always()
         env:
-          NODE_ENV: production
-          
-      - name: Verify required files
-        run: |
-          if [ ! -f main.js ]; then
-            echo "❌ main.js not found"
-            exit 1
-          fi
-          if [ ! -f manifest.json ]; then
-            echo "❌ manifest.json not found"
-            exit 1
-          fi
-          echo "✅ All required files present"
-          
-      - name: Create release archive
-        run: |
-          mkdir -p release
-          cp main.js manifest.json README.md release/
-          if [ -f LICENSE ]; then cp LICENSE release/; fi
-          if [ -f styles.css ]; then cp styles.css release/; fi
-          
-          VERSION="${{ needs.validate-release.outputs.version }}"
-          zip -r "obsidian-speech-to-text-${VERSION}.zip" release/
-          
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts
-          path: |
-            obsidian-speech-to-text-*.zip
-            main.js
-            manifest.json
-            styles.css
-          retention-days: 7
+            DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
-  # 릴리즈 노트 생성
-  generate-release-notes:
-    name: Generate Release Notes
-    runs-on: ubuntu-latest
-    needs: validate-release
-    outputs:
-      release_notes: ${{ steps.notes.outputs.notes }}
-      
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ needs.validate-release.outputs.version }}
-          
-      - name: Generate changelog
-        id: notes
-        run: |
-          VERSION="${{ needs.validate-release.outputs.version }}"
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
-          echo "## What's Changed" > release-notes.md
-          echo "" >> release-notes.md
-          
-          if [[ -n "$PREVIOUS_TAG" ]]; then
-            echo "### 🚀 Features" >> release-notes.md
-            git log ${PREVIOUS_TAG}..HEAD --grep="feat:" --pretty="- %s (%h)" >> release-notes.md || echo "- No new features" >> release-notes.md
-            
-            echo "" >> release-notes.md
-            echo "### 🐛 Bug Fixes" >> release-notes.md
-            git log ${PREVIOUS_TAG}..HEAD --grep="fix:" --pretty="- %s (%h)" >> release-notes.md || echo "- No bug fixes" >> release-notes.md
-            
-            echo "" >> release-notes.md
-            echo "### 🔧 Maintenance" >> release-notes.md
-            git log ${PREVIOUS_TAG}..HEAD --grep="chore:" --pretty="- %s (%h)" >> release-notes.md || echo "- No maintenance updates" >> release-notes.md
-            
-            echo "" >> release-notes.md
-            echo "### 📝 Documentation" >> release-notes.md
-            git log ${PREVIOUS_TAG}..HEAD --grep="docs:" --pretty="- %s (%h)" >> release-notes.md || echo "- No documentation changes" >> release-notes.md
-          else
-            echo "🎉 Initial release" >> release-notes.md
-          fi
-          
-          echo "" >> release-notes.md
-          if [[ -n "$PREVIOUS_TAG" ]]; then
-            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${VERSION}" >> release-notes.md
-          fi
-          
-          {
-            echo 'notes<<EOF'
-            cat release-notes.md
-            echo 'EOF'
-          } >> $GITHUB_OUTPUT
+        steps:
+            - name: Send Discord notification
+              if: ${{ needs.create-release.result == 'success' && env.DISCORD_WEBHOOK != '' }}
+              run: |
+                  VERSION="${{ needs.validate-release.outputs.version }}"
+                  curl -H "Content-Type: application/json" \
+                    -X POST \
+                    -d "{\"content\":\"🎉 **Speech to Text ${VERSION} Released!**\\n\\nCheck out the release: https://github.com/${{ github.repository }}/releases/tag/${VERSION}\"}" \
+                    $DISCORD_WEBHOOK
 
-  # GitHub 릴리스 생성
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [validate-release, download-ci-artifacts, generate-release-notes]
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Download release artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: release-artifacts
-          
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ needs.validate-release.outputs.version }}
-          name: Release ${{ needs.validate-release.outputs.version }}
-          body: ${{ needs.generate-release-notes.outputs.release_notes }}
-          draft: false
-          prerelease: ${{ contains(needs.validate-release.outputs.version, '-') }}
-          files: |
-            obsidian-speech-to-text-*.zip
-            main.js
-            manifest.json
-            styles.css
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # 알림 발송
-  notify-release:
-    name: Send Release Notifications
-    runs-on: ubuntu-latest
-    needs: [validate-release, create-release]
-    if: always()
-    env:
-      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-    
-    steps:
-      - name: Send Discord notification
-        if: ${{ needs.create-release.result == 'success' && env.DISCORD_WEBHOOK != '' }}
-        run: |
-          VERSION="${{ needs.validate-release.outputs.version }}"
-          curl -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\"content\":\"🎉 **Speech to Text ${VERSION} Released!**\\n\\nCheck out the release: https://github.com/${{ github.repository }}/releases/tag/${VERSION}\"}" \
-            $DISCORD_WEBHOOK
-            
-      - name: Send failure notification
-        if: ${{ needs.create-release.result == 'failure' && env.DISCORD_WEBHOOK != '' }}
-        run: |
-          curl -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\"content\":\"❌ **Release ${{ needs.validate-release.outputs.version }} Failed!**\\n\\nCheck the workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
-            $DISCORD_WEBHOOK
+            - name: Send failure notification
+              if: ${{ needs.create-release.result == 'failure' && env.DISCORD_WEBHOOK != '' }}
+              run: |
+                  curl -H "Content-Type: application/json" \
+                    -X POST \
+                    -d "{\"content\":\"❌ **Release ${{ needs.validate-release.outputs.version }} Failed!**\\n\\nCheck the workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+                    $DISCORD_WEBHOOK

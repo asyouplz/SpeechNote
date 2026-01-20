@@ -1,4 +1,5 @@
 import { requestUrl } from 'obsidian';
+import { isPlainRecord } from '../../types/guards';
 
 /**
  * BatchRequestManager - Phase 4 Performance Optimization
@@ -120,7 +121,10 @@ export class BatchRequestManager {
             this.queues.set(batchKey, []);
         }
 
-        const queue = this.queues.get(batchKey)!;
+        const queue = this.queues.get(batchKey) ?? [];
+        if (!this.queues.has(batchKey)) {
+            this.queues.set(batchKey, queue);
+        }
         queue.push(request);
 
         // 우선순위 정렬
@@ -229,7 +233,8 @@ export class BatchRequestManager {
             throw new Error(`Batch request failed with status ${response.status}`);
         }
 
-        const data = response.json ?? (response.text ? JSON.parse(response.text) : {});
+        const json = response.json as unknown;
+        const data = (isPlainRecord(json) ? json : {}) as { responses?: BatchResponse[] };
         return data.responses || [];
     }
 
@@ -260,9 +265,10 @@ export class BatchRequestManager {
      */
     private handleBatchError(batch: AnyBatch[], error: Error): void {
         batch.forEach((request) => {
-            if (request.retries! < this.maxRetries) {
+            const currentRetries = request.retries ?? 0;
+            if (currentRetries < this.maxRetries) {
                 // 재시도
-                request.retries!++;
+                request.retries = currentRetries + 1;
                 this.enqueueRequest(request);
             } else {
                 // 최종 실패

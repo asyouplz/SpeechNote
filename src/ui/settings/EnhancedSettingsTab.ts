@@ -19,7 +19,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private validator: SettingsValidator;
     private memoryManager: ResourceManager;
     private isDirty = false;
-    private autoSaveTimeout: NodeJS.Timeout | null = null;
+    private autoSaveTimeout: number | null = null;
 
     constructor(app: App, plugin: SpeechToTextPlugin) {
         super(app, plugin);
@@ -29,7 +29,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         this.validator = new SettingsValidator();
         this.memoryManager = new ResourceManager();
 
-        // 초기화
+        // 초기화 (Fire-and-forget)
         void this.initialize();
     }
 
@@ -88,7 +88,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async initialize(): Promise<void> {
         await this.settingsAPI.initialize();
 
-        // 변경 감지 리스너
+        // 변경 감지 리스너 (Fire-and-forget auto-save)
         const unsubscribe = this.settingsAPI.on('change', () => {
             this.isDirty = true;
             this.scheduleAutoSave();
@@ -131,10 +131,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 제목
         const titleContainer = headerEl.createDiv({ cls: 'header-title-container' });
-        titleContainer.createEl('h2', {
-            text: 'Speech to text settings',
-            cls: 'settings-title',
-        });
+        new Setting(titleContainer).setName('Speech Note').setHeading();
 
         // 상태 표시
         const statusBadge = titleContainer.createEl('span', {
@@ -160,8 +157,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         new ButtonComponent(quickActions)
             .setButtonText('Save all')
             .setCta()
-            .onClick(async () => {
-                await this.saveSettings();
+            .onClick(() => {
+                this.saveSettings();
                 new Notice('Settings saved successfully');
             });
 
@@ -198,7 +195,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
             tabEl.setAttribute('data-tab', tab.id);
 
-            tabEl.addEventListener('click', async () => {
+            tabEl.addEventListener('click', () => {
                 // 활성 탭 업데이트
                 tabContainer.querySelectorAll('.settings-tab').forEach((el) => {
                     el.removeClass('active');
@@ -208,7 +205,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                 // 콘텐츠 표시
                 const contentContainer = containerEl.querySelector('.settings-content');
                 if (contentContainer instanceof HTMLElement) {
-                    await this.showTabContent(contentContainer, tab.id);
+                    void this.showTabContent(contentContainer, tab.id);
                 }
             });
         });
@@ -253,7 +250,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private showGeneralSettings(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        new Setting(section).setName('General settings').setHeading();
+        new Setting(section).setName('Transcription').setHeading();
 
         // 언어 설정
         new Setting(section)
@@ -387,7 +384,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showApiSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        new Setting(section).setName('API configuration').setHeading();
+        new Setting(section).setName('API').setHeading();
 
         // API 프로바이더
         new Setting(section)
@@ -445,13 +442,14 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         toggleBtn.setText('👁️');
 
         let isVisible = false;
-        toggleBtn.addEventListener('click', async () => {
+        toggleBtn.addEventListener('click', () => {
             isVisible = !isVisible;
             if (isVisible) {
                 inputEl.type = 'text';
                 if (hasKey) {
-                    const key = await this.apiKeyManager.getApiKey();
-                    if (key) inputEl.value = key;
+                    void this.apiKeyManager.getApiKey().then((key) => {
+                        if (key) inputEl.value = key;
+                    });
                 }
                 toggleBtn.setText('🙈');
             } else {
@@ -470,7 +468,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             cls: 'mod-cta api-key-validate',
         });
 
-        validateBtn.addEventListener('click', async () => {
+        validateBtn.addEventListener('click', () => {
             const value = inputEl.value;
             if (!value) {
                 new Notice('Please enter an API key');
@@ -480,28 +478,30 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             validateBtn.disabled = true;
             validateBtn.textContent = 'Validating...';
 
-            try {
-                // API 키 검증
-                const validation = SettingsValidator.validateApiKey(value);
+            void (async () => {
+                try {
+                    // API 키 검증
+                    const validation = SettingsValidator.validateApiKey(value);
 
-                if (validation.valid) {
-                    // 암호화 저장
-                    await this.apiKeyManager.storeApiKey(value);
-                    new Notice('✅ API key validated and saved securely');
-                    inputEl.value = '';
-                    inputEl.placeholder = '••••••••••••••••';
-                    inputEl.addClass('has-value');
-                } else {
-                    const error = validation.errors?.[0]?.message || 'Invalid API key';
-                    new Notice(`❌ ${error}`);
+                    if (validation.valid) {
+                        // 암호화 저장
+                        await this.apiKeyManager.storeApiKey(value);
+                        new Notice('✅ API key validated and saved securely');
+                        inputEl.value = '';
+                        inputEl.placeholder = '••••••••••••••••';
+                        inputEl.addClass('has-value');
+                    } else {
+                        const error = validation.errors?.[0]?.message || 'Invalid API key';
+                        new Notice(`❌ ${error}`);
+                    }
+                } catch (error) {
+                    new Notice('❌ Failed to validate API key');
+                    console.error(error);
+                } finally {
+                    validateBtn.disabled = false;
+                    validateBtn.textContent = 'Validate';
                 }
-            } catch (error) {
-                new Notice('❌ Failed to validate API key');
-                console.error(error);
-            } finally {
-                validateBtn.disabled = false;
-                validateBtn.textContent = 'Validate';
-            }
+            })();
         });
 
         // 모델 선택
@@ -573,7 +573,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showAudioSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        new Setting(section).setName('Audio settings').setHeading();
+        new Setting(section).setName('Audio').setHeading();
 
         const audio = await this.settingsAPI.get('audio');
 
@@ -686,13 +686,13 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private async showAdvancedSettings(container: HTMLElement): Promise<void> {
         const section = container.createDiv({ cls: 'settings-section' });
 
-        new Setting(section).setName('Advanced settings').setHeading();
+        new Setting(section).setName('Advanced').setHeading();
 
         const advanced = await this.settingsAPI.get('advanced');
 
         // 캐시 설정
         const cacheSection = section.createDiv({ cls: 'sub-section' });
-        new Setting(cacheSection).setName('Cache settings').setHeading();
+        new Setting(cacheSection).setName('Cache').setHeading();
 
         new Setting(cacheSection)
             .setName('Enable cache')
@@ -737,7 +737,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 성능 설정
         const perfSection = section.createDiv({ cls: 'sub-section' });
-        new Setting(perfSection).setName('Performance settings').setHeading();
+        new Setting(perfSection).setName('Performance').setHeading();
 
         new Setting(perfSection)
             .setName('Max concurrency')
@@ -797,7 +797,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 디버그 설정
         const debugSection = section.createDiv({ cls: 'sub-section' });
-        new Setting(debugSection).setName('Debug settings').setHeading();
+        new Setting(debugSection).setName('Debug').setHeading();
 
         new Setting(debugSection)
             .setName('Enable debug mode')
@@ -869,7 +869,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                     text.setValue(shortcuts[item.key]);
 
                     // 단축키 캡처
-                    text.inputEl.addEventListener('keydown', async (e) => {
+                    text.inputEl.addEventListener('keydown', (e) => {
                         e.preventDefault();
 
                         const modifiers = [];
@@ -883,7 +883,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                             text.setValue(shortcut);
 
                             shortcuts[item.key] = shortcut;
-                            await this.settingsAPI.set('shortcuts', shortcuts);
+                            void this.settingsAPI.set('shortcuts', shortcuts);
                         }
                     });
                 });
@@ -985,8 +985,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             await this.exportSettings();
         });
 
-        new ButtonComponent(portSection).setButtonText('📥 import settings').onClick(async () => {
-            await this.importSettings();
+        new ButtonComponent(portSection).setButtonText('📥 import settings').onClick(() => {
+            this.importSettings();
         });
 
         // 도움말 링크
@@ -1030,11 +1030,11 @@ export class EnhancedSettingsTab extends PluginSettingTab {
      */
     private scheduleAutoSave(): void {
         if (this.autoSaveTimeout) {
-            clearTimeout(this.autoSaveTimeout);
+            window.clearTimeout(this.autoSaveTimeout);
         }
 
-        this.autoSaveTimeout = setTimeout(async () => {
-            await this.saveSettings();
+        this.autoSaveTimeout = window.setTimeout(() => {
+            this.saveSettings();
             this.isDirty = false;
             new Notice('Settings auto-saved', 2000);
         }, 5000); // 5초 후 자동 저장
@@ -1145,7 +1145,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
      */
     onClose(): void {
         if (this.autoSaveTimeout) {
-            clearTimeout(this.autoSaveTimeout);
+            window.clearTimeout(this.autoSaveTimeout);
         }
         this.memoryManager.dispose();
     }

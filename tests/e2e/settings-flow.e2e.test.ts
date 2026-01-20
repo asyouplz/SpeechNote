@@ -1,6 +1,6 @@
 /**
  * E2E Test: 설정 변경 및 저장 플로우
- * 
+ *
  * 테스트 시나리오:
  * 1. 설정 탭 열기
  * 2. 각 설정 항목 변경
@@ -30,7 +30,14 @@ interface MockUIOptions {
 }
 
 function renderMockSettingsUI(options: MockUIOptions): void {
-    const { containerEl, plugin, settingsManager, notificationManager, defaultSettings, originalSuccess } = options;
+    const {
+        containerEl,
+        plugin,
+        settingsManager,
+        notificationManager,
+        defaultSettings,
+        originalSuccess,
+    } = options;
 
     containerEl.innerHTML = '';
 
@@ -98,7 +105,7 @@ function renderMockSettingsUI(options: MockUIOptions): void {
     const responseSection = createSection('Response Format', 'response-section');
     const formats: Array<{ value: string; label: string }> = [
         { value: 'text', label: 'Text' },
-        { value: 'json', label: 'JSON' }
+        { value: 'json', label: 'JSON' },
     ];
     const timestampOption = document.createElement('div');
     timestampOption.className = 'timestamp-option';
@@ -298,12 +305,12 @@ describe('E2E: 설정 플로우', () => {
                 adapter: {
                     read: jest.fn(),
                     write: jest.fn(),
-                    exists: jest.fn().mockResolvedValue(true)
-                }
+                    exists: jest.fn().mockResolvedValue(true),
+                },
             },
             workspace: {
-                trigger: jest.fn()
-            }
+                trigger: jest.fn(),
+            },
         } as any;
 
         // Mock Plugin
@@ -311,7 +318,7 @@ describe('E2E: 설정 플로우', () => {
             manifest: {
                 id: 'speech-to-text',
                 name: 'Speech to Text',
-                version: '2.0.0'
+                version: '2.0.0',
             },
             settings: {
                 apiKey: '',
@@ -330,10 +337,10 @@ describe('E2E: 설정 플로우', () => {
                 retryAttempts: 3,
                 retryDelay: 1000,
                 timeout: 30000,
-                concurrentLimit: 3
+                concurrentLimit: 3,
             },
             saveData: jest.fn(),
-            loadData: jest.fn()
+            loadData: jest.fn(),
         };
 
         // 서비스 초기화
@@ -341,17 +348,18 @@ describe('E2E: 설정 플로우', () => {
         settingsValidator = new SettingsValidator();
         settingsMigrator = {
             migrate: jest.fn(async (settings: any, fromVersion = '2.0.0', toVersion = '3.0.0') => {
-                const normalizedLanguage = (settings.language || 'auto').toString().toLowerCase() === 'korean'
-                    ? 'ko'
-                    : settings.language || 'auto';
+                const normalizedLanguage =
+                    (settings.language || 'auto').toString().toLowerCase() === 'korean'
+                        ? 'ko'
+                        : settings.language || 'auto';
                 return {
                     ...settings,
                     version: toVersion,
                     language: normalizedLanguage,
                     maxFileSize: settings.fileSize ?? settings.maxFileSize ?? 25,
-                    enableNotifications: settings.enableNotifications ?? true
+                    enableNotifications: settings.enableNotifications ?? true,
                 };
-            })
+            }),
         } as unknown as SettingsMigrator;
         settingsManager = {
             saveSettings: jest.fn(async (newSettings: any) => {
@@ -364,11 +372,11 @@ describe('E2E: 설정 플로우', () => {
                     plugin.settings = { ...plugin.settings, ...data };
                 }
                 return plugin.settings;
-            })
+            }),
         } as unknown as SettingsManager;
         notificationManager = new NotificationManager({
             defaultDuration: 5000,
-            soundEnabled: true
+            soundEnabled: true,
         });
         settingsTab = new SettingsTab(app, plugin);
 
@@ -377,7 +385,7 @@ describe('E2E: 설정 플로우', () => {
 
         Object.defineProperty(settingsTab, 'containerEl', {
             value: containerEl,
-            writable: true
+            writable: true,
         });
 
         settingsTab.display = () =>
@@ -388,7 +396,7 @@ describe('E2E: 설정 플로우', () => {
                 notificationManager,
                 defaultSettings,
                 eventManager,
-                originalSuccess
+                originalSuccess,
             });
     });
 
@@ -443,15 +451,19 @@ describe('E2E: 설정 플로우', () => {
         test('API 키 입력 및 검증', async () => {
             settingsTab.display();
 
-            const apiKeyInput = containerEl.querySelector('input[type="password"]') as HTMLInputElement;
-            const validateButton = containerEl.querySelector('button.validate-api-key') as HTMLButtonElement;
+            const apiKeyInput = containerEl.querySelector(
+                'input[type="password"]'
+            ) as HTMLInputElement;
+            const validateButton = containerEl.querySelector(
+                'button.validate-api-key'
+            ) as HTMLButtonElement;
 
             // 빈 API 키 검증
             apiKeyInput.value = '';
             validateButton.click();
-            
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
+
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
             let errorMessage = containerEl.querySelector('.error-message');
             expect(errorMessage?.textContent).toContain('API 키를 입력해주세요');
 
@@ -462,11 +474,11 @@ describe('E2E: 설정 플로우', () => {
             // Mock API 검증 성공
             global.fetch = jest.fn().mockResolvedValue({
                 ok: true,
-                json: () => Promise.resolve({ models: ['whisper-1'] })
+                json: () => Promise.resolve({ models: ['whisper-1'] }),
             });
 
             validateButton.click();
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
 
             const successMessage = containerEl.querySelector('.success-message');
             expect(successMessage?.textContent).toContain('API 키가 유효합니다');
@@ -475,8 +487,10 @@ describe('E2E: 설정 플로우', () => {
         test('언어 설정 변경', () => {
             settingsTab.display();
 
-            const languageSelect = containerEl.querySelector('select.language-select') as HTMLSelectElement;
-            
+            const languageSelect = containerEl.querySelector(
+                'select.language-select'
+            ) as HTMLSelectElement;
+
             // 초기값 확인
             expect(languageSelect.value).toBe('auto');
 
@@ -496,8 +510,10 @@ describe('E2E: 설정 플로우', () => {
         test('파일 크기 제한 설정', () => {
             settingsTab.display();
 
-            const fileSizeInput = containerEl.querySelector('input.file-size-input') as HTMLInputElement;
-            
+            const fileSizeInput = containerEl.querySelector(
+                'input.file-size-input'
+            ) as HTMLInputElement;
+
             // 유효한 값
             fileSizeInput.value = '20';
             fileSizeInput.dispatchEvent(new Event('input'));
@@ -506,7 +522,7 @@ describe('E2E: 설정 플로우', () => {
             // 최대값 초과
             fileSizeInput.value = '30';
             fileSizeInput.dispatchEvent(new Event('input'));
-            
+
             const errorMessage = containerEl.querySelector('.file-size-error');
             expect(errorMessage?.textContent).toContain('최대 25MB까지 허용됩니다');
 
@@ -519,15 +535,17 @@ describe('E2E: 설정 플로우', () => {
         test('응답 형식 설정', () => {
             settingsTab.display();
 
-            const formatRadios = containerEl.querySelectorAll('input[name="response-format"]') as NodeListOf<HTMLInputElement>;
-            
+            const formatRadios = containerEl.querySelectorAll(
+                'input[name="response-format"]'
+            ) as NodeListOf<HTMLInputElement>;
+
             // text 형식 선택
-            const textRadio = Array.from(formatRadios).find(r => r.value === 'text');
+            const textRadio = Array.from(formatRadios).find((r) => r.value === 'text');
             textRadio?.click();
             expect(plugin.settings.responseFormat).toBe('text');
 
             // json 형식 선택
-            const jsonRadio = Array.from(formatRadios).find(r => r.value === 'json');
+            const jsonRadio = Array.from(formatRadios).find((r) => r.value === 'json');
             jsonRadio?.click();
             expect(plugin.settings.responseFormat).toBe('json');
 
@@ -544,13 +562,13 @@ describe('E2E: 설정 플로우', () => {
                 apiKey: 'sk-new-api-key',
                 language: 'ko',
                 maxFileSize: 20,
-                enableNotifications: false
+                enableNotifications: false,
             };
 
             await settingsManager.saveSettings(newSettings);
 
             expect(plugin.saveData).toHaveBeenCalledWith(newSettings);
-            
+
             // 이벤트 발생 확인
             const eventSpy = jest.spyOn(eventManager, 'emit');
             eventManager.emit('settings:saved', newSettings);
@@ -561,28 +579,30 @@ describe('E2E: 설정 플로우', () => {
             const savedSettings = {
                 apiKey: 'sk-saved-key',
                 language: 'en',
-                maxFileSize: 15
+                maxFileSize: 15,
             };
 
             plugin.loadData.mockResolvedValue(savedSettings);
-            
+
             const loadedSettings = await settingsManager.loadSettings();
-            
+
             expect(loadedSettings).toMatchObject(savedSettings);
         });
 
         test('설정 초기화', async () => {
             settingsTab.display();
 
-            const resetButton = containerEl.querySelector('button.reset-settings') as HTMLButtonElement;
-            
+            const resetButton = containerEl.querySelector(
+                'button.reset-settings'
+            ) as HTMLButtonElement;
+
             // 확인 대화상자 모의
             const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
-            
+
             resetButton.click();
-            
+
             expect(confirmSpy).toHaveBeenCalledWith('모든 설정을 초기값으로 되돌리시겠습니까?');
-            
+
             // 기본 설정으로 복원 확인
             expect(plugin.settings.apiKey).toBe('');
             expect(plugin.settings.language).toBe('auto');
@@ -593,28 +613,32 @@ describe('E2E: 설정 플로우', () => {
             settingsTab.display();
 
             // 내보내기
-            const exportButton = containerEl.querySelector('button.export-settings') as HTMLButtonElement;
+            const exportButton = containerEl.querySelector(
+                'button.export-settings'
+            ) as HTMLButtonElement;
             const downloadSpy = jest.spyOn(document, 'createElement');
-            
+
             exportButton.click();
-            
+
             // 다운로드 링크 생성 확인
             expect(downloadSpy).toHaveBeenCalledWith('a');
 
             // 가져오기
-            const importInput = containerEl.querySelector('input[type="file"].import-settings') as HTMLInputElement;
+            const importInput = containerEl.querySelector(
+                'input[type="file"].import-settings'
+            ) as HTMLInputElement;
             const importedSettings = {
                 apiKey: 'sk-imported-key',
                 language: 'ja',
-                maxFileSize: 10
+                maxFileSize: 10,
             };
 
             importInput.dataset.mockJson = JSON.stringify(importedSettings);
             importInput.dispatchEvent(new Event('change'));
-            
+
             // 비동기 처리 대기
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
             // 설정이 가져와졌는지 확인
             expect(plugin.settings.language).toBe('ja');
         });
@@ -625,7 +649,7 @@ describe('E2E: 설정 플로우', () => {
             const oldSettings = {
                 apiKey: 'old-key',
                 language: 'korean', // 구버전 형식
-                fileSize: 20 // 구버전 속성명
+                fileSize: 20, // 구버전 속성명
             };
 
             const migratedSettings = await settingsMigrator.migrate(oldSettings);
@@ -637,7 +661,7 @@ describe('E2E: 설정 플로우', () => {
 
         test('누락된 설정 자동 보완', async () => {
             const incompleteSettings = {
-                apiKey: 'test-key'
+                apiKey: 'test-key',
                 // 다른 설정들이 누락됨
             };
 
@@ -655,13 +679,15 @@ describe('E2E: 설정 플로우', () => {
             settingsTab.display();
 
             const hotkeySection = containerEl.querySelector('.hotkey-settings');
-            const hotkeyInput = hotkeySection?.querySelector('input.hotkey-input') as HTMLInputElement;
+            const hotkeyInput = hotkeySection?.querySelector(
+                'input.hotkey-input'
+            ) as HTMLInputElement;
 
             // 단축키 입력 시뮬레이션
             const keyEvent = new KeyboardEvent('keydown', {
                 ctrlKey: true,
                 shiftKey: true,
-                key: 'T'
+                key: 'T',
             });
 
             hotkeyInput.focus();
@@ -672,11 +698,11 @@ describe('E2E: 설정 플로우', () => {
             // 중복 단축키 검사
             const duplicateEvent = new KeyboardEvent('keydown', {
                 ctrlKey: true,
-                key: 'S' // 저장 단축키와 충돌
+                key: 'S', // 저장 단축키와 충돌
             });
 
             hotkeyInput.dispatchEvent(duplicateEvent);
-            
+
             const warningMessage = containerEl.querySelector('.hotkey-warning');
             expect(warningMessage?.textContent).toContain('이미 사용 중인 단축키입니다');
         });
@@ -686,8 +712,10 @@ describe('E2E: 설정 플로우', () => {
         test('알림 설정 변경 시 즉시 반영', () => {
             settingsTab.display();
 
-            const notificationToggle = containerEl.querySelector('input[type="checkbox"].notification-toggle') as HTMLInputElement;
-            
+            const notificationToggle = containerEl.querySelector(
+                'input[type="checkbox"].notification-toggle'
+            ) as HTMLInputElement;
+
             // 알림 비활성화
             notificationToggle.checked = false;
             notificationToggle.dispatchEvent(new Event('change'));
@@ -702,8 +730,10 @@ describe('E2E: 설정 플로우', () => {
         test('디버그 모드 토글', () => {
             settingsTab.display();
 
-            const debugToggle = containerEl.querySelector('input[type="checkbox"].debug-toggle') as HTMLInputElement;
-            
+            const debugToggle = containerEl.querySelector(
+                'input[type="checkbox"].debug-toggle'
+            ) as HTMLInputElement;
+
             // 디버그 모드 활성화
             debugToggle.checked = true;
             debugToggle.dispatchEvent(new Event('change'));

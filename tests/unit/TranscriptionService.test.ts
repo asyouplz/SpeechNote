@@ -9,7 +9,7 @@ import type {
     ITextFormatter,
     IEventManager,
     ILogger,
-    TranscriptionStatus
+    TranscriptionStatus,
 } from '../../src/types';
 import {
     createMockAudioFile,
@@ -18,7 +18,7 @@ import {
     createMockValidationResult,
     createMockProcessedAudio,
     createMockTranscriptionResult,
-    createMockError
+    createMockError,
 } from '../helpers/mockDataFactory';
 import '../helpers/testSetup';
 
@@ -35,33 +35,33 @@ describe('TranscriptionService', () => {
         mockWhisperService = {
             transcribe: jest.fn(),
             cancel: jest.fn(),
-            validateApiKey: jest.fn()
+            validateApiKey: jest.fn(),
         } as jest.Mocked<IWhisperService>;
 
         mockAudioProcessor = {
             validate: jest.fn(),
             process: jest.fn(),
-            extractMetadata: jest.fn()
+            extractMetadata: jest.fn(),
         } as jest.Mocked<IAudioProcessor>;
 
         mockTextFormatter = {
             format: jest.fn(),
             insertTimestamps: jest.fn(),
-            cleanUp: jest.fn()
+            cleanUp: jest.fn(),
         } as jest.Mocked<ITextFormatter>;
 
         mockEventManager = {
             emit: jest.fn(),
             on: jest.fn(),
             off: jest.fn(),
-            once: jest.fn()
+            once: jest.fn(),
         } as jest.Mocked<IEventManager>;
 
         mockLogger = {
             debug: jest.fn(),
             info: jest.fn(),
             warn: jest.fn(),
-            error: jest.fn()
+            error: jest.fn(),
         };
 
         transcriptionService = new TranscriptionService(
@@ -103,16 +103,21 @@ describe('TranscriptionService', () => {
             expect(mockTextFormatter.format).toHaveBeenCalledWith(mockWhisperResponse.text);
 
             // Verify events
-            expect(mockEventManager.emit).toHaveBeenCalledWith('transcription:start', { fileName: file.name });
-            expect(mockEventManager.emit).toHaveBeenCalledWith('transcription:complete', expect.objectContaining({ result }));
+            expect(mockEventManager.emit).toHaveBeenCalledWith('transcription:start', {
+                fileName: file.name,
+            });
+            expect(mockEventManager.emit).toHaveBeenCalledWith(
+                'transcription:complete',
+                expect.objectContaining({ result })
+            );
         });
 
         it('should handle validation failure', async () => {
             const file = createMockAudioFile();
             const validationErrors = ['File too large', 'Unsupported format'];
-            const mockValidation = createMockValidationResult({ 
-                valid: false, 
-                errors: validationErrors 
+            const mockValidation = createMockValidationResult({
+                valid: false,
+                errors: validationErrors,
             });
 
             mockAudioProcessor.validate.mockResolvedValue(mockValidation);
@@ -123,14 +128,19 @@ describe('TranscriptionService', () => {
 
             expect(mockAudioProcessor.process).not.toHaveBeenCalled();
             expect(mockWhisperService.transcribe).not.toHaveBeenCalled();
-            expect(mockEventManager.emit).toHaveBeenCalledWith('transcription:error', expect.any(Object));
+            expect(mockEventManager.emit).toHaveBeenCalledWith(
+                'transcription:error',
+                expect.any(Object)
+            );
         });
 
         it('should handle audio processing failure', async () => {
             const file = createMockAudioFile();
             const error = new Error('Failed to read audio file');
 
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockRejectedValue(error);
 
             await expect(transcriptionService.transcribe(file)).rejects.toThrow(error);
@@ -143,7 +153,9 @@ describe('TranscriptionService', () => {
             const file = createMockAudioFile();
             const error = new Error('API request failed');
 
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockRejectedValue(error);
 
@@ -157,10 +169,14 @@ describe('TranscriptionService', () => {
             const file = createMockAudioFile();
             const error = new Error('Formatting failed');
 
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockResolvedValue(createMockWhisperResponse());
-            mockTextFormatter.format.mockImplementation(() => { throw error; });
+            mockTextFormatter.format.mockImplementation(() => {
+                throw error;
+            });
 
             await expect(transcriptionService.transcribe(file)).rejects.toThrow(error);
 
@@ -171,11 +187,13 @@ describe('TranscriptionService', () => {
             const file = createMockAudioFile();
             const segments = [
                 { start: 0, end: 5, text: '첫 번째 세그먼트' },
-                { start: 5, end: 10, text: '두 번째 세그먼트' }
+                { start: 5, end: 10, text: '두 번째 세그먼트' },
             ];
             const mockWhisperResponse = createMockWhisperResponse({ segments });
 
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockResolvedValue(mockWhisperResponse);
             mockTextFormatter.format.mockReturnValue('포맷된 텍스트');
@@ -188,7 +206,7 @@ describe('TranscriptionService', () => {
                 id: 0,
                 start: 0,
                 end: 5,
-                text: '첫 번째 세그먼트'
+                text: '첫 번째 세그먼트',
             });
         });
 
@@ -196,7 +214,9 @@ describe('TranscriptionService', () => {
             const file = createMockAudioFile();
             const mockWhisperResponse = createMockWhisperResponse({ segments: undefined });
 
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockResolvedValue(mockWhisperResponse);
             mockTextFormatter.format.mockReturnValue('포맷된 텍스트');
@@ -294,57 +314,56 @@ describe('TranscriptionService', () => {
     describe('event emissions', () => {
         it('should emit start event with file name', async () => {
             const file = createMockAudioFile({ name: 'test-audio.mp3' });
-            
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockResolvedValue(createMockWhisperResponse());
             mockTextFormatter.format.mockReturnValue('텍스트');
 
             await transcriptionService.transcribe(file);
 
-            expect(mockEventManager.emit).toHaveBeenCalledWith(
-                'transcription:start',
-                { fileName: 'test-audio.mp3' }
-            );
+            expect(mockEventManager.emit).toHaveBeenCalledWith('transcription:start', {
+                fileName: 'test-audio.mp3',
+            });
         });
 
         it('should emit complete event with result', async () => {
             const file = createMockAudioFile();
-            
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockResolvedValue(createMockWhisperResponse());
             mockTextFormatter.format.mockReturnValue('완료된 텍스트');
 
             const result = await transcriptionService.transcribe(file);
 
-            expect(mockEventManager.emit).toHaveBeenCalledWith(
-                'transcription:complete',
-                { result }
-            );
+            expect(mockEventManager.emit).toHaveBeenCalledWith('transcription:complete', {
+                result,
+            });
         });
 
         it('should emit error event on any failure', async () => {
             const file = createMockAudioFile();
             const error = new Error('Test error');
-            
+
             mockAudioProcessor.validate.mockRejectedValue(error);
 
             await expect(transcriptionService.transcribe(file)).rejects.toThrow(error);
 
-            expect(mockEventManager.emit).toHaveBeenCalledWith(
-                'transcription:error',
-                { error }
-            );
+            expect(mockEventManager.emit).toHaveBeenCalledWith('transcription:error', { error });
         });
     });
 
     describe('edge cases', () => {
         it('should handle empty validation errors array', async () => {
             const file = createMockAudioFile();
-            const mockValidation = createMockValidationResult({ 
-                valid: false, 
-                errors: [] 
+            const mockValidation = createMockValidationResult({
+                valid: false,
+                errors: [],
             });
 
             mockAudioProcessor.validate.mockResolvedValue(mockValidation);
@@ -356,9 +375,9 @@ describe('TranscriptionService', () => {
 
         it('should handle undefined validation errors', async () => {
             const file = createMockAudioFile();
-            const mockValidation = createMockValidationResult({ 
-                valid: false, 
-                errors: undefined 
+            const mockValidation = createMockValidationResult({
+                valid: false,
+                errors: undefined,
             });
 
             mockAudioProcessor.validate.mockResolvedValue(mockValidation);
@@ -372,7 +391,9 @@ describe('TranscriptionService', () => {
             const file = createMockAudioFile();
             const mockWhisperResponse = createMockWhisperResponse({ text: '' });
 
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockResolvedValue(mockWhisperResponse);
             mockTextFormatter.format.mockReturnValue('');
@@ -387,7 +408,9 @@ describe('TranscriptionService', () => {
             const longText = '긴 텍스트 '.repeat(10000);
             const mockWhisperResponse = createMockWhisperResponse({ text: longText });
 
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockResolvedValue(mockWhisperResponse);
             mockTextFormatter.format.mockReturnValue(longText);
@@ -404,16 +427,18 @@ describe('TranscriptionService', () => {
             const files = [
                 createMockAudioFile({ name: 'file1.mp3' }),
                 createMockAudioFile({ name: 'file2.mp3' }),
-                createMockAudioFile({ name: 'file3.mp3' })
+                createMockAudioFile({ name: 'file3.mp3' }),
             ];
 
-            mockAudioProcessor.validate.mockResolvedValue(createMockValidationResult({ valid: true }));
+            mockAudioProcessor.validate.mockResolvedValue(
+                createMockValidationResult({ valid: true })
+            );
             mockAudioProcessor.process.mockResolvedValue(createMockProcessedAudio());
             mockWhisperService.transcribe.mockResolvedValue(createMockWhisperResponse());
             mockTextFormatter.format.mockReturnValue('텍스트');
 
             const results = await Promise.all(
-                files.map(file => transcriptionService.transcribe(file))
+                files.map((file) => transcriptionService.transcribe(file))
             );
 
             expect(results).toHaveLength(3);

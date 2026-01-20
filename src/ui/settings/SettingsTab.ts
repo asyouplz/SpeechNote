@@ -48,7 +48,7 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         // Add main title
-        new Setting(containerEl).setName('Speech to text settings').setHeading();
+        new Setting(containerEl).setName('Speech Note').setHeading();
         this.debug('Title setting created');
 
         // Add debug info section at the top
@@ -119,7 +119,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createApiSection(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('API configuration').setHeading();
+        new Setting(containerEl).setName('API').setHeading();
 
         // Provider 선택 섹션
         const providerContainer = containerEl.createEl('div', { cls: 'provider-selection' });
@@ -308,7 +308,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private renderWhisperSettings(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('OpenAI Whisper configuration').setHeading();
+        new Setting(containerEl).setName('Whisper').setHeading();
 
         // Whisper API Key
         this.renderWhisperApiKey(containerEl);
@@ -448,7 +448,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createGeneralSection(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('General settings').setHeading();
+        new Setting(containerEl).setName('Transcription').setHeading();
 
         // Language setting
         new Setting(containerEl)
@@ -517,7 +517,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createAudioSection(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('Audio settings').setHeading();
+        new Setting(containerEl).setName('Audio').setHeading();
 
         // Model selection - Provider에 따라 다르게 표시
         const provider = this.plugin.settings.provider || 'auto';
@@ -570,7 +570,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private createAdvancedSection(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('Advanced settings').setHeading();
+        new Setting(containerEl).setName('Advanced').setHeading();
 
         // Enable cache
         new Setting(containerEl)
@@ -608,6 +608,7 @@ export class SettingsTab extends PluginSettingTab {
                 button
                     .setButtonText('Reset')
                     .setWarning()
+                    // eslint-disable-next-line @typescript-eslint/require-await
                     .onClick(async () => {
                         new ConfirmationModal(
                             this.app,

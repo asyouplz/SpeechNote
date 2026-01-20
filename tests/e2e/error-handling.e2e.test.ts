@@ -1,6 +1,6 @@
 /**
  * E2E Test: 에러 처리 시나리오
- * 
+ *
  * 테스트 시나리오:
  * 1. 네트워크 에러 처리
  * 2. API 에러 응답 처리
@@ -39,15 +39,15 @@ describe('E2E: 에러 처리 시나리오', () => {
         app = {
             workspace: {
                 getActiveViewOfType: jest.fn(),
-                trigger: jest.fn()
+                trigger: jest.fn(),
             },
             vault: {
                 adapter: {
                     read: jest.fn(),
                     write: jest.fn(),
-                    exists: jest.fn().mockResolvedValue(true)
-                }
-            }
+                    exists: jest.fn().mockResolvedValue(true),
+                },
+            },
         } as any;
 
         // 기본 설정
@@ -68,7 +68,7 @@ describe('E2E: 에러 처리 시나리오', () => {
             retryAttempts: 3,
             retryDelay: 1000,
             timeout: 30000,
-            concurrentLimit: 3
+            concurrentLimit: 3,
         };
 
         // 서비스 초기화
@@ -114,7 +114,7 @@ describe('E2E: 에러 처리 시나리오', () => {
                 }
                 return Promise.resolve({
                     ok: true,
-                    text: () => Promise.resolve('변환된 텍스트')
+                    text: () => Promise.resolve('변환된 텍스트'),
                 });
             });
 
@@ -126,7 +126,7 @@ describe('E2E: 에러 처리 시나리오', () => {
             // 검증
             expect(attemptCount).toBe(3); // 2번 실패 후 3번째 성공
             expect(result.text).toBe('변환된 텍스트');
-            
+
             // 로그 확인
             const logSpy = jest.spyOn(logger, 'warn');
             logger.warn(`Retry attempt ${attemptCount}/${maxRetries}`);
@@ -150,7 +150,7 @@ describe('E2E: 에러 처리 시나리오', () => {
 
             try {
                 await transcriptionService.transcribe(mockFile, {
-                    signal: controller.signal
+                    signal: controller.signal,
                 });
                 fail('Should have thrown timeout error');
             } catch (error: any) {
@@ -166,9 +166,9 @@ describe('E2E: 에러 처리 시나리오', () => {
 
         test('CORS 에러 처리', async () => {
             // CORS 에러 시뮬레이션
-            (global.fetch as jest.Mock) = jest.fn().mockRejectedValue(
-                new TypeError('Failed to fetch')
-            );
+            (global.fetch as jest.Mock) = jest
+                .fn()
+                .mockRejectedValue(new TypeError('Failed to fetch'));
 
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
 
@@ -192,12 +192,13 @@ describe('E2E: 에러 처리 시나리오', () => {
                 ok: false,
                 status: 401,
                 statusText: 'Unauthorized',
-                json: () => Promise.resolve({
-                    error: {
-                        message: 'Invalid API key provided',
-                        type: 'invalid_request_error'
-                    }
-                })
+                json: () =>
+                    Promise.resolve({
+                        error: {
+                            message: 'Invalid API key provided',
+                            type: 'invalid_request_error',
+                        },
+                    }),
             });
 
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
@@ -227,19 +228,20 @@ describe('E2E: 에러 처리 시나리오', () => {
                         status: 429,
                         statusText: 'Too Many Requests',
                         headers: new Headers({
-                            'Retry-After': retryAfter.toString()
+                            'Retry-After': retryAfter.toString(),
                         }),
-                        json: () => Promise.resolve({
-                            error: {
-                                message: 'Rate limit exceeded',
-                                type: 'rate_limit_error'
-                            }
-                        })
+                        json: () =>
+                            Promise.resolve({
+                                error: {
+                                    message: 'Rate limit exceeded',
+                                    type: 'rate_limit_error',
+                                },
+                            }),
                     });
                 }
                 return Promise.resolve({
                     ok: true,
-                    text: () => Promise.resolve('변환된 텍스트')
+                    text: () => Promise.resolve('변환된 텍스트'),
                 });
             });
 
@@ -250,7 +252,7 @@ describe('E2E: 에러 처리 시나리오', () => {
                 await whisperService.transcribe(mockFile);
             } catch (error: any) {
                 expect(error.message).toContain('Rate limit');
-                
+
                 // Retry-After 헤더 파싱
                 const waitTime = parseInt(error.retryAfter || '60');
                 expect(waitTime).toBe(60);
@@ -265,19 +267,18 @@ describe('E2E: 에러 처리 시나리오', () => {
                 ok: false,
                 status: 413,
                 statusText: 'Payload Too Large',
-                json: () => Promise.resolve({
-                    error: {
-                        message: 'Maximum file size exceeded',
-                        type: 'invalid_request_error'
-                    }
-                })
+                json: () =>
+                    Promise.resolve({
+                        error: {
+                            message: 'Maximum file size exceeded',
+                            type: 'invalid_request_error',
+                        },
+                    }),
             });
 
-            const largeFile = new File(
-                [new ArrayBuffer(30 * 1024 * 1024)],
-                'large.mp3',
-                { type: 'audio/mp3' }
-            );
+            const largeFile = new File([new ArrayBuffer(30 * 1024 * 1024)], 'large.mp3', {
+                type: 'audio/mp3',
+            });
 
             try {
                 await whisperService.transcribe(largeFile);
@@ -302,17 +303,18 @@ describe('E2E: 에러 처리 시나리오', () => {
                         ok: false,
                         status: 500,
                         statusText: 'Internal Server Error',
-                        json: () => Promise.resolve({
-                            error: {
-                                message: 'An error occurred during processing',
-                                type: 'server_error'
-                            }
-                        })
+                        json: () =>
+                            Promise.resolve({
+                                error: {
+                                    message: 'An error occurred during processing',
+                                    type: 'server_error',
+                                },
+                            }),
                     });
                 }
                 return Promise.resolve({
                     ok: true,
-                    text: () => Promise.resolve('변환된 텍스트')
+                    text: () => Promise.resolve('변환된 텍스트'),
                 });
             });
 
@@ -328,11 +330,9 @@ describe('E2E: 에러 처리 시나리오', () => {
 
     describe('파일 처리 에러', () => {
         test('지원하지 않는 파일 형식', async () => {
-            const unsupportedFile = new File(
-                ['text content'],
-                'document.txt',
-                { type: 'text/plain' }
-            );
+            const unsupportedFile = new File(['text content'], 'document.txt', {
+                type: 'text/plain',
+            });
 
             try {
                 await transcriptionService.transcribe(unsupportedFile);
@@ -352,19 +352,18 @@ describe('E2E: 에러 처리 시나리오', () => {
                 ok: false,
                 status: 400,
                 statusText: 'Bad Request',
-                json: () => Promise.resolve({
-                    error: {
-                        message: 'Invalid audio file',
-                        type: 'invalid_request_error'
-                    }
-                })
+                json: () =>
+                    Promise.resolve({
+                        error: {
+                            message: 'Invalid audio file',
+                            type: 'invalid_request_error',
+                        },
+                    }),
             });
 
-            const corruptedFile = new File(
-                ['corrupted data'],
-                'corrupted.mp3',
-                { type: 'audio/mp3' }
-            );
+            const corruptedFile = new File(['corrupted data'], 'corrupted.mp3', {
+                type: 'audio/mp3',
+            });
 
             try {
                 await whisperService.transcribe(corruptedFile);
@@ -379,11 +378,9 @@ describe('E2E: 에러 처리 시나리오', () => {
 
         test('파일 읽기 권한 에러', async () => {
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
-            
+
             // 파일 읽기 에러 시뮬레이션
-            jest.spyOn(mockFile, 'arrayBuffer').mockRejectedValue(
-                new Error('Permission denied')
-            );
+            jest.spyOn(mockFile, 'arrayBuffer').mockRejectedValue(new Error('Permission denied'));
 
             try {
                 await transcriptionService.transcribe(mockFile);
@@ -409,7 +406,7 @@ describe('E2E: 에러 처리 시나리오', () => {
                 }
                 return Promise.resolve({
                     ok: true,
-                    text: () => Promise.resolve('변환된 텍스트')
+                    text: () => Promise.resolve('변환된 텍스트'),
                 });
             });
 
@@ -433,7 +430,7 @@ describe('E2E: 에러 처리 시나리오', () => {
             const files = [
                 new File(['audio1'], 'file1.mp3', { type: 'audio/mp3' }),
                 new File(['audio2'], 'file2.mp3', { type: 'audio/mp3' }),
-                new File(['audio3'], 'file3.mp3', { type: 'audio/mp3' })
+                new File(['audio3'], 'file3.mp3', { type: 'audio/mp3' }),
             ];
 
             let callCount = 0;
@@ -445,7 +442,7 @@ describe('E2E: 에러 처리 시나리오', () => {
                 }
                 return Promise.resolve({
                     ok: true,
-                    text: () => Promise.resolve(`변환된 텍스트 ${callCount}`)
+                    text: () => Promise.resolve(`변환된 텍스트 ${callCount}`),
                 });
             });
 
@@ -477,9 +474,7 @@ describe('E2E: 에러 처리 시나리오', () => {
             // 에러 리포터 등록
             errorManager.setReporter(errorReportSpy);
 
-            (global.fetch as jest.Mock) = jest.fn().mockRejectedValue(
-                new Error('Critical error')
-            );
+            (global.fetch as jest.Mock) = jest.fn().mockRejectedValue(new Error('Critical error'));
 
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
 
@@ -494,7 +489,7 @@ describe('E2E: 에러 처리 시나리오', () => {
                 await errorManager.report(error, {
                     context: 'transcription',
                     file: mockFile.name,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
                 });
                 expect(errorReportSpy).toHaveBeenCalled();
             }
@@ -513,7 +508,7 @@ describe('E2E: 에러 처리 시나리오', () => {
                 }
                 return Promise.resolve({
                     ok: true,
-                    text: () => Promise.resolve('폴백 API 결과')
+                    text: () => Promise.resolve('폴백 API 결과'),
                 });
             });
 
@@ -539,7 +534,7 @@ describe('E2E: 에러 처리 시나리오', () => {
                 { error: 'ETIMEDOUT', message: '연결 시간이 초과되었습니다.' },
                 { error: 'ENOTFOUND', message: '서버를 찾을 수 없습니다.' },
                 { error: 'EPERM', message: '권한이 없습니다.' },
-                { error: 'ENOSPC', message: '저장 공간이 부족합니다.' }
+                { error: 'ENOSPC', message: '저장 공간이 부족합니다.' },
             ];
 
             technicalErrors.forEach(({ error, message }) => {
@@ -552,17 +547,14 @@ describe('E2E: 에러 처리 시나리오', () => {
             const errorWithSolution = {
                 code: 'INVALID_API_KEY',
                 message: 'API 키가 유효하지 않습니다.',
-                solution: '설정에서 올바른 API 키를 입력해주세요.'
+                solution: '설정에서 올바른 API 키를 입력해주세요.',
             };
 
             const solution = errorHandler.getSolution(errorWithSolution.code);
             expect(solution).toBe(errorWithSolution.solution);
 
             // 해결 방법 표시
-            notificationManager.error(
-                errorWithSolution.message,
-                { detail: solution }
-            );
+            notificationManager.error(errorWithSolution.message, { detail: solution });
         });
     });
 });

@@ -28,37 +28,37 @@ describe('EditorService', () => {
             getValue: jest.fn(),
             setValue: jest.fn(),
             setSelection: jest.fn(),
-            focus: jest.fn()
+            focus: jest.fn(),
         } as any;
 
         mockView = {
             editor: mockEditor,
-            file: { path: 'test.md' }
+            file: { path: 'test.md' },
         } as any;
 
         mockApp = {
             workspace: {
                 getActiveViewOfType: jest.fn().mockReturnValue(mockView),
                 on: jest.fn(),
-                openLinkText: jest.fn()
+                openLinkText: jest.fn(),
             },
             vault: {
-                create: jest.fn()
-            }
+                create: jest.fn(),
+            },
         } as any;
 
         mockEventManager = {
             emit: jest.fn(),
             on: jest.fn(),
             off: jest.fn(),
-            once: jest.fn()
+            once: jest.fn(),
         } as any;
 
         mockLogger = {
             debug: jest.fn(),
             info: jest.fn(),
             warn: jest.fn(),
-            error: jest.fn()
+            error: jest.fn(),
         } as any;
 
         editorService = new EditorService(mockApp, mockEventManager, mockLogger);
@@ -123,18 +123,18 @@ describe('EditorService', () => {
             expect(mockEditor.replaceRange).toHaveBeenCalledWith(text, position);
             expect(mockEditor.setCursor).toHaveBeenCalledWith({
                 line: 1,
-                ch: text.length
+                ch: text.length,
             });
             expect(mockEventManager.emit).toHaveBeenCalledWith('editor:text-inserted', {
                 text,
-                position
+                position,
             });
         });
 
         it('should return false when no active editor', async () => {
             mockApp.workspace.getActiveViewOfType.mockReturnValue(null);
             const result = await editorService.insertAtCursor('text');
-            
+
             expect(result).toBe(false);
             expect(mockLogger.warn).toHaveBeenCalled();
         });
@@ -145,7 +145,7 @@ describe('EditorService', () => {
             });
 
             const result = await editorService.insertAtCursor('text');
-            
+
             expect(result).toBe(false);
             expect(mockLogger.error).toHaveBeenCalled();
         });
@@ -156,8 +156,9 @@ describe('EditorService', () => {
             const oldText = 'old text';
             const newText = 'new text';
             mockEditor.getSelection.mockReturnValue(oldText);
-            mockEditor.getCursor.mockReturnValueOnce({ line: 1, ch: 0 })
-                                 .mockReturnValueOnce({ line: 1, ch: 8 });
+            mockEditor.getCursor
+                .mockReturnValueOnce({ line: 1, ch: 0 })
+                .mockReturnValueOnce({ line: 1, ch: 8 });
 
             const result = await editorService.replaceSelection(newText);
 
@@ -165,7 +166,7 @@ describe('EditorService', () => {
             expect(mockEditor.replaceSelection).toHaveBeenCalledWith(newText);
             expect(mockEventManager.emit).toHaveBeenCalledWith('editor:text-replaced', {
                 oldText,
-                newText
+                newText,
             });
         });
     });
@@ -180,10 +181,10 @@ describe('EditorService', () => {
             const result = await editorService.appendToDocument(text);
 
             expect(result).toBe(true);
-            expect(mockEditor.replaceRange).toHaveBeenCalledWith(
-                `\n${text}`,
-                { line: 10, ch: lastLineContent.length }
-            );
+            expect(mockEditor.replaceRange).toHaveBeenCalledWith(`\n${text}`, {
+                line: 10,
+                ch: lastLineContent.length,
+            });
         });
     });
 
@@ -194,10 +195,7 @@ describe('EditorService', () => {
             const result = await editorService.prependToDocument(text);
 
             expect(result).toBe(true);
-            expect(mockEditor.replaceRange).toHaveBeenCalledWith(
-                `${text}\n`,
-                { line: 0, ch: 0 }
-            );
+            expect(mockEditor.replaceRange).toHaveBeenCalledWith(`${text}\n`, { line: 0, ch: 0 });
         });
     });
 
@@ -259,11 +257,10 @@ describe('EditorService', () => {
             const result = await editorService.undo();
 
             expect(result).toBe(true);
-            expect(mockEditor.replaceRange).toHaveBeenCalledWith(
-                '',
-                position,
-                { line: 1, ch: text.length }
-            );
+            expect(mockEditor.replaceRange).toHaveBeenCalledWith('', position, {
+                line: 1,
+                ch: text.length,
+            });
         });
 
         it('should redo insert action', async () => {
@@ -297,21 +294,17 @@ describe('EditorService', () => {
             const fileName = 'test.md';
             const content = 'note content';
             const mockFile = { path: fileName };
-            
+
             mockApp.vault.create.mockResolvedValue(mockFile as any);
 
             const result = await editorService.createAndOpenNote(fileName, content);
 
             expect(result).toBe(true);
             expect(mockApp.vault.create).toHaveBeenCalledWith(fileName, content);
-            expect(mockApp.workspace.openLinkText).toHaveBeenCalledWith(
-                fileName,
-                '',
-                true
-            );
+            expect(mockApp.workspace.openLinkText).toHaveBeenCalledWith(fileName, '', true);
             expect(mockEventManager.emit).toHaveBeenCalledWith('editor:note-created', {
                 file: mockFile,
-                content
+                content,
             });
         });
 
@@ -388,9 +381,9 @@ describe('EditorService', () => {
     describe('destroy', () => {
         it('should clean up resources', () => {
             editorService.destroy();
-            
+
             expect(mockLogger.debug).toHaveBeenCalledWith('EditorService destroyed');
-            
+
             // Should return null after destroy
             const editor = editorService.getActiveEditor();
             expect(editor).toBeNull();

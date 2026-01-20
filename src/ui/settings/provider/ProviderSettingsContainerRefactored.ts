@@ -21,6 +21,13 @@ interface ProviderSettingsState {
     error: string | null;
 }
 
+interface ProviderMetrics {
+    totalRequests: number;
+    successRate: number;
+    avgLatency: number;
+    totalCost: number;
+}
+
 /**
  * Provider Settings Container (리팩토링 버전)
  *
@@ -37,7 +44,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     private state: SettingsState<ProviderSettingsState>;
 
     // 메모이제이션을 위한 캐시
-    private memoCache = new Map<string, any>();
+    private memoCache = new Map<string, unknown>();
 
     // 실시간 업데이트 간격
     private statusUpdateInterval?: number;
@@ -62,26 +69,28 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         this.apiKeyManager = new APIKeyManager(plugin);
         this.advancedPanel = new AdvancedSettingsPanel(plugin);
 
+        // Fire-and-forget initialization
         void this.initialize();
     }
 
     /**
      * 초기화 (비동기 작업 처리)
      */
-    private async initialize(): Promise<void> {
-        await this.withErrorHandling(async () => {
+    private initialize(): void {
+        void this.withErrorHandling(async () => {
             this.state.set((prev) => ({ ...prev, isLoading: true }));
 
             // 설정 로드
-            await this.loadSettings();
+            this.loadSettings();
 
-            // 연결 상태 확인 (병렬 처리)
-            await this.checkAllConnectionsOptimized();
+            // 연결 상태 확인 (병렬 처리, fire-and-forget)
+            void this.checkAllConnectionsOptimized();
 
             // 실시간 모니터링 시작
             this.startStatusMonitoring();
 
             this.state.set((prev) => ({ ...prev, isLoading: false }));
+            return Promise.resolve();
         }, 'Provider 초기화 실패');
     }
 
@@ -204,7 +213,11 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 상태 대시보드 렌더링 (최적화)
      */
     private renderStatusDashboard(containerEl: HTMLElement): void {
-        const dashboardEl = this.createSection(containerEl, '상태 대시보드', '시스템 전체 상태');
+        const dashboardEl = this.createSection(
+            containerEl,
+            'Status dashboard',
+            'System overall status'
+        );
 
         // 메모이제이션된 상태 가져오기
         const overallStatus = this.memoized('overallStatus', () => this.calculateOverallStatus());
@@ -232,7 +245,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         providers.forEach((provider) => {
             const hasKey = this.hasApiKey(provider);
             const isConnected = state.connectionStatus.get(provider) || false;
-            state.lastValidation.get(provider);
+            // const lastValidation = state.lastValidation.get(provider); // Unused variable
 
             UIComponentFactory.createCard(
                 containerEl,
@@ -240,13 +253,19 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
                 this.getProviderStatusText(provider, hasKey, isConnected),
                 [
                     {
-                        text: '상세 정보',
-                        onClick: () => this.showProviderDetails(provider),
+                        text: 'Details',
+                        onClick: () => {
+                            // Fire-and-forget 상세 표시
+                            void this.showProviderDetails(provider);
+                        },
                         type: 'secondary',
                     },
                     {
-                        text: '테스트',
-                        onClick: () => this.testProvider(provider),
+                        text: 'Test',
+                        onClick: () => {
+                            // Fire-and-forget 테스트 실행
+                            void this.testProvider(provider);
+                        },
                         type: 'primary',
                     },
                 ]
@@ -258,33 +277,39 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 빠른 설정 렌더링
      */
     private renderQuickSettings(containerEl: HTMLElement): void {
-        const section = this.createSection(containerEl, '빠른 설정');
+        const section = this.createSection(containerEl, 'Quick settings');
 
         // Provider 모드
-        this.createSetting(section, 'Provider 모드', '자동 또는 수동 선택').addDropdown(
-            (dropdown) => {
-                dropdown
-                    .addOption('auto', '🤖 자동')
-                    .addOption('whisper', '🎯 Whisper')
-                    .addOption('deepgram', '🚀 Deepgram')
-                    .setValue(this.state.get().currentProvider)
-                    .onChange((value) => this.handleProviderChange(value));
-            }
-        );
+        this.createSetting(
+            section,
+            'Provider mode',
+            'Select how to choose the transcription provider'
+        ).addDropdown((dropdown) => {
+            dropdown
+                .addOption('auto', '🤖 Automatic')
+                .addOption('whisper', '🎯 Whisper')
+                .addOption('deepgram', '🚀 Deepgram')
+                .setValue(this.state.get().currentProvider)
+                .onChange((value) => {
+                    void this.handleProviderChange(value);
+                });
+        });
 
         // 자동 모드 전략
         if (this.state.get().currentProvider === 'auto') {
             this.createSetting(section, '선택 전략', 'Provider 선택 방법').addDropdown(
                 (dropdown) => {
                     dropdown
-                        .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ 성능 우선')
-                        .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 비용 최적화')
-                        .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ 품질 우선')
+                        .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
+                        .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
+                        .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
                         .setValue(
                             this.plugin.settings.selectionStrategy ||
                                 SelectionStrategy.PERFORMANCE_OPTIMIZED
                         )
-                        .onChange((value) => this.handleStrategyChange(value));
+                        .onChange((value) => {
+                            void this.handleStrategyChange(value);
+                        });
                 }
             );
         }
@@ -296,12 +321,12 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     private renderProviderSelection(containerEl: HTMLElement): void {
         const section = this.createSection(
             containerEl,
-            'Provider 선택',
-            'Transcription Provider 구성'
+            'Provider selection',
+            'Transcription provider configuration'
         );
 
         // Collapsible 섹션으로 구성
-        const { contentEl } = UIComponentFactory.createCollapsibleSection(
+        UIComponentFactory.createCollapsibleSection(
             section,
             'Provider 설정',
             this.state.get().isExpanded,
@@ -327,10 +352,14 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         const actionsEl = containerEl.createDiv({ cls: 'quick-actions' });
 
         const actions = [
-            { text: '모든 키 검증', onClick: () => this.verifyAllApiKeys(), primary: true },
-            { text: '연결 테스트', onClick: () => this.testAllConnections() },
-            { text: '설정 내보내기', onClick: () => this.exportConfiguration() },
-            { text: '설정 초기화', onClick: () => this.resetProviderSettings(), danger: true },
+            { text: 'Verify all keys', onClick: () => void this.verifyAllApiKeys(), primary: true },
+            { text: 'Test connection', onClick: () => void this.testAllConnections() },
+            { text: 'Export config', onClick: () => void this.exportConfiguration() },
+            {
+                text: 'Reset settings',
+                onClick: () => void this.resetProviderSettings(),
+                danger: true,
+            },
         ];
 
         actions.forEach((action) => {
@@ -347,10 +376,10 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 메트릭 표시
      */
     private renderMetricsDisplay(containerEl: HTMLElement): void {
-        const section = this.createSection(containerEl, '성능 메트릭', '최근 30일간 통계');
+        const _section = this.createSection(containerEl, '성능 메트릭', '최근 30일간 통계');
 
         // 메트릭 데이터 (예시)
-        const metrics = this.memoized('metrics', () => this.calculateMetrics());
+        const _metrics = this.memoized('metrics', () => this.calculateMetrics());
 
         // 차트나 그래프로 표시
         this.renderMetricsCharts();
@@ -373,20 +402,20 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         if (!this.memoCache.has(key)) {
             this.memoCache.set(key, compute());
         }
-        return this.memoCache.get(key);
+        return this.memoCache.get(key) as T;
     }
 
     /**
      * 디바운스 헬퍼
      */
-    private debounce(key: string, fn: () => void, delay = 300): void {
+    private debounce(key: string, fn: () => void | Promise<void>, delay = 300): void {
         const existing = this.debounceTimers.get(key);
         if (existing) {
             window.clearTimeout(existing);
         }
 
         const timer = window.setTimeout(() => {
-            fn();
+            void fn();
             this.debounceTimers.delete(key);
         }, delay);
 
@@ -459,9 +488,9 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     private async checkAllConnectionsOptimized(): Promise<void> {
         const providers: TranscriptionProvider[] = ['whisper', 'deepgram'];
 
-        const connectionPromises = providers.map(async (provider) => {
+        const connectionPromises = providers.map((provider) => {
             if (this.hasApiKey(provider)) {
-                const isConnected = await this.checkProviderConnection(provider);
+                const isConnected = this.checkProviderConnection(provider);
                 return { provider, isConnected };
             }
             return { provider, isConnected: false };
@@ -549,7 +578,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * Provider 상태 텍스트
      */
     private getProviderStatusText(
-        provider: TranscriptionProvider,
+        _provider: TranscriptionProvider,
         hasKey: boolean,
         isConnected: boolean
     ): string {
@@ -562,20 +591,22 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * Provider 상세 정보 표시
      */
     private showProviderDetails(provider: TranscriptionProvider): void {
+        if (!this.app) return;
         // Modal로 상세 정보 표시
-        const modal = new ProviderDetailsModal(this.app!, provider, this.plugin);
+        const modal = new ProviderDetailsModal(this.app, provider, this.plugin);
         modal.open();
     }
 
     /**
      * Provider 테스트
      */
-    private async testProvider(provider: TranscriptionProvider): Promise<void> {
-        await this.withErrorHandling(async () => {
+    private testProvider(provider: TranscriptionProvider): void {
+        void this.withErrorHandling(async () => {
             this.showNotice(`${this.getProviderDisplayName(provider)} 테스트 중...`);
+            await Promise.resolve(); // Ensure await
 
             // 테스트 로직
-            const success = await this.checkProviderConnection(provider);
+            const success = this.checkProviderConnection(provider);
 
             if (success) {
                 this.showNotice(`✅ ${this.getProviderDisplayName(provider)} 테스트 성공`);
@@ -697,7 +728,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * 메트릭 계산
      */
-    private calculateMetrics(): any {
+    private calculateMetrics(): ProviderMetrics {
         // 실제 메트릭 계산 로직
         return {
             totalRequests: 0,
@@ -744,14 +775,15 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     }
 
     private isSelectionStrategy(value: string): value is SelectionStrategy {
-        return (
-            value === SelectionStrategy.MANUAL ||
-            value === SelectionStrategy.COST_OPTIMIZED ||
-            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
-            value === SelectionStrategy.QUALITY_OPTIMIZED ||
-            value === SelectionStrategy.ROUND_ROBIN ||
-            value === SelectionStrategy.AB_TEST
-        );
+        const strategies: string[] = [
+            SelectionStrategy.MANUAL,
+            SelectionStrategy.COST_OPTIMIZED,
+            SelectionStrategy.PERFORMANCE_OPTIMIZED,
+            SelectionStrategy.QUALITY_OPTIMIZED,
+            SelectionStrategy.ROUND_ROBIN,
+            SelectionStrategy.AB_TEST,
+        ];
+        return strategies.includes(value);
     }
 }
 
@@ -768,7 +800,8 @@ class ProviderDetailsModal extends Modal {
     }
 
     onOpen(): void {
-        const { contentEl, titleEl } = this;
+        const { titleEl } = this;
+        const contentEl = this.contentEl;
 
         titleEl.setText(`${this.getProviderName()} 상세 정보`);
 
