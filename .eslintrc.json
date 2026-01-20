@@ -10,11 +10,7 @@
         "sourceType": "module",
         "project": "./tsconfig.json"
     },
-    "plugins": [
-        "@typescript-eslint",
-        "unused-imports",
-        "obsidianmd"
-    ],
+    "plugins": ["@typescript-eslint", "unused-imports", "obsidianmd"],
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
@@ -69,11 +65,7 @@
         "no-console": [
             "error",
             {
-                "allow": [
-                    "warn",
-                    "error",
-                    "debug"
-                ]
+                "allow": ["warn", "error", "debug"]
             }
         ],
         "prefer-const": "error",

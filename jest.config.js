@@ -8,9 +8,9 @@ const tsJestTransform = [
         tsconfig: {
             esModuleInterop: true,
             allowSyntheticDefaultImports: true,
-            skipLibCheck: true
-        }
-    }
+            skipLibCheck: true,
+        },
+    },
 ];
 
 const moduleNameMapper = {
@@ -24,17 +24,17 @@ const moduleNameMapper = {
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '\\.(css|less|scss|sass)$': '<rootDir>/tests/mocks/styleMock.js',
     '\\.(jpg|jpeg|png|gif|svg|webp)$': '<rootDir>/tests/mocks/fileMock.js',
-    '^obsidian$': '<rootDir>/tests/mocks/obsidian.mock.ts'
+    '^obsidian$': '<rootDir>/tests/mocks/obsidian.mock.ts',
 };
 
-const createProject = overrides => ({
+const createProject = (overrides) => ({
     preset: 'ts-jest',
     transform: {
-        '^.+\\.(ts|tsx)$': tsJestTransform
+        '^.+\\.(ts|tsx)$': tsJestTransform,
     },
     moduleNameMapper,
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-    ...overrides
+    ...overrides,
 });
 
 module.exports = {
@@ -50,11 +50,11 @@ module.exports = {
                       'jest-junit',
                       {
                           outputDirectory: './reports',
-                          outputName: 'junit.xml'
-                      }
-                  ]
+                          outputName: 'junit.xml',
+                      },
+                  ],
               ]
-            : [])
+            : []),
     ],
     bail: isCI ? 1 : 0,
     errorOnDeprecated: true,
@@ -71,7 +71,7 @@ module.exports = {
         '!src/types/**',
         '!src/main.ts',
         '!src/**/*.test.ts',
-        '!src/**/*.spec.ts'
+        '!src/**/*.spec.ts',
     ],
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
@@ -87,9 +87,9 @@ module.exports = {
                     branches: 50,
                     functions: 25,
                     lines: 10,
-                    statements: 10
-                }
-            }
+                    statements: 10,
+                },
+            },
         }),
         createProject({
             displayName: 'Integration Tests',
@@ -102,9 +102,9 @@ module.exports = {
                     branches: 50,
                     functions: 25,
                     lines: 3,
-                    statements: 3
-                }
-            }
+                    statements: 3,
+                },
+            },
         }),
         createProject({
             displayName: 'E2E Tests',
@@ -118,9 +118,9 @@ module.exports = {
                     branches: 50,
                     functions: 25,
                     lines: 3,
-                    statements: 3
-                }
-            }
-        })
-    ]
+                    statements: 3,
+                },
+            },
+        }),
+    ],
 };

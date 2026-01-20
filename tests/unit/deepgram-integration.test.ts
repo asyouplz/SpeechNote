@@ -17,7 +17,7 @@ describe('Deepgram Integration Tests', () => {
             model: 'base',
             experimentalFeatures: {
                 enableStreaming: false,
-                enableSpeakerDiarization: false
+                enableSpeakerDiarization: false,
             },
             providerSettings: {
                 deepgram: {
@@ -26,21 +26,21 @@ describe('Deepgram Integration Tests', () => {
                     features: {
                         punctuate: true,
                         utterances: false,
-                        smartFormat: true
-                    }
+                        smartFormat: true,
+                    },
                 },
                 whisper: {
                     model: 'whisper-1',
-                    temperature: 0
-                }
+                    temperature: 0,
+                },
             },
             abTesting: {
                 enabled: false,
                 whisperPercentage: 50,
-                forceProvider: null
-            }
+                forceProvider: null,
+            },
         } as PluginSettings;
-        
+
         factory = new TranscriberFactory(mockSettings, console);
     });
 
@@ -90,7 +90,7 @@ describe('Deepgram Integration Tests', () => {
         test('should handle missing API key gracefully', async () => {
             mockSettings.deepgramApiKey = '';
             mockSettings.transcriptionProvider = 'deepgram';
-            
+
             expect(() => factory.getProvider()).toThrow(/API key/i);
         });
 
@@ -107,16 +107,16 @@ describe('Deepgram Integration Tests', () => {
             mockSettings.abTesting = {
                 enabled: true,
                 whisperPercentage: 100,
-                forceProvider: null
+                forceProvider: null,
             };
-            
+
             const providers = [];
             for (let i = 0; i < 10; i++) {
                 providers.push(factory.getProvider());
             }
-            
+
             // With 100% whisper, all should be WhisperAdapter
-            const allWhisper = providers.every(p => p instanceof WhisperAdapter);
+            const allWhisper = providers.every((p) => p instanceof WhisperAdapter);
             expect(allWhisper).toBe(true);
         });
 
@@ -124,9 +124,9 @@ describe('Deepgram Integration Tests', () => {
             mockSettings.abTesting = {
                 enabled: true,
                 whisperPercentage: 0,
-                forceProvider: 'deepgram'
+                forceProvider: 'deepgram',
             };
-            
+
             const provider = factory.getProvider();
             expect(provider).toBeInstanceOf(DeepgramAdapter);
         });
@@ -150,21 +150,25 @@ describe('Deepgram Integration Tests', () => {
         test('should normalize Deepgram response to common format', () => {
             const deepgramResponse = {
                 results: {
-                    channels: [{
-                        alternatives: [{
-                            transcript: '테스트 텍스트',
-                            confidence: 0.95,
-                            words: [
-                                { word: '테스트', start: 0, end: 0.5 },
-                                { word: '텍스트', start: 0.5, end: 1.0 }
-                            ]
-                        }]
-                    }]
+                    channels: [
+                        {
+                            alternatives: [
+                                {
+                                    transcript: '테스트 텍스트',
+                                    confidence: 0.95,
+                                    words: [
+                                        { word: '테스트', start: 0, end: 0.5 },
+                                        { word: '텍스트', start: 0.5, end: 1.0 },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
                 },
                 metadata: {
                     duration: 1.0,
-                    channels: 1
-                }
+                    channels: 1,
+                },
             };
 
             const adapter = new DeepgramAdapter(
@@ -172,7 +176,7 @@ describe('Deepgram Integration Tests', () => {
                 mockSettings,
                 console
             );
-            
+
             // This would be tested with actual normalization logic
             expect(adapter).toBeDefined();
         });

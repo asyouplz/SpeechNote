@@ -29,18 +29,18 @@ async 함수는 반드시 `await` 표현식을 포함해야 합니다.
 ```typescript
 // ❌ 잘못된 예
 async function loadSettings() {
-  return this.settings;
+    return this.settings;
 }
 
 // ✅ 올바른 예
 async function loadSettings() {
-  const data = await this.loadData();
-  return data || DEFAULT_SETTINGS;
+    const data = await this.loadData();
+    return data || DEFAULT_SETTINGS;
 }
 
 // ✅ 또는 async 제거
 function loadSettings() {
-  return this.settings;
+    return this.settings;
 }
 ```
 
@@ -69,17 +69,17 @@ const element = document.createElement('div');
 ```typescript
 // ❌ 잘못된 예
 function processData(data: {}) {
-  // ...
+    // ...
 }
 
 // ✅ 올바른 예
 function processData(data: object) {
-  // ...
+    // ...
 }
 
 // 또는 더 명확하게
 function processData(data: unknown) {
-  // ...
+    // ...
 }
 ```
 
@@ -100,8 +100,8 @@ await someAsyncFunction();
 void someAsyncFunction();
 
 // 또는 catch 처리
-someAsyncFunction().catch(error => {
-  console.error('Error:', error);
+someAsyncFunction().catch((error) => {
+    console.error('Error:', error);
 });
 ```
 
@@ -109,8 +109,8 @@ someAsyncFunction().catch(error => {
 
 Obsidian API의 deprecated 항목은 사용하지 않아야 합니다:
 
-- `noticeEl` → `messageEl` 사용
-- `createElement` → Obsidian의 `createEl` 또는 `createDiv` 사용
+-   `noticeEl` → `messageEl` 사용
+-   `createElement` → Obsidian의 `createEl` 또는 `createDiv` 사용
 
 ```typescript
 // ❌ 잘못된 예
@@ -133,14 +133,14 @@ UI 텍스트는 sentence case를 사용해야 합니다 (첫 글자만 대문자
 ```typescript
 // ❌ 잘못된 예
 addCommand({
-  id: 'my-command',
-  name: 'Convert Audio To Text', // Title Case
+    id: 'my-command',
+    name: 'Convert Audio To Text', // Title Case
 });
 
 // ✅ 올바른 예
 addCommand({
-  id: 'my-command',
-  name: 'Convert audio to text', // Sentence case
+    id: 'my-command',
+    name: 'Convert audio to text', // Sentence case
 });
 ```
 
@@ -150,9 +150,9 @@ addCommand({
 
 샘플 코드나 placeholder는 제거해야 합니다:
 
-- `MyPlugin` → 실제 플러그인 이름으로 변경
-- `SampleSettingTab` → 실제 이름으로 변경
-- 샘플 커맨드 제거
+-   `MyPlugin` → 실제 플러그인 이름으로 변경
+-   `SampleSettingTab` → 실제 이름으로 변경
+-   샘플 커맨드 제거
 
 ### HTML Heading 금지
 
@@ -165,9 +165,7 @@ Settings 탭에서 HTML heading 태그를 직접 사용하지 않아야 합니�
 containerEl.createEl('h2', { text: 'General Settings' });
 
 // ✅ 올바른 예
-new Setting(containerEl)
-  .setName('General settings')
-  .setHeading();
+new Setting(containerEl).setName('General settings').setHeading();
 ```
 
 ## Optional 규칙 (경고)
@@ -188,7 +186,7 @@ underscore(`_`)로 시작하는 변수는 미사용으로 허용됩니다:
 // ✅ 허용됨
 const _unusedVariable = someValue;
 function handler(_event: Event) {
-  // event를 사용하지 않지만 signature가 필요한 경우
+    // event를 사용하지 않지만 signature가 필요한 경우
 }
 ```
 
@@ -202,6 +200,6 @@ function handler(_event: Event) {
 
 ## 추가 리소스
 
-- [Obsidian Plugin Guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines)
-- [eslint-plugin-obsidian](https://github.com/obsidianmd/eslint-plugin)
-- [Obsidian Developer Docs](https://docs.obsidian.md/)
+-   [Obsidian Plugin Guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines)
+-   [eslint-plugin-obsidian](https://github.com/obsidianmd/eslint-plugin)
+-   [Obsidian Developer Docs](https://docs.obsidian.md/)

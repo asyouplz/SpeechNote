@@ -4,7 +4,8 @@ import type { DeepgramFeatures } from '../../types/DeepgramTypes';
 export interface SpeechToTextSettings {
     apiKey: string;
     apiEndpoint?: string; // Added for custom API endpoint support
-    model: WhisperModel | string; // Allow string for compatibility
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    model: WhisperModel | (string & {}); // Allow string for compatibility
     language: LanguageCode;
     autoInsert: boolean;
     insertPosition: InsertPosition;
@@ -123,7 +124,8 @@ export interface SpeechToTextSettings {
 }
 
 export type WhisperModel = 'whisper-1';
-export type LanguageCode = 'auto' | 'en' | 'ko' | 'ja' | 'zh' | 'es' | 'fr' | 'de' | string;
+// eslint-disable-next-line @typescript-eslint/ban-types
+export type LanguageCode = 'auto' | 'en' | 'ko' | 'ja' | 'zh' | 'es' | 'fr' | 'de' | (string & {});
 export type InsertPosition = 'cursor' | 'end' | 'beginning';
 export type TimestampFormat = 'none' | 'inline' | 'sidebar';
 

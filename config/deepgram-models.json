@@ -1,188 +1,231 @@
 {
-  "models": {
-    "nova-3": {
-      "id": "nova-3",
-      "name": "Nova-3",
-      "description": "Next-generation model with state-of-the-art accuracy and enhanced diarization",
-      "tier": "premium",
-      "features": {
-        "punctuation": true,
-        "smartFormat": true,
-        "diarization": true,
-        "numerals": true,
-        "profanityFilter": true,
-        "redaction": true,
-        "utterances": true,
-        "summarization": true,
-        "advancedDiarization": true,
-        "emotionDetection": true,
-        "speakerIdentification": true
-      },
-      "languages": ["en", "es", "fr", "de", "pt", "nl", "it", "pl", "ru", "zh", "ja", "ko", "ar", "hi", "tr", "sv", "da", "no", "fi", "cs", "hu", "bg"],
-      "performance": {
-        "accuracy": 98,
-        "speed": "fast",
-        "latency": "low"
-      },
-      "pricing": {
-        "perMinute": 0.0043,
-        "currency": "USD"
-      },
-      "isDefault": true,
-      "migrationPath": {
-        "from": ["nova-2", "nova"],
-        "autoMigrate": true,
-        "backwardCompatible": true
-      }
+    "models": {
+        "nova-3": {
+            "id": "nova-3",
+            "name": "Nova-3",
+            "description": "Next-generation model with state-of-the-art accuracy and enhanced diarization",
+            "tier": "premium",
+            "features": {
+                "punctuation": true,
+                "smartFormat": true,
+                "diarization": true,
+                "numerals": true,
+                "profanityFilter": true,
+                "redaction": true,
+                "utterances": true,
+                "summarization": true,
+                "advancedDiarization": true,
+                "emotionDetection": true,
+                "speakerIdentification": true
+            },
+            "languages": [
+                "en",
+                "es",
+                "fr",
+                "de",
+                "pt",
+                "nl",
+                "it",
+                "pl",
+                "ru",
+                "zh",
+                "ja",
+                "ko",
+                "ar",
+                "hi",
+                "tr",
+                "sv",
+                "da",
+                "no",
+                "fi",
+                "cs",
+                "hu",
+                "bg"
+            ],
+            "performance": {
+                "accuracy": 98,
+                "speed": "fast",
+                "latency": "low"
+            },
+            "pricing": {
+                "perMinute": 0.0043,
+                "currency": "USD"
+            },
+            "isDefault": true,
+            "migrationPath": {
+                "from": ["nova-2", "nova"],
+                "autoMigrate": true,
+                "backwardCompatible": true
+            }
+        },
+        "nova-2": {
+            "id": "nova-2",
+            "name": "Nova-2",
+            "description": "Latest and most powerful model with best accuracy",
+            "tier": "premium",
+            "features": {
+                "punctuation": true,
+                "smartFormat": true,
+                "diarization": true,
+                "numerals": true,
+                "profanityFilter": true,
+                "redaction": true,
+                "utterances": true,
+                "summarization": true
+            },
+            "languages": [
+                "en",
+                "es",
+                "fr",
+                "de",
+                "pt",
+                "nl",
+                "it",
+                "pl",
+                "ru",
+                "zh",
+                "ja",
+                "ko",
+                "ar",
+                "hi",
+                "tr",
+                "sv",
+                "da",
+                "no",
+                "fi"
+            ],
+            "performance": {
+                "accuracy": 95,
+                "speed": "fast",
+                "latency": "low"
+            },
+            "pricing": {
+                "perMinute": 0.0145,
+                "currency": "USD"
+            }
+        },
+        "nova": {
+            "id": "nova",
+            "name": "Nova",
+            "description": "High-quality model with excellent accuracy",
+            "tier": "standard",
+            "features": {
+                "punctuation": true,
+                "smartFormat": true,
+                "diarization": true,
+                "numerals": true,
+                "profanityFilter": true,
+                "redaction": false,
+                "utterances": true,
+                "summarization": false
+            },
+            "languages": ["en", "es", "fr", "de", "pt", "nl", "it", "pl", "ru", "zh", "ja", "ko"],
+            "performance": {
+                "accuracy": 90,
+                "speed": "fast",
+                "latency": "low"
+            },
+            "pricing": {
+                "perMinute": 0.0125,
+                "currency": "USD"
+            }
+        },
+        "enhanced": {
+            "id": "enhanced",
+            "name": "Enhanced",
+            "description": "Balanced model for general use",
+            "tier": "basic",
+            "features": {
+                "punctuation": true,
+                "smartFormat": true,
+                "diarization": false,
+                "numerals": true,
+                "profanityFilter": true,
+                "redaction": false,
+                "utterances": false,
+                "summarization": false
+            },
+            "languages": ["en", "es", "fr", "de", "pt"],
+            "performance": {
+                "accuracy": 85,
+                "speed": "moderate",
+                "latency": "medium"
+            },
+            "pricing": {
+                "perMinute": 0.0085,
+                "currency": "USD"
+            }
+        },
+        "base": {
+            "id": "base",
+            "name": "Base",
+            "description": "Basic model for simple transcription",
+            "tier": "economy",
+            "features": {
+                "punctuation": true,
+                "smartFormat": false,
+                "diarization": false,
+                "numerals": false,
+                "profanityFilter": false,
+                "redaction": false,
+                "utterances": false,
+                "summarization": false
+            },
+            "languages": ["en"],
+            "performance": {
+                "accuracy": 80,
+                "speed": "moderate",
+                "latency": "medium"
+            },
+            "pricing": {
+                "perMinute": 0.0059,
+                "currency": "USD"
+            }
+        }
     },
-    "nova-2": {
-      "id": "nova-2",
-      "name": "Nova-2",
-      "description": "Latest and most powerful model with best accuracy",
-      "tier": "premium",
-      "features": {
-        "punctuation": true,
-        "smartFormat": true,
-        "diarization": true,
-        "numerals": true,
-        "profanityFilter": true,
-        "redaction": true,
-        "utterances": true,
-        "summarization": true
-      },
-      "languages": ["en", "es", "fr", "de", "pt", "nl", "it", "pl", "ru", "zh", "ja", "ko", "ar", "hi", "tr", "sv", "da", "no", "fi"],
-      "performance": {
-        "accuracy": 95,
-        "speed": "fast",
-        "latency": "low"
-      },
-      "pricing": {
-        "perMinute": 0.0145,
-        "currency": "USD"
-      }
-    },
-    "nova": {
-      "id": "nova",
-      "name": "Nova",
-      "description": "High-quality model with excellent accuracy",
-      "tier": "standard",
-      "features": {
-        "punctuation": true,
-        "smartFormat": true,
-        "diarization": true,
-        "numerals": true,
-        "profanityFilter": true,
-        "redaction": false,
-        "utterances": true,
-        "summarization": false
-      },
-      "languages": ["en", "es", "fr", "de", "pt", "nl", "it", "pl", "ru", "zh", "ja", "ko"],
-      "performance": {
-        "accuracy": 90,
-        "speed": "fast",
-        "latency": "low"
-      },
-      "pricing": {
-        "perMinute": 0.0125,
-        "currency": "USD"
-      }
-    },
-    "enhanced": {
-      "id": "enhanced",
-      "name": "Enhanced",
-      "description": "Balanced model for general use",
-      "tier": "basic",
-      "features": {
-        "punctuation": true,
-        "smartFormat": true,
-        "diarization": false,
-        "numerals": true,
-        "profanityFilter": true,
-        "redaction": false,
-        "utterances": false,
-        "summarization": false
-      },
-      "languages": ["en", "es", "fr", "de", "pt"],
-      "performance": {
-        "accuracy": 85,
-        "speed": "moderate",
-        "latency": "medium"
-      },
-      "pricing": {
-        "perMinute": 0.0085,
-        "currency": "USD"
-      }
-    },
-    "base": {
-      "id": "base",
-      "name": "Base",
-      "description": "Basic model for simple transcription",
-      "tier": "economy",
-      "features": {
-        "punctuation": true,
-        "smartFormat": false,
-        "diarization": false,
-        "numerals": false,
-        "profanityFilter": false,
-        "redaction": false,
-        "utterances": false,
-        "summarization": false
-      },
-      "languages": ["en"],
-      "performance": {
-        "accuracy": 80,
-        "speed": "moderate",
-        "latency": "medium"
-      },
-      "pricing": {
-        "perMinute": 0.0059,
-        "currency": "USD"
-      }
+    "features": {
+        "punctuation": {
+            "name": "Punctuation",
+            "description": "Add punctuation marks to transcript",
+            "default": true
+        },
+        "smartFormat": {
+            "name": "Smart Format",
+            "description": "Apply intelligent formatting (numbers, dates, etc.)",
+            "default": true
+        },
+        "diarization": {
+            "name": "Speaker Diarization",
+            "description": "Identify different speakers in audio",
+            "default": true,
+            "requiresPremium": true
+        },
+        "numerals": {
+            "name": "Numerals",
+            "description": "Convert number words to digits",
+            "default": true
+        },
+        "profanityFilter": {
+            "name": "Profanity Filter",
+            "description": "Filter profane words",
+            "default": false
+        },
+        "redaction": {
+            "name": "Redaction",
+            "description": "Redact sensitive information (SSN, credit cards)",
+            "default": false,
+            "requiresPremium": true
+        },
+        "utterances": {
+            "name": "Utterances",
+            "description": "Split transcript by natural speech boundaries",
+            "default": false
+        },
+        "summarization": {
+            "name": "Summarization",
+            "description": "Generate summary of transcript",
+            "default": false,
+            "requiresPremium": true
+        }
     }
-  },
-  "features": {
-    "punctuation": {
-      "name": "Punctuation",
-      "description": "Add punctuation marks to transcript",
-      "default": true
-    },
-    "smartFormat": {
-      "name": "Smart Format",
-      "description": "Apply intelligent formatting (numbers, dates, etc.)",
-      "default": true
-    },
-    "diarization": {
-      "name": "Speaker Diarization",
-      "description": "Identify different speakers in audio",
-      "default": true,
-      "requiresPremium": true
-    },
-    "numerals": {
-      "name": "Numerals",
-      "description": "Convert number words to digits",
-      "default": true
-    },
-    "profanityFilter": {
-      "name": "Profanity Filter",
-      "description": "Filter profane words",
-      "default": false
-    },
-    "redaction": {
-      "name": "Redaction",
-      "description": "Redact sensitive information (SSN, credit cards)",
-      "default": false,
-      "requiresPremium": true
-    },
-    "utterances": {
-      "name": "Utterances",
-      "description": "Split transcript by natural speech boundaries",
-      "default": false
-    },
-    "summarization": {
-      "name": "Summarization",
-      "description": "Generate summary of transcript",
-      "default": false,
-      "requiresPremium": true
-    }
-  }
 }

@@ -1,4 +1,4 @@
-import { TFile, requestUrl, Notice } from 'obsidian';
+import { TFile, requestUrl } from 'obsidian';
 import type {
     ITranscriptionService,
     TranscriptionResult,
@@ -100,23 +100,23 @@ export class TranscriptionService implements ITranscriptionService {
 
             this.logger.debug('WhisperService response:', {
                 hasResponse: !!response,
-                hasText: !!response?.text,
-                textLength: response?.text?.length || 0,
-                textPreview: response?.text?.substring(0, 100),
-                language: response?.language,
+                textLength: response?.text?.length,
             });
 
-            // Validate response
-            if (!response || response.text === undefined || response.text === null) {
-                this.logger.error('Empty or invalid response from WhisperService', undefined, {
-                    response,
-                });
-                throw new Error('Transcription service returned empty text');
+            if (!response) {
+                throw new Error('No response from WhisperService');
             }
+
+            const text = response.text;
+            if (!text || typeof text !== 'string' || text.trim() === '') {
+                throw new Error('Transcription service returned empty or invalid text');
+            }
+
+            const _language = response.language || languagePreference;
 
             // Format text
             this.status = 'formatting';
-            const formattedText = this.textFormatter.format(response.text);
+            const formattedText = this.textFormatter.format(text);
 
             this.logger.debug('Text formatted:', {
                 originalLength: response.text.length,
@@ -126,9 +126,9 @@ export class TranscriptionService implements ITranscriptionService {
 
             const result: TranscriptionResult = {
                 text: formattedText,
-                language: response.language,
-                segments: response.segments?.map((s, i) => ({
-                    id: i,
+                language: _language,
+                segments: (response.segments || []).map((s, i: number) => ({
+                    id: s.id ?? i,
                     start: s.start,
                     end: s.end,
                     text: s.text,
@@ -230,12 +230,15 @@ export class TranscriptionService implements ITranscriptionService {
 
     private createNoopAudioProcessor(): IAudioProcessor {
         return {
+            // eslint-disable-next-line @typescript-eslint/require-await
             validate: async () => {
                 throw new Error('Audio processor not configured');
             },
+            // eslint-disable-next-line @typescript-eslint/require-await
             process: async () => {
                 throw new Error('Audio processor not configured');
             },
+            // eslint-disable-next-line @typescript-eslint/require-await
             extractMetadata: async () => {
                 throw new Error('Audio processor not configured');
             },
@@ -244,10 +247,12 @@ export class TranscriptionService implements ITranscriptionService {
 
     private createNoopWhisperService(): IWhisperService {
         return {
+            // eslint-disable-next-line @typescript-eslint/require-await
             transcribe: async () => {
                 throw new Error('Whisper service not configured');
             },
             cancel: () => undefined,
+            // eslint-disable-next-line @typescript-eslint/require-await
             validateApiKey: async () => false,
         };
     }
@@ -398,7 +403,7 @@ export class TranscriptionService implements ITranscriptionService {
             ok: response.status >= 200 && response.status < 300,
             status: response.status,
             statusText: String(response.status),
-            json: response.json,
+            json: response.json as unknown,
             text: response.text,
         }));
 
@@ -426,7 +431,7 @@ export class TranscriptionService implements ITranscriptionService {
                 signal.addEventListener('abort', abortHandler, { once: true });
             }
             if (signal && 'onabort' in signal) {
-                const sig = signal as AbortSignal;
+                const sig = signal;
                 const previous = sig.onabort;
                 sig.onabort = (event: Event) => {
                     if (typeof previous === 'function') {
@@ -455,7 +460,7 @@ export class TranscriptionService implements ITranscriptionService {
                 'removeEventListener' in signal &&
                 typeof signal.removeEventListener === 'function'
             ) {
-                (signal as AbortSignal).removeEventListener('abort', abortHandler);
+                signal.removeEventListener('abort', abortHandler);
             }
             if (restoreOnAbort) {
                 restoreOnAbort();
@@ -637,8 +642,9 @@ export class TranscriptionService implements ITranscriptionService {
         }
         if (
             this.isTestEnvironment() &&
+            typeof setTimeout === 'function' &&
             'mock' in setTimeout &&
-            typeof (setTimeout as any).mock === 'object' &&
+            isPlainRecord((setTimeout as unknown as { mock: unknown }).mock) &&
             !signal
         ) {
             return promise;
@@ -701,7 +707,7 @@ export class TranscriptionService implements ITranscriptionService {
 
     private normalizeError(error: unknown): Error {
         if (error instanceof Error) {
-            const errorCode = Reflect.get(error, 'code');
+            const errorCode = Reflect.get(error, 'code') as unknown;
             if (errorCode === 'MAX_RETRIES_EXCEEDED' && error.message.includes(':')) {
                 const parts = error.message.split(':');
                 const originalMessage = parts[parts.length - 1]?.trim();

@@ -75,7 +75,7 @@
     border-color: var(--text-error);
 }
 
-.api-key-input[data-has-value="true"] {
+.api-key-input[data-has-value='true'] {
     background-color: var(--background-secondary);
 }
 
@@ -305,15 +305,15 @@
     .api-key-input {
         min-width: 200px;
     }
-    
+
     .stat-grid {
         grid-template-columns: 1fr 1fr;
     }
-    
+
     .chart-bars {
         height: 120px;
     }
-    
+
     .chart-bar {
         width: 60px;
     }

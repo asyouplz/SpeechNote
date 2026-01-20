@@ -16,14 +16,14 @@ import {
     createMockVault,
     createMockSettings,
     createMockWhisperResponse,
-    createMockWAVBuffer
+    createMockWAVBuffer,
 } from '../helpers/mockDataFactory';
 import '../helpers/testSetup';
 
 // Mock Obsidian's requestUrl
 jest.mock('obsidian', () => ({
     ...jest.requireActual('obsidian'),
-    requestUrl: jest.fn()
+    requestUrl: jest.fn(),
 }));
 
 describe('API Integration Tests', () => {
@@ -44,14 +44,14 @@ describe('API Integration Tests', () => {
             debug: jest.fn(),
             info: jest.fn(),
             warn: jest.fn(),
-            error: jest.fn()
+            error: jest.fn(),
         };
 
         mockEventManager = {
             emit: jest.fn(),
             on: jest.fn(),
             off: jest.fn(),
-            once: jest.fn()
+            once: jest.fn(),
         };
 
         // Initialize services
@@ -59,7 +59,7 @@ describe('API Integration Tests', () => {
         fileUploadManager = new FileUploadManager(mockVault as Vault, mockLogger);
         audioProcessor = new AudioProcessor(mockVault as Vault, mockLogger);
         textFormatter = new TextFormatter(mockSettings);
-        
+
         transcriptionService = new TranscriptionService(
             whisperService,
             audioProcessor,
@@ -80,18 +80,18 @@ describe('API Integration Tests', () => {
             const file = createMockAudioFile({
                 name: 'test-audio.mp3',
                 extension: 'mp3',
-                size: 2 * 1024 * 1024 // 2MB
+                size: 2 * 1024 * 1024, // 2MB
             });
             const mockBuffer = createMockWAVBuffer(44100, 5);
             const mockWhisperResponse = createMockWhisperResponse({
                 text: '통합 테스트 결과입니다.',
-                language: 'ko'
+                language: 'ko',
             });
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: mockWhisperResponse
+                json: mockWhisperResponse,
             });
 
             // Execute
@@ -110,19 +110,19 @@ describe('API Integration Tests', () => {
             const file = createMockAudioFile({
                 name: 'large-audio.wav',
                 extension: 'wav',
-                size: 30 * 1024 * 1024 // 30MB
+                size: 30 * 1024 * 1024, // 30MB
             });
             const mockBuffer = createMockWAVBuffer(44100, 700); // Large WAV
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             // Execute
             const processedFile = await fileUploadManager.prepareAudioFile(file);
-            
+
             // Verify compression occurred
             expect(processedFile.compressed).toBe(true);
             expect(processedFile.processedSize).toBeLessThan(processedFile.originalSize);
@@ -140,7 +140,7 @@ describe('API Integration Tests', () => {
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             // Capture progress
@@ -150,8 +150,8 @@ describe('API Integration Tests', () => {
 
             // Verify progress updates
             expect(progressUpdates.length).toBeGreaterThan(0);
-            expect(progressUpdates.some(p => p.status === 'preparing')).toBe(true);
-            expect(progressUpdates.some(p => p.status === 'completed')).toBe(true);
+            expect(progressUpdates.some((p) => p.status === 'preparing')).toBe(true);
+            expect(progressUpdates.some((p) => p.status === 'completed')).toBe(true);
 
             // Continue with transcription
             const result = await whisperService.transcribe(processedFile.buffer);
@@ -165,7 +165,7 @@ describe('API Integration Tests', () => {
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 401,
-                json: { error: { message: 'Invalid API key' } }
+                json: { error: { message: 'Invalid API key' } },
             });
 
             // File processing should succeed
@@ -173,13 +173,14 @@ describe('API Integration Tests', () => {
             expect(processedFile).toBeDefined();
 
             // But transcription should fail with auth error
-            await expect(whisperService.transcribe(processedFile.buffer))
-                .rejects.toThrow('Invalid API key');
+            await expect(whisperService.transcribe(processedFile.buffer)).rejects.toThrow(
+                'Invalid API key'
+            );
         });
 
         it('should handle cancellation during processing', async () => {
             const file = createMockAudioFile({
-                size: 10 * 1024 * 1024 // 10MB
+                size: 10 * 1024 * 1024, // 10MB
             });
             const mockBuffer = createMockArrayBuffer(10 * 1024 * 1024);
 
@@ -201,7 +202,7 @@ describe('API Integration Tests', () => {
             const file = createMockAudioFile({
                 name: 'speech.mp3',
                 extension: 'mp3',
-                size: 3 * 1024 * 1024
+                size: 3 * 1024 * 1024,
             });
             const mockBuffer = createMockArrayBuffer(3 * 1024 * 1024);
             const mockWhisperResponse = createMockWhisperResponse({
@@ -209,14 +210,14 @@ describe('API Integration Tests', () => {
                 language: 'ko',
                 segments: [
                     { start: 0, end: 2, text: '안녕하세요.' },
-                    { start: 2, end: 5, text: '음성 인식 테스트입니다.' }
-                ]
+                    { start: 2, end: 5, text: '음성 인식 테스트입니다.' },
+                ],
             });
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: mockWhisperResponse
+                json: mockWhisperResponse,
             });
 
             // Execute full pipeline
@@ -241,11 +242,12 @@ describe('API Integration Tests', () => {
         it('should handle validation errors in pipeline', async () => {
             const file = createMockAudioFile({
                 extension: 'txt', // Invalid format
-                size: 1024
+                size: 1024,
             });
 
-            await expect(transcriptionService.transcribe(file))
-                .rejects.toThrow('File validation failed');
+            await expect(transcriptionService.transcribe(file)).rejects.toThrow(
+                'File validation failed'
+            );
 
             expect(mockEventManager.emit).toHaveBeenCalledWith(
                 'transcription:error',
@@ -260,15 +262,14 @@ describe('API Integration Tests', () => {
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockRejectedValue(new Error('Network error'));
 
-            await expect(transcriptionService.transcribe(file))
-                .rejects.toThrow('Network error');
+            await expect(transcriptionService.transcribe(file)).rejects.toThrow('Network error');
 
             expect(mockEventManager.emit).toHaveBeenCalledWith(
                 'transcription:error',
                 expect.objectContaining({
                     error: expect.objectContaining({
-                        message: 'Network error'
-                    })
+                        message: 'Network error',
+                    }),
                 })
             );
         });
@@ -277,13 +278,13 @@ describe('API Integration Tests', () => {
             const file = createMockAudioFile();
             const mockBuffer = createMockArrayBuffer(1024);
             const mockWhisperResponse = createMockWhisperResponse({
-                text: '  많은   공백이    있는   텍스트입니다.  '
+                text: '  많은   공백이    있는   텍스트입니다.  ',
             });
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: mockWhisperResponse
+                json: mockWhisperResponse,
             });
 
             const result = await transcriptionService.transcribe(file);
@@ -297,7 +298,7 @@ describe('API Integration Tests', () => {
             // Update settings for timestamp
             mockSettings.timestampFormat = 'inline';
             textFormatter = new TextFormatter(mockSettings);
-            
+
             transcriptionService = new TranscriptionService(
                 whisperService,
                 audioProcessor,
@@ -310,15 +311,13 @@ describe('API Integration Tests', () => {
             const mockBuffer = createMockArrayBuffer(1024);
             const mockWhisperResponse = createMockWhisperResponse({
                 text: '타임스탬프 테스트',
-                segments: [
-                    { start: 0, end: 3, text: '타임스탬프 테스트' }
-                ]
+                segments: [{ start: 0, end: 3, text: '타임스탬프 테스트' }],
             });
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: mockWhisperResponse
+                json: mockWhisperResponse,
             });
 
             const result = await transcriptionService.transcribe(file);
@@ -334,18 +333,18 @@ describe('API Integration Tests', () => {
             const mockBuffer = createMockArrayBuffer(1024);
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
-            
+
             // First call fails, second succeeds
             (requestUrl as jest.Mock)
                 .mockRejectedValueOnce(new Error('Temporary error'))
                 .mockResolvedValueOnce({
                     status: 200,
-                    json: createMockWhisperResponse()
+                    json: createMockWhisperResponse(),
                 });
 
             // Should eventually succeed with retry
             const processedFile = await fileUploadManager.prepareAudioFile(file);
-            
+
             // Note: Retry logic is in WhisperService
             // This would require retry strategy to be properly mocked
             expect(processedFile).toBeDefined();
@@ -359,13 +358,14 @@ describe('API Integration Tests', () => {
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 429,
                 json: { error: { message: 'Rate limit exceeded' } },
-                headers: { 'retry-after': '5' }
+                headers: { 'retry-after': '5' },
             });
 
             const processedFile = await fileUploadManager.prepareAudioFile(file);
-            
-            await expect(whisperService.transcribe(processedFile.buffer))
-                .rejects.toThrow('Rate limit exceeded');
+
+            await expect(whisperService.transcribe(processedFile.buffer)).rejects.toThrow(
+                'Rate limit exceeded'
+            );
         });
     });
 
@@ -374,23 +374,23 @@ describe('API Integration Tests', () => {
             const files = [
                 createMockAudioFile({ name: 'file1.mp3' }),
                 createMockAudioFile({ name: 'file2.mp3' }),
-                createMockAudioFile({ name: 'file3.mp3' })
+                createMockAudioFile({ name: 'file3.mp3' }),
             ];
             const mockBuffer = createMockArrayBuffer(1024);
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             // Process files concurrently
             const results = await Promise.all(
-                files.map(file => transcriptionService.transcribe(file))
+                files.map((file) => transcriptionService.transcribe(file))
             );
 
             expect(results).toHaveLength(3);
-            results.forEach(result => {
+            results.forEach((result) => {
                 expect(result.text).toBeDefined();
                 expect(result.language).toBeDefined();
             });
@@ -403,19 +403,19 @@ describe('API Integration Tests', () => {
             const files = [
                 createMockAudioFile({ name: 'success.mp3' }),
                 createMockAudioFile({ name: 'failure.txt', extension: 'txt' }), // Will fail validation
-                createMockAudioFile({ name: 'success2.mp3' })
+                createMockAudioFile({ name: 'success2.mp3' }),
             ];
             const mockBuffer = createMockArrayBuffer(1024);
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             // Process files concurrently with error handling
             const results = await Promise.allSettled(
-                files.map(file => transcriptionService.transcribe(file))
+                files.map((file) => transcriptionService.transcribe(file))
             );
 
             expect(results[0].status).toBe('fulfilled');
@@ -427,20 +427,20 @@ describe('API Integration Tests', () => {
     describe('Performance and Memory Management', () => {
         it('should handle large files without memory issues', async () => {
             const file = createMockAudioFile({
-                size: 24 * 1024 * 1024 // 24MB - just under limit
+                size: 24 * 1024 * 1024, // 24MB - just under limit
             });
             const mockBuffer = createMockArrayBuffer(24 * 1024 * 1024);
 
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             const startMemory = process.memoryUsage().heapUsed;
-            
+
             const result = await transcriptionService.transcribe(file);
-            
+
             const endMemory = process.memoryUsage().heapUsed;
             const memoryIncrease = (endMemory - startMemory) / 1024 / 1024; // MB
 
@@ -456,7 +456,7 @@ describe('API Integration Tests', () => {
             (mockVault.readBinary as jest.Mock).mockResolvedValue(mockBuffer);
             (requestUrl as jest.Mock).mockResolvedValue({
                 status: 200,
-                json: createMockWhisperResponse()
+                json: createMockWhisperResponse(),
             });
 
             await transcriptionService.transcribe(file);
