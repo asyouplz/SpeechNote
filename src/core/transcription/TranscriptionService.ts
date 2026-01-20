@@ -91,39 +91,35 @@ export class TranscriptionService implements ITranscriptionService {
                 });
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const response = hasTranscribeOptions
-                ? await (this.whisperService as any).transcribe(processedAudio.buffer, {
+                ? await this.whisperService.transcribe(processedAudio.buffer, {
                       language: languagePreference,
                       model: modelPreference,
                   })
-                : await (this.whisperService as any).transcribe(processedAudio.buffer);
+                : await this.whisperService.transcribe(processedAudio.buffer);
 
             this.logger.debug('WhisperService response:', {
                 hasResponse: !!response,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                textLength: (response as any)?.text?.length,
+                textLength: response?.text?.length,
             });
 
             if (!response) {
                 throw new Error('No response from WhisperService');
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            const text = (response as any).text;
+            const text = response.text;
             if (!text || typeof text !== 'string' || text.trim() === '') {
                 throw new Error('Transcription service returned empty or invalid text');
             }
 
-            const _language = (response as any).language || languagePreference;
+            const _language = response.language || languagePreference;
 
             // Format text
             this.status = 'formatting';
             const formattedText = this.textFormatter.format(text);
 
             this.logger.debug('Text formatted:', {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                originalLength: (response as any).text.length,
+                originalLength: response.text.length,
                 formattedLength: formattedText.length,
                 formattedPreview: formattedText.substring(0, 100),
             });
@@ -131,14 +127,10 @@ export class TranscriptionService implements ITranscriptionService {
             const result: TranscriptionResult = {
                 text: formattedText,
                 language: _language,
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-                segments: ((response as any).segments || []).map((s: any, i: number) => ({
-                    id: i,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                segments: (response.segments || []).map((s, i: number) => ({
+                    id: s.id ?? i,
                     start: s.start,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     end: s.end,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                     text: s.text,
                 })),
             };
@@ -411,7 +403,7 @@ export class TranscriptionService implements ITranscriptionService {
             ok: response.status >= 200 && response.status < 300,
             status: response.status,
             statusText: String(response.status),
-            json: response.json,
+            json: response.json as unknown,
             text: response.text,
         }));
 
@@ -439,7 +431,7 @@ export class TranscriptionService implements ITranscriptionService {
                 signal.addEventListener('abort', abortHandler, { once: true });
             }
             if (signal && 'onabort' in signal) {
-                const sig = signal as AbortSignal;
+                const sig = signal;
                 const previous = sig.onabort;
                 sig.onabort = (event: Event) => {
                     if (typeof previous === 'function') {
@@ -468,7 +460,7 @@ export class TranscriptionService implements ITranscriptionService {
                 'removeEventListener' in signal &&
                 typeof signal.removeEventListener === 'function'
             ) {
-                (signal as AbortSignal).removeEventListener('abort', abortHandler);
+                signal.removeEventListener('abort', abortHandler);
             }
             if (restoreOnAbort) {
                 restoreOnAbort();
@@ -650,8 +642,9 @@ export class TranscriptionService implements ITranscriptionService {
         }
         if (
             this.isTestEnvironment() &&
+            typeof setTimeout === 'function' &&
             'mock' in setTimeout &&
-            typeof (setTimeout as any).mock === 'object' &&
+            isPlainRecord((setTimeout as unknown as { mock: unknown }).mock) &&
             !signal
         ) {
             return promise;
@@ -714,7 +707,7 @@ export class TranscriptionService implements ITranscriptionService {
 
     private normalizeError(error: unknown): Error {
         if (error instanceof Error) {
-            const errorCode = Reflect.get(error, 'code');
+            const errorCode = Reflect.get(error, 'code') as unknown;
             if (errorCode === 'MAX_RETRIES_EXCEEDED' && error.message.includes(':')) {
                 const parts = error.message.split(':');
                 const originalMessage = parts[parts.length - 1]?.trim();

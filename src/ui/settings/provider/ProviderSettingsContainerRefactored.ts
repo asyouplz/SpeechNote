@@ -21,6 +21,13 @@ interface ProviderSettingsState {
     error: string | null;
 }
 
+interface ProviderMetrics {
+    totalRequests: number;
+    successRate: number;
+    avgLatency: number;
+    totalCost: number;
+}
+
 /**
  * Provider Settings Container (리팩토링 버전)
  *
@@ -37,7 +44,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     private state: SettingsState<ProviderSettingsState>;
 
     // 메모이제이션을 위한 캐시
-    private memoCache = new Map<string, any>();
+    private memoCache = new Map<string, unknown>();
 
     // 실시간 업데이트 간격
     private statusUpdateInterval?: number;
@@ -62,6 +69,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         this.apiKeyManager = new APIKeyManager(plugin);
         this.advancedPanel = new AdvancedSettingsPanel(plugin);
 
+        // Fire-and-forget initialization
         void this.initialize();
     }
 
@@ -75,7 +83,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
             // 설정 로드
             this.loadSettings();
 
-            // 연결 상태 확인 (병렬 처리)
+            // 연결 상태 확인 (병렬 처리, fire-and-forget)
             void this.checkAllConnectionsOptimized();
 
             // 실시간 모니터링 시작
@@ -246,12 +254,16 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
                 [
                     {
                         text: 'Details',
-                        onClick: () => void this.showProviderDetails(provider),
+                        onClick: () => {
+                            // Fire-and-forget 상세 표시
+                            void this.showProviderDetails(provider);
+                        },
                         type: 'secondary',
                     },
                     {
                         text: 'Test',
                         onClick: () => {
+                            // Fire-and-forget 테스트 실행
                             void this.testProvider(provider);
                         },
                         type: 'primary',
@@ -314,7 +326,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         );
 
         // Collapsible 섹션으로 구성
-        const { contentEl } = UIComponentFactory.createCollapsibleSection(
+        UIComponentFactory.createCollapsibleSection(
             section,
             'Provider 설정',
             this.state.get().isExpanded,
@@ -390,20 +402,20 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         if (!this.memoCache.has(key)) {
             this.memoCache.set(key, compute());
         }
-        return this.memoCache.get(key);
+        return this.memoCache.get(key) as T;
     }
 
     /**
      * 디바운스 헬퍼
      */
-    private debounce(key: string, fn: () => void, delay = 300): void {
+    private debounce(key: string, fn: () => void | Promise<void>, delay = 300): void {
         const existing = this.debounceTimers.get(key);
         if (existing) {
             window.clearTimeout(existing);
         }
 
         const timer = window.setTimeout(() => {
-            fn();
+            void fn();
             this.debounceTimers.delete(key);
         }, delay);
 
@@ -579,8 +591,9 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * Provider 상세 정보 표시
      */
     private showProviderDetails(provider: TranscriptionProvider): void {
+        if (!this.app) return;
         // Modal로 상세 정보 표시
-        const modal = new ProviderDetailsModal(this.app!, provider, this.plugin);
+        const modal = new ProviderDetailsModal(this.app, provider, this.plugin);
         modal.open();
     }
 
@@ -590,6 +603,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     private testProvider(provider: TranscriptionProvider): void {
         void this.withErrorHandling(async () => {
             this.showNotice(`${this.getProviderDisplayName(provider)} 테스트 중...`);
+            await Promise.resolve(); // Ensure await
 
             // 테스트 로직
             const success = this.checkProviderConnection(provider);
@@ -714,7 +728,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     /**
      * 메트릭 계산
      */
-    private calculateMetrics(): any {
+    private calculateMetrics(): ProviderMetrics {
         // 실제 메트릭 계산 로직
         return {
             totalRequests: 0,
@@ -761,14 +775,15 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
     }
 
     private isSelectionStrategy(value: string): value is SelectionStrategy {
-        return (
-            value === (SelectionStrategy.MANUAL as string) ||
-            value === (SelectionStrategy.COST_OPTIMIZED as string) ||
-            value === (SelectionStrategy.PERFORMANCE_OPTIMIZED as string) ||
-            value === (SelectionStrategy.QUALITY_OPTIMIZED as string) ||
-            value === (SelectionStrategy.ROUND_ROBIN as string) ||
-            value === (SelectionStrategy.AB_TEST as string)
-        );
+        const strategies: string[] = [
+            SelectionStrategy.MANUAL,
+            SelectionStrategy.COST_OPTIMIZED,
+            SelectionStrategy.PERFORMANCE_OPTIMIZED,
+            SelectionStrategy.QUALITY_OPTIMIZED,
+            SelectionStrategy.ROUND_ROBIN,
+            SelectionStrategy.AB_TEST,
+        ];
+        return strategies.includes(value);
     }
 }
 

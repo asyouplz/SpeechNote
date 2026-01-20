@@ -334,6 +334,7 @@ export default class SpeechToTextPlugin extends Plugin {
             id: 'transcribe-audio-file',
             name: 'Transcribe audio file',
             callback: () => {
+                // Fire-and-forget audio file picker
                 void this.showAudioFilePicker();
             },
         });
@@ -570,8 +571,8 @@ export default class SpeechToTextPlugin extends Plugin {
         }
 
         // Show file picker modal
-        new AudioFilePickerModal(this.app, audioFiles, async (file) => {
-            await this.transcribeFile(file);
+        new AudioFilePickerModal(this.app, audioFiles, (file) => {
+            void this.transcribeFile(file);
         }).open();
     }
 
@@ -728,10 +729,10 @@ export default class SpeechToTextPlugin extends Plugin {
                 addTimestamp: this.settings.addTimestamp || false,
                 language: this.settings.language,
             },
-            async (options) => {
+            (options) => {
                 // Apply formatting and insert
                 if (text) {
-                    await this.textInsertionHandler.insertText(text, options);
+                    void this.textInsertionHandler.insertText(text, options);
                 } else {
                     new Notice('No text to insert');
                 }
@@ -745,7 +746,8 @@ export default class SpeechToTextPlugin extends Plugin {
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        const loadedData = (await this.loadData()) as Record<string, unknown> | null;
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData ?? {});
     }
 
     async saveSettings() {
