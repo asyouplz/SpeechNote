@@ -80,7 +80,7 @@ export type SettingValue = string | number | boolean | Date | Record<string, unk
 /**
  * 설정 키 타입 (type-safe keys)
  */
-export type SettingKey<T> = keyof T & string;
+export type SettingKey<T> = Extract<keyof T, string>;
 
 /**
  * 에러 레벨
@@ -178,14 +178,14 @@ export type DeepReadonly<T> = {
  * Required Keys 타입
  */
 export type RequiredKeys<T> = {
-    [K in keyof T]-?: object extends Pick<T, K> ? never : K;
+    [K in keyof T]-?: Record<string, never> extends Pick<T, K> ? never : K;
 }[keyof T];
 
 /**
  * Optional Keys 타입
  */
 export type OptionalKeys<T> = {
-    [K in keyof T]-?: object extends Pick<T, K> ? K : never;
+    [K in keyof T]-?: Record<string, never> extends Pick<T, K> ? K : never;
 }[keyof T];
 
 /**

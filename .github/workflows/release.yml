@@ -76,6 +76,9 @@ jobs:
               env:
                   NODE_ENV: production
 
+            - name: Build styles.css
+              run: npm run build:css
+
             - name: Verify required files
               run: |
                   if [ ! -f main.js ]; then
