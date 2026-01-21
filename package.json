@@ -1,11 +1,12 @@
 {
     "name": "obsidian-speech-to-text",
-    "version": "3.0.11",
+    "version": "3.0.13",
     "description": "Convert audio recordings to text in Obsidian using multiple AI providers (OpenAI Whisper, Deepgram)",
     "main": "main.js",
     "scripts": {
         "dev": "node esbuild.config.mjs",
         "build": "npx tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+        "build:css": "cat src/ui/styles/*.css styles/*.css > styles.css",
         "lint": "eslint src/**/*.ts",
         "lint:fix": "eslint src/**/*.ts --fix",
         "lint:obsidian": "eslint src/**/*.ts --format=stylish",
