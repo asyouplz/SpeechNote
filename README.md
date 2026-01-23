@@ -4,7 +4,7 @@
 
 <div align="center">
 
-[![Version](https://img.shields.io/badge/version-3.0.9-blue.svg)](https://github.com/asyouplz/SpeechNote/releases)
+[![Version](https://img.shields.io/badge/version-3.0.14-blue.svg)](https://github.com/asyouplz/SpeechNote/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/obsidian-%3E%3D0.15.0-purple.svg)](https://obsidian.md)
 [![OpenAI](https://img.shields.io/badge/OpenAI-Whisper%20API-orange.svg)](https://platform.openai.com/docs/guides/speech-to-text)
@@ -1044,6 +1044,60 @@ SpeechNote/
 -   ⭐ GitHub에 별 주기
 -   🐦 소셜 미디어에 공유
 -   ☕ [커피 사주기](https://buymeacoffee.com/asyouplz)
+-   🆕 **Development**: See below for contribution and release guidelines.
+
+---
+
+## Development
+
+### 🛠️ Release Process (Automated)
+
+This project uses **semantic-release** for fully automated versioning and releases.
+
+1.  **Merge PR to `main`**: Ensure all commits follow the **Conventional Commits** specification.
+2.  **CI/CD Pipeline**: GitHub Actions triggered on push to `main` will:
+    - Analyze commits to determine the next version (feat -> minor, fix -> patch, BREAKING CHANGE -> major).
+    - Update `manifest.json`, `package.json`, and `versions.json`.
+    - Generate `CHANGELOG.md`.
+    - Create a git tag and GitHub Release with built assets.
+
+### 📝 Conventional Commits
+
+We use `commitlint` and `husky` to enforce commit message formats.
+
+**Format**: `<type>(<scope>): <description>`
+
+-   **feat**: A new feature (causes a **minor** version bump)
+-   **fix**: A bug fix (causes a **patch** version bump)
+-   **perf**: A performance improvement (causes a **patch** version bump)
+-   **chore**: Maintenance/Internal changes (no release)
+-   **docs**: Documentation changes (no release)
+-   **refactor**: Code change that neither fixes a bug nor adds a feature
+
+**Example**: `feat(audio): add support for deepgram v3`
+
+### 🆘 Emergency Manual Release
+
+If the automated system fails, use the emergency script:
+
+```bash
+./scripts/release-emergency.sh [patch|minor|major|VERSION]
+```
+
+### 🔄 Rollback Procedure
+
+If a bad release is pushed:
+
+1.  **Revert**: Revert the release commit on `main`.
+2.  **Delete Tag**: Delete the problematic git tag locally and remotely:
+    ```bash
+    git tag -d v3.x.x
+    git push origin :refs/tags/v3.x.x
+    ```
+3.  **Delete Release**: Manually delete the release on GitHub.
+4.  **Fix & Release**: Push a fix commit using `fix:` to trigger a new patch release.
+
+---
 
 ## 최근 업데이트
 

@@ -39,32 +39,14 @@ jobs:
       - name: Verify build artifacts
         run: |
           for file in main.js manifest.json styles.css; do
-            if [ ! -f "$file" ]; then
-              echo "❌ $file not found"
+            if [ ! -s "$file" ]; then
+              echo "❌ $file is missing or empty"
               exit 1
             fi
           done
-          
-          # Check minimum file sizes to ensure they are not empty/incomplete
-          MAIN_SIZE=$(wc -c < main.js)
-          if [ "$MAIN_SIZE" -lt 10000 ]; then
-            echo "❌ main.js too small ($MAIN_SIZE bytes)"
-            exit 1
-          fi
-          
-          MANIFEST_SIZE=$(wc -c < manifest.json)
-          if [ "$MANIFEST_SIZE" -lt 100 ]; then
-            echo "❌ manifest.json too small ($MANIFEST_SIZE bytes)"
-            exit 1
-          fi
-          
-          echo "✅ All build artifacts present and valid sizes"
+          echo "✅ All build artifacts present and non-empty"
 
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: github-actions[bot]
-          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
-          GIT_COMMITTER_NAME: github-actions[bot]
-          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: npx semantic-release

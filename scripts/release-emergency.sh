@@ -137,7 +137,7 @@ node -e "
   const fs = require('fs');
   const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
   manifest.version = '${NEW_VERSION}';
-  fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 4) + '\n');
+  fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, '\t') + '\n');
 "
 
 # Update package.json
@@ -154,7 +154,7 @@ node -e "
   const fs = require('fs');
   const versions = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
   versions['${NEW_VERSION}'] = '${MIN_APP_VERSION}';
-  fs.writeFileSync('versions.json', JSON.stringify(versions, null, 4) + '\n');
+  fs.writeFileSync('versions.json', JSON.stringify(versions, null, '\t') + '\n');
 "
 
 echo -e "${GREEN}✅ Updated manifest.json, package.json, and versions.json${NC}"
