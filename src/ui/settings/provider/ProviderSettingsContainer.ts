@@ -95,7 +95,7 @@ export class ProviderSettingsContainer {
 
         // 타이틀
         const titleEl = headerEl.createDiv({ cls: 'provider-title' });
-        new Setting(titleEl).setName('🎯 Transcription provider Configuration').setHeading();
+        new Setting(titleEl).setName('🎯 Transcription provider configuration').setHeading();
 
         // 확장/축소 토글
         const toggleBtn = headerEl.createEl('button', {
@@ -541,7 +541,7 @@ export class ProviderSettingsContainer {
 
             try {
                 const content = await file.text();
-                const parsed = JSON.parse(content);
+                const parsed: unknown = JSON.parse(content);
                 const keys: Record<string, string> = {};
                 if (isPlainRecord(parsed)) {
                     Object.entries(parsed).forEach(([key, value]) => {
