@@ -1,13 +1,29 @@
 #!/bin/bash
 
-# Release Script for SpeechNote Plugin
-# Usage: ./scripts/release.sh [patch|minor|major|VERSION]
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${RED}⚠️  WARNING: This script is for emergency manual releases only.${NC}"
+echo -e "${YELLOW}    Regular releases are now handled automatically by semantic-release on PR merge to main.${NC}"
+echo ""
+read -p "Continue with manually creating a release? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}⚠️  Manual release cancelled.${NC}"
+    exit 0
+fi
+
+# Release Script for SpeechNote Plugin (EMERGENCY MANUAL ONLY)
+# Usage: ./scripts/release-emergency.sh [patch|minor|major|VERSION]
 #
 # Examples:
-#   ./scripts/release.sh patch      # 3.0.9 -> 3.0.10
-#   ./scripts/release.sh minor      # 3.0.9 -> 3.1.0
-#   ./scripts/release.sh major      # 3.0.9 -> 4.0.0
-#   ./scripts/release.sh 3.2.5      # Specific version
+#   ./scripts/release-emergency.sh patch      # 3.0.9 -> 3.0.10
+#   ./scripts/release-emergency.sh minor      # 3.0.9 -> 3.1.0
+#   ./scripts/release-emergency.sh major      # 3.0.9 -> 4.0.0
+#   ./scripts/release-emergency.sh 3.2.5      # Specific version
 
 set -e
 
@@ -121,7 +137,7 @@ node -e "
   const fs = require('fs');
   const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
   manifest.version = '${NEW_VERSION}';
-  fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, '\t') + '\n');
+  fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 4) + '\n');
 "
 
 # Update package.json
@@ -129,7 +145,7 @@ node -e "
   const fs = require('fs');
   const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   pkg.version = '${NEW_VERSION}';
-  fs.writeFileSync('package.json', JSON.stringify(pkg, null, '\t') + '\n');
+  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 4) + '\n');
 "
 
 # Update versions.json
@@ -138,7 +154,7 @@ node -e "
   const fs = require('fs');
   const versions = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
   versions['${NEW_VERSION}'] = '${MIN_APP_VERSION}';
-  fs.writeFileSync('versions.json', JSON.stringify(versions, null, '\t') + '\n');
+  fs.writeFileSync('versions.json', JSON.stringify(versions, null, 4) + '\n');
 "
 
 echo -e "${GREEN}✅ Updated manifest.json, package.json, and versions.json${NC}"

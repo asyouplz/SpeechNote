@@ -33,7 +33,6 @@
         "release:dry-run": "semantic-release --dry-run",
         "release:debug": "semantic-release --debug",
         "posttest": "npm run coverage:report",
-        "version": "node version-bump.mjs && git add manifest.json versions.json",
         "clean": "rm -rf main.js main.js.map coverage .jest-cache",
         "clean:all": "npm run clean && rm -rf node_modules",
         "typecheck": "npx tsc -noEmit",

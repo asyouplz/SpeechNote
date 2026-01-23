@@ -12,12 +12,26 @@ if (!targetVersion) {
     process.exit(1);
 }
 
+// Validate semver format (basic check for semantic-release compatibility)
+const semverRegex = /^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?$/;
+if (!semverRegex.test(targetVersion)) {
+    console.error(`❌ Error: Invalid semver format: ${targetVersion}`);
+    process.exit(1);
+}
+
 console.log(`📦 Updating version to ${targetVersion}...`);
 
 try {
     // Update manifest.json
     const manifestPath = 'manifest.json';
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    const manifestData = readFileSync(manifestPath, 'utf8');
+    const manifest = JSON.parse(manifestData);
+
+    if (!manifest.minAppVersion) {
+        console.error(`❌ Error: minAppVersion not found in ${manifestPath}`);
+        process.exit(1);
+    }
+
     const { minAppVersion } = manifest;
     manifest.version = targetVersion;
     writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t') + '\n');
