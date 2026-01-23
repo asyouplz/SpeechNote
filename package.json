@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "node esbuild.config.mjs",
         "build": "npx tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-        "build:css": "node -e \"const fs=require('fs'),g=require('glob');let c='';['src/ui/styles/*.css','styles/*.css'].forEach(p=>g.sync(p).forEach(f=>c+=fs.readFileSync(f,'utf8')+'\\n'));fs.writeFileSync('styles.css',c);\"",
+        "build:css": "cat src/ui/styles/*.css styles/*.css > styles.css",
         "lint": "eslint src/**/*.ts",
         "lint:fix": "eslint src/**/*.ts --fix",
         "lint:obsidian": "eslint src/**/*.ts --format=stylish",
