@@ -36,7 +36,7 @@ export class DeepgramLogger {
     /**
      * 디버그 로그
      */
-    public debug(message: string, ...args: any[]): void {
+    public debug(message: string, ...args: unknown[]): void {
         if (this.shouldLog(LOG_LEVEL.DEBUG)) {
             console.debug(`${LOG_PREFIX} ${message}`, ...args);
         }
@@ -45,7 +45,7 @@ export class DeepgramLogger {
     /**
      * 정보 로그
      */
-    public info(message: string, ...args: any[]): void {
+    public info(message: string, ...args: unknown[]): void {
         if (this.shouldLog(LOG_LEVEL.INFO)) {
             console.debug(`${LOG_PREFIX} ${message}`, ...args);
         }
@@ -54,7 +54,7 @@ export class DeepgramLogger {
     /**
      * 경고 로그
      */
-    public warn(message: string, ...args: any[]): void {
+    public warn(message: string, ...args: unknown[]): void {
         if (this.shouldLog(LOG_LEVEL.WARN)) {
             console.warn(`${LOG_PREFIX} ${message}`, ...args);
         }
@@ -84,6 +84,7 @@ export class DeepgramLogger {
      */
     public group(label: string): void {
         if (this.enabled) {
+            // eslint-disable-next-line no-console
             console.group(`${LOG_PREFIX} ${label}`);
         }
     }
@@ -93,6 +94,7 @@ export class DeepgramLogger {
      */
     public groupEnd(): void {
         if (this.enabled) {
+            // eslint-disable-next-line no-console
             console.groupEnd();
         }
     }
@@ -103,11 +105,14 @@ export class DeepgramLogger {
     private shouldLog(level: LogLevel): boolean {
         if (!this.enabled) return false;
 
-        const levels = [LOG_LEVEL.DEBUG, LOG_LEVEL.INFO, LOG_LEVEL.WARN, LOG_LEVEL.ERROR];
-        const currentIndex = levels.indexOf(level);
-        const minIndex = levels.indexOf(this.minLevel);
+        const levels: Record<LogLevel, number> = {
+            debug: 0,
+            info: 1,
+            warn: 2,
+            error: 3,
+        };
 
-        return currentIndex >= minIndex;
+        return levels[level] >= levels[this.minLevel];
     }
 
     /**
@@ -115,6 +120,7 @@ export class DeepgramLogger {
      */
     public time(label: string): void {
         if (this.enabled) {
+            // eslint-disable-next-line no-console
             console.time(`${LOG_PREFIX} ${label}`);
         }
     }
@@ -124,6 +130,7 @@ export class DeepgramLogger {
      */
     public timeEnd(label: string): void {
         if (this.enabled) {
+            // eslint-disable-next-line no-console
             console.timeEnd(`${LOG_PREFIX} ${label}`);
         }
     }
