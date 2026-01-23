@@ -1,7 +1,5 @@
 # Obsidian Speech-to-Text Plugin
 
-<!-- Test: Verifying Claude Code Review with new OAuth token - 2026-01-20 -->
-
 <div align="center">
 
 [![Version](https://img.shields.io/badge/version-3.0.9-blue.svg)](https://github.com/asyouplz/SpeechNote/releases)
