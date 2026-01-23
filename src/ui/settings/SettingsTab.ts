@@ -48,7 +48,7 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         // Add main title
-        new Setting(containerEl).setName('Speech Note').setHeading();
+        new Setting(containerEl).setName('Speech note').setHeading();
         this.debug('Title setting created');
 
         // Add debug info section at the top
@@ -316,7 +316,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('Openai API endpoint (leave default unless using custom endpoint)')
+            .setDesc('OpenAI API endpoint (leave default unless using custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')

@@ -63,10 +63,10 @@ export default class SpeechToTextPlugin extends Plugin {
                 this.createStatusBarItem();
             });
 
-            new Notice('Speech-to-Text plugin loaded successfully');
+            new Notice('Speech-to-text plugin loaded successfully');
         } catch (error) {
             console.error('Failed to load Speech-to-Text plugin:', error);
-            new Notice('Failed to load Speech-to-Text plugin. Check console for details.');
+            new Notice('Failed to load speech-to-text plugin. Check console for details.');
         }
     }
 

@@ -131,7 +131,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         // 제목
         const titleContainer = headerEl.createDiv({ cls: 'header-title-container' });
-        new Setting(titleContainer).setName('Speech Note').setHeading();
+        new Setting(titleContainer).setName('Speech note').setHeading();
 
         // 상태 표시
         const statusBadge = titleContainer.createEl('span', {

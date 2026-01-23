@@ -234,10 +234,10 @@ export class FormatOptionsModal extends Modal {
                     .setDesc('Character to use for bullets')
                     .addDropdown((dropdown) => {
                         dropdown
-                            .addOption('-', '- (Dash)')
-                            .addOption('*', '* (Asterisk)')
-                            .addOption('+', '+ (Plus)')
-                            .addOption('•', '• (Bullet)')
+                            .addOption('-', '- (dash)')
+                            .addOption('*', '*  (asterisk)')
+                            .addOption('+', '+ (plus)')
+                            .addOption('•', '• (bullet)')
                             .setValue(this.options.bulletChar || '-')
                             .onChange((value) => {
                                 this.options.bulletChar = value;
