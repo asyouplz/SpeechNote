@@ -44,7 +44,14 @@ jobs:
               exit 1
             fi
           done
-          echo "✅ All build artifacts present and non-empty"
+          
+          # Syntax check for main.js
+          node -c main.js || { echo "❌ main.js has syntax errors"; exit 1; }
+          
+          # Syntax check for manifest.json
+          node -e "JSON.parse(require('fs').readFileSync('manifest.json'))" || { echo "❌ manifest.json is invalid JSON"; exit 1; }
+          
+          echo "✅ All build artifacts present, non-empty, and syntax is valid"
 
       - name: Run semantic-release
         env:

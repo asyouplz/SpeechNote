@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 
 /**
  * Update version in manifest.json, package.json, and versions.json
@@ -20,6 +20,15 @@ if (!semverRegex.test(targetVersion)) {
 }
 
 console.log(`📦 Updating version to ${targetVersion}...`);
+
+// Check if all required files exist before starting to avoid partial updates
+const requiredFiles = ['manifest.json', 'package.json', 'versions.json'];
+const missingFiles = requiredFiles.filter(file => !existsSync(file));
+
+if (missingFiles.length > 0) {
+    console.error(`❌ Error: Missing required files: ${missingFiles.join(', ')}`);
+    process.exit(1);
+}
 
 try {
     // Update manifest.json
