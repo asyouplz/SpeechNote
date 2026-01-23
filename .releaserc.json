@@ -1,0 +1,118 @@
+{
+    "branches": [
+        "main"
+    ],
+    "plugins": [
+        [
+            "@semantic-release/commit-analyzer",
+            {
+                "preset": "conventionalcommits",
+                "releaseRules": [
+                    {
+                        "type": "feat",
+                        "release": "minor"
+                    },
+                    {
+                        "type": "fix",
+                        "release": "patch"
+                    },
+                    {
+                        "type": "perf",
+                        "release": "patch"
+                    },
+                    {
+                        "type": "refactor",
+                        "release": "patch"
+                    },
+                    {
+                        "breaking": true,
+                        "release": "major"
+                    }
+                ]
+            }
+        ],
+        [
+            "@semantic-release/release-notes-generator",
+            {
+                "preset": "conventionalcommits",
+                "presetConfig": {
+                    "types": [
+                        {
+                            "type": "feat",
+                            "section": "🚀 Features"
+                        },
+                        {
+                            "type": "fix",
+                            "section": "🐛 Bug Fixes"
+                        },
+                        {
+                            "type": "perf",
+                            "section": "⚡ Performance Improvements"
+                        },
+                        {
+                            "type": "refactor",
+                            "section": "♻️ Code Refactoring"
+                        },
+                        {
+                            "type": "docs",
+                            "section": "📝 Documentation"
+                        },
+                        {
+                            "type": "chore",
+                            "section": "🔧 Maintenance"
+                        }
+                    ]
+                }
+            }
+        ],
+        [
+            "@semantic-release/changelog",
+            {
+                "changelogFile": "CHANGELOG.md"
+            }
+        ],
+        [
+            "@semantic-release/npm",
+            {
+                "npmPublish": false
+            }
+        ],
+        [
+            "@semantic-release/exec",
+            {
+                "prepareCmd": "node scripts/update-version.mjs ${nextRelease.version}"
+            }
+        ],
+        [
+            "@semantic-release/git",
+            {
+                "assets": [
+                    "manifest.json",
+                    "package.json",
+                    "versions.json",
+                    "CHANGELOG.md"
+                ],
+                "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+            }
+        ],
+        [
+            "@semantic-release/github",
+            {
+                "assets": [
+                    {
+                        "path": "main.js",
+                        "label": "Main Plugin File"
+                    },
+                    {
+                        "path": "manifest.json",
+                        "label": "Manifest"
+                    },
+                    {
+                        "path": "styles.css",
+                        "label": "Styles"
+                    }
+                ]
+            }
+        ]
+    ]
+}

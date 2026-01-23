@@ -20,8 +20,10 @@ styles.css
 !test/**/*.js
 !test/**/*.ts
 
-# Scripts (internal tooling)
-scripts/
+# Scripts (test/internal tooling only - keep release scripts)
+scripts/test-*
+scripts/debug-*
+scripts/open-coverage.js
 
 # Testing
 coverage/
@@ -169,3 +171,6 @@ typecheck_output.txt
 AGENTS.ko.md
 AGENTS.md
 CODE_OF_CONDUCT.md
+
+# Semantic Release
+.semantic-release-cache/
