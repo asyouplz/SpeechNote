@@ -1,16 +1,42 @@
 import { readFileSync, writeFileSync } from 'fs';
 
-const targetVersion = process.env.npm_package_version;
+function readJson(path, fsImpl) {
+    return JSON.parse(fsImpl.readFileSync(path, 'utf8'));
+}
 
-// Update manifest.json
-let manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
-const { minAppVersion } = manifest;
-manifest.version = targetVersion;
-writeFileSync('manifest.json', JSON.stringify(manifest, null, '\t'));
+function writeJson(path, data, fsImpl) {
+    fsImpl.writeFileSync(path, JSON.stringify(data, null, '\t'));
+}
 
-// Update versions.json
-let versions = JSON.parse(readFileSync('versions.json', 'utf8'));
-versions[targetVersion] = minAppVersion;
-writeFileSync('versions.json', JSON.stringify(versions, null, '\t'));
+export function updateVersion({
+    version,
+    manifestPath = 'manifest.json',
+    versionsPath = 'versions.json',
+    fsImpl = { readFileSync, writeFileSync },
+}) {
+    if (!version) {
+        throw new Error('No version provided. Ensure npm_package_version is set.');
+    }
 
-console.log(`Updated version to ${targetVersion}`);
+    const manifest = readJson(manifestPath, fsImpl);
+    const { minAppVersion } = manifest;
+
+    if (!minAppVersion) {
+        throw new Error('manifest.json is missing minAppVersion.');
+    }
+
+    manifest.version = version;
+    writeJson(manifestPath, manifest, fsImpl);
+
+    const versions = readJson(versionsPath, fsImpl);
+    versions[version] = minAppVersion;
+    writeJson(versionsPath, versions, fsImpl);
+
+    return { version, minAppVersion };
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+    const targetVersion = process.env.npm_package_version;
+    const { version } = updateVersion({ version: targetVersion });
+    console.log(`Updated version to ${version}`);
+}

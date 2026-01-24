@@ -13,7 +13,6 @@ on:
 
 permissions:
     contents: write
-    packages: write
 
 jobs:
     # 버전 검증
@@ -70,6 +69,12 @@ jobs:
 
             - name: Install dependencies
               run: npm ci
+
+            - name: Run lint, typecheck, and tests
+              run: |
+                  npm run lint
+                  npm run typecheck
+                  npm run test:ci
 
             - name: Build production bundle
               run: npm run build

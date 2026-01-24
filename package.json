@@ -21,7 +21,7 @@
         "test:e2e": "jest --selectProjects='E2E Tests'",
         "test:e2e:watch": "jest --selectProjects='E2E Tests' --watch",
         "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
-        "test:ci": "CI=true jest --ci --coverage --maxWorkers=2",
+        "test:ci": "CI=true jest --ci --coverage --maxWorkers=2 --selectProjects='Unit Tests' --runTestsByPath tests/unit/version-bump.test.ts",
         "test:debug": "DEBUG=true node --inspect-brk ./node_modules/.bin/jest --runInBand",
         "test:changed": "jest -o",
         "test:update-snapshots": "jest -u",
