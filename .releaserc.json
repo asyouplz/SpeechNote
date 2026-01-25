@@ -89,6 +89,7 @@
                 "assets": [
                     "manifest.json",
                     "package.json",
+                    "package-lock.json",
                     "versions.json",
                     "CHANGELOG.md"
                 ],

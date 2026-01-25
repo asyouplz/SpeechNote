@@ -1,8 +1,8 @@
 module.exports = {
     extends: ['@commitlint/config-conventional'],
     rules: {
-        // Subject line should be lowercase (conventional commits style)
-        'subject-case': [2, 'always', 'lower-case'],
+        // Subject line can be lowercase or sentence-case (more flexible)
+        'subject-case': [2, 'always', ['lower-case', 'sentence-case']],
         // Maximum subject line length
         'subject-max-length': [2, 'always', 72],
         // Maximum body line length

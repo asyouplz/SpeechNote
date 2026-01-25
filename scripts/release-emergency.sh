@@ -150,33 +150,9 @@ echo ""
 echo -e "${GREEN}✅ All checks passed${NC}"
 echo ""
 
-# Update version in files
+# Update version in files using the shared script
 echo "📝 Updating version files..."
-
-# Update manifest.json
-node -e "
-  const fs = require('fs');
-  const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
-  manifest.version = '${NEW_VERSION}';
-  fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, '\t') + '\n');
-"
-
-# Update package.json
-node -e "
-  const fs = require('fs');
-  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  pkg.version = '${NEW_VERSION}';
-  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 4) + '\n');
-"
-
-# Update versions.json
-MIN_APP_VERSION=$(node -p "require('./manifest.json').minAppVersion")
-node -e "
-  const fs = require('fs');
-  const versions = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
-  versions['${NEW_VERSION}'] = '${MIN_APP_VERSION}';
-  fs.writeFileSync('versions.json', JSON.stringify(versions, null, '\t') + '\n');
-"
+node scripts/update-version.mjs "${NEW_VERSION}" || { echo -e "${RED}❌ Version update failed${NC}"; exit 1; }
 
 echo -e "${GREEN}✅ Updated manifest.json, package.json, and versions.json${NC}"
 
