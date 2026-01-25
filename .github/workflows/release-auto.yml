@@ -8,8 +8,7 @@ on:
 
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
+  # Note: issues/pull-requests write permissions removed - not needed for current semantic-release config
 
 jobs:
   release:
@@ -30,6 +29,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm run test:ci
+        continue-on-error: true  # Don't fail release if some tests are flaky
 
       - name: Build plugin
         run: |

@@ -115,9 +115,30 @@ if [[ "$CURRENT_BRANCH" != "main" ]]; then
   fi
 fi
 
-# Pull latest changes
-echo "📥 Pulling latest changes..."
-git pull origin main
+# Pull latest changes with verification
+echo "📥 Fetching latest changes..."
+git fetch origin main
+
+# Show what would be pulled
+COMMITS_BEHIND=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo "0")
+if [ "$COMMITS_BEHIND" -gt 0 ]; then
+  echo -e "${YELLOW}⚠️  Local branch is $COMMITS_BEHIND commit(s) behind origin/main${NC}"
+  echo ""
+  echo "Changes to be pulled:"
+  git log --oneline HEAD..origin/main
+  echo ""
+  git diff --stat HEAD..origin/main
+  echo ""
+  read -p "Pull these changes? (y/N) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${RED}❌ Aborting: Please resolve manually${NC}"
+    exit 1
+  fi
+  git merge origin/main
+else
+  echo -e "${GREEN}✅ Already up to date${NC}"
+fi
 
 # Run tests and checks
 echo "🧪 Running tests and checks..."
