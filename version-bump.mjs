@@ -1,3 +1,16 @@
+/**
+ * @deprecated This file is being phased out.
+ * 
+ * Version updates are now handled by semantic-release via scripts/update-version.mjs
+ * This file is kept temporarily for emergency manual releases only.
+ * 
+ * To perform a release:
+ * - Automated: Merge PR to main branch (semantic-release handles everything)
+ * - Manual: Use the existing release.yml workflow with workflow_dispatch
+ * 
+ * This file will be removed after semantic-release is fully stable.
+ */
+
 import { readFileSync, writeFileSync } from 'fs';
 
 const targetVersion = process.env.npm_package_version;

@@ -1,0 +1,66 @@
+name: Automated Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  # Note: issues/pull-requests write permissions removed - not needed for current semantic-release config
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    # Skip workflow for semantic-release commits to prevent infinite loops
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Build plugin
+        run: |
+          npm run build
+          npm run build:css
+
+      - name: Verify build artifacts
+        run: |
+          for file in main.js manifest.json styles.css; do
+            if [ ! -s "$file" ]; then
+              echo "❌ $file is missing or empty"
+              exit 1
+            fi
+          done
+          
+          # Syntax check for main.js
+          node -c main.js || { echo "❌ main.js has syntax errors"; exit 1; }
+          
+          # Syntax check for manifest.json
+          node -e "JSON.parse(require('fs').readFileSync('manifest.json'))" || { echo "❌ manifest.json is invalid JSON"; exit 1; }
+          
+          echo "✅ All build artifacts present, non-empty, and syntax is valid"
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

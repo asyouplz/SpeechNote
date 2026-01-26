@@ -4,6 +4,7 @@
     "description": "Convert audio recordings to text in Obsidian using multiple AI providers (OpenAI Whisper, Deepgram)",
     "main": "main.js",
     "scripts": {
+        "prepare": "husky",
         "dev": "node esbuild.config.mjs",
         "build": "npx tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "build:css": "cat src/ui/styles/*.css styles/*.css > styles.css",
@@ -28,14 +29,16 @@
         "coverage:report": "node scripts/open-coverage.js",
         "coverage:clean": "rm -rf coverage .jest-cache",
         "pretest": "npm run lint && npm run typecheck",
+        "version:update": "node scripts/update-version.mjs",
+        "semantic-release": "semantic-release",
+        "release:dry-run": "semantic-release --dry-run",
+        "release:debug": "semantic-release --debug",
         "posttest": "npm run coverage:report",
-        "version": "node version-bump.mjs && git add manifest.json versions.json",
         "clean": "rm -rf main.js main.js.map coverage .jest-cache",
         "clean:all": "npm run clean && rm -rf node_modules",
         "typecheck": "npx tsc -noEmit",
         "validate": "npm run lint && npm run typecheck && npm run test",
-        "ci": "npm run validate && npm run build",
-        "prepare": "husky"
+        "ci": "npm run validate && npm run build"
     },
     "keywords": [
         "obsidian",
@@ -49,13 +52,20 @@
     "author": "Taesun Lee",
     "license": "MIT",
     "devDependencies": {
+        "@commitlint/cli": "^20.3.1",
+        "@commitlint/config-conventional": "^20.3.1",
         "@deepgram/sdk": "^3.9.0",
+        "@semantic-release/changelog": "^6.0.3",
+        "@semantic-release/exec": "^7.1.0",
+        "@semantic-release/git": "^10.0.1",
+        "@semantic-release/github": "^12.0.2",
         "@testing-library/jest-dom": "^6.9.1",
         "@types/jest": "^29.5.12",
         "@types/node": "^16.18.126",
         "@typescript-eslint/eslint-plugin": "^7.18.0",
         "@typescript-eslint/parser": "^7.18.0",
         "builtin-modules": "^3.3.0",
+        "conventional-changelog-conventionalcommits": "^9.1.0",
         "esbuild": "0.25.0",
         "eslint": "^8.42.0",
         "eslint-config-prettier": "^8.8.0",
@@ -74,12 +84,10 @@
         "lint-staged": "^16.2.7",
         "obsidian": "latest",
         "prettier": "^2.8.8",
+        "semantic-release": "^25.0.2",
         "ts-jest": "^29.1.0",
         "tslib": "^2.4.0",
         "typescript": "^4.9.5"
-    },
-    "overrides": {
-        "npm": "11.7.0"
     },
     "lint-staged": {
         "*.ts": [
