@@ -1,3 +1,40 @@
+## [4.0.0](https://github.com/asyouplz/SpeechNote/compare/v3.0.14...v4.0.0) (2026-01-26)
+
+### ⚠ BREAKING CHANGES
+
+* Manual version updates via version-bump.mjs will be deprecated.
+Use Conventional Commits format for all commits going forward.
+
+* fix: address code review feedback from Claude bot
+
+Addressing 8 issues identified in PR #54:
+- [P0/Critical] Disable version-bump.yml to prevent workflow conflicts
+- [P0/Critical] Remove persist-credentials: false from release-auto.yml
+- [P0/Critical] Remove deprecated version lifecycle hook in package.json
+- [P1/Important] Add semver and manifest validation to update-version.mjs
+- [P1/Important] Fix JSON formatting consistency in scripts
+- [P2/Optional] Enhance build artifact verification with file size checks
+- [P2/Optional] Rename release.sh to release-emergency.sh and add warning
+
+* fix: address final code review points and documentation updates
+
+* fix: address third round of code review feedback
+
+- Revert pre-commit hook to use lint-staged
+- Add file existence checks to update-version.mjs
+- Remove unnecessary npm override in package.json
+- Add syntax verification for build artifacts in release workflow
+
+### 🚀 Features
+
+* implement semantic-release automation ([#54](https://github.com/asyouplz/SpeechNote/issues/54)) ([240e125](https://github.com/asyouplz/SpeechNote/commit/240e125df5479cda9c084164494756ea87eafb38))
+
+### 🐛 Bug Fixes
+
+* make lint step resilient to eslint crashes ([2e3adc8](https://github.com/asyouplz/SpeechNote/commit/2e3adc8a5301bbd7b4c92e8b2b61dc8bd3746d51))
+* upgrade nodejs to v20 for semantic-release ([4dc3ae9](https://github.com/asyouplz/SpeechNote/commit/4dc3ae9abdf25ed9233f50b9c92c45fcbebaeb26))
+* upgrade nodejs to v22 for semantic-release v24 ([8c5ec24](https://github.com/asyouplz/SpeechNote/commit/8c5ec24f1b8c49996cb6df5f8bed5d88cee10e8f))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
