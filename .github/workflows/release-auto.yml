@@ -14,6 +14,8 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
+    # Skip workflow for semantic-release commits to prevent infinite loops
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     
     steps:
       - name: Checkout code
