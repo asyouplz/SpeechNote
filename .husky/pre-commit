@@ -1,1 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged for incremental checks on staged files
 npx lint-staged
+npm run format:check
