@@ -80,7 +80,13 @@
         [
             "@semantic-release/exec",
             {
-                "prepareCmd": "node scripts/update-version.mjs ${nextRelease.version} && npm install --package-lock-only"
+                "prepareCmd": "node scripts/update-version.mjs ${nextRelease.version}"
+            }
+        ],
+        [
+            "@semantic-release/exec",
+            {
+                "prepareCmd": "npm install --package-lock-only"
             }
         ],
         [
