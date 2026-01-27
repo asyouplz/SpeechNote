@@ -80,22 +80,20 @@ export class DeepgramLogger {
     }
 
     /**
-     * 그룹 로깅 시작
+     * 그룹 로깅 시작 - Using debug as group alternative
      */
     public group(label: string): void {
         if (this.enabled) {
-            // eslint-disable-next-line no-console
-            console.group(`${LOG_PREFIX} ${label}`);
+            console.debug(`${LOG_PREFIX} ▼ ${label}`);
         }
     }
 
     /**
-     * 그룹 로깅 종료
+     * 그룹 로깅 종료 - Using debug as groupEnd alternative
      */
     public groupEnd(): void {
         if (this.enabled) {
-            // eslint-disable-next-line no-console
-            console.groupEnd();
+            console.debug(`${LOG_PREFIX} ▲ [group end]`);
         }
     }
 
@@ -115,23 +113,31 @@ export class DeepgramLogger {
         return levels[level] >= levels[this.minLevel];
     }
 
+    private timers: Map<string, number> = new Map();
+
     /**
-     * 성능 측정 시작
+     * 성능 측정 시작 - Using Date.now as alternative to console.time
      */
     public time(label: string): void {
         if (this.enabled) {
-            // eslint-disable-next-line no-console
-            console.time(`${LOG_PREFIX} ${label}`);
+            this.timers.set(label, Date.now());
+            console.debug(`${LOG_PREFIX} ⏱ Timer started: ${label}`);
         }
     }
 
     /**
-     * 성능 측정 종료
+     * 성능 측정 종료 - Using Date.now as alternative to console.timeEnd
      */
     public timeEnd(label: string): void {
         if (this.enabled) {
-            // eslint-disable-next-line no-console
-            console.timeEnd(`${LOG_PREFIX} ${label}`);
+            const startTime = this.timers.get(label);
+            if (startTime !== undefined) {
+                const elapsed = Date.now() - startTime;
+                console.debug(`${LOG_PREFIX} ⏱ ${label}: ${elapsed}ms`);
+                this.timers.delete(label);
+            } else {
+                console.debug(`${LOG_PREFIX} ⏱ Timer '${label}' not found`);
+            }
         }
     }
 }

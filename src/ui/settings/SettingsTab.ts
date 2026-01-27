@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison -- Type guard pattern */
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison -- Type guard pattern uses string comparison with enum values for type narrowing */
 
 import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
@@ -106,7 +106,7 @@ export class SettingsTab extends PluginSettingTab {
             console.error('Error stack:', error instanceof Error ? error.stack : 'N/A');
 
             containerEl.empty();
-            new Setting(containerEl).setName('Settings error').setHeading();
+            new Setting(containerEl).setName('Error').setHeading();
             containerEl.createEl('p', {
                 text: 'Error loading settings. Please reload the plugin.',
                 cls: 'mod-warning',
@@ -703,3 +703,4 @@ export class SettingsTab extends PluginSettingTab {
         return key.substring(0, visibleStart) + masked + key.substring(key.length - visibleEnd);
     }
 }
+/* eslint-enable @typescript-eslint/no-unsafe-enum-comparison */

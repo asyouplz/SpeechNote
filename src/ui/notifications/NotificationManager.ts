@@ -28,10 +28,6 @@ interface NotificationChannel {
     dismissAll(): void;
 }
 
-const DOM_AVAILABLE =
-    typeof document !== 'undefined' && typeof document.createElement === 'function';
-const AUDIO_AVAILABLE = typeof Audio !== 'undefined';
-
 const createEl = (
     tag: string,
     options?: { cls?: string; text?: string; attr?: Record<string, string> }
@@ -55,6 +51,9 @@ const createEl = (
     }
     return element;
 };
+
+const DOM_AVAILABLE = typeof document !== 'undefined';
+const AUDIO_AVAILABLE = typeof Audio !== 'undefined';
 
 class NoopChannel implements NotificationChannel {
     send(): Promise<void> {
@@ -538,7 +537,7 @@ class ModalChannel implements NotificationChannel {
     }
 
     private generateId(): string {
-        return `modal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return `modal-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     }
 }
 
