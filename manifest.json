@@ -1,9 +1,9 @@
 {
-	"id": "speech-to-text",
+	"id": "speechnote",
 	"name": "Speech to Text",
 	"version": "4.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Convert audio recordings to text using multiple AI providers (OpenAI Whisper, Deepgram)",
+	"description": "Convert audio recordings to text in Obsidian using multiple AI providers (OpenAI Whisper, Deepgram)",
 	"author": "Taesun Lee",
 	"authorUrl": "https://github.com/asyouplz",
 	"fundingUrl": "",

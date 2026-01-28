@@ -1,4 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import { App, Plugin } from 'obsidian';
 import { DependencyContainer } from '../architecture/DependencyContainer';
 
@@ -19,18 +23,18 @@ export class MockFactory {
                 delete: jest.fn(),
                 rename: jest.fn(),
                 getAbstractFileByPath: jest.fn(),
-            } as any,
+            } as unknown as App['vault'],
             workspace: {
                 getActiveViewOfType: jest.fn(),
                 openLinkText: jest.fn(),
                 onLayoutReady: jest.fn((callback) => callback()),
                 layoutReady: true,
-                activeLeaf: null as any,
-            } as any,
+                activeLeaf: null,
+            } as unknown as App['workspace'],
             metadataCache: {
                 getFileCache: jest.fn(),
                 getCache: jest.fn(),
-            } as any,
+            } as unknown as App['metadataCache'],
         };
     }
 
@@ -40,7 +44,15 @@ export class MockFactory {
     static createMockPlugin(): Partial<Plugin> {
         return {
             app: MockFactory.createMockApp() as App,
-            manifest: { version: '1.0.0' } as any,
+            manifest: {
+                version: '1.0.0',
+                id: 'test',
+                name: 'Test',
+                author: 'Test',
+                description: 'Test',
+                minAppVersion: '0.0.0',
+                isDesktopOnly: false,
+            },
             addCommand: jest.fn(),
             addSettingTab: jest.fn(),
             addStatusBarItem: jest.fn().mockReturnValue({
@@ -59,8 +71,10 @@ export class MockFactory {
      */
     static createMockStatusBarItem(): HTMLElement {
         const element = createEl('div');
-        (element as any).setText = jest.fn();
-        (element as any).remove = jest.fn();
+        Object.assign(element, {
+            setText: jest.fn(),
+            remove: jest.fn(),
+        });
         return element;
     }
 
@@ -101,6 +115,7 @@ export class TestEnvironment {
      * 테스트 환경 설정
      */
     async setup(): Promise<void> {
+        await Promise.resolve(); // Ensure async for interface consistency
         // 의존성 등록
         this.container.registerInstance('App', this.mockApp);
         this.container.registerInstance('Plugin', this.mockPlugin);
@@ -142,6 +157,7 @@ export class TestEnvironment {
      * 테스트 환경 정리
      */
     async teardown(): Promise<void> {
+        await Promise.resolve(); // Ensure async for interface consistency
         this.container.dispose();
         jest.clearAllMocks();
     }
@@ -255,13 +271,14 @@ export class IntegrationTestUtils {
      * 플러그인 초기화 테스트
      */
     static async testPluginInitialization(
-        pluginClass: any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pluginClass: new (...args: any[]) => any,
         options: { expectSuccess: boolean } = { expectSuccess: true }
     ): Promise<void> {
         const env = new TestEnvironment();
         await env.setup();
 
-        const plugin = new pluginClass();
+        const plugin = new pluginClass(env.getMockApp(), env.getMockPlugin());
         plugin.app = env.getMockApp() as App;
 
         if (options.expectSuccess) {
@@ -278,8 +295,11 @@ export class IntegrationTestUtils {
      * UI 컴포넌트 테스트
      */
     static async testUIComponent(
-        componentClass: any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        componentClass: new (...args: any[]) => any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setupFn?: (component: any) => void
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): Promise<any> {
         const env = new TestEnvironment();
         await env.setup();
@@ -299,8 +319,11 @@ export class IntegrationTestUtils {
      * 서비스 테스트
      */
     static async testService(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         serviceClass: any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         dependencies: Record<string, any> = {}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ): Promise<any> {
         const env = new TestEnvironment();
         await env.setup();
@@ -310,6 +333,7 @@ export class IntegrationTestUtils {
             env.getContainer().registerInstance(key, value);
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         const service = env.getContainer().resolve(serviceClass);
 
         return { service, env };
