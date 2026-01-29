@@ -484,8 +484,9 @@ export function Benchmark(name?: string) {
         const isAsync = method.constructor.name === 'AsyncFunction';
         descriptor.value = function (this: unknown, ...args: unknown[]) {
             if (isAsync) {
-                return PerformanceBenchmark.measureAsync(metricName, () =>
-                    method.apply(this, args)
+                return PerformanceBenchmark.measureAsync(
+                    metricName,
+                    () => method.apply(this, args) as Promise<unknown>
                 );
             }
             return PerformanceBenchmark.measureSync(metricName, () => method.apply(this, args));

@@ -482,12 +482,16 @@ class ApiSettingsSection extends SectionRenderer {
             .setDesc('OpenAI API 키를 입력하세요. (sk-로 시작)');
 
         const inputContainer = setting.controlEl.createDiv('api-key-container');
+        const eventManager = this.eventManager;
+        if (!eventManager) {
+            return;
+        }
 
         // Create secure input
         const input = new SecureApiKeyInput(
             inputContainer,
             this.plugin.settings.apiKey,
-            this.eventManager
+            eventManager
         );
 
         input.onChange((value) => {

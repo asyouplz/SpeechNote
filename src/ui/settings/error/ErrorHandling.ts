@@ -81,7 +81,11 @@ function getRetryCallback(details: unknown): (() => void) | null {
     }
 
     const retry = details.retry;
-    return typeof retry === 'function' ? retry : null;
+    return typeof retry === 'function'
+        ? () => {
+              retry();
+          }
+        : null;
 }
 
 /**

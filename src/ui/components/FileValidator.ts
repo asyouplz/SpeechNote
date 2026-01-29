@@ -106,7 +106,7 @@ export class FileValidator {
     /**
      * 파일 검증 메인 메서드
      */
-    validate(file: TFile, buffer?: ArrayBuffer): ValidationResult {
+    validate(file: TFile, buffer?: ArrayBuffer): Promise<ValidationResult> {
         const errors: ValidationError[] = [];
         const warnings: ValidationWarning[] = [];
 
@@ -141,12 +141,12 @@ export class FileValidator {
         // 5. 메타데이터 추출
         const metadata = this.extractMetadata(file, buffer);
 
-        return {
+        return Promise.resolve({
             valid: errors.length === 0,
             errors: errors.length > 0 ? errors : undefined,
             warnings: warnings.length > 0 ? warnings : undefined,
             metadata,
-        };
+        });
     }
 
     /**
