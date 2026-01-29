@@ -240,8 +240,8 @@ export class FilePickerModalRefactored extends Modal {
     private setupEventHandlers(): void {
         // Drag and drop
         if (this.components.dragDropZone) {
-            this.components.dragDropZone.onFilesDropped(async (files) => {
-                await this.handleDroppedFiles(files);
+            this.components.dragDropZone.onFilesDropped((files) => {
+                void this.handleDroppedFiles(files);
             });
         }
 
@@ -365,7 +365,7 @@ export class FilePickerModalRefactored extends Modal {
     private async validateFile(file: TFile): Promise<ValidationResult> {
         try {
             const buffer = await this.app.vault.readBinary(file);
-            return await this.components.validator.validate(file, buffer);
+            return this.components.validator.validate(file, buffer);
         } catch (error) {
             const normalizedError = this.normalizeError(error);
             this.logger?.error('File validation failed', normalizedError);
@@ -432,7 +432,7 @@ export class FilePickerModalRefactored extends Modal {
     /**
      * 제출 처리 - 비동기 최적화
      */
-    private async handleSubmit(): Promise<void> {
+    private handleSubmit(): void {
         if (this.state.isProcessing || this.state.selectedFiles.length === 0) {
             return;
         }
@@ -441,10 +441,10 @@ export class FilePickerModalRefactored extends Modal {
         this.components.progressIndicator.show('파일 처리 중...', true);
 
         try {
-            const results = await this.processSelectedFiles();
+            const results = this.processSelectedFiles();
 
             if (results.length > 0) {
-                await this.saveRecentFiles(results);
+                this.saveRecentFiles(results);
                 this.onChoose(results);
                 this.close();
             } else {
@@ -524,7 +524,8 @@ export class FilePickerModalRefactored extends Modal {
      * 검증 에러 표시
      */
     private showValidationError(validation: ValidationResult): void {
-        const errors = validation.errors?.join('\n') || '알 수 없는 오류';
+        const errors =
+            validation.errors?.map((error) => error.message).join('\n') || '알 수 없는 오류';
         new Notice(`파일 검증 실패:\n${errors}`);
     }
 
@@ -532,7 +533,7 @@ export class FilePickerModalRefactored extends Modal {
      * 검증 경고 표시
      */
     private showValidationWarnings(validation: ValidationResult): void {
-        const warnings = validation.warnings?.join('\n') || '';
+        const warnings = validation.warnings?.map((warning) => warning.message).join('\n') || '';
         if (warnings) {
             new Notice(`경고:\n${warnings}`);
         }
@@ -761,7 +762,7 @@ class SelectedFilesListRenderer {
         } else {
             statusIcon.addClass('invalid');
             statusIcon.setText('✗');
-            statusIcon.title = validation.errors?.join('\n') || '';
+            statusIcon.title = validation.errors?.map((error) => error.message).join('\n') || '';
         }
     }
 
@@ -787,9 +788,9 @@ class SelectedFilesListRenderer {
 class AutoDisposableManager {
     private disposables: Set<{ dispose: () => void }> = new Set();
 
-    add(disposable: any): void {
-        if (disposable && typeof disposable.dispose === 'function') {
-            this.disposables.add(disposable);
+    add(disposable: unknown): void {
+        if (disposable && typeof (disposable as { dispose?: unknown }).dispose === 'function') {
+            this.disposables.add(disposable as { dispose: () => void });
         }
     }
 

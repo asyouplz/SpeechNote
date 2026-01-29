@@ -145,7 +145,10 @@ export class ObjectPool<T> {
      */
     private findAvailableObject(): T | null {
         while (this.available.length > 0) {
-            const obj = this.available.pop()!;
+            const obj = this.available.pop();
+            if (!obj) {
+                return null;
+            }
 
             // 유효성 검사
             if (!this.validate || this.validate(obj)) {
@@ -311,9 +314,7 @@ export class ObjectPool<T> {
  * 타입별 풀 매니저
  */
 export class PoolManager {
-    // Using any here to allow heterogeneous pool types under one registry
-    // without complex type gymnastics.
-    private static pools = new Map<string, ObjectPool<any>>();
+    private static pools = new Map<string, ObjectPool<unknown>>();
 
     /**
      * 풀 등록
@@ -321,11 +322,12 @@ export class PoolManager {
     static register<T>(name: string, options: PoolOptions<T>): ObjectPool<T> {
         if (this.pools.has(name)) {
             console.warn(`Pool '${name}' already exists`);
-            return this.pools.get(name)! as ObjectPool<T>;
+            const existing = this.pools.get(name);
+            return existing as ObjectPool<T>;
         }
 
         const pool = new ObjectPool(options);
-        this.pools.set(name, pool);
+        this.pools.set(name, pool as ObjectPool<unknown>);
         return pool;
     }
 

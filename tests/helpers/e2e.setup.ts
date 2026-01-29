@@ -16,6 +16,95 @@ global.TextDecoder = TextDecoder as any;
 
 jest.setTimeout(30000);
 
+if (typeof HTMLMediaElement !== 'undefined') {
+    Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+        configurable: true,
+        value: jest.fn().mockResolvedValue(undefined),
+    });
+    Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+        configurable: true,
+        value: jest.fn(),
+    });
+}
+
+const activeTimeouts = new Set<ReturnType<typeof setTimeout>>();
+const activeIntervals = new Set<ReturnType<typeof setInterval>>();
+const originalSetTimeout = global.setTimeout;
+const originalSetInterval = global.setInterval;
+const originalClearTimeout = global.clearTimeout;
+const originalClearInterval = global.clearInterval;
+const originalConsoleWarn = console.warn;
+const originalConsoleError = console.error;
+const originalConsoleInfo = console.info;
+const originalConsoleDebug = console.debug;
+const originalConsoleLog = console.log;
+
+const IGNORED_CONSOLE_WARNINGS = ['Workspace event API not available', '[E2E-Test]'];
+const IGNORED_CONSOLE_ERRORS = ['Critical error in render()', '[E2E-Test]'];
+const IGNORED_CONSOLE_INFO = [
+    'Whisper provider initialized',
+    'Deepgram provider initialized',
+    'Providers reinitialized with new configuration',
+];
+const IGNORED_CONSOLE_DEBUG = ['Deepgram provider not initialized: disabled or missing API key'];
+const IGNORED_CONSOLE_LOG = ['[DEBUG] Test message'];
+
+const shouldIgnoreConsoleMessage = (ignored: string[], args: unknown[]): boolean =>
+    args.some((arg) => typeof arg === 'string' && ignored.some((text) => arg.includes(text)));
+
+console.warn = (...args: unknown[]) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_WARNINGS, args)) {
+        return;
+    }
+    originalConsoleWarn(...args);
+};
+console.error = (...args: unknown[]) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_ERRORS, args)) {
+        return;
+    }
+    originalConsoleError(...args);
+};
+console.info = (...args: unknown[]) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_INFO, args)) {
+        return;
+    }
+    originalConsoleInfo(...args);
+};
+console.debug = (...args: unknown[]) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_DEBUG, args)) {
+        return;
+    }
+    originalConsoleDebug(...args);
+};
+console.log = (...args: unknown[]) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_LOG, args)) {
+        return;
+    }
+    originalConsoleLog(...args);
+};
+
+global.setTimeout = ((...args: Parameters<typeof setTimeout>) => {
+    const id = originalSetTimeout(...args);
+    activeTimeouts.add(id);
+    return id;
+}) as typeof setTimeout;
+
+global.setInterval = ((...args: Parameters<typeof setInterval>) => {
+    const id = originalSetInterval(...args);
+    activeIntervals.add(id);
+    return id;
+}) as typeof setInterval;
+
+global.clearTimeout = ((id: ReturnType<typeof setTimeout>) => {
+    activeTimeouts.delete(id);
+    return originalClearTimeout(id);
+}) as typeof clearTimeout;
+
+global.clearInterval = ((id: ReturnType<typeof setInterval>) => {
+    activeIntervals.delete(id);
+    return originalClearInterval(id);
+}) as typeof clearInterval;
+
 // Fetch API Mock
 global.fetch = jest.fn();
 
@@ -351,6 +440,11 @@ beforeEach(() => {
 
 // 테스트 완료 후 정리
 afterEach(() => {
+    activeTimeouts.forEach((id) => originalClearTimeout(id));
+    activeTimeouts.clear();
+    activeIntervals.forEach((id) => originalClearInterval(id));
+    activeIntervals.clear();
+
     jest.restoreAllMocks();
 });
 

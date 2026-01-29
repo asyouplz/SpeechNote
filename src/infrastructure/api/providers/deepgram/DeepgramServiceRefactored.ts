@@ -1,5 +1,6 @@
 import { requestUrl, RequestUrlParam } from 'obsidian';
 import type { ILogger } from '../../../../types';
+import { isPlainRecord } from '../../../../types/guards';
 import {
     DeepgramSpecificOptions,
     TranscriptionResponse,
@@ -225,7 +226,7 @@ export class DeepgramServiceRefactored {
                 return response.json as DeepgramAPIResponse;
             }
 
-            throw await this.handleApiError(response);
+            throw this.handleApiError(response);
         } catch (error) {
             if ((error as Error).name === 'AbortError') {
                 throw new TranscriptionError(
@@ -338,11 +339,14 @@ export class DeepgramServiceRefactored {
      */
     private handleApiError(response: {
         status: number;
-        json: any;
+        json?: unknown;
         headers?: Record<string, string>;
     }): never {
-        const errorBody = response.json;
-        const errorMessage = errorBody?.message ?? errorBody?.error ?? 'Unknown error';
+        const errorBody = isPlainRecord(response.json) ? response.json : undefined;
+        const errorMessage =
+            (typeof errorBody?.message === 'string' ? errorBody.message : undefined) ??
+            (typeof errorBody?.error === 'string' ? errorBody.error : undefined) ??
+            'Unknown error';
 
         this.config.logger.error(`Deepgram API Error: ${response.status}`, undefined, {
             status: response.status,
@@ -444,13 +448,17 @@ export class DeepgramServiceRefactored {
     /**
      * Check if error is retryable
      */
-    private isRetryableError = (error: any): boolean => {
+    private isRetryableError = (error: unknown): boolean => {
         if (error instanceof TranscriptionError) {
             return error.isRetryable;
         }
 
+        if (!(error instanceof Error)) {
+            return false;
+        }
+
         const retryableMessages = ['network', 'timeout', 'econnreset', 'socket'];
-        const message = error.message?.toLowerCase() ?? '';
+        const message = error.message.toLowerCase();
 
         return retryableMessages.some((msg) => message.includes(msg));
     };

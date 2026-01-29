@@ -189,6 +189,9 @@ export type RequiredKeys<T, K extends keyof T> = T & Required<Pick<T, K>>;
 
 export type OptionalKeys<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
 // Type guards
 export const isValidModelTier = (tier: string): tier is ModelTier => {
     return ['economy', 'basic', 'standard', 'premium', 'enterprise'].includes(tier);
@@ -204,19 +207,20 @@ export const isValidPerformanceSpeed = (speed: string): speed is PerformanceSpee
 
 // === 런타임 타입 검증 헬퍼들 ===
 export class TypeValidator {
-    static isDeepgramAPIResponse(obj: any): obj is DeepgramAPIResponse {
+    static isDeepgramAPIResponse(obj: unknown): obj is DeepgramAPIResponse {
         return (
-            obj &&
-            typeof obj === 'object' &&
-            obj.metadata &&
-            obj.results &&
+            isRecord(obj) &&
+            isRecord(obj.metadata) &&
+            isRecord(obj.results) &&
             Array.isArray(obj.results.channels)
         );
     }
 
-    static hasValidWord(word: any): word is DeepgramWord {
+    static hasValidWord(word: unknown): word is DeepgramWord {
+        if (!isRecord(word)) {
+            return false;
+        }
         return (
-            word &&
             typeof word.word === 'string' &&
             typeof word.start === 'number' &&
             typeof word.end === 'number' &&
@@ -228,18 +232,22 @@ export class TypeValidator {
         );
     }
 
-    static hasValidSpeakerInfo(word: any): boolean {
-        return word.speaker !== undefined && typeof word.speaker === 'number' && word.speaker >= 0;
+    static hasValidSpeakerInfo(word: unknown): boolean {
+        return (
+            isRecord(word) &&
+            word.speaker !== undefined &&
+            typeof word.speaker === 'number' &&
+            word.speaker >= 0
+        );
     }
 
-    static isValidDiarizationConfig(config: any): config is DiarizationConfigComplete {
+    static isValidDiarizationConfig(config: unknown): config is DiarizationConfigComplete {
         return (
-            config &&
-            typeof config === 'object' &&
+            isRecord(config) &&
             typeof config.enabled === 'boolean' &&
-            config.speakerLabels &&
-            config.merging &&
-            config.output
+            isRecord(config.speakerLabels) &&
+            isRecord(config.merging) &&
+            isRecord(config.output)
         );
     }
 }

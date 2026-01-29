@@ -392,8 +392,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the transcription service provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('openai', 'OpenAI Whisper')
-                    .addOption('azure', 'Azure Speech Services')
+                    .addOption('openai', 'OpenAI whisper')
+                    .addOption('azure', 'Azure speech services')
                     .addOption('custom', 'Custom endpoint');
 
                 void this.settingsAPI.get('api').then((api) => {
@@ -495,7 +495,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                         new Notice(`❌ ${error}`);
                     }
                 } catch (error) {
-                    new Notice('❌ Failed to validate API key');
+                    new Notice('❌ Failed to validate API key.');
                     console.error(error);
                 } finally {
                     validateBtn.disabled = false;
@@ -671,7 +671,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setName('Audio language')
             .setDesc('Language hint for better recognition')
             .addText((text) => {
-                text.setPlaceholder('auto');
+                text.setPlaceholder('Auto');
                 text.setValue(audio.language);
                 text.onChange(async (value) => {
                     audio.language = value;
@@ -721,7 +721,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
 
         new Setting(cacheSection)
-            .setName('Cache TTL')
+            .setName('Cache TTL (days)')
             .setDesc('Cache time-to-live in days')
             .addSlider((slider) => {
                 slider
@@ -904,7 +904,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
     private showAbout(container: HTMLElement): void {
         const section = container.createDiv({ cls: 'settings-section about-section' });
 
-        new Setting(section).setName('About speech to text').setHeading();
+        new Setting(section).setName('About').setHeading();
 
         // 버전 정보
         const versionInfo = section.createDiv({ cls: 'version-info' });
@@ -919,7 +919,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         const links = section.createDiv({ cls: 'about-links' });
 
         const githubLink = links.createEl('a', {
-            text: '📖 Documentation',
+            text: '📖 Documentation and guides',
             href: 'https://github.com/yourusername/obsidian-speech-to-text',
         });
         githubLink.setAttribute('target', '_blank');
@@ -927,7 +927,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         links.createEl('br');
 
         const issueLink = links.createEl('a', {
-            text: '🐛 Report issue',
+            text: '🐛 Report an issue',
             href: 'https://github.com/yourusername/obsidian-speech-to-text/issues',
         });
         issueLink.setAttribute('target', '_blank');
@@ -1199,7 +1199,7 @@ class HelpModal extends Modal {
     onOpen(): void {
         const { contentEl } = this;
 
-        new Setting(contentEl).setName('Speech to text help').setHeading();
+        new Setting(contentEl).setName('Help and support').setHeading();
 
         const helpContent = contentEl.createDiv({ cls: 'help-content' });
 

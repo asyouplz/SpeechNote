@@ -5,8 +5,10 @@
  * - 검증 실패 이벤트
  * - 진행 상태 이벤트
  */
+type EventCallback = (data?: unknown) => void;
+
 export class EventHandlers {
-    private eventListeners: Map<string, Set<Function>> = new Map();
+    private eventListeners: Map<string, Set<EventCallback>> = new Map();
     private eventHistory: EventHistoryEntry[] = [];
     private readonly MAX_HISTORY_SIZE = 100;
 
@@ -44,12 +46,15 @@ export class EventHandlers {
     /**
      * 이벤트 리스너 등록
      */
-    on(eventType: string, callback: Function): () => void {
+    on(eventType: string, callback: EventCallback): () => void {
         if (!this.eventListeners.has(eventType)) {
             this.eventListeners.set(eventType, new Set());
         }
 
-        this.eventListeners.get(eventType)!.add(callback);
+        const listeners = this.eventListeners.get(eventType);
+        if (listeners) {
+            listeners.add(callback);
+        }
 
         // 언등록 함수 반환
         return () => {
@@ -60,7 +65,7 @@ export class EventHandlers {
     /**
      * 이벤트 리스너 제거
      */
-    off(eventType: string, callback: Function) {
+    off(eventType: string, callback: EventCallback) {
         const listeners = this.eventListeners.get(eventType);
         if (listeners) {
             listeners.delete(callback);
@@ -70,9 +75,9 @@ export class EventHandlers {
     /**
      * 한 번만 실행되는 이벤트 리스너
      */
-    once(eventType: string, callback: Function): () => void {
-        const wrapper = (...args: any[]) => {
-            callback(...args);
+    once(eventType: string, callback: EventCallback): () => void {
+        const wrapper: EventCallback = (data) => {
+            callback(data);
             this.off(eventType, wrapper);
         };
 
@@ -82,7 +87,7 @@ export class EventHandlers {
     /**
      * 이벤트 발생
      */
-    emit(eventType: string, data?: any) {
+    emit(eventType: string, data?: unknown) {
         // 이벤트 기록
         this.recordEvent(eventType, data);
 
@@ -106,7 +111,7 @@ export class EventHandlers {
     /**
      * 이벤트 기록
      */
-    private recordEvent(eventType: string, data: any) {
+    private recordEvent(eventType: string, data: unknown) {
         this.eventHistory.push({
             type: eventType,
             data: data,
@@ -122,7 +127,7 @@ export class EventHandlers {
     /**
      * 파일 선택 이벤트 처리
      */
-    handleFileSelection(file: any) {
+    handleFileSelection(file: unknown) {
         this.emit('file:selected', {
             file: file,
             timestamp: Date.now(),
@@ -132,7 +137,7 @@ export class EventHandlers {
     /**
      * 파일 제거 이벤트 처리
      */
-    handleFileRemoval(file: any) {
+    handleFileRemoval(file: unknown) {
         this.emit('file:removed', {
             file: file,
             timestamp: Date.now(),
@@ -142,7 +147,7 @@ export class EventHandlers {
     /**
      * 파일 검증 성공 이벤트
      */
-    handleValidationSuccess(file: any, validation: any) {
+    handleValidationSuccess(file: unknown, validation: unknown) {
         this.emit('file:validated', {
             file: file,
             validation: validation,
@@ -153,7 +158,7 @@ export class EventHandlers {
     /**
      * 파일 검증 실패 이벤트
      */
-    handleValidationFailure(file: any, errors: string[]) {
+    handleValidationFailure(file: unknown, errors: string[]) {
         this.emit('file:validation-failed', {
             file: file,
             errors: errors,
@@ -268,7 +273,7 @@ export class EventHandlers {
     /**
      * 진행 중 에러
      */
-    errorProgress(error: any, message?: string) {
+    errorProgress(error: unknown, message?: string) {
         this.emit('progress:error', {
             error: error,
             message: message,
@@ -337,7 +342,7 @@ export class EventHandlers {
     /**
      * 디바운스된 이벤트 핸들러 생성
      */
-    debounce<T extends (...args: any[]) => void>(
+    debounce<T extends (...args: unknown[]) => void>(
         func: T,
         wait: number
     ): (...args: Parameters<T>) => void {
@@ -354,7 +359,7 @@ export class EventHandlers {
     /**
      * 쓰로틀된 이벤트 핸들러 생성
      */
-    throttle<T extends (...args: any[]) => void>(
+    throttle<T extends (...args: unknown[]) => void>(
         func: T,
         limit: number
     ): (...args: Parameters<T>) => void {
@@ -373,7 +378,7 @@ export class EventHandlers {
 // 타입 정의
 interface EventHistoryEntry {
     type: string;
-    data: any;
+    data: unknown;
     timestamp: number;
 }
 
@@ -390,13 +395,13 @@ interface KeyboardShortcuts {
 
 // 이벤트 타입 정의
 export type FileEvent = {
-    file: any;
+    file: unknown;
     timestamp: number;
 };
 
 export type ValidationEvent = {
-    file: any;
-    validation?: any;
+    file: unknown;
+    validation?: unknown;
     errors?: string[];
     timestamp: number;
 };
@@ -404,7 +409,7 @@ export type ValidationEvent = {
 export type ProgressEvent = {
     progress?: number;
     message?: string;
-    error?: any;
+    error?: unknown;
     timestamp: number;
 };
 

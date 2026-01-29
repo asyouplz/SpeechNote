@@ -217,7 +217,7 @@ export class MetricsTracker {
     /**
      * Format metrics for logging
      */
-    private formatMetrics(metric: ProviderMetrics): any {
+    private formatMetrics(metric: ProviderMetrics): Record<string, unknown> {
         return {
             provider: metric.provider,
             requests: {

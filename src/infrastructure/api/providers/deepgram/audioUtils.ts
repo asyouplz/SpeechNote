@@ -89,7 +89,10 @@ export class AudioValidator {
     /**
      * 기본 검증 수행
      */
-    private performBasicValidation(metadata: any, errors: string[]): void {
+    private performBasicValidation(
+        metadata: AudioValidationResult['metadata'],
+        errors: string[]
+    ): void {
         if (metadata.isEmpty) {
             errors.push(ERROR_MESSAGES.AUDIO_VALIDATION.EMPTY);
         }
@@ -106,7 +109,10 @@ export class AudioValidator {
     /**
      * 크기 관련 경고 수행
      */
-    private performSizeWarnings(metadata: any, warnings: string[]): void {
+    private performSizeWarnings(
+        metadata: AudioValidationResult['metadata'],
+        warnings: string[]
+    ): void {
         if (metadata.size < AUDIO_VALIDATION.SIZE_WARNING_THRESHOLD) {
             warnings.push(ERROR_MESSAGES.AUDIO_VALIDATION.VERY_SMALL_WARNING);
         }

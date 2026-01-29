@@ -17,6 +17,7 @@ import {
     ErrorSeverity,
     tryCatchAsync,
 } from '../../utils/error/ErrorManager';
+import { isPlainRecord } from '../../types/guards';
 
 /**
  * 개선된 설정 탭 UI 컴포넌트
@@ -34,7 +35,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
     private errorManager = GlobalErrorManager.getInstance();
 
     // 비동기 작업 관리
-    private pendingOperations = new Set<CancellablePromise<any>>();
+    private pendingOperations = new Set<CancellablePromise<boolean>>();
 
     // 디바운스된 저장 함수
     private debouncedSave = debounceAsync(() => this.plugin.saveSettings(), 500);
@@ -89,37 +90,30 @@ export class SettingsTabRefactored extends PluginSettingTab {
         containerEl.empty();
         containerEl.addClass('speech-to-text-settings');
 
-        void tryCatchAsync(
-            async () => {
-                await this.renderContent(containerEl);
+        void tryCatchAsync(() => Promise.resolve(this.renderContent(containerEl)), {
+            onError: (error) => {
+                void this.errorManager.handleError(error, {
+                    type: ErrorType.UNKNOWN,
+                    severity: ErrorSeverity.HIGH,
+                    userMessage: '설정 페이지를 불러오는 중 오류가 발생했습니다.',
+                });
             },
-            {
-                onError: (error) => {
-                    this.errorManager.handleError(error, {
-                        type: ErrorType.UNKNOWN,
-                        severity: ErrorSeverity.HIGH,
-                        userMessage: '설정 페이지를 불러오는 중 오류가 발생했습니다.',
-                    });
-                },
-            }
-        );
+        });
     }
 
     /**
      * 콘텐츠 렌더링
      */
-    private async renderContent(containerEl: HTMLElement): Promise<void> {
+    private renderContent(containerEl: HTMLElement): void {
         // 헤더
         this.createHeader(containerEl);
 
         // 섹션별 설정
-        await Promise.all([
-            this.createGeneralSection(containerEl),
-            this.createApiSection(containerEl),
-            this.createAudioSection(containerEl),
-            this.createAdvancedSection(containerEl),
-            this.createShortcutSection(containerEl),
-        ]);
+        this.createGeneralSection(containerEl);
+        this.createApiSection(containerEl);
+        this.createAudioSection(containerEl);
+        this.createAdvancedSection(containerEl);
+        this.createShortcutSection(containerEl);
 
         // 푸터
         this.createFooter(containerEl);
@@ -131,10 +125,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
     private createHeader(containerEl: HTMLElement): void {
         const headerEl = containerEl.createDiv({ cls: 'settings-header' });
 
-        headerEl.createEl('h2', {
-            text: 'Speech to Text 설정',
-            cls: 'settings-title',
-        });
+        new Setting(headerEl).setName('음성 전사 설정').setHeading();
 
         headerEl.createEl('p', {
             text: '음성을 텍스트로 변환하는 플러그인 설정을 구성합니다.',
@@ -202,77 +193,86 @@ export class SettingsTabRefactored extends PluginSettingTab {
             cls: 'mod-cta api-key-validate',
         });
 
-        this.eventManager.add(validateBtn, 'click', async () => {
-            const value = inputEl.value;
-            if (!value || value === this.maskApiKey(currentKey)) {
-                new Notice('API 키를 입력해주세요');
-                return;
-            }
-
-            validateBtn.disabled = true;
-            validateBtn.textContent = '검증 중...';
-
-            // 취소 가능한 Promise로 검증
-            const validation = new CancellablePromise<boolean>(async (resolve, reject, signal) => {
-                try {
-                    const validator = this.getComponent('apiKeyValidator', ApiKeyValidatorWrapper);
-                    if (!validator) {
-                        throw new Error('API 키 검증기를 불러오지 못했습니다');
-                    }
-                    const result = await withTimeout(
-                        validator.validate(value),
-                        10000,
-                        new Error('API 키 검증 시간 초과')
-                    );
-
-                    if (!signal.aborted) {
-                        resolve(result);
-                    }
-                } catch (error) {
-                    reject(error);
-                }
-            });
-
-            this.pendingOperations.add(validation);
-
-            try {
-                const isValid = await validation;
-
-                if (isValid) {
-                    this.plugin.settings.apiKey = value;
-                    await this.debouncedSave();
-                    new Notice('✅ API 키가 검증되었습니다');
-                    inputEl.setAttribute('data-valid', 'true');
-                } else {
-                    new Notice('❌ 유효하지 않은 API 키입니다');
-                    inputEl.setAttribute('data-valid', 'false');
-                }
-            } catch (error) {
-                this.errorManager.handleError(this.normalizeError(error), {
-                    type: ErrorType.VALIDATION,
-                    severity: ErrorSeverity.MEDIUM,
-                    userMessage: 'API 키 검증 중 오류가 발생했습니다.',
-                });
-            } finally {
-                this.pendingOperations.delete(validation);
-                validateBtn.disabled = false;
-                validateBtn.textContent = '검증';
-            }
-        });
-
-        // 입력 변경 시 저장 - 디바운스 적용
-        this.eventManager.add(inputEl, 'input', async () => {
-            const value = inputEl.value;
-            if (value && value !== this.maskApiKey(currentKey)) {
-                if (!value.startsWith('sk-')) {
-                    new Notice('API 키는 "sk-"로 시작해야 합니다');
+        this.eventManager.add(validateBtn, 'click', () => {
+            void (async () => {
+                const value = inputEl.value;
+                if (!value || value === this.maskApiKey(currentKey)) {
+                    new Notice('API 키를 입력해주세요');
                     return;
                 }
 
-                this.plugin.settings.apiKey = value;
-                await this.debouncedSave();
-                inputEl.setAttribute('data-has-value', 'true');
-            }
+                validateBtn.disabled = true;
+                validateBtn.textContent = '검증 중...';
+
+                // 취소 가능한 Promise로 검증
+                const validation = new CancellablePromise<boolean>((resolve, reject, signal) => {
+                    void (async () => {
+                        try {
+                            const validator = this.getComponent(
+                                'apiKeyValidator',
+                                ApiKeyValidatorWrapper
+                            );
+                            if (!validator) {
+                                throw new Error('API 키 검증기를 불러오지 못했습니다');
+                            }
+                            const result = await withTimeout(
+                                validator.validate(value),
+                                10000,
+                                new Error('API 키 검증 시간 초과')
+                            );
+
+                            if (!signal.aborted) {
+                                resolve(result);
+                            }
+                        } catch (error) {
+                            reject(error);
+                        }
+                    })();
+                });
+
+                this.pendingOperations.add(validation);
+
+                try {
+                    const isValid = await validation;
+
+                    if (isValid) {
+                        this.plugin.settings.apiKey = value;
+                        await this.debouncedSave();
+                        new Notice('✅ API 키가 검증되었습니다');
+                        inputEl.setAttribute('data-valid', 'true');
+                    } else {
+                        new Notice('❌ 유효하지 않은 API 키입니다');
+                        inputEl.setAttribute('data-valid', 'false');
+                    }
+                } catch (error) {
+                    void this.errorManager.handleError(this.normalizeError(error), {
+                        type: ErrorType.VALIDATION,
+                        severity: ErrorSeverity.MEDIUM,
+                        userMessage: 'API 키 검증 중 오류가 발생했습니다.',
+                    });
+                } finally {
+                    this.pendingOperations.delete(validation);
+                    validateBtn.disabled = false;
+                    validateBtn.textContent = '검증';
+                }
+            })();
+        });
+
+        // 입력 변경 시 저장 - 디바운스 적용
+        this.eventManager.add(inputEl, 'input', () => {
+            void (async () => {
+                const value = inputEl.value;
+                if (value && value !== this.maskApiKey(currentKey)) {
+                    if (!value.startsWith('sk-')) {
+                        new Notice('API 키는 "sk-"로 시작해야 합니다');
+                        return;
+                    }
+
+                    this.plugin.settings.apiKey = value;
+                    await this.debouncedSave();
+                    inputEl.setAttribute('data-has-value', 'true');
+                }
+            })();
         });
 
         this.createApiUsageDisplay(sectionEl);
@@ -316,10 +316,10 @@ export class SettingsTabRefactored extends PluginSettingTab {
         // 설정 내보내기
         const exportBtn = new ButtonComponent(exportImportEl).setButtonText('설정 내보내기');
 
-        this.eventManager.add(exportBtn.buttonEl, 'click', async () => {
-            await tryCatchAsync(() => this.exportSettings(), {
+        this.eventManager.add(exportBtn.buttonEl, 'click', () => {
+            void tryCatchAsync(() => this.exportSettings(), {
                 onError: (error) => {
-                    this.errorManager.handleError(error, {
+                    void this.errorManager.handleError(error, {
                         type: ErrorType.UNKNOWN,
                         severity: ErrorSeverity.LOW,
                         userMessage: '설정 내보내기에 실패했습니다.',
@@ -331,10 +331,10 @@ export class SettingsTabRefactored extends PluginSettingTab {
         // 설정 가져오기
         const importBtn = new ButtonComponent(exportImportEl).setButtonText('설정 가져오기');
 
-        this.eventManager.add(importBtn.buttonEl, 'click', async () => {
-            await tryCatchAsync(() => this.importSettings(), {
+        this.eventManager.add(importBtn.buttonEl, 'click', () => {
+            void tryCatchAsync(() => this.importSettings(), {
                 onError: (error) => {
-                    this.errorManager.handleError(error, {
+                    void this.errorManager.handleError(error, {
                         type: ErrorType.UNKNOWN,
                         severity: ErrorSeverity.LOW,
                         userMessage: '설정 가져오기에 실패했습니다.',
@@ -348,11 +348,13 @@ export class SettingsTabRefactored extends PluginSettingTab {
             .setButtonText('기본값으로 초기화')
             .setWarning();
 
-        this.eventManager.add(resetBtn.buttonEl, 'click', async () => {
-            const confirmed = await this.confirmReset();
-            if (confirmed) {
-                await this.resetSettings();
-            }
+        this.eventManager.add(resetBtn.buttonEl, 'click', () => {
+            void (async () => {
+                const confirmed = await this.confirmReset();
+                if (confirmed) {
+                    await this.resetSettings();
+                }
+            })();
         });
 
         // 버전 정보
@@ -379,7 +381,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
         });
 
         const headerEl = sectionEl.createDiv({ cls: 'section-header' });
-        headerEl.createEl('h3', { text: title });
+        new Setting(headerEl).setName(title).setHeading();
         headerEl.createEl('p', { text: desc, cls: 'section-description' });
 
         return sectionEl.createDiv({ cls: 'section-content' });
@@ -391,7 +393,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
     private createApiUsageDisplay(containerEl: HTMLElement): void {
         const usageEl = containerEl.createDiv({ cls: 'api-usage-display' });
 
-        usageEl.createEl('h4', { text: 'API 사용량' });
+        new Setting(usageEl).setName('API 사용량').setHeading();
 
         const statsEl = usageEl.createDiv({ cls: 'usage-stats' });
 
@@ -490,9 +492,9 @@ export class SettingsTabRefactored extends PluginSettingTab {
      * 설정 내보내기
      */
     private exportSettings(): Promise<void> {
-        const exportSettings = { ...this.plugin.settings };
-        delete (exportSettings as any).apiKey;
-        delete (exportSettings as any).encryptedApiKey;
+        const exportSettings: Record<string, unknown> = { ...this.plugin.settings };
+        delete exportSettings.apiKey;
+        delete exportSettings.encryptedApiKey;
 
         const json = JSON.stringify(exportSettings, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
@@ -538,10 +540,13 @@ export class SettingsTabRefactored extends PluginSettingTab {
 
         const file = await filePromise;
         const text = await file.text();
-        const settings = JSON.parse(text);
+        const parsed = JSON.parse(text) as unknown;
+        if (!isPlainRecord(parsed)) {
+            throw new Error('Invalid settings data');
+        }
 
         const currentApiKey = this.plugin.settings.apiKey;
-        Object.assign(this.plugin.settings, settings);
+        Object.assign(this.plugin.settings, parsed);
 
         if (currentApiKey) {
             this.plugin.settings.apiKey = currentApiKey;
@@ -617,7 +622,7 @@ class ConfirmModalRefactored extends Modal {
     onOpen() {
         const { contentEl } = this;
 
-        contentEl.createEl('h2', { text: this.title });
+        new Setting(contentEl).setName(this.title).setHeading();
         contentEl.createEl('p', { text: this.message });
 
         const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });

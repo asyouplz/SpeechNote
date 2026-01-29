@@ -1,4 +1,4 @@
-import { App, PluginSettingTab } from 'obsidian';
+import { App, PluginSettingTab, Setting } from 'obsidian';
 import type SpeechToTextPlugin from '../../main';
 import { Logger } from '../../infrastructure/logging/Logger';
 import { IDisposable } from '../../architecture/DependencyContainer';
@@ -149,13 +149,14 @@ export class SettingsTabManager implements IDisposable {
     /**
      * 초기화 에러 처리
      */
-    private handleInitializationError(error: any): void {
+    private handleInitializationError(error: unknown): void {
         // 에러 타입에 따른 처리
-        if (error?.message?.includes('toLowerCase')) {
+        const message = error instanceof Error ? error.message : '';
+        if (message.includes('toLowerCase')) {
             this.logger.error(
                 'String method error detected, possibly due to incorrect parameter types'
             );
-        } else if (error?.message?.includes('undefined')) {
+        } else if (message.includes('undefined')) {
             this.logger.error('Undefined reference error, checking dependencies');
         }
 
@@ -243,7 +244,7 @@ class MinimalSettingsTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        containerEl.createEl('h2', { text: 'Speech to text settings' });
+        new Setting(containerEl).setName('Transcription settings').setHeading();
         containerEl.createEl('p', {
             text: 'Settings are temporarily unavailable. Please restart Obsidian if this persists.',
             cls: 'settings-error-message',

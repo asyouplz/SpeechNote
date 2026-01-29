@@ -14,7 +14,7 @@ export type MessageType = 'info' | 'success' | 'warning' | 'error' | 'progress';
 export interface StatusMessage {
     key: string;
     type: MessageType;
-    params?: Record<string, any>;
+    params?: Record<string, unknown>;
     timestamp?: number;
 }
 
@@ -264,14 +264,15 @@ export class MessageStore {
     /**
      * 메시지 가져오기
      */
-    static getMessage(key: string, lang: Language, params?: Record<string, any>): string {
+    static getMessage(key: string, lang: Language, params?: Record<string, unknown>): string {
         const message = this.messages[key]?.[lang] || key;
 
         if (!params) return message;
 
         // 파라미터 치환
-        return message.replace(/\{(\w+)\}/g, (match, param) => {
-            return params[param] !== undefined ? String(params[param]) : match;
+        return message.replace(/\{(\w+)\}/g, (match: string, param: string) => {
+            const value = params[param];
+            return value !== undefined ? String(value) : match;
         });
     }
 
@@ -606,7 +607,7 @@ export class StatusMessageManager {
     /**
      * 메시지 표시
      */
-    showMessage(key: string, type: MessageType = 'info', params?: Record<string, any>) {
+    showMessage(key: string, type: MessageType = 'info', params?: Record<string, unknown>) {
         if (!this.display) {
             console.warn('StatusMessageDisplay is not initialized');
             return;
@@ -623,35 +624,35 @@ export class StatusMessageManager {
     /**
      * 정보 메시지
      */
-    info(key: string, params?: Record<string, any>) {
+    info(key: string, params?: Record<string, unknown>) {
         this.showMessage(key, 'info', params);
     }
 
     /**
      * 성공 메시지
      */
-    success(key: string, params?: Record<string, any>) {
+    success(key: string, params?: Record<string, unknown>) {
         this.showMessage(key, 'success', params);
     }
 
     /**
      * 경고 메시지
      */
-    warning(key: string, params?: Record<string, any>) {
+    warning(key: string, params?: Record<string, unknown>) {
         this.showMessage(key, 'warning', params);
     }
 
     /**
      * 오류 메시지
      */
-    error(key: string, params?: Record<string, any>) {
+    error(key: string, params?: Record<string, unknown>) {
         this.showMessage(key, 'error', params);
     }
 
     /**
      * 진행 메시지
      */
-    progress(key: string, params?: Record<string, any>) {
+    progress(key: string, params?: Record<string, unknown>) {
         this.showMessage(key, 'progress', params);
     }
 

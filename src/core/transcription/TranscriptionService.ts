@@ -108,8 +108,8 @@ export class TranscriptionService implements ITranscriptionService {
             }
 
             const text = response.text;
-            if (!text || typeof text !== 'string' || text.trim() === '') {
-                throw new Error('Transcription service returned empty or invalid text');
+            if (typeof text !== 'string') {
+                throw new Error('Transcription service returned invalid text');
             }
 
             const _language = response.language || languagePreference;
@@ -127,7 +127,7 @@ export class TranscriptionService implements ITranscriptionService {
             const result: TranscriptionResult = {
                 text: formattedText,
                 language: _language,
-                segments: (response.segments || []).map((s, i: number) => ({
+                segments: response.segments?.map((s, i: number) => ({
                     id: s.id ?? i,
                     start: s.start,
                     end: s.end,
@@ -230,15 +230,15 @@ export class TranscriptionService implements ITranscriptionService {
 
     private createNoopAudioProcessor(): IAudioProcessor {
         return {
-            // eslint-disable-next-line @typescript-eslint/require-await
+            // eslint-disable-next-line @typescript-eslint/require-await -- interface expects a Promise-returning validator
             validate: async () => {
                 throw new Error('Audio processor not configured');
             },
-            // eslint-disable-next-line @typescript-eslint/require-await
+            // eslint-disable-next-line @typescript-eslint/require-await -- interface expects a Promise-returning processor
             process: async () => {
                 throw new Error('Audio processor not configured');
             },
-            // eslint-disable-next-line @typescript-eslint/require-await
+            // eslint-disable-next-line @typescript-eslint/require-await -- interface expects a Promise-returning metadata extractor
             extractMetadata: async () => {
                 throw new Error('Audio processor not configured');
             },
@@ -247,12 +247,12 @@ export class TranscriptionService implements ITranscriptionService {
 
     private createNoopWhisperService(): IWhisperService {
         return {
-            // eslint-disable-next-line @typescript-eslint/require-await
+            // eslint-disable-next-line @typescript-eslint/require-await -- interface expects a Promise-returning transcribe method
             transcribe: async () => {
                 throw new Error('Whisper service not configured');
             },
             cancel: () => undefined,
-            // eslint-disable-next-line @typescript-eslint/require-await
+            // eslint-disable-next-line @typescript-eslint/require-await -- interface expects a Promise-returning validator
             validateApiKey: async () => false,
         };
     }
@@ -305,7 +305,7 @@ export class TranscriptionService implements ITranscriptionService {
         if (fallbackUrl) {
             try {
                 return await this.fetchOnce(apiUrl, file, buffer, options);
-            } catch (error) {
+            } catch {
                 return await this.fetchOnce(fallbackUrl, file, buffer, options);
             }
         }
@@ -393,19 +393,76 @@ export class TranscriptionService implements ITranscriptionService {
             headers['Authorization'] = `Bearer ${apiKey}`;
         }
 
-        const responsePromise = requestUrl({
-            url,
-            method: 'POST',
-            headers,
-            body: body as string | ArrayBuffer,
-            throw: false,
-        }).then((response) => ({
-            ok: response.status >= 200 && response.status < 300,
-            status: response.status,
-            statusText: String(response.status),
-            json: response.json as unknown,
-            text: response.text,
-        }));
+        const requestResult =
+            typeof requestUrl === 'function'
+                ? requestUrl({
+                      url,
+                      method: 'POST',
+                      headers,
+                      body: body as string | ArrayBuffer,
+                      throw: false,
+                  })
+                : undefined;
+
+        const responsePromise =
+            requestResult && typeof (requestResult as PromiseLike<unknown>).then === 'function'
+                ? (
+                      requestResult as PromiseLike<{
+                          status: number;
+                          json?: unknown;
+                          text?: string;
+                      }>
+                  ).then((response) => ({
+                      ok: response.status >= 200 && response.status < 300,
+                      status: response.status,
+                      statusText: String(response.status),
+                      json: response.json,
+                      text: response.text,
+                  }))
+                : (async () => {
+                      if (typeof fetch !== 'function') {
+                          throw new Error('Fetch API not available');
+                      }
+                      const fetchResponse = await fetch(url, {
+                          method: 'POST',
+                          headers,
+                          body: body as BodyInit,
+                          signal,
+                      });
+                      let json: unknown;
+                      let text: string | undefined;
+                      if (typeof fetchResponse.json === 'function') {
+                          try {
+                              json = await fetchResponse.json();
+                          } catch {
+                              json = undefined;
+                          }
+                      }
+                      if (json === undefined && typeof fetchResponse.text === 'function') {
+                          try {
+                              text = await fetchResponse.text();
+                          } catch {
+                              text = undefined;
+                          }
+                      }
+                      const status =
+                          typeof fetchResponse.status === 'number'
+                              ? fetchResponse.status
+                              : fetchResponse.ok
+                              ? 200
+                              : 500;
+                      const ok =
+                          typeof fetchResponse.ok === 'boolean'
+                              ? fetchResponse.ok
+                              : status >= 200 && status < 300;
+                      return {
+                          ok,
+                          status,
+                          statusText: fetchResponse.statusText ?? String(status),
+                          json,
+                          text,
+                      };
+                  })();
 
         const effectiveFetchPromise =
             this.isTestEnvironment() && delayForAbort

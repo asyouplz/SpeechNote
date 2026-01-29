@@ -225,7 +225,7 @@ export class APIKeyManager {
             cls: 'key-visibility-toggle',
             attr: {
                 'aria-label': 'Toggle visibility',
-                title: 'Show/Hide API key',
+                title: 'Show/hide API key',
             },
         });
 
@@ -684,7 +684,7 @@ export class APIKeyManager {
      * Provider 이름 가져오기
      */
     private getProviderName(provider: TranscriptionProvider): string {
-        return provider === 'whisper' ? 'OpenAI Whisper' : 'Deepgram';
+        return provider === 'whisper' ? 'OpenAI whisper' : 'Deepgram';
     }
 
     /**
@@ -795,7 +795,7 @@ export class APIKeyManager {
         modal.titleEl.setText('Environment variable setup');
 
         const contentEl = modal.contentEl;
-        const instructions = contentEl.createDiv('env-var-instructions') as HTMLDivElement;
+        const instructions = contentEl.createDiv('env-var-instructions');
         instructions.createEl('p', { text: 'To use environment variables for API keys:' });
 
         const orderedList = instructions.createEl('ol');
@@ -903,12 +903,12 @@ export class APIKeyManager {
         if (this.plugin.settings.apiKey || this.plugin.settings.whisperApiKey) {
             try {
                 const key = this.plugin.settings.whisperApiKey || this.plugin.settings.apiKey;
-                const encryptedData = JSON.parse(key!) as unknown;
+                const encryptedData: unknown = JSON.parse(key);
                 if (isEncryptedData(encryptedData)) {
                     const decrypted = await this.encryptor.decrypt(encryptedData);
                     this.apiKeys.set('whisper', decrypted);
                 }
-            } catch (error) {
+            } catch {
                 // 암호화되지 않은 키일 수 있음 (마이그레이션)
                 const key = this.plugin.settings.apiKey;
                 if (key && !key.includes('*')) {
@@ -924,7 +924,7 @@ export class APIKeyManager {
                     const decrypted = await this.encryptor.decrypt(encryptedData);
                     this.apiKeys.set('deepgram', decrypted);
                 }
-            } catch (error) {
+            } catch {
                 // 암호화되지 않은 키일 수 있음
                 const key = this.plugin.settings.deepgramApiKey;
                 if (key && !key.includes('*')) {

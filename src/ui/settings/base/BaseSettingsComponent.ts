@@ -239,7 +239,7 @@ export class SettingsValidator {
 /**
  * 설정 상태 관리
  */
-export class SettingsState<T = any> {
+export class SettingsState<T = unknown> {
     private state: T;
     private listeners: Set<(state: T) => void> = new Set();
 

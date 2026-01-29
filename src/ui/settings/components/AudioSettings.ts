@@ -76,7 +76,7 @@ export class AudioSettings {
 
         // 온도 설정
         const temperatureSetting = new Setting(containerEl)
-            .setName('온도 (Temperature)')
+            .setName('온도 (temperature)')
             .setDesc('텍스트 생성의 창의성 수준 (0: 보수적, 1: 창의적)');
 
         const tempValue = containerEl.createDiv({ cls: 'temperature-value' });

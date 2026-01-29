@@ -4,7 +4,6 @@ const isDebug = process.env.DEBUG === 'true';
 const tsJestTransform = [
     'ts-jest',
     {
-        isolatedModules: true,
         tsconfig: {
             esModuleInterop: true,
             allowSyntheticDefaultImports: true,
@@ -81,7 +80,6 @@ module.exports = {
             testEnvironment: 'node',
             testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
             setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.js'],
-            testTimeout: 10000,
             coverageThreshold: {
                 global: {
                     branches: 50,
@@ -96,7 +94,6 @@ module.exports = {
             testEnvironment: 'node',
             testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
             setupFilesAfterEnv: ['<rootDir>/tests/helpers/testSetup.js'],
-            testTimeout: 15000,
             coverageThreshold: {
                 global: {
                     branches: 50,
@@ -112,7 +109,6 @@ module.exports = {
             testMatch: ['<rootDir>/tests/e2e/**/*.e2e.test.ts'],
             setupFilesAfterEnv: ['<rootDir>/tests/helpers/e2e.setup.ts'],
             maxWorkers: 1,
-            testTimeout: 30000,
             coverageThreshold: {
                 global: {
                     branches: 50,

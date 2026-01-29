@@ -1,5 +1,6 @@
 import { Notice, Platform } from 'obsidian';
 import type { App } from 'obsidian';
+import { isPlainRecord } from '../../../types/guards';
 
 /**
  * 에러 타입 정의
@@ -66,21 +67,25 @@ function normalizeError(error: unknown): Error {
 }
 
 function getFieldFromDetails(details: unknown): string | null {
-    if (!details || typeof details !== 'object') {
+    if (!isPlainRecord(details)) {
         return null;
     }
 
-    const field = Reflect.get(details, 'field');
+    const field = details.field;
     return typeof field === 'string' ? field : null;
 }
 
 function getRetryCallback(details: unknown): (() => void) | null {
-    if (!details || typeof details !== 'object') {
+    if (!isPlainRecord(details)) {
         return null;
     }
 
-    const retry = Reflect.get(details, 'retry');
-    return typeof retry === 'function' ? retry : null;
+    const retry = details.retry;
+    return typeof retry === 'function'
+        ? () => {
+              retry();
+          }
+        : null;
 }
 
 /**
@@ -310,7 +315,7 @@ export class ErrorBoundary {
      * 에러 세부사항 가져오기
      */
     private getErrorDetails(error: Error): string {
-        const details: any = {
+        const details: Record<string, unknown> = {
             name: error.name,
             message: this.getSafeErrorMessage(error),
             stack: error.stack?.split('\n').slice(0, 5).join('\n'),
@@ -393,8 +398,12 @@ export class ErrorBoundary {
      */
     private saveErrorLog(errorData: Record<string, unknown>): void {
         try {
-            const storedData = this.app.loadLocalStorage('settings-error-logs');
-            const logs = storedData ? JSON.parse(storedData) : [];
+            const storedDataRaw = this.app.loadLocalStorage('settings-error-logs') as unknown;
+            const storedData = typeof storedDataRaw === 'string' ? storedDataRaw : null;
+            const parsed = storedData ? (JSON.parse(storedData) as unknown) : [];
+            const logs: Record<string, unknown>[] = Array.isArray(parsed)
+                ? parsed.filter(isPlainRecord)
+                : [];
             logs.push(errorData);
 
             // 최대 50개의 로그만 유지

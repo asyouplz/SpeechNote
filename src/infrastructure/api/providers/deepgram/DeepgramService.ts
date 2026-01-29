@@ -1,5 +1,6 @@
 import { requestUrl, RequestUrlParam } from 'obsidian';
 import type { ILogger } from '../../../../types';
+import { isPlainRecord } from '../../../../types/guards';
 import {
     DeepgramSpecificOptions,
     TranscriptionResponse,
@@ -215,6 +216,10 @@ interface DeepgramAPIResponse {
     };
 }
 
+type DeepgramWord = NonNullable<
+    DeepgramAPIResponse['results']['channels'][number]['alternatives'][number]['words']
+>[number];
+
 // Rate Limiter 구현
 class RateLimiter {
     private queue: Array<() => void> = [];
@@ -345,13 +350,13 @@ class ExponentialBackoffRetry {
     constructor(private logger: ILogger) {}
 
     async execute<T>(operation: () => Promise<T>): Promise<T> {
-        let lastError: Error;
+        let lastError = new Error('Unknown error');
 
         for (let attempt = 0; attempt < this.maxRetries; attempt++) {
             try {
                 return await operation();
             } catch (error) {
-                lastError = error as Error;
+                lastError = error instanceof Error ? error : new Error(String(error));
 
                 if (!this.isRetryable(error)) {
                     throw error;
@@ -370,19 +375,22 @@ class ExponentialBackoffRetry {
         }
 
         throw new TranscriptionError(
-            `Deepgram operation failed after ${this.maxRetries} attempts: ${lastError!.message}`,
+            `Deepgram operation failed after ${this.maxRetries} attempts: ${lastError.message}`,
             'MAX_RETRIES_EXCEEDED',
             'deepgram',
             false
         );
     }
 
-    private isRetryable(error: any): boolean {
+    private isRetryable(error: unknown): boolean {
         if (error instanceof TranscriptionError) {
             return error.isRetryable;
         }
         // 네트워크 에러는 재시도 가능
-        return error.message?.toLowerCase().includes('network');
+        if (error instanceof Error) {
+            return error.message.toLowerCase().includes('network');
+        }
+        return false;
     }
 
     private calculateDelay(attempt: number): number {
@@ -654,7 +662,7 @@ export class DeepgramService {
 
                 return jsonResponse;
             } else {
-                throw await this.handleAPIError(response);
+                throw this.handleAPIError(response);
             }
         } catch (error) {
             if ((error as Error).name === 'AbortError') {
@@ -713,7 +721,7 @@ export class DeepgramService {
         }
 
         // Utterance segmentation improves speaker grouping with diarization
-        if ((options as any)?.utterances) {
+        if (options?.utterances) {
             params.append('utterances', 'true');
         }
 
@@ -761,10 +769,17 @@ export class DeepgramService {
         };
     }
 
-    private handleAPIError(response: any): never {
-        const errorBody = response.json;
-        const rawText = response.text;
-        const messageFromBody = errorBody?.message || errorBody?.error;
+    private handleAPIError(response: {
+        status: number;
+        json?: unknown;
+        text?: unknown;
+        headers?: Record<string, string>;
+    }): never {
+        const errorBody = isPlainRecord(response.json) ? response.json : undefined;
+        const rawText = typeof response.text === 'string' ? response.text : undefined;
+        const messageFromBody =
+            (typeof errorBody?.message === 'string' ? errorBody.message : undefined) ??
+            (typeof errorBody?.error === 'string' ? errorBody.error : undefined);
         const errorMessage =
             messageFromBody ||
             (typeof rawText === 'string' && rawText.length > 0 ? rawText : 'Unknown error');
@@ -1109,7 +1124,7 @@ export class DeepgramService {
                     diarizationEnabled: true,
                     diarizationStats,
                 }),
-            } as any, // 메타데이터 타입 확장 필요
+            },
         };
 
         this.logger.info('=== DeepgramService.parseResponse COMPLETE ===', {
@@ -1123,7 +1138,7 @@ export class DeepgramService {
         return result;
     }
 
-    private createSegmentsFromWords(words: any[]): TranscriptionSegment[] {
+    private createSegmentsFromWords(words: DeepgramWord[]): TranscriptionSegment[] {
         const segments: TranscriptionSegment[] = [];
         const wordsPerSegment = 10; // 10단어씩 세그먼트 생성
 
@@ -1134,11 +1149,14 @@ export class DeepgramService {
                     id: Math.floor(i / wordsPerSegment),
                     start: segmentWords[0].start,
                     end: segmentWords[segmentWords.length - 1].end,
-                    text: segmentWords.map((w: any) => w.word).join(' '),
+                    text: segmentWords.map((w) => w.word).join(' '),
                     confidence:
-                        segmentWords.reduce((acc: number, w: any) => acc + w.confidence, 0) /
+                        segmentWords.reduce((acc, w) => acc + w.confidence, 0) /
                         segmentWords.length,
-                    speaker: segmentWords[0].speaker,
+                    speaker:
+                        segmentWords[0].speaker !== undefined
+                            ? String(segmentWords[0].speaker)
+                            : undefined,
                 });
             }
         }

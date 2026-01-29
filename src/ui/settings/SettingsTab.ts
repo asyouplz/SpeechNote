@@ -152,7 +152,7 @@ export class SettingsTab extends PluginSettingTab {
 
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI Whisper')
+                        .addOption('whisper', 'OpenAI whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -316,7 +316,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('OpenAI API endpoint (leave default unless using custom endpoint)')
+            .setDesc('OpenAI API endpoint (leave the default unless using a custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')
@@ -354,7 +354,7 @@ export class SettingsTab extends PluginSettingTab {
         } catch (error) {
             console.error('Error rendering Deepgram settings:', error);
             deepgramContainer.createEl('p', {
-                text: 'Error loading Deepgram settings',
+                text: 'Error loading Deepgram settings.',
                 cls: 'mod-warning',
             });
         }
@@ -366,7 +366,7 @@ export class SettingsTab extends PluginSettingTab {
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('OpenAI API key')
-            .setDesc('Enter your OpenAI API key for Whisper transcription')
+            .setDesc('Enter your OpenAI API key for whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -377,7 +377,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('OpenAI API key saved');
+                            new Notice('OpenAI API key saved.');
                         }
                     });
 
@@ -410,7 +410,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('Deepgram API key saved');
+                            new Notice('Deepgram API key saved.');
                         }
                     });
 
@@ -439,9 +439,9 @@ export class SettingsTab extends PluginSettingTab {
         const descriptions = {
             auto: '🤖 Intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
             whisper:
-                '🎯 OpenAI Whisper - High-quality transcription with support for multiple languages. Best for general-purpose transcription.',
+                '🎯 OpenAI whisper - high-quality transcription with support for multiple languages. Best for general-purpose transcription.',
             deepgram:
-                '⚡ Deepgram - Fast, accurate transcription with advanced AI features. Best for real-time processing and speaker diarization.',
+                '⚡ Deepgram - fast, accurate transcription with advanced AI features. Best for real-time processing and speaker diarization.',
         };
 
         infoEl.createEl('p', { text: descriptions[provider] });
@@ -540,7 +540,7 @@ export class SettingsTab extends PluginSettingTab {
         new Setting(containerEl)
             .setName('Temperature')
             .setDesc(
-                'Sampling temperature (0-1). lower values make output more focused and deterministic'
+                'Sampling temperature (0-1). Lower values make output more focused and deterministic'
             )
             .addText((text) =>
                 text
@@ -608,8 +608,7 @@ export class SettingsTab extends PluginSettingTab {
                 button
                     .setButtonText('Reset')
                     .setWarning()
-                    // eslint-disable-next-line @typescript-eslint/require-await
-                    .onClick(async () => {
+                    .onClick(() => {
                         new ConfirmationModal(
                             this.app,
                             'Reset settings',
@@ -639,7 +638,7 @@ export class SettingsTab extends PluginSettingTab {
 
         // 감사 메시지
         containerEl.createEl('p', {
-            text: 'Thank you for using Speech to text! Your support helps keep this plugin free and actively maintained.',
+            text: 'Thank you for using speech-to-text! Your support helps keep this plugin free and actively maintained.',
             cls: 'setting-item-description',
         });
 

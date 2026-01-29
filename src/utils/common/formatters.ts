@@ -158,7 +158,7 @@ export function formatISODate(isoString: string, format = 'YYYY-MM-DD HH:mm'): s
             throw new Error('Invalid ISO date string');
         }
         return formatDate(date, format);
-    } catch (error) {
+    } catch {
         return isoString; // 파싱 실패 시 원본 반환
     }
 }

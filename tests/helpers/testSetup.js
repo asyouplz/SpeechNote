@@ -8,6 +8,88 @@ const { TextEncoder, TextDecoder } = require('util');
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
+jest.setTimeout(15000);
+
+const activeTimeouts = new Set();
+const activeIntervals = new Set();
+const originalSetTimeout = global.setTimeout;
+const originalSetInterval = global.setInterval;
+const originalClearTimeout = global.clearTimeout;
+const originalClearInterval = global.clearInterval;
+const originalConsoleWarn = console.warn;
+const originalConsoleError = console.error;
+const originalConsoleInfo = console.info;
+const originalConsoleDebug = console.debug;
+const originalConsoleLog = console.log;
+
+const IGNORED_CONSOLE_WARNINGS = ['Workspace event API not available', '[E2E-Test]'];
+const IGNORED_CONSOLE_ERRORS = ['Critical error in render()', '[E2E-Test]'];
+const IGNORED_CONSOLE_INFO = [
+    'Whisper provider initialized',
+    'Deepgram provider initialized',
+    'Providers reinitialized with new configuration',
+];
+const IGNORED_CONSOLE_DEBUG = ['Deepgram provider not initialized: disabled or missing API key'];
+const IGNORED_CONSOLE_LOG = ['[DEBUG] Test message'];
+
+const shouldIgnoreConsoleMessage = (ignored, args) =>
+    args.some(
+        (arg) => typeof arg === 'string' && ignored.some((text) => arg.includes(text))
+    );
+
+global.setTimeout = (...args) => {
+    const id = originalSetTimeout(...args);
+    activeTimeouts.add(id);
+    return id;
+};
+
+global.setInterval = (...args) => {
+    const id = originalSetInterval(...args);
+    activeIntervals.add(id);
+    return id;
+};
+
+global.clearTimeout = (id) => {
+    activeTimeouts.delete(id);
+    return originalClearTimeout(id);
+};
+
+global.clearInterval = (id) => {
+    activeIntervals.delete(id);
+    return originalClearInterval(id);
+};
+
+console.warn = (...args) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_WARNINGS, args)) {
+        return;
+    }
+    originalConsoleWarn(...args);
+};
+console.error = (...args) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_ERRORS, args)) {
+        return;
+    }
+    originalConsoleError(...args);
+};
+console.info = (...args) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_INFO, args)) {
+        return;
+    }
+    originalConsoleInfo(...args);
+};
+console.debug = (...args) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_DEBUG, args)) {
+        return;
+    }
+    originalConsoleDebug(...args);
+};
+console.log = (...args) => {
+    if (shouldIgnoreConsoleMessage(IGNORED_CONSOLE_LOG, args)) {
+        return;
+    }
+    originalConsoleLog(...args);
+};
+
 if (typeof globalThis.createEl !== 'function') {
     globalThis.createEl = (tag, options = {}) => {
         const el = document.createElement(tag);
@@ -193,9 +275,6 @@ expect.extend({
     },
 });
 
-// 테스트 타임아웃 설정
-jest.setTimeout(15000);
-
 globalThis.__JEST_FAKE_TIME = Date.now();
 
 if (typeof jest !== 'undefined' && typeof jest.advanceTimersByTime === 'function') {
@@ -229,6 +308,11 @@ if (typeof jest !== 'undefined' && typeof jest.advanceTimersByTime === 'function
 }
 
 afterEach(() => {
+    activeTimeouts.forEach((id) => originalClearTimeout(id));
+    activeTimeouts.clear();
+    activeIntervals.forEach((id) => originalClearInterval(id));
+    activeIntervals.clear();
+
     globalThis.__JEST_FAKE_TIME = Date.now();
     try {
         const { requestUrl } = require('obsidian');

@@ -23,6 +23,9 @@ interface ErrorStrategy {
     technicalDetails: string;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
 /**
  * Graceful Degradation 옵션
  */
@@ -130,9 +133,16 @@ export class DeepgramErrorHandler {
     /**
      * API 응답 에러를 적절한 예외로 변환
      */
-    handleAPIError(response: any): never {
-        const errorBody = response.json;
-        const errorMessage = errorBody?.message || errorBody?.error || 'Unknown error';
+    handleAPIError(response: {
+        status: number;
+        json?: unknown;
+        headers?: Record<string, string>;
+    }): never {
+        const errorBody = isRecord(response.json) ? response.json : undefined;
+        const errorMessage =
+            (typeof errorBody?.message === 'string' ? errorBody.message : undefined) ??
+            (typeof errorBody?.error === 'string' ? errorBody.error : undefined) ??
+            'Unknown error';
         const strategy = this.errorStrategies.get(response.status);
 
         this.logger.error(`Deepgram API Error: ${response.status} - ${errorMessage}`, undefined, {
@@ -254,7 +264,7 @@ export class DeepgramErrorHandler {
     /**
      * TranscriptionError 세부 분석
      */
-    private analyzeTranscriptionError(error: TranscriptionError, _context: any): ErrorAnalysis {
+    private analyzeTranscriptionError(error: TranscriptionError, _context: unknown): ErrorAnalysis {
         switch (error.code) {
             case 'SERVER_TIMEOUT':
                 return {
@@ -323,10 +333,10 @@ export class DeepgramErrorHandler {
      * Graceful Degradation 전략 적용
      */
     applyDegradation(
-        originalOptions: any,
+        originalOptions: Record<string, unknown>,
         degradationOptions: DegradationOptions,
         error: Error
-    ): Promise<any> {
+    ): Promise<Record<string, unknown>> {
         const degradedOptions = { ...originalOptions };
 
         this.logger.info('Applying graceful degradation', {
@@ -435,8 +445,8 @@ export class DeepgramErrorHandler {
     async executeRecoveryStrategy(
         error: Error,
         analysis: ErrorAnalysis,
-        retryFunction: () => Promise<any>
-    ): Promise<any> {
+        retryFunction: () => Promise<unknown>
+    ): Promise<unknown> {
         this.logger.info('Executing error recovery strategy', {
             error: error.message,
             category: analysis.category,

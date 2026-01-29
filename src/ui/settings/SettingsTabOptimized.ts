@@ -10,6 +10,7 @@ import { debounceAsync } from '../../utils/async/AsyncManager';
 import { GlobalErrorManager, ErrorType, ErrorSeverity } from '../../utils/error/ErrorManager';
 import { DEFAULT_SETTINGS } from '../../domain/models/Settings';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
+import { isPlainRecord } from '../../types/guards';
 
 /**
  * 최적화된 설정 탭 컴포넌트
@@ -75,7 +76,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
                 sectionRenderers: new Map(),
             };
         } catch (error) {
-            this.errorManager.handleError(this.normalizeError(error), {
+            void this.errorManager.handleError(this.normalizeError(error), {
                 type: ErrorType.RESOURCE,
                 severity: ErrorSeverity.HIGH,
                 context: { component: 'SettingsTab' },
@@ -107,7 +108,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
                 this.state.isDirty = false;
                 this.updateSaveStatus('saved');
             } catch (error) {
-                this.errorManager.handleError(this.normalizeError(error), {
+                void this.errorManager.handleError(this.normalizeError(error), {
                     type: ErrorType.RESOURCE,
                     severity: ErrorSeverity.MEDIUM,
                     userMessage: '설정 저장 실패',
@@ -170,8 +171,9 @@ export class SettingsTabOptimized extends PluginSettingTab {
     /**
      * 섹션 에러 처리
      */
-    private handleSectionError(sectionId: string, error: any): void {
-        this.errorManager.handleError(error, {
+    private handleSectionError(sectionId: string, error: unknown): void {
+        const normalizedError = error instanceof Error ? error : new Error(String(error));
+        void this.errorManager.handleError(normalizedError, {
             type: ErrorType.UNKNOWN,
             severity: ErrorSeverity.MEDIUM,
             context: { section: sectionId },
@@ -290,7 +292,7 @@ export class SettingsTabOptimized extends PluginSettingTab {
      */
     private createSection(container: HTMLElement, title: string, description: string): HTMLElement {
         const section = container.createDiv('settings-section');
-        section.createEl('h3', { text: title });
+        new Setting(section).setName(title).setHeading();
 
         if (description) {
             section.createEl('p', {
@@ -429,10 +431,7 @@ class SettingsHeader extends SectionRenderer {
     render(): void {
         const headerEl = this.container.createDiv({ cls: 'settings-header' });
 
-        headerEl.createEl('h2', {
-            text: 'Speech to Text 설정',
-            cls: 'settings-title',
-        });
+        new Setting(headerEl).setName('음성 전사 설정').setHeading();
 
         headerEl.createEl('p', {
             text: '음성을 텍스트로 변환하는 플러그인 설정을 구성합니다.',
@@ -469,7 +468,7 @@ class ApiSettingsSection extends SectionRenderer {
 
     private createSection(): HTMLElement {
         const section = this.container.createDiv('settings-section');
-        section.createEl('h3', { text: 'API' });
+        new Setting(section).setName('API').setHeading();
         section.createEl('p', {
             text: 'OpenAI API 설정',
             cls: 'setting-item-description',
@@ -483,27 +482,33 @@ class ApiSettingsSection extends SectionRenderer {
             .setDesc('OpenAI API 키를 입력하세요. (sk-로 시작)');
 
         const inputContainer = setting.controlEl.createDiv('api-key-container');
+        const eventManager = this.eventManager;
+        if (!eventManager) {
+            return;
+        }
 
         // Create secure input
         const input = new SecureApiKeyInput(
             inputContainer,
             this.plugin.settings.apiKey,
-            this.eventManager!
+            eventManager
         );
 
-        input.onChange(async (value) => {
-            if (this.validator) {
-                const isValid = await this.validator.validate(value);
-                this.state.validationStatus.set('apiKey', isValid);
+        input.onChange((value) => {
+            void (async () => {
+                if (this.validator) {
+                    const isValid = await this.validator.validate(value);
+                    this.state.validationStatus.set('apiKey', isValid);
 
-                if (isValid) {
-                    this.plugin.settings.apiKey = value;
-                    this.notifyChange();
-                    new Notice('✅ API 키가 검증되었습니다');
-                } else {
-                    new Notice('❌ 유효하지 않은 API 키입니다');
+                    if (isValid) {
+                        this.plugin.settings.apiKey = value;
+                        this.notifyChange();
+                        new Notice('✅ API 키가 검증되었습니다');
+                    } else {
+                        new Notice('❌ 유효하지 않은 API 키입니다');
+                    }
                 }
-            }
+            })();
         });
 
         input.render();
@@ -511,7 +516,7 @@ class ApiSettingsSection extends SectionRenderer {
 
     private createApiUsageDisplay(section: HTMLElement): void {
         const usageEl = section.createDiv('api-usage');
-        usageEl.createEl('h4', { text: 'API 사용량' });
+        new Setting(usageEl).setName('API 사용량').setHeading();
 
         // Placeholder for usage stats
         const statsEl = usageEl.createDiv('usage-stats');
@@ -692,7 +697,7 @@ class SettingsFooter extends SectionRenderer {
 
             URL.revokeObjectURL(url);
             new Notice('설정을 내보냈습니다');
-        } catch (error) {
+        } catch {
             new Notice('설정 내보내기 실패');
         }
     }
@@ -702,35 +707,40 @@ class SettingsFooter extends SectionRenderer {
         input.type = 'file';
         input.accept = '.json';
 
-        input.onchange = async (e) => {
-            const target = e.target;
-            if (!(target instanceof HTMLInputElement)) {
-                return;
-            }
-            const file = target.files?.[0];
-            if (!file) return;
+        input.onchange = (e) => {
+            void (async () => {
+                const target = e.target;
+                if (!(target instanceof HTMLInputElement)) {
+                    return;
+                }
+                const file = target.files?.[0];
+                if (!file) return;
 
-            try {
-                const text = await file.text();
-                const settings = JSON.parse(text);
+                try {
+                    const text = await file.text();
+                    const parsed = JSON.parse(text) as unknown;
+                    if (!isPlainRecord(parsed)) {
+                        throw new Error('Invalid settings data');
+                    }
 
-                // Validate and merge settings
-                Object.assign(this.plugin.settings, settings);
-                await this.plugin.saveSettings();
+                    // Validate and merge settings
+                    Object.assign(this.plugin.settings, parsed);
+                    await this.plugin.saveSettings();
 
-                new Notice('설정을 가져왔습니다');
+                    new Notice('설정을 가져왔습니다');
 
-                // Refresh UI - need to trigger parent component refresh
-                // This should be handled via event or callback
-            } catch (error) {
-                new Notice('설정 가져오기 실패');
-            }
+                    // Refresh UI - need to trigger parent component refresh
+                    // This should be handled via event or callback
+                } catch {
+                    new Notice('설정 가져오기 실패');
+                }
+            })();
         };
 
         input.click();
     }
 
-    private async resetSettings(): Promise<void> {
+    private resetSettings(): void {
         new ConfirmationModal(
             this.plugin.app,
             'Reset settings',
@@ -746,7 +756,7 @@ class SettingsFooter extends SectionRenderer {
                     // Refresh UI
                     // Note: We need to refresh the main settings tab, not from within footer
                     // This should be handled by the parent component
-                } catch (error) {
+                } catch {
                     new Notice('설정 재설정 실패');
                 }
             }

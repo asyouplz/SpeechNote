@@ -226,10 +226,10 @@ export class SettingsAPI implements ISettingsAPI {
             const encoder = new TextEncoder();
             const data = encoder.encode(json);
             const compressed = await this.compress(data);
-            return new Blob([compressed as any], { type: 'application/gzip' });
+            return new Blob([compressed], { type: 'application/gzip' });
         }
 
-        return new Blob([json as any], { type: 'application/json' });
+        return new Blob([json], { type: 'application/json' });
     }
 
     /**
@@ -281,7 +281,8 @@ export class SettingsAPI implements ISettingsAPI {
                 this.settings = importedSettings as SettingsSchema;
             } else {
                 // 기본: 안전한 병합 (API 키 제외)
-                const { api: _api, ...safeSettings } = importedSettings;
+                const safeSettings = { ...importedSettings };
+                delete safeSettings.api;
                 Object.assign(this.settings, safeSettings);
             }
 

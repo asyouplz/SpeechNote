@@ -350,7 +350,7 @@ export class ErrorBoundary {
             context,
         });
 
-        new Notice('Speech-to-Text plugin is experiencing issues. Please restart Obsidian.', 15000);
+        new Notice('Speech-to-text plugin is experiencing issues. Please restart Obsidian.', 15000);
 
         // 플러그인 비활성화 고려
         // this.plugin.unload();

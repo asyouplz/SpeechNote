@@ -271,8 +271,11 @@ export class IntegrationTestUtils {
      * 플러그인 초기화 테스트
      */
     static async testPluginInitialization(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        pluginClass: new (...args: any[]) => any,
+        pluginClass: new (...args: unknown[]) => {
+            onload: () => Promise<void>;
+            isLoaded?: boolean;
+            app?: App;
+        },
         options: { expectSuccess: boolean } = { expectSuccess: true }
     ): Promise<void> {
         const env = new TestEnvironment();
@@ -295,12 +298,11 @@ export class IntegrationTestUtils {
      * UI 컴포넌트 테스트
      */
     static async testUIComponent(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        componentClass: new (...args: any[]) => any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setupFn?: (component: any) => void
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ): Promise<any> {
+        componentClass: new (...args: unknown[]) => {
+            initialize: () => Promise<void>;
+        },
+        setupFn?: (component: { initialize: () => Promise<void> }) => void
+    ): Promise<{ component: { initialize: () => Promise<void> }; env: TestEnvironment }> {
         const env = new TestEnvironment();
         await env.setup();
 
@@ -319,12 +321,9 @@ export class IntegrationTestUtils {
      * 서비스 테스트
      */
     static async testService(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        serviceClass: any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        dependencies: Record<string, any> = {}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ): Promise<any> {
+        serviceToken: string | symbol | (new (...args: unknown[]) => unknown),
+        dependencies: Record<string, unknown> = {}
+    ): Promise<{ service: unknown; env: TestEnvironment }> {
         const env = new TestEnvironment();
         await env.setup();
 
@@ -333,8 +332,8 @@ export class IntegrationTestUtils {
             env.getContainer().registerInstance(key, value);
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        const service = env.getContainer().resolve(serviceClass);
+        const token = serviceToken as unknown as string | symbol;
+        const service = env.getContainer().resolve(token);
 
         return { service, env };
     }
