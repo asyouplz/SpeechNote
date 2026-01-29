@@ -11,7 +11,7 @@ export class WhisperAPIError extends Error {
         message: string,
         public readonly code: string,
         public readonly status?: number,
-        public readonly isRetryable: boolean = false
+        public readonly isRetryable = false
     ) {
         super(message);
         this.name = 'WhisperAPIError';
@@ -405,7 +405,7 @@ export class WhisperService implements IWhisperService {
                 })
             );
 
-            const response = await requestUrl(requestParams);
+            const response = await this.executeRequest(requestParams, formData);
             const processingTime = Date.now() - startTime;
 
             this.logger.info(`Transcription completed in ${processingTime}ms`, {
@@ -484,6 +484,90 @@ export class WhisperService implements IWhisperService {
             throw: false,
         } as RequestUrlParam & { timeout: number };
         return requestParams;
+    }
+
+    private async executeRequest(
+        requestParams: RequestUrlParam & { timeout?: number },
+        formData: FormData
+    ): Promise<{
+        status: number;
+        headers?: Record<string, string>;
+        json?: unknown;
+        text?: string;
+    }> {
+        const requestResult =
+            typeof requestUrl === 'function' ? requestUrl(requestParams) : undefined;
+
+        if (requestResult && typeof (requestResult as PromiseLike<unknown>).then === 'function') {
+            const response = await requestResult;
+            return {
+                status: response.status,
+                headers: response.headers,
+                json: response.json as unknown,
+                text: response.text,
+            };
+        }
+
+        if (typeof fetch !== 'function') {
+            throw new Error('Fetch API not available');
+        }
+
+        const controller = this.abortController;
+        const timeoutMs =
+            typeof requestParams.timeout === 'number' ? requestParams.timeout : this.timeoutMs;
+        const timeoutId =
+            timeoutMs > 0 && controller
+                ? window.setTimeout(() => controller.abort(), timeoutMs)
+                : undefined;
+
+        try {
+            const fetchResponse = await fetch(requestParams.url, {
+                method: requestParams.method,
+                headers: requestParams.headers as HeadersInit,
+                body: (requestParams.body as BodyInit) ?? (formData as BodyInit),
+                signal: controller?.signal,
+            });
+
+            let json: unknown;
+            let text: string | undefined;
+            if (typeof fetchResponse.json === 'function') {
+                try {
+                    json = await fetchResponse.json();
+                } catch {
+                    json = undefined;
+                }
+            }
+            if (json === undefined && typeof fetchResponse.text === 'function') {
+                try {
+                    text = await fetchResponse.text();
+                } catch {
+                    text = undefined;
+                }
+            }
+
+            const headers: Record<string, string> = {};
+            if (fetchResponse.headers) {
+                fetchResponse.headers.forEach((value, key) => {
+                    headers[key.toLowerCase()] = value;
+                });
+            }
+
+            return {
+                status:
+                    typeof fetchResponse.status === 'number'
+                        ? fetchResponse.status
+                        : fetchResponse.ok
+                        ? 200
+                        : 500,
+                headers,
+                json,
+                text,
+            };
+        } finally {
+            if (timeoutId !== undefined) {
+                clearTimeout(timeoutId);
+            }
+        }
     }
 
     private parseResponse(json: unknown, processingTime: number): WhisperResponse {
@@ -588,7 +672,7 @@ export class WhisperService implements IWhisperService {
                     const result = await request();
                     resolve(result);
                 } catch (error) {
-                    reject(error);
+                    reject(error instanceof Error ? error : new Error(String(error)));
                 }
             };
 

@@ -107,7 +107,7 @@ export class RetryHandler {
     /**
      * Default retry condition
      */
-    private defaultRetryCondition(error: unknown): boolean {
+    private defaultRetryCondition(this: void, error: unknown): boolean {
         // Retry on network errors
         if (error instanceof Error && error.message?.toLowerCase().includes('network')) {
             return true;
@@ -120,8 +120,8 @@ export class RetryHandler {
 
         // Retry on specific HTTP status codes
         const statusCode =
-            typeof error === 'object' && error !== null
-                ? Reflect.get(error, 'statusCode')
+            typeof error === 'object' && error !== null && 'statusCode' in error
+                ? (error as { statusCode?: unknown }).statusCode
                 : undefined;
         if (typeof statusCode === 'number') {
             const retryableCodes = [408, 429, 500, 502, 503, 504];
@@ -130,8 +130,8 @@ export class RetryHandler {
 
         // Don't retry on explicit non-retryable errors
         const isRetryable =
-            typeof error === 'object' && error !== null
-                ? Reflect.get(error, 'isRetryable')
+            typeof error === 'object' && error !== null && 'isRetryable' in error
+                ? (error as { isRetryable?: unknown }).isRetryable
                 : undefined;
         if (isRetryable === false) {
             return false;

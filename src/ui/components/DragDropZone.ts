@@ -87,10 +87,10 @@ export class DragDropZone {
         if (!this.dropZone) return;
 
         // 드래그 이벤트
-        this.dropZone.addEventListener('dragenter', this.handleDragEnter.bind(this));
-        this.dropZone.addEventListener('dragleave', this.handleDragLeave.bind(this));
-        this.dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
-        this.dropZone.addEventListener('drop', this.handleDrop.bind(this));
+        this.dropZone.addEventListener('dragenter', this.handleDragEnter);
+        this.dropZone.addEventListener('dragleave', this.handleDragLeave);
+        this.dropZone.addEventListener('dragover', this.handleDragOver);
+        this.dropZone.addEventListener('drop', this.handleDrop);
 
         // 전체 문서에 대한 드래그 방지
         document.addEventListener('dragover', this.preventDefaultDrag);
@@ -103,10 +103,10 @@ export class DragDropZone {
     private detachEventListeners() {
         if (!this.dropZone) return;
 
-        this.dropZone.removeEventListener('dragenter', this.handleDragEnter.bind(this));
-        this.dropZone.removeEventListener('dragleave', this.handleDragLeave.bind(this));
-        this.dropZone.removeEventListener('dragover', this.handleDragOver.bind(this));
-        this.dropZone.removeEventListener('drop', this.handleDrop.bind(this));
+        this.dropZone.removeEventListener('dragenter', this.handleDragEnter);
+        this.dropZone.removeEventListener('dragleave', this.handleDragLeave);
+        this.dropZone.removeEventListener('dragover', this.handleDragOver);
+        this.dropZone.removeEventListener('drop', this.handleDrop);
 
         document.removeEventListener('dragover', this.preventDefaultDrag);
         document.removeEventListener('drop', this.preventDefaultDrag);
@@ -115,7 +115,7 @@ export class DragDropZone {
     /**
      * 드래그 진입 처리
      */
-    private handleDragEnter(e: DragEvent) {
+    private readonly handleDragEnter = (e: DragEvent): void => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -127,12 +127,12 @@ export class DragDropZone {
                 this.setDragging(true);
             }
         }
-    }
+    };
 
     /**
      * 드래그 떠남 처리
      */
-    private handleDragLeave(e: DragEvent) {
+    private readonly handleDragLeave = (e: DragEvent): void => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -141,24 +141,24 @@ export class DragDropZone {
         if (this.dragCounter === 0) {
             this.setDragging(false);
         }
-    }
+    };
 
     /**
      * 드래그 오버 처리
      */
-    private handleDragOver(e: DragEvent) {
+    private readonly handleDragOver = (e: DragEvent): void => {
         e.preventDefault();
         e.stopPropagation();
 
         if (e.dataTransfer) {
             e.dataTransfer.dropEffect = 'copy';
         }
-    }
+    };
 
     /**
      * 드롭 처리
      */
-    private handleDrop(e: DragEvent) {
+    private readonly handleDrop = (e: DragEvent): void => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -169,14 +169,14 @@ export class DragDropZone {
         if (files.length > 0) {
             this.handleFiles(files);
         }
-    }
+    };
 
     /**
      * 기본 드래그 동작 방지
      */
-    private preventDefaultDrag(e: Event) {
+    private readonly preventDefaultDrag = (e: Event): void => {
         e.preventDefault();
-    }
+    };
 
     /**
      * 드래그 상태 설정

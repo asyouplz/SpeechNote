@@ -186,7 +186,7 @@ export class ResourcePool<T extends IDisposable> {
 
     async dispose(): Promise<void> {
         const allResources = [...this.available, ...this.inUse];
-        await Promise.all(allResources.map((r) => r.dispose()));
+        await Promise.all(allResources.map((r) => Promise.resolve(r.dispose())));
         this.available = [];
         this.inUse.clear();
     }

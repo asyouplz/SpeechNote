@@ -40,7 +40,7 @@ export class ShortcutSettings {
                 button
                     .setButtonText('기본값 복원')
                     .setWarning()
-                    .onClick(async () => {
+                    .onClick(() => {
                         new ConfirmationModal(
                             this.app,
                             '단축키 초기화',
@@ -327,7 +327,10 @@ export class ShortcutSettings {
             if (!keyMap.has(info.key)) {
                 keyMap.set(info.key, []);
             }
-            keyMap.get(info.key)!.push(commandId);
+            const commands = keyMap.get(info.key);
+            if (commands) {
+                commands.push(commandId);
+            }
         });
 
         const conflicts: Array<{ key: string; commands: string[] }> = [];

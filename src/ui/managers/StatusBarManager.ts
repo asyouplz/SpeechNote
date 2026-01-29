@@ -1,4 +1,5 @@
 import { Plugin } from 'obsidian';
+import type { AppState } from '../../types';
 import { Logger } from '../../infrastructure/logging/Logger';
 import { StateManager } from '../../application/StateManager';
 import { IDisposable } from '../../architecture/DependencyContainer';
@@ -107,7 +108,7 @@ export class StatusBarManager implements IDisposable {
     /**
      * 상태에 따른 StatusBar 설정 생성
      */
-    private getStatusConfigForState(state: any): StatusBarConfig {
+    private getStatusConfigForState(state: AppState): StatusBarConfig {
         switch (state.status) {
             case 'idle':
                 return { text: '' };

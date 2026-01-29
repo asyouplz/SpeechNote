@@ -1,4 +1,5 @@
 import type { ILogger, ISettingsManager } from '../../../../types';
+import { isPlainRecord } from '../../../../types/guards';
 import type { TranscriptionSettings as SettingsStoreTranscriptionSettings } from '../../../../types/DeepgramTypes';
 import {
     ITranscriber,
@@ -426,10 +427,17 @@ export class DeepgramAdapter implements ITranscriber {
         }
 
         // 설정에서 사용자 화자 분리 설정 가져오기
-        let userDiarizationConfig = null;
+        let userDiarizationConfig: Partial<DiarizationConfig> | null = null;
         if (this.settingsManager) {
-            const transcriptionSettings = this.settingsManager.get('transcription') as any;
-            userDiarizationConfig = transcriptionSettings?.deepgram?.diarizationConfig;
+            const rawSettings = this.settingsManager.get('transcription');
+            const transcriptionSettings = isPlainRecord(rawSettings)
+                ? (rawSettings as SettingsStoreTranscriptionSettings)
+                : undefined;
+            const deepgramSettings = transcriptionSettings?.deepgram;
+            const diarizationConfig = deepgramSettings?.diarizationConfig;
+            if (isPlainRecord(diarizationConfig)) {
+                userDiarizationConfig = diarizationConfig as Partial<DiarizationConfig>;
+            }
         }
 
         // 기본 설정을 베이스로 사용자 설정 덮어쓰기

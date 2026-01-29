@@ -287,7 +287,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         ).addDropdown((dropdown) => {
             dropdown
                 .addOption('auto', '🤖 Automatic')
-                .addOption('whisper', '🎯 Whisper')
+                .addOption('whisper', '🎯 OpenAI whisper')
                 .addOption('deepgram', '🚀 Deepgram')
                 .setValue(this.state.get().currentProvider)
                 .onChange((value) => {
@@ -376,10 +376,10 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      * 메트릭 표시
      */
     private renderMetricsDisplay(containerEl: HTMLElement): void {
-        const _section = this.createSection(containerEl, '성능 메트릭', '최근 30일간 통계');
+        this.createSection(containerEl, '성능 메트릭', '최근 30일간 통계');
 
         // 메트릭 데이터 (예시)
-        const _metrics = this.memoized('metrics', () => this.calculateMetrics());
+        this.memoized('metrics', () => this.calculateMetrics());
 
         // 차트나 그래프로 표시
         this.renderMetricsCharts();
@@ -491,9 +491,9 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         const connectionPromises = providers.map((provider) => {
             if (this.hasApiKey(provider)) {
                 const isConnected = this.checkProviderConnection(provider);
-                return { provider, isConnected };
+                return Promise.resolve({ provider, isConnected });
             }
-            return { provider, isConnected: false };
+            return Promise.resolve({ provider, isConnected: false });
         });
 
         const results = await Promise.all(connectionPromises);
@@ -567,7 +567,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      */
     private getProviderDisplayName(provider: string): string {
         const names: Record<string, string> = {
-            whisper: 'OpenAI Whisper',
+            whisper: 'OpenAI whisper',
             deepgram: 'Deepgram',
             auto: '자동',
         };
@@ -828,7 +828,7 @@ class ProviderDetailsModal extends Modal {
     }
 
     private getProviderName(): string {
-        return this.provider === 'whisper' ? 'OpenAI Whisper' : 'Deepgram';
+        return this.provider === 'whisper' ? 'OpenAI whisper' : 'Deepgram';
     }
 
     private createStatusContent(): HTMLElement {

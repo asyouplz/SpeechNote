@@ -184,13 +184,13 @@ export class ExponentialBackoffRetry {
      * 재시도 전략으로 작업 실행
      */
     async execute<T>(operation: () => Promise<T>): Promise<T> {
-        let lastError: Error;
+        let lastError = new Error('Unknown error');
 
         for (let attempt = 0; attempt < this.maxRetries; attempt++) {
             try {
                 return await operation();
             } catch (error) {
-                lastError = error as Error;
+                lastError = error instanceof Error ? error : new Error(String(error));
 
                 if (!this.isRetryable(error)) {
                     throw error;
@@ -208,7 +208,7 @@ export class ExponentialBackoffRetry {
 
         throw new TranscriptionError(
             ERROR_MESSAGES.API.MAX_RETRIES.replace('{retries}', this.maxRetries.toString()) +
-                `: ${lastError!.message}`,
+                `: ${lastError.message}`,
             'MAX_RETRIES_EXCEEDED',
             'deepgram',
             false
@@ -218,12 +218,15 @@ export class ExponentialBackoffRetry {
     /**
      * 재시도 가능한 에러인지 판단
      */
-    private isRetryable(error: any): boolean {
+    private isRetryable(error: unknown): boolean {
         if (error instanceof TranscriptionError) {
             return error.isRetryable;
         }
         // 네트워크 에러는 재시도 가능
-        return error.message?.toLowerCase().includes('network');
+        if (error instanceof Error) {
+            return error.message.toLowerCase().includes('network');
+        }
+        return false;
     }
 
     /**

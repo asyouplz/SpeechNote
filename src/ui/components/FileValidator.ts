@@ -106,40 +106,40 @@ export class FileValidator {
     /**
      * 파일 검증 메인 메서드
      */
-    async validate(file: TFile, buffer?: ArrayBuffer): Promise<ValidationResult> {
+    validate(file: TFile, buffer?: ArrayBuffer): ValidationResult {
         const errors: ValidationError[] = [];
         const warnings: ValidationWarning[] = [];
 
         // 1. 확장자 검증
         const extensionResult = this.validateExtension(file);
-        if (!extensionResult.valid) {
-            errors.push(extensionResult.error!);
+        if (!extensionResult.valid && extensionResult.error) {
+            errors.push(extensionResult.error);
         }
 
         // 2. 파일 크기 검증
         const sizeResult = this.validateFileSize(file.stat.size);
-        if (!sizeResult.valid) {
-            errors.push(sizeResult.error!);
+        if (!sizeResult.valid && sizeResult.error) {
+            errors.push(sizeResult.error);
         } else if (sizeResult.warning) {
             warnings.push(sizeResult.warning);
         }
 
         // 3. 파일명 검증
         const nameResult = this.validateFileName(file.name);
-        if (!nameResult.valid) {
-            warnings.push(nameResult.warning!);
+        if (!nameResult.valid && nameResult.warning) {
+            warnings.push(nameResult.warning);
         }
 
         // 4. 매직 바이트 검증 (버퍼가 제공된 경우)
         if (buffer && extensionResult.valid) {
             const magicResult = this.validateMagicBytes(file.extension, buffer);
-            if (!magicResult.valid) {
-                errors.push(magicResult.error!);
+            if (!magicResult.valid && magicResult.error) {
+                errors.push(magicResult.error);
             }
         }
 
         // 5. 메타데이터 추출
-        const metadata = await this.extractMetadata(file, buffer);
+        const metadata = this.extractMetadata(file, buffer);
 
         return {
             valid: errors.length === 0,

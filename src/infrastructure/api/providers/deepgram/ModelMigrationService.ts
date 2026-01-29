@@ -9,6 +9,7 @@
  */
 
 import type { ILogger, ISettingsManager } from '../../../../types';
+import { isPlainRecord } from '../../../../types/guards';
 import { ModelCapabilityManager, type CompatibilityCheck } from './ModelCapabilityManager';
 
 // 마이그레이션 타입 정의
@@ -23,7 +24,7 @@ export interface MigrationRule {
 
 export interface MigrationCondition {
     type: 'feature_compatible' | 'user_consent' | 'cost_threshold' | 'custom';
-    parameters: Record<string, any>;
+    parameters: Record<string, unknown>;
     required: boolean;
 }
 
@@ -42,7 +43,7 @@ export interface MigrationStep {
     id: string;
     description: string;
     action: 'backup_settings' | 'update_model' | 'test_compatibility' | 'notify_user' | 'rollback';
-    parameters: Record<string, any>;
+    parameters: Record<string, unknown>;
     critical: boolean;
     rollbackAction?: string;
 }
@@ -71,6 +72,11 @@ export interface UserMigrationPreferences {
     backupSettings: boolean;
     testMode: boolean; // dry run without actual changes
 }
+
+type SettingsBackup = {
+    timestamp: string;
+    settings: Record<string, unknown>;
+};
 
 /**
  * 기본 마이그레이션 규칙
@@ -184,7 +190,7 @@ export class ModelMigrationService {
     /**
      * 사용자의 현재 모델에 대한 마이그레이션 제안을 확인합니다
      */
-    async checkForMigrationOpportunities(currentModel?: string): Promise<MigrationPlan[]> {
+    checkForMigrationOpportunities(currentModel?: string): MigrationPlan[] {
         const model = currentModel || this.getCurrentModel();
         if (!model) {
             this.logger.warn('No current model found, cannot check migration opportunities');
@@ -197,9 +203,9 @@ export class ModelMigrationService {
         const applicableRules = this.migrationRules.filter((rule) => rule.fromModel === model);
 
         for (const rule of applicableRules) {
-            const compatibility = await this.checkMigrationCompatibility(rule);
+            const compatibility = this.checkMigrationCompatibility(rule);
             if (compatibility.compatible) {
-                const plan = await this.createMigrationPlan(rule);
+                const plan = this.createMigrationPlan(rule);
                 opportunities.push(plan);
             }
         }
@@ -248,11 +254,11 @@ export class ModelMigrationService {
         try {
             // 테스트 모드 확인
             if (prefs.testMode) {
-                return await this.simulateMigration(plan, result);
+                return this.simulateMigration(plan, result);
             }
 
             // 사용자 승인 확인
-            if (!(await this.getUserApproval(plan, prefs))) {
+            if (!this.getUserApproval(plan, prefs)) {
                 result.errors.push('User approval required but not granted');
                 return result;
             }
@@ -311,7 +317,7 @@ export class ModelMigrationService {
         const currentModel = this.getCurrentModel();
         if (!currentModel) return false;
 
-        const opportunities = await this.checkForMigrationOpportunities(currentModel);
+        const opportunities = this.checkForMigrationOpportunities(currentModel);
         const autoMigrations = opportunities.filter((plan) =>
             this.migrationRules.find(
                 (rule) =>
@@ -355,7 +361,7 @@ export class ModelMigrationService {
 
         try {
             const backup = this.getBackup(migrationId);
-            if (backup) {
+            if (this.isSettingsBackup(backup)) {
                 await this.restoreSettings(backup);
                 this.logger.info('Migration rollback completed successfully');
                 return true;
@@ -393,8 +399,17 @@ export class ModelMigrationService {
      */
 
     private getCurrentModel(): string | null {
-        const transcriptionSettings = this.settingsManager.get('transcription') as any;
-        return transcriptionSettings?.deepgram?.model || transcriptionSettings?.model || null;
+        const rawSettings = this.settingsManager.get('transcription');
+        const transcriptionSettings = isPlainRecord(rawSettings) ? rawSettings : undefined;
+        const deepgramSettings = isPlainRecord(transcriptionSettings?.deepgram)
+            ? transcriptionSettings?.deepgram
+            : undefined;
+        const deepgramModel = deepgramSettings?.model;
+        if (typeof deepgramModel === 'string') {
+            return deepgramModel;
+        }
+        const fallbackModel = transcriptionSettings?.model;
+        return typeof fallbackModel === 'string' ? fallbackModel : null;
     }
 
     private getUserPreferences(
@@ -409,11 +424,12 @@ export class ModelMigrationService {
             testMode: false,
         };
 
-        const saved = this.settingsManager.get('migrationPreferences') || {};
-        return { ...defaults, ...saved, ...overrides };
+        const saved = this.settingsManager.get('migrationPreferences');
+        const savedPrefs = isPlainRecord(saved) ? (saved as Partial<UserMigrationPreferences>) : {};
+        return { ...defaults, ...savedPrefs, ...overrides };
     }
 
-    private async checkMigrationCompatibility(rule: MigrationRule): Promise<CompatibilityCheck> {
+    private checkMigrationCompatibility(rule: MigrationRule): CompatibilityCheck {
         const toCapabilities = this.capabilityManager.getModelCapabilities(rule.toModel);
         const fromCapabilities = this.capabilityManager.getModelCapabilities(rule.fromModel);
 
@@ -429,7 +445,7 @@ export class ModelMigrationService {
 
         // 조건 검사
         for (const condition of rule.conditions) {
-            if (condition.required && !(await this.evaluateCondition(condition))) {
+            if (condition.required && !this.evaluateCondition(condition)) {
                 return {
                     compatible: false,
                     missingFeatures: [],
@@ -546,19 +562,53 @@ export class ModelMigrationService {
 
         switch (step.action) {
             case 'backup_settings':
-                await this.backupCurrentSettings(step.parameters.settings);
+                {
+                    const settings = step.parameters.settings;
+                    if (!Array.isArray(settings)) {
+                        throw new Error('Invalid backup settings list');
+                    }
+                    const keys = settings.filter(
+                        (item): item is string => typeof item === 'string'
+                    );
+                    await this.backupCurrentSettings(keys);
+                }
                 break;
 
             case 'update_model':
-                await this.updateModel(step.parameters.newModel);
+                {
+                    const newModel = step.parameters.newModel;
+                    if (typeof newModel !== 'string') {
+                        throw new Error('Invalid target model');
+                    }
+                    await this.updateModel(newModel);
+                }
                 break;
 
             case 'test_compatibility':
-                await this.testModelCompatibility(step.parameters.targetModel);
+                {
+                    const targetModel = step.parameters.targetModel;
+                    if (typeof targetModel !== 'string') {
+                        throw new Error('Invalid target model');
+                    }
+                    this.testModelCompatibility(targetModel);
+                }
                 break;
 
             case 'notify_user':
-                this.notifyUser(step.parameters.message, step.parameters.type);
+                {
+                    const message =
+                        typeof step.parameters.message === 'string'
+                            ? step.parameters.message
+                            : 'Migration update';
+                    const type =
+                        step.parameters.type === 'info' ||
+                        step.parameters.type === 'success' ||
+                        step.parameters.type === 'warning' ||
+                        step.parameters.type === 'error'
+                            ? step.parameters.type
+                            : 'info';
+                    this.notifyUser(message, type);
+                }
                 break;
 
             case 'rollback':
@@ -616,7 +666,7 @@ export class ModelMigrationService {
     }
 
     private async backupCurrentSettings(settingsToBackup: string[]): Promise<void> {
-        const backup: Record<string, any> = {
+        const backup: SettingsBackup = {
             timestamp: new Date().toISOString(),
             settings: {},
         };
@@ -635,10 +685,16 @@ export class ModelMigrationService {
     }
 
     private async updateModel(newModel: string): Promise<void> {
-        const transcriptionSettings = (this.settingsManager.get('transcription') as any) || {};
+        const rawSettings = this.settingsManager.get('transcription');
+        const transcriptionSettings = isPlainRecord(rawSettings) ? { ...rawSettings } : {};
 
-        if (transcriptionSettings.deepgram) {
-            transcriptionSettings.deepgram.model = newModel;
+        const deepgramSettings = isPlainRecord(transcriptionSettings.deepgram)
+            ? { ...transcriptionSettings.deepgram }
+            : undefined;
+
+        if (deepgramSettings) {
+            deepgramSettings.model = newModel;
+            transcriptionSettings.deepgram = deepgramSettings;
         } else {
             transcriptionSettings.model = newModel;
         }
@@ -665,16 +721,26 @@ export class ModelMigrationService {
         this.logger.info(`User notification (${type}): ${message}`);
     }
 
-    private getBackup(backupId: string): any {
+    private getBackup(backupId: string): unknown {
         return this.settingsManager.get(`backup.${backupId}`);
     }
 
-    private getLatestBackup(): any {
+    private isSettingsBackup(value: unknown): value is SettingsBackup {
+        if (!isPlainRecord(value)) {
+            return false;
+        }
+        if (typeof value.timestamp !== 'string') {
+            return false;
+        }
+        return isPlainRecord(value.settings);
+    }
+
+    private getLatestBackup(): SettingsBackup | null {
         // 최신 백업 찾기 로직 (ISettingsManager에 getAll이 없으므로 대안 구현)
         try {
             const backupPattern = 'backup.migration_backup_';
             const currentTime = Date.now();
-            let latestBackup: any = null;
+            let latestBackup: SettingsBackup | null = null;
             let latestTimestamp = 0;
 
             // 최근 24시간 내의 백업을 체크 (타임스탬프 기반)
@@ -682,9 +748,15 @@ export class ModelMigrationService {
                 const timestamp = currentTime - i * 60 * 60 * 1000; // i시간 전
                 const backupId = `${backupPattern}${timestamp}`;
                 const backup = this.getBackup(backupId);
-
-                if (backup && timestamp > latestTimestamp) {
-                    latestBackup = backup;
+                if (
+                    isPlainRecord(backup) &&
+                    isPlainRecord(backup.settings) &&
+                    timestamp > latestTimestamp
+                ) {
+                    latestBackup = {
+                        timestamp: typeof backup.timestamp === 'string' ? backup.timestamp : '',
+                        settings: backup.settings,
+                    };
                     latestTimestamp = timestamp;
                 }
             }
@@ -696,7 +768,7 @@ export class ModelMigrationService {
         }
     }
 
-    private async restoreSettings(backup: any): Promise<void> {
+    private async restoreSettings(backup: SettingsBackup): Promise<void> {
         if (!backup || !backup.settings) {
             throw new Error('Invalid backup data');
         }

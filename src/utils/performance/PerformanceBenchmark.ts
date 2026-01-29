@@ -147,7 +147,10 @@ export class PerformanceBenchmark {
             metadata,
         };
 
-        const metrics = this.metrics.get(name)!;
+        const metrics = this.metrics.get(name);
+        if (!metrics) {
+            return;
+        }
         metrics.push(metric);
 
         // 최대 1000개까지만 유지
@@ -375,7 +378,7 @@ export class PerformanceBenchmark {
         try {
             clsObserver.observe({ type: 'layout-shift', buffered: true });
             this.observers.push(clsObserver);
-        } catch (error) {
+        } catch {
             console.warn('Layout shift observation not supported');
         }
     }
@@ -471,22 +474,22 @@ export class PerformanceBenchmark {
  */
 export function Benchmark(name?: string) {
     return function (target: object, propertyName: string, descriptor: PropertyDescriptor) {
-        const originalMethod = descriptor.value;
+        const originalMethod: unknown = descriptor.value;
+        if (typeof originalMethod !== 'function') {
+            return descriptor;
+        }
+        const method = originalMethod as (...args: unknown[]) => unknown;
         const metricName = name || `${target.constructor.name}.${propertyName}`;
 
-        if (originalMethod.constructor.name === 'AsyncFunction') {
-            descriptor.value = function (...args: unknown[]) {
+        const isAsync = method.constructor.name === 'AsyncFunction';
+        descriptor.value = function (this: unknown, ...args: unknown[]) {
+            if (isAsync) {
                 return PerformanceBenchmark.measureAsync(metricName, () =>
-                    originalMethod.apply(this, args)
+                    method.apply(this, args)
                 );
-            };
-        } else {
-            descriptor.value = function (...args: unknown[]) {
-                return PerformanceBenchmark.measureSync(metricName, () =>
-                    originalMethod.apply(this, args)
-                );
-            };
-        }
+            }
+            return PerformanceBenchmark.measureSync(metricName, () => method.apply(this, args));
+        };
 
         return descriptor;
     };

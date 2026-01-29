@@ -204,8 +204,8 @@ export class FilePickerModal extends Modal {
         const dropSection = container.createDiv('drag-drop-section');
 
         this.dragDropZone.mount(dropSection);
-        this.dragDropZone.onFilesDropped(async (files) => {
-            await this.handleDroppedFiles(files);
+        this.dragDropZone.onFilesDropped((files) => {
+            void this.handleDroppedFiles(files);
         });
     }
 
@@ -278,7 +278,8 @@ export class FilePickerModal extends Modal {
                 } else {
                     statusIcon.addClass('invalid');
                     statusIcon.setText('✗');
-                    statusIcon.title = validation.errors?.join('\n') || '';
+                    statusIcon.title =
+                        validation.errors?.map((error) => error.message).join('\n') || '';
                 }
             }
 
@@ -309,8 +310,8 @@ export class FilePickerModal extends Modal {
                     .setButtonText(`선택 (${this.selectedFiles.length})`)
                     .setCta()
                     .setDisabled(this.selectedFiles.length === 0)
-                    .onClick(async () => {
-                        await this.processSelectedFiles();
+                    .onClick(() => {
+                        this.processSelectedFiles();
                     })
             );
     }
@@ -333,14 +334,15 @@ export class FilePickerModal extends Modal {
         this.validationResults.set(file.path, validation);
 
         if (!validation.valid) {
-            const errors = validation.errors?.join('\n') || '알 수 없는 오류';
+            const errors =
+                validation.errors?.map((error) => error.message).join('\n') || '알 수 없는 오류';
             new Notice(`파일 검증 실패:\n${errors}`);
             return;
         }
 
         // 경고가 있는 경우
         if (validation.warnings && validation.warnings.length > 0) {
-            const warnings = validation.warnings.join('\n');
+            const warnings = validation.warnings.map((warning) => warning.message).join('\n');
             new Notice(`경고:\n${warnings}`);
         }
 
@@ -368,7 +370,7 @@ export class FilePickerModal extends Modal {
         try {
             // ArrayBuffer 읽기 (선택적)
             const buffer = await this.app.vault.readBinary(file);
-            return await this.validator.validate(file, buffer);
+            return this.validator.validate(file, buffer);
         } catch (error) {
             const normalizedError = this.normalizeError(error);
             this.logger?.error('File validation failed', normalizedError);
@@ -406,8 +408,9 @@ export class FilePickerModal extends Modal {
 
         if (results.length > 0) {
             // 최근 파일 저장
-            if (this.recentFiles) {
-                results.forEach((r) => this.recentFiles!.addRecentFile(r.file));
+            const recentFiles = this.recentFiles;
+            if (recentFiles) {
+                results.forEach((r) => recentFiles.addRecentFile(r.file));
             }
 
             this.onChoose(results);

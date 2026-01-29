@@ -825,9 +825,7 @@ export class TranscriberFactory extends TranscriberFactoryRefactored {
         return undefined;
     }
 
-    private validateProviderAvailability(
-        provider?: TranscriptionProvider | 'auto' | undefined
-    ): void {
+    private validateProviderAvailability(provider?: TranscriptionProvider | 'auto'): void {
         if (provider === 'deepgram' && !this.config.deepgram?.enabled) {
             throw new Error('Deepgram API key is missing');
         }

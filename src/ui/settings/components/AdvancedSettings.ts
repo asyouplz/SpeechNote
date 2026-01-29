@@ -45,8 +45,8 @@ export class AdvancedSettings {
                             this.plugin.app,
                             'Clear cache',
                             '기존 캐시를 삭제하시겠습니까?',
-                            async () => {
-                                await this.clearCache();
+                            () => {
+                                this.clearCache();
                             }
                         ).open();
                     }
@@ -87,8 +87,8 @@ export class AdvancedSettings {
 
         // 캐시 삭제 버튼
         cacheManagement.addButton((button) =>
-            button.setButtonText('캐시 삭제').onClick(async () => {
-                await this.clearCache();
+            button.setButtonText('캐시 삭제').onClick(() => {
+                this.clearCache();
                 this.updateCacheStatus(cacheStatus);
             })
         );
@@ -164,8 +164,8 @@ export class AdvancedSettings {
         );
 
         logManagement.addButton((button) =>
-            button.setButtonText('로그 내보내기').onClick(async () => {
-                await this.exportLogs();
+            button.setButtonText('로그 내보내기').onClick(() => {
+                this.exportLogs();
             })
         );
 
@@ -173,8 +173,8 @@ export class AdvancedSettings {
             button
                 .setButtonText('로그 삭제')
                 .setWarning()
-                .onClick(async () => {
-                    await this.clearLogs();
+                .onClick(() => {
+                    this.clearLogs();
                 })
         );
     }

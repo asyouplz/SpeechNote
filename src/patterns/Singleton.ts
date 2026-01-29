@@ -65,21 +65,24 @@ export function createSingleton<T>(factory: () => T): () => T {
 /**
  * 클래스 데코레이터를 사용한 Singleton 패턴
  */
-/* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-argument */
-export function SingletonDecorator<T extends new (...args: any[]) => object>(constructor: T): T {
-    let instance: InstanceType<T>;
+export function SingletonDecorator<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mixin constructors require any[] params
+    T extends new (...args: any[]) => object
+>(constructor: T): T {
+    let instance: InstanceType<T> | undefined;
 
     return class extends constructor {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mixin constructors require any[] params
         constructor(...args: any[]) {
             if (instance) {
                 return instance;
             }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- args are passed through to base constructor
             super(...args);
             instance = this as InstanceType<T>;
         }
     } as T;
 }
-/* eslint-enable @typescript-eslint/no-explicit-any,@typescript-eslint/no-unsafe-argument */
 
 /**
  * 비동기 Singleton 팩토리

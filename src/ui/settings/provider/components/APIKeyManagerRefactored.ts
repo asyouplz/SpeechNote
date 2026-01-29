@@ -66,7 +66,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         [
             'whisper',
             {
-                name: 'OpenAI Whisper',
+                name: 'OpenAI whisper',
                 placeholder: 'sk-...',
                 pattern: /^sk-[A-Za-z0-9]{48,}$/,
                 validateEndpoint: 'https://api.openai.com/v1/models',
@@ -879,7 +879,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
      * 보안 설정 표시
      */
     private showSecuritySettings(): void {
-        const modal = new SecuritySettingsModal(this.plugin.app!, this.plugin);
+        const modal = new SecuritySettingsModal(this.plugin.app, this.plugin);
         modal.open();
     }
 
@@ -964,7 +964,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
                             isValid: false,
                         });
                     }
-                } catch (error) {
+                } catch {
                     // 암호화되지 않은 키일 수 있음
                     if (!key.includes('*')) {
                         this.apiKeys.set(provider, {

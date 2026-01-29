@@ -1,5 +1,6 @@
 import { Plugin } from 'obsidian';
 import type { ISettingsManager, ILogger } from '../../types';
+import { isPlainRecord } from '../../types/guards';
 
 // 설정 타입 정의
 export interface PluginSettings {
@@ -139,11 +140,14 @@ export class SettingsManager implements ISettingsManager {
 
     async load(): Promise<PluginSettings> {
         try {
-            const loadedData = await this.plugin.loadData();
+            const loadedData = (await this.plugin.loadData()) as unknown;
 
-            if (loadedData) {
+            if (isPlainRecord(loadedData)) {
                 // 기존 설정과 병합
-                this.settings = { ...DEFAULT_SETTINGS, ...loadedData };
+                this.settings = {
+                    ...DEFAULT_SETTINGS,
+                    ...(loadedData as Partial<PluginSettings>),
+                };
 
                 // 암호화된 API 키가 있으면 복호화
                 if (this.settings.encryptedApiKey && !this.settings.apiKey) {
@@ -172,7 +176,8 @@ export class SettingsManager implements ISettingsManager {
             if (settings.apiKey) {
                 settings.encryptedApiKey = this.encryption.encrypt(settings.apiKey);
                 // 원본 API 키는 저장하지 않음
-                const { apiKey: _, ...saveData } = settings;
+                const { apiKey: _apiKey, ...saveData } = settings;
+                void _apiKey;
                 await this.plugin.saveData(saveData);
             } else {
                 await this.plugin.saveData(settings);
@@ -232,7 +237,8 @@ export class SettingsManager implements ISettingsManager {
         this.settings.encryptedApiKey = this.encryption.encrypt(apiKey);
 
         // 저장 시 API 키는 제외
-        const { apiKey: _, ...saveData } = this.settings;
+        const { apiKey: _apiKey, ...saveData } = this.settings;
+        void _apiKey;
 
         await this.plugin.saveData(saveData);
         this.logger?.debug('API key encrypted and saved', {
@@ -249,14 +255,18 @@ export class SettingsManager implements ISettingsManager {
 
     // 설정 내보내기 (민감한 정보 제외)
     exportSettings(): Partial<PluginSettings> {
-        const { apiKey: _, encryptedApiKey: __, ...exported } = this.settings;
+        const { apiKey: _apiKey, encryptedApiKey: _encryptedApiKey, ...exported } = this.settings;
+        void _apiKey;
+        void _encryptedApiKey;
         return exported;
     }
 
     // 설정 가져오기
     async importSettings(imported: Partial<PluginSettings>): Promise<void> {
         // API 키는 가져오지 않음
-        const { apiKey: _, encryptedApiKey: __, ...safeImported } = imported;
+        const { apiKey: _apiKey, encryptedApiKey: _encryptedApiKey, ...safeImported } = imported;
+        void _apiKey;
+        void _encryptedApiKey;
 
         this.settings = { ...this.settings, ...safeImported };
         await this.save(this.settings);

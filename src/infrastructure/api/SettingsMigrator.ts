@@ -4,8 +4,41 @@
 
 import type { App } from 'obsidian';
 import type { SettingsSchema, LanguageCode } from '../../types/phase3-api';
+import { isPlainRecord } from '../../types/guards';
 
 type Migration = (settings: SettingsSchema) => Promise<SettingsSchema>;
+type BackupEntry = { key: string; timestamp: number };
+type SettingsBackup = {
+    timestamp: string;
+    version: string;
+    settings: SettingsSchema;
+};
+
+const isBackupEntry = (value: unknown): value is BackupEntry =>
+    isPlainRecord(value) && typeof value.key === 'string' && typeof value.timestamp === 'number';
+
+const isSettingsBackup = (value: unknown): value is SettingsBackup =>
+    isPlainRecord(value) &&
+    typeof value.timestamp === 'string' &&
+    typeof value.version === 'string' &&
+    isPlainRecord(value.settings);
+
+const parseJson = (value: string): unknown => JSON.parse(value) as unknown;
+
+const parseBackupList = (value: string | null): BackupEntry[] => {
+    if (!value) return [];
+    try {
+        const parsed = parseJson(value);
+        return Array.isArray(parsed) ? parsed.filter(isBackupEntry) : [];
+    } catch {
+        return [];
+    }
+};
+
+const cloneSettings = (settings: SettingsSchema): SettingsSchema => {
+    const cloned = JSON.parse(JSON.stringify(settings)) as unknown;
+    return isPlainRecord(cloned) ? (cloned as SettingsSchema) : settings;
+};
 
 /**
  * 설정 마이그레이터
@@ -310,7 +343,6 @@ export class SettingsMigrator {
         // 2.2.0 -> 3.0.0 (메이저 업데이트)
         this.migrations.set('2.2.0->3.0.0', (settings) => {
             // API 키 분리 및 암호화 준비
-            const apiKey = settings.api?.apiKey;
             const legacyGeneralLanguage = settings.general?.language ?? settings.language;
             const legacyAudioLanguage = getString(settings.audio?.language ?? settings.language);
             const newSettings: SettingsSchema = {
@@ -386,7 +418,7 @@ export class SettingsMigrator {
         const backup = {
             timestamp: new Date(timestamp).toISOString(),
             version: settings.version || 'unknown',
-            settings: JSON.parse(JSON.stringify(settings)), // Deep clone
+            settings: cloneSettings(settings), // Deep clone
         };
 
         const key = `settings_backup_${timestamp}`;
@@ -405,13 +437,16 @@ export class SettingsMigrator {
      * 백업 복원
      */
     restoreBackup(backupKey: string): Promise<SettingsSchema> {
-        const backupData = this.app.loadLocalStorage(backupKey);
-        if (!backupData) {
+        const backupDataRaw = this.app.loadLocalStorage(backupKey) as unknown;
+        if (typeof backupDataRaw !== 'string' || backupDataRaw.length === 0) {
             throw new Error('Backup not found');
         }
 
-        const backup = JSON.parse(backupData);
-        return Promise.resolve(backup.settings);
+        const parsed = parseJson(backupDataRaw);
+        if (!isSettingsBackup(parsed)) {
+            throw new Error('Invalid backup data');
+        }
+        return Promise.resolve(parsed.settings);
     }
 
     /**
@@ -421,16 +456,9 @@ export class SettingsMigrator {
      */
     private cleanupOldBackups(): void {
         const backupListKey = 'settings_backup_list';
-        const backupListData = this.app.loadLocalStorage(backupListKey);
-        let backupKeys: Array<{ key: string; timestamp: number }> = [];
-
-        if (backupListData) {
-            try {
-                backupKeys = JSON.parse(backupListData);
-            } catch {
-                backupKeys = [];
-            }
-        }
+        const backupListDataRaw = this.app.loadLocalStorage(backupListKey) as unknown;
+        const backupListData = typeof backupListDataRaw === 'string' ? backupListDataRaw : null;
+        let backupKeys = parseBackupList(backupListData);
 
         // 현재 백업 키 추가 (이미 createBackup에서 저장된 경우)
         const latestBackupKey = `settings_backup_${Date.now()}`;
@@ -460,16 +488,9 @@ export class SettingsMigrator {
      */
     addBackupToList(key: string, timestamp: number): void {
         const backupListKey = 'settings_backup_list';
-        const backupListData = this.app.loadLocalStorage(backupListKey);
-        let backupKeys: Array<{ key: string; timestamp: number }> = [];
-
-        if (backupListData) {
-            try {
-                backupKeys = JSON.parse(backupListData);
-            } catch {
-                backupKeys = [];
-            }
-        }
+        const backupListDataRaw = this.app.loadLocalStorage(backupListKey) as unknown;
+        const backupListData = typeof backupListDataRaw === 'string' ? backupListDataRaw : null;
+        const backupKeys = parseBackupList(backupListData);
 
         backupKeys.push({ key, timestamp });
         this.app.saveLocalStorage(backupListKey, JSON.stringify(backupKeys));

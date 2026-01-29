@@ -1,5 +1,6 @@
 import { Notice, requestUrl } from 'obsidian';
 import type SpeechToTextPlugin from '../../../main';
+import { isPlainRecord } from '../../../types/guards';
 
 /**
  * API 키 검증 컴포넌트
@@ -59,9 +60,13 @@ export class ApiKeyValidator {
             // 성공적으로 응답을 받으면 유효한 키
             if (response.status === 200) {
                 // Whisper 모델 존재 확인
-                const models = response.json.data || [];
+                const data = isPlainRecord(response.json) ? response.json.data : undefined;
+                const models = Array.isArray(data) ? data : [];
                 const hasWhisper = models.some(
-                    (model: any) => model.id && model.id.includes('whisper')
+                    (model) =>
+                        isPlainRecord(model) &&
+                        typeof model.id === 'string' &&
+                        model.id.includes('whisper')
                 );
 
                 if (!hasWhisper) {
@@ -214,11 +219,11 @@ export class ApiKeyValidator {
     }
 
     private getErrorStatus(error: unknown): number | null {
-        if (!error || typeof error !== 'object') {
+        if (!isPlainRecord(error)) {
             return null;
         }
 
-        const status = Reflect.get(error, 'status');
+        const status = error.status;
         if (typeof status === 'number') {
             return status;
         }

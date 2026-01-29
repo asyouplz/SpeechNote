@@ -81,7 +81,7 @@ export class ProviderSettings {
             .addDropdown((dropdown) => {
                 dropdown
                     .addOption('auto', '🤖 Automatic (recommended)')
-                    .addOption('whisper', '🎯 OpenAI Whisper')
+                    .addOption('whisper', '🎯 OpenAI whisper')
                     .addOption('deepgram', '🚀 Deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
@@ -219,11 +219,11 @@ export class ProviderSettings {
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost Optimized')
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance Optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality Optimized')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round Robin')
-                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B Testing')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality optimized')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
+                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -492,11 +492,11 @@ export class ProviderSettings {
             cls: 'mod-cta validate-btn',
         });
 
-        validateBtn.addEventListener('click', async () => {
+        validateBtn.addEventListener('click', () => {
             validateBtn.disabled = true;
             validateBtn.textContent = 'Verifying...';
 
-            const isValid = await this.validateApiKey(provider, inputEl.value);
+            const isValid = this.validateApiKey(provider, inputEl.value);
 
             if (isValid) {
                 new Notice(`✅ ${this.getProviderDisplayName(provider)} API key verified!`);
@@ -515,21 +515,23 @@ export class ProviderSettings {
      * 입력 핸들러 추가
      */
     private addInputHandler(inputEl: HTMLInputElement, provider: TranscriptionProvider): void {
-        inputEl.addEventListener('change', async () => {
-            const value = inputEl.value;
+        inputEl.addEventListener('change', () => {
+            void (async () => {
+                const value = inputEl.value;
 
-            // 마스킹된 값이면 무시
-            if (value.includes('***')) return;
+                // 마스킹된 값이면 무시
+                if (value.includes('***')) return;
 
-            // 형식 검증
-            if (this.validateKeyFormat(provider, value)) {
-                this.apiKeys.set(provider, value);
-                await this.saveApiKey(provider, value);
-                inputEl.removeClass('invalid');
-            } else {
-                inputEl.addClass('invalid');
-                new Notice(`Invalid ${this.getProviderDisplayName(provider)} key format`);
-            }
+                // 형식 검증
+                if (this.validateKeyFormat(provider, value)) {
+                    this.apiKeys.set(provider, value);
+                    await this.saveApiKey(provider, value);
+                    inputEl.removeClass('invalid');
+                } else {
+                    inputEl.addClass('invalid');
+                    new Notice(`Invalid ${this.getProviderDisplayName(provider)} key format`);
+                }
+            })();
         });
     }
 
@@ -572,8 +574,8 @@ export class ProviderSettings {
     private showProviderInfo(provider: string): void {
         const info: Record<string, string> = {
             auto: '🤖 System will automatically select the best provider based on performance and availability',
-            whisper: '🎯 OpenAI Whisper - High accuracy, supports 50+ languages',
-            deepgram: '🚀 Deepgram - Fast real-time transcription with excellent accuracy',
+            whisper: '🎯 OpenAI whisper - high accuracy, supports 50+ languages',
+            deepgram: '🚀 Deepgram - fast real-time transcription with excellent accuracy',
         };
 
         new Notice(info[provider] || 'Provider selected');
@@ -599,7 +601,7 @@ export class ProviderSettings {
      */
     private getProviderDisplayName(provider: TranscriptionProvider): string {
         const names: Record<TranscriptionProvider, string> = {
-            whisper: 'OpenAI Whisper',
+            whisper: 'OpenAI whisper',
             deepgram: 'Deepgram',
         };
         return names[provider] || provider;
@@ -693,14 +695,7 @@ export class ProviderSettings {
     }
 
     private isSelectionStrategy(value: string): value is SelectionStrategy {
-        return (
-            value === SelectionStrategy.MANUAL ||
-            value === SelectionStrategy.COST_OPTIMIZED ||
-            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
-            value === SelectionStrategy.QUALITY_OPTIMIZED ||
-            value === SelectionStrategy.ROUND_ROBIN ||
-            value === SelectionStrategy.AB_TEST
-        );
+        return Object.values(SelectionStrategy).includes(value as SelectionStrategy);
     }
 
     private async saveApiKey(provider: TranscriptionProvider, key: string): Promise<void> {

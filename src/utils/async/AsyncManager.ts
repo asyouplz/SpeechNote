@@ -9,6 +9,9 @@
 /**
  * 취소 가능한 Promise 래퍼
  */
+const toError = (error: unknown): Error =>
+    error instanceof Error ? error : new Error(String(error));
+
 export class CancellablePromise<T> {
     private promise: Promise<T>;
     private cancelled = false;
@@ -35,7 +38,7 @@ export class CancellablePromise<T> {
                 },
                 (reason) => {
                     if (!this.cancelled) {
-                        reject(reason);
+                        reject(toError(reason));
                     }
                 },
                 this.abortController.signal
@@ -47,8 +50,8 @@ export class CancellablePromise<T> {
      * Promise 실행
      */
     then<TResult1 = T, TResult2 = never>(
-        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
-        onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | undefined | null
+        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
+        onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null
     ): Promise<TResult1 | TResult2> {
         return this.promise.then(onfulfilled, onrejected);
     }
@@ -57,7 +60,7 @@ export class CancellablePromise<T> {
      * 에러 처리
      */
     catch<TResult = never>(
-        onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | undefined | null
+        onrejected?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null
     ): Promise<T | TResult> {
         return this.promise.catch(onrejected);
     }
@@ -65,7 +68,7 @@ export class CancellablePromise<T> {
     /**
      * Finally 처리
      */
-    finally(onfinally?: (() => void) | undefined | null): Promise<T> {
+    finally(onfinally?: (() => void) | null): Promise<T> {
         return this.promise.finally(onfinally);
     }
 
@@ -173,7 +176,7 @@ export async function retryAsync<T>(fn: () => Promise<T>, options: RetryOptions 
             lastError = error;
 
             if (attempt === maxAttempts || !shouldRetry(error, attempt)) {
-                throw error;
+                throw toError(error);
             }
 
             onRetry?.(error, attempt);
@@ -187,7 +190,7 @@ export async function retryAsync<T>(fn: () => Promise<T>, options: RetryOptions 
         }
     }
 
-    throw lastError;
+    throw toError(lastError ?? new Error('Unknown error'));
 }
 
 /**
@@ -224,13 +227,10 @@ export function debounceAsync<Args extends unknown[], R>(
         }
 
         lastPromise = new Promise((resolve, reject) => {
-            timeoutId = window.setTimeout(async () => {
-                try {
-                    const result = await fn(...args);
-                    resolve(result);
-                } catch (error) {
-                    reject(error);
-                }
+            timeoutId = window.setTimeout(() => {
+                fn(...args)
+                    .then(resolve)
+                    .catch((error) => reject(toError(error)));
             }, delay);
         });
 
@@ -375,7 +375,7 @@ export function allSettled<T>(promises: Promise<T>[]): Promise<PromiseResult<T>[
             if (result.status === 'fulfilled') {
                 return { status: 'fulfilled', value: result.value };
             } else {
-                return { status: 'rejected', reason: result.reason };
+                return { status: 'rejected', reason: result.reason as unknown };
             }
         })
     );
@@ -405,8 +405,9 @@ export class AsyncQueue<T> {
                     resolve(result);
                     return result;
                 } catch (error) {
-                    reject(error);
-                    throw error;
+                    const wrappedError = toError(error);
+                    reject(wrappedError);
+                    throw wrappedError;
                 }
             });
 

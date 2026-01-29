@@ -4,7 +4,6 @@
  * Toast, Modal, StatusBar, Sound 알림을 통합 관리합니다.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
@@ -33,8 +32,52 @@ interface NotificationChannel {
     dismissAll(): void;
 }
 
+type NotificationListener =
+    | ((notification: NotificationOptions) => void)
+    | ((id: string) => void)
+    | ((id: string, action: string) => void);
+
 const DOM_AVAILABLE = typeof document !== 'undefined';
 const AUDIO_AVAILABLE = typeof Audio !== 'undefined';
+
+type CreateElOptions = {
+    cls?: string | string[];
+    text?: string;
+    attr?: Record<string, string>;
+};
+
+const createEl = <K extends keyof HTMLElementTagNameMap>(
+    tag: K,
+    options: CreateElOptions = {}
+): HTMLElementTagNameMap[K] => {
+    const creator = (globalThis as { createEl?: unknown }).createEl;
+    if (typeof creator === 'function') {
+        return (creator as (tagName: K, options: CreateElOptions) => HTMLElementTagNameMap[K])(
+            tag,
+            options
+        );
+    }
+    if (!DOM_AVAILABLE) {
+        throw new Error('DOM is not available');
+    }
+    const el = document.createElement(tag);
+    if (options.cls) {
+        if (Array.isArray(options.cls)) {
+            el.classList.add(...options.cls);
+        } else {
+            el.className = options.cls;
+        }
+    }
+    if (options.text !== undefined) {
+        el.textContent = options.text;
+    }
+    if (options.attr) {
+        Object.entries(options.attr).forEach(([key, value]) => {
+            el.setAttribute(key, value);
+        });
+    }
+    return el;
+};
 
 class NoopChannel implements NotificationChannel {
     send(): Promise<void> {
@@ -202,12 +245,15 @@ class ToastChannel implements NotificationChannel {
     }
 
     private createContainer(): void {
+        if (!DOM_AVAILABLE) {
+            return;
+        }
         const container = createEl('div', { cls: 'toast-container' });
         container.setAttribute('aria-live', 'polite');
         container.setAttribute('aria-atomic', 'true');
         this.container = container;
         this.setPosition(this.position);
-        document.body.appendChild(container);
+        document.body?.appendChild(container);
     }
 
     setPosition(position: NotificationPosition): void {
@@ -1108,10 +1154,8 @@ export class NotificationManager implements INotificationAPI {
      */
     setSoundFile(type: NotificationType, soundUrl: string): void {
         const sound = this.channels.get('sound');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (sound && (sound as any).setSoundFile) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (sound as any).setSoundFile(type, soundUrl);
+        if (sound instanceof SoundChannel) {
+            sound.setSoundFile(type, soundUrl);
         }
     }
 
@@ -1135,11 +1179,10 @@ export class NotificationManager implements INotificationAPI {
     subscribe(event: 'show', listener: (notification: NotificationOptions) => void): Unsubscribe;
     subscribe(event: 'dismiss', listener: (id: string) => void): Unsubscribe;
     subscribe(event: 'action', listener: (id: string, action: string) => void): Unsubscribe;
-    subscribe(event: string, listener: (...args: any[]) => void): Unsubscribe {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.emitter.on(event, listener as any);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return () => this.emitter.off(event, listener as any);
+    subscribe(event: string, listener: NotificationListener): Unsubscribe {
+        const handler = listener as (...args: unknown[]) => void;
+        this.emitter.on(event, handler);
+        return () => this.emitter.off(event, handler);
     }
 
     /**
@@ -1260,9 +1303,10 @@ export class NotificationManager implements INotificationAPI {
     on(event: 'show', listener: (notification: NotificationOptions) => void): () => void;
     on(event: 'dismiss', listener: (id: string) => void): () => void;
     on(event: 'action', listener: (id: string, action: string) => void): () => void;
-    on(event: string, listener: (...args: any[]) => void): () => void {
-        this.emitter.on(event, listener);
-        return () => this.emitter.off(event, listener);
+    on(event: string, listener: NotificationListener): () => void {
+        const handler = listener as (...args: unknown[]) => void;
+        this.emitter.on(event, handler);
+        return () => this.emitter.off(event, handler);
     }
 
     /**

@@ -268,7 +268,7 @@ export class ProgressBar {
         this.startTime = 0;
 
         if (this.progressFill) {
-            this.progressFill.setAttribute('style', '--sn-progress-width: 0%');
+            this.progressFill.setCssProps({ '--sn-progress-width': '0%' });
         }
 
         if (this.percentageElement) {
@@ -391,6 +391,11 @@ export class MultiStepProgressBar {
 
         // 단계 표시
         this.stepsContainer = createEl('div', { cls: 'multi-step-progress__steps' });
+        const stepsContainer = this.stepsContainer;
+        if (!stepsContainer) {
+            container.appendChild(this.element);
+            return this.element;
+        }
 
         this.steps.forEach((step, index) => {
             const stepEl = createEl('div', { cls: 'step' });
@@ -409,16 +414,16 @@ export class MultiStepProgressBar {
             stepEl.appendChild(stepNumber);
             stepEl.appendChild(stepLabel);
 
-            this.stepsContainer!.appendChild(stepEl);
+            stepsContainer.appendChild(stepEl);
 
             // 단계 사이 연결선
             if (index < this.steps.length - 1) {
                 const connector = createEl('div', { cls: 'step-connector' });
-                this.stepsContainer!.appendChild(connector);
+                stepsContainer.appendChild(connector);
             }
         });
 
-        this.element.appendChild(this.stepsContainer);
+        this.element.appendChild(stepsContainer);
 
         // 전체 진행률 바
         const progressContainer = createEl('div', { cls: 'multi-step-progress__bar' });

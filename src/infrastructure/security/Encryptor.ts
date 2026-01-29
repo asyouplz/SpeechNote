@@ -121,10 +121,10 @@ export class Encryptor implements IEncryptor {
             const encryptedBuffer = await crypto.subtle.encrypt(
                 {
                     name: this.algorithm,
-                    iv: iv.buffer as ArrayBuffer,
+                    iv: iv.buffer,
                 },
                 key,
-                encodedText.buffer as ArrayBuffer
+                encodedText.buffer
             );
 
             // Base64 인코딩
@@ -398,7 +398,7 @@ export class SettingsEncryptor {
         settings: Record<string, unknown>
     ): Promise<Record<string, unknown>> {
         const sensitiveFields = ['apiKey', 'tokens', 'credentials'];
-        const encryptedSettings: Record<string, any> = { ...settings };
+        const encryptedSettings: Record<string, unknown> = { ...settings };
 
         for (const field of sensitiveFields) {
             if (settings[field]) {
@@ -417,7 +417,7 @@ export class SettingsEncryptor {
     async decryptSensitiveSettings(
         encryptedSettings: Record<string, unknown>
     ): Promise<Record<string, unknown>> {
-        const settings: Record<string, any> = { ...encryptedSettings };
+        const settings: Record<string, unknown> = { ...encryptedSettings };
         const sensitiveFields = ['apiKey', 'tokens', 'credentials'];
 
         for (const field of sensitiveFields) {

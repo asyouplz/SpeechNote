@@ -79,6 +79,9 @@ export interface TranscriptionResponse {
         chunksProcessed?: number;
         chunksSuccessful?: number;
         isPartial?: boolean;
+        speakerCount?: number;
+        diarizationEnabled?: boolean;
+        diarizationStats?: unknown;
     };
 }
 
@@ -215,7 +218,7 @@ export class TranscriptionError extends Error {
         message: string,
         public readonly code: string,
         public readonly provider: TranscriptionProvider,
-        public readonly isRetryable: boolean = false,
+        public readonly isRetryable = false,
         public readonly statusCode?: number
     ) {
         super(message);

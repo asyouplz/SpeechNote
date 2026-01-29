@@ -410,7 +410,7 @@ export class FormValidator {
     /**
      * 필수 필드 검증
      */
-    required(field: string, value: any, message?: string): this {
+    required(field: string, value: unknown, message?: string): this {
         if (!value || (typeof value === 'string' && value.trim() === '')) {
             this.errors.set(field, message || `${field}는 필수 항목입니다`);
         }

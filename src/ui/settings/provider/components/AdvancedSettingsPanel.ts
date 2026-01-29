@@ -522,8 +522,8 @@ export class AdvancedSettingsPanel {
                 button
                     .setButtonText('Clear cache')
                     .setWarning()
-                    .onClick(async () => {
-                        await this.clearCache();
+                    .onClick(() => {
+                        this.clearCache();
                     });
             });
     }
@@ -880,7 +880,7 @@ export class AdvancedSettingsPanel {
      */
     private showABTestResults(): void {
         // TODO: Implement A/B test results modal
-        new Notice('A/B test results coming soon!');
+        new Notice('A/B test results coming soon.');
     }
 
     /**
@@ -998,14 +998,7 @@ export class AdvancedSettingsPanel {
     }
 
     private isSelectionStrategy(value: string): value is SelectionStrategy {
-        return (
-            value === SelectionStrategy.MANUAL ||
-            value === SelectionStrategy.COST_OPTIMIZED ||
-            value === SelectionStrategy.PERFORMANCE_OPTIMIZED ||
-            value === SelectionStrategy.QUALITY_OPTIMIZED ||
-            value === SelectionStrategy.ROUND_ROBIN ||
-            value === SelectionStrategy.AB_TEST
-        );
+        return Object.values(SelectionStrategy).includes(value as SelectionStrategy);
     }
 
     private isFallbackStrategy(value: string): value is 'auto' | 'none' | 'manual' {

@@ -23,10 +23,10 @@ export class SimpleSettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         // 제목
-        containerEl.createEl('h2', { text: 'Speech to text settings' });
+        new Setting(containerEl).setName('Transcription settings').setHeading();
 
         // Provider 선택 드롭다운 - 가장 중요한 기능
-        containerEl.createEl('h3', { text: 'API configuration' });
+        new Setting(containerEl).setName('API configuration').setHeading();
 
         try {
             this.debug('Creating provider dropdown...');
@@ -39,7 +39,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     this.debug('Adding options to dropdown...');
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI Whisper')
+                        .addOption('whisper', 'OpenAI whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -61,8 +61,8 @@ export class SimpleSettingsTab extends PluginSettingTab {
             // Auto 모드일 때는 양쪽 API 키 모두 표시
             if (provider === 'auto' || provider === 'whisper') {
                 new Setting(containerEl)
-                    .setName('Openai API key')
-                    .setDesc('Enter your openai API key for whisper')
+                    .setName('OpenAI API key')
+                    .setDesc('Enter your OpenAI API key for whisper')
                     .addText((text) =>
                         text
                             .setPlaceholder('sk-...')
@@ -78,7 +78,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             if (provider === 'auto' || provider === 'deepgram') {
                 new Setting(containerEl)
                     .setName('Deepgram API key')
-                    .setDesc('Enter your deepgram API key')
+                    .setDesc('Enter your Deepgram API key')
                     .addText((text) =>
                         text
                             .setPlaceholder('Enter Deepgram API key...')
@@ -120,7 +120,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             }
 
             // 기본 설정들
-            containerEl.createEl('h3', { text: 'General settings' });
+            new Setting(containerEl).setName('General settings').setHeading();
 
             new Setting(containerEl)
                 .setName('Language')
@@ -152,7 +152,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 );
 
             // 디버그 정보
-            containerEl.createEl('h3', { text: 'Debug information' });
+            new Setting(containerEl).setName('Debug information').setHeading();
 
             const debugInfo = {
                 provider: this.plugin.settings.provider,
@@ -172,7 +172,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
         } catch (error) {
             console.error('Error in SimpleSettingsTab:', error);
             containerEl.createEl('p', {
-                text: `Error: ${error}`,
+                text: `Error: ${error instanceof Error ? error.message : String(error)}`,
                 cls: 'mod-warning',
             });
         }

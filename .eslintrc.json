@@ -28,7 +28,8 @@
         "esbuild.config.mjs",
         "node_modules/**",
         "dist/**",
-        "build/**"
+        "build/**",
+        "tests/**"
     ],
     "rules": {
         "unused-imports/no-unused-imports": "error",
