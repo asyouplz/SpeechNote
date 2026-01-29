@@ -1,6 +1,6 @@
 {
     "name": "obsidian-speechnote",
-    "version": "4.0.1",
+    "version": "4.0.2",
     "description": "Convert audio recordings to text in Obsidian using multiple AI providers (OpenAI Whisper, Deepgram)",
     "main": "main.js",
     "scripts": {

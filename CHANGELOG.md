@@ -1,3 +1,12 @@
+## [4.0.2](https://github.com/asyouplz/SpeechNote/compare/v4.0.1...v4.0.2) (2026-01-29)
+
+### 🐛 Bug Fixes
+
+* address review feedback and stabilize tests ([#60](https://github.com/asyouplz/SpeechNote/issues/60)) ([2d8bc68](https://github.com/asyouplz/SpeechNote/commit/2d8bc686154d28ca68d67c5889a2cfc6f8ecf07c))
+* **ci:** add semantic-release configuration ([#59](https://github.com/asyouplz/SpeechNote/issues/59)) ([cb98d70](https://github.com/asyouplz/SpeechNote/commit/cb98d70ce80e9c19c0b03410cc0b0ceafb7d5fc1))
+* **ci:** use github app token to bypass repository rulesets ([537a4bb](https://github.com/asyouplz/SpeechNote/commit/537a4bb9561378896143fa679ec435011ac7f562))
+* **review:** resolve obsidian bot validation errors (metadata, lint, ui) ([#58](https://github.com/asyouplz/SpeechNote/issues/58)) ([c6df377](https://github.com/asyouplz/SpeechNote/commit/c6df37736221b619a02b1f9c36ce0979c4d4eec9))
+
 ## [4.0.0](https://github.com/asyouplz/SpeechNote/compare/v3.0.14...v4.0.0) (2026-01-26)
 
 ### ⚠ BREAKING CHANGES
