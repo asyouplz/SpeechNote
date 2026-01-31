@@ -23,7 +23,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
         containerEl.empty();
 
         // 제목
-        new Setting(containerEl).setName('Transcription settings').setHeading();
+        new Setting(containerEl).setName('Transcription').setHeading();
 
         // Provider 선택 드롭다운 - 가장 중요한 기능
         new Setting(containerEl).setName('API configuration').setHeading();
@@ -39,7 +39,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     this.debug('Adding options to dropdown...');
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI whisper')
+                        .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -62,7 +62,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             if (provider === 'auto' || provider === 'whisper') {
                 new Setting(containerEl)
                     .setName('OpenAI API key')
-                    .setDesc('Enter your OpenAI API key for whisper')
+                    .setDesc('Enter your OpenAI API key for Whisper')
                     .addText((text) =>
                         text
                             .setPlaceholder('sk-...')
@@ -93,7 +93,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 if (provider === 'deepgram') {
                     new Setting(containerEl)
                         .setName('Deepgram model')
-                        .setDesc('Select the deepgram model to use')
+                        .setDesc('Select the Deepgram model to use')
                         .addDropdown((dropdown) =>
                             dropdown
                                 .addOption('nova-2', 'Nova 2 (premium)')
@@ -120,7 +120,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             }
 
             // 기본 설정들
-            new Setting(containerEl).setName('General settings').setHeading();
+            new Setting(containerEl).setName('Basics').setHeading();
 
             new Setting(containerEl)
                 .setName('Language')

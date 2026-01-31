@@ -249,7 +249,7 @@ export class FormatOptionsModal extends Modal {
             case 'heading':
                 new Setting(targetContainer)
                     .setName('Heading level')
-                    .setDesc('Level of the heading (1-6)')
+                    .setDesc('Heading level (1-6)')
                     .addDropdown((dropdown) => {
                         for (let i = 1; i <= 6; i++) {
                             dropdown.addOption(String(i), `H${i}`);

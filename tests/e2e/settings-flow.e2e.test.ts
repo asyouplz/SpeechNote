@@ -10,7 +10,7 @@
  * 6. 설정 마이그레이션
  */
 
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, PluginSettingTab, Setting, requestUrl } from 'obsidian';
 import { SettingsTab } from '../../src/ui/settings/SettingsTab';
 import { SettingsManager } from '../../src/infrastructure/storage/SettingsManager';
 import { SettingsValidator } from '../../src/infrastructure/api/SettingsValidator';
@@ -472,9 +472,9 @@ describe('E2E: 설정 플로우', () => {
             apiKeyInput.dispatchEvent(new Event('input'));
 
             // Mock API 검증 성공
-            global.fetch = jest.fn().mockResolvedValue({
-                ok: true,
-                json: () => Promise.resolve({ models: ['whisper-1'] }),
+            (requestUrl as jest.Mock).mockResolvedValue({
+                status: 200,
+                json: { data: [{ id: 'whisper-1' }] },
             });
 
             validateButton.click();

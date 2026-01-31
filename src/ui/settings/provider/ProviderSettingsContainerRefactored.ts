@@ -287,7 +287,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         ).addDropdown((dropdown) => {
             dropdown
                 .addOption('auto', '🤖 Automatic')
-                .addOption('whisper', '🎯 OpenAI whisper')
+                .addOption('whisper', '🎯 OpenAI Whisper')
                 .addOption('deepgram', '🚀 Deepgram')
                 .setValue(this.state.get().currentProvider)
                 .onChange((value) => {
@@ -567,7 +567,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
      */
     private getProviderDisplayName(provider: string): string {
         const names: Record<string, string> = {
-            whisper: 'OpenAI whisper',
+            whisper: 'OpenAI Whisper',
             deepgram: 'Deepgram',
             auto: '자동',
         };
@@ -828,7 +828,7 @@ class ProviderDetailsModal extends Modal {
     }
 
     private getProviderName(): string {
-        return this.provider === 'whisper' ? 'OpenAI whisper' : 'Deepgram';
+        return this.provider === 'whisper' ? 'OpenAI Whisper' : 'Deepgram';
     }
 
     private createStatusContent(): HTMLElement {

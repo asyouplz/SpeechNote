@@ -152,7 +152,7 @@ export class SettingsTab extends PluginSettingTab {
 
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI whisper')
+                        .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -366,7 +366,7 @@ export class SettingsTab extends PluginSettingTab {
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('OpenAI API key')
-            .setDesc('Enter your OpenAI API key for whisper transcription')
+            .setDesc('Enter your OpenAI API key for Whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -439,7 +439,7 @@ export class SettingsTab extends PluginSettingTab {
         const descriptions = {
             auto: '🤖 Intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
             whisper:
-                '🎯 OpenAI whisper - high-quality transcription with support for multiple languages. Best for general-purpose transcription.',
+                '🎯 OpenAI Whisper - high-quality transcription with support for multiple languages. Best for general-purpose transcription.',
             deepgram:
                 '⚡ Deepgram - fast, accurate transcription with advanced AI features. Best for real-time processing and speaker diarization.',
         };
@@ -524,7 +524,7 @@ export class SettingsTab extends PluginSettingTab {
         if (provider === 'whisper' || provider === 'auto') {
             new Setting(containerEl)
                 .setName('Whisper model')
-                .setDesc('Select the whisper model to use')
+                .setDesc('Select the Whisper model to use')
                 .addDropdown((dropdown) =>
                     dropdown
                         .addOption('whisper-1', 'Whisper v1 (default)')
@@ -702,4 +702,4 @@ export class SettingsTab extends PluginSettingTab {
         return key.substring(0, visibleStart) + masked + key.substring(key.length - visibleEnd);
     }
 }
-/* eslint-enable @typescript-eslint/no-unsafe-enum-comparison */
+/* eslint-enable @typescript-eslint/no-unsafe-enum-comparison -- re-enable after SettingsTab type guards */

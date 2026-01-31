@@ -81,7 +81,7 @@ export class ProviderSettings {
             .addDropdown((dropdown) => {
                 dropdown
                     .addOption('auto', '🤖 Automatic (recommended)')
-                    .addOption('whisper', '🎯 OpenAI whisper')
+                    .addOption('whisper', '🎯 OpenAI Whisper')
                     .addOption('deepgram', '🚀 Deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
@@ -306,7 +306,7 @@ export class ProviderSettings {
     private renderABTestDetails(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('Traffic split')
-            .setDesc('Percentage of requests to send to whisper vs deepgram')
+            .setDesc('Percentage of requests to send to Whisper vs Deepgram')
             .addSlider((slider) => {
                 const currentSplit = this.plugin.settings.abTestSplit || 50;
 
@@ -574,7 +574,7 @@ export class ProviderSettings {
     private showProviderInfo(provider: string): void {
         const info: Record<string, string> = {
             auto: '🤖 System will automatically select the best provider based on performance and availability',
-            whisper: '🎯 OpenAI whisper - high accuracy, supports 50+ languages',
+            whisper: '🎯 OpenAI Whisper - high accuracy, supports 50+ languages',
             deepgram: '🚀 Deepgram - fast real-time transcription with excellent accuracy',
         };
 
@@ -601,7 +601,7 @@ export class ProviderSettings {
      */
     private getProviderDisplayName(provider: TranscriptionProvider): string {
         const names: Record<TranscriptionProvider, string> = {
-            whisper: 'OpenAI whisper',
+            whisper: 'OpenAI Whisper',
             deepgram: 'Deepgram',
         };
         return names[provider] || provider;

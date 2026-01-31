@@ -578,7 +578,7 @@ export class DeepgramSettings {
         // Maximum chunk size
         const chunkSizeSetting = new Setting(container)
             .setName('Maximum chunk size')
-            .setDesc('Maximum size per chunk in mb (recommended: 50mb)')
+            .setDesc('Maximum size per chunk in MB (recommended: 50MB)')
             .addSlider((slider) => {
                 slider
                     .setLimits(10, 100, 10)
@@ -648,20 +648,21 @@ export class DeepgramSettings {
             this.plugin.settings.monthlyBudget
         );
 
-        if (!estimation) {
-            this.uiBuilder.updateCostDetails(this.estimatedCostEl.parentElement!, null);
+        const parentEl = this.estimatedCostEl.parentElement;
+        if (!parentEl) {
             return;
         }
 
-        this.uiBuilder.updateCostDetails(
-            this.estimatedCostEl.parentElement!,
-            this.selectedModel,
-            estimation.monthly
-        );
+        if (!estimation) {
+            this.uiBuilder.updateCostDetails(parentEl, null);
+            return;
+        }
+
+        this.uiBuilder.updateCostDetails(parentEl, this.selectedModel, estimation.monthly);
 
         if (estimation.exceeedsBudget && this.plugin.settings.monthlyBudget) {
             this.uiBuilder.addBudgetWarning(
-                this.estimatedCostEl.parentElement!,
+                parentEl,
                 estimation.monthly,
                 this.plugin.settings.monthlyBudget
             );

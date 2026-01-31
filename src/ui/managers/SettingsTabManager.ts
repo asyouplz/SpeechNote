@@ -244,7 +244,7 @@ class MinimalSettingsTab extends PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
 
-        new Setting(containerEl).setName('Transcription settings').setHeading();
+        new Setting(containerEl).setName('Transcription').setHeading();
         containerEl.createEl('p', {
             text: 'Settings are temporarily unavailable. Please restart Obsidian if this persists.',
             cls: 'settings-error-message',

@@ -6,6 +6,7 @@
 
 import '../helpers/testSetup'; // 테스트 환경 설정 임포트
 import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { requestUrl } from 'obsidian';
 import { WhisperService } from '../../src/infrastructure/api/WhisperService';
 import { FileUploadManager } from '../../src/infrastructure/api/FileUploadManager';
 import { NotificationManager } from '../../src/ui/notifications/NotificationManager';
@@ -243,8 +244,8 @@ describe('Integration Tests', () => {
         const mockLogger = new Logger('test') as jest.Mocked<Logger>;
         const whisperService = new WhisperService('invalid-key', mockLogger);
 
-        // Mock fetch to simulate API error
-        global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+        // Mock requestUrl to simulate API error
+        (requestUrl as jest.Mock).mockRejectedValue(new Error('Network error'));
 
         await expect(whisperService.transcribe(new ArrayBuffer(1000))).rejects.toThrow();
 
