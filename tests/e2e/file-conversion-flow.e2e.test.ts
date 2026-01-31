@@ -10,7 +10,7 @@
  * 6. 성공 알림 확인
  */
 
-import { App, Modal, Editor, Notice } from 'obsidian';
+import { App, Modal, Editor, Notice, requestUrl } from 'obsidian';
 import { FilePickerModal } from '../../src/ui/modals/FilePickerModal';
 import { TranscriptionService } from '../../src/core/transcription/TranscriptionService';
 import { EditorService } from '../../src/application/EditorService';
@@ -90,10 +90,10 @@ describe('E2E: 파일 변환 플로우', () => {
         transcriptionService = new TranscriptionService(settings);
 
         // Mock API 응답
-        global.fetch = jest.fn().mockResolvedValue({
-            ok: true,
-            json: jest.fn().mockResolvedValue({ text: '변환된 텍스트' }),
-            text: jest.fn().mockResolvedValue('변환된 텍스트'),
+        (requestUrl as jest.Mock).mockResolvedValue({
+            status: 200,
+            json: { text: '변환된 텍스트' },
+            text: '변환된 텍스트',
         });
     });
 
@@ -155,9 +155,9 @@ describe('E2E: 파일 변환 플로우', () => {
             await filePickerModal.onChooseFile(mockFile);
 
             // API 호출 검증
-            expect(global.fetch).toHaveBeenCalledWith(
-                settings.apiUrl,
+            expect(requestUrl).toHaveBeenCalledWith(
                 expect.objectContaining({
+                    url: settings.apiUrl,
                     method: 'POST',
                     headers: expect.objectContaining({
                         Authorization: `Bearer ${settings.apiKey}`,
@@ -206,7 +206,7 @@ describe('E2E: 파일 변환 플로우', () => {
             await new Promise((resolve) => setTimeout(resolve, 100));
 
             // 검증
-            expect(global.fetch).toHaveBeenCalled();
+            expect(requestUrl).toHaveBeenCalled();
 
             document.body.removeChild(dropZone);
         });
@@ -222,11 +222,11 @@ describe('E2E: 파일 변환 플로우', () => {
             const results: string[] = [];
 
             // 각 파일에 대한 mock 응답 설정
-            (global.fetch as jest.Mock).mockImplementation(() => {
+            (requestUrl as jest.Mock).mockImplementation(() => {
                 processedCount++;
                 return Promise.resolve({
-                    ok: true,
-                    text: () => Promise.resolve(`변환된 텍스트 ${processedCount}`),
+                    status: 200,
+                    text: `변환된 텍스트 ${processedCount}`,
                 });
             });
 
@@ -282,14 +282,14 @@ describe('E2E: 파일 변환 플로우', () => {
 
         test('네트워크 에러 처리 및 재시도', async () => {
             let attemptCount = 0;
-            (global.fetch as jest.Mock).mockImplementation(() => {
+            (requestUrl as jest.Mock).mockImplementation(() => {
                 attemptCount++;
                 if (attemptCount < 3) {
                     return Promise.reject(new Error('Network error'));
                 }
                 return Promise.resolve({
-                    ok: true,
-                    text: () => Promise.resolve('변환된 텍스트'),
+                    status: 200,
+                    text: '변환된 텍스트',
                 });
             });
 
@@ -301,7 +301,7 @@ describe('E2E: 파일 변환 플로우', () => {
         });
 
         test('타임아웃 처리', async () => {
-            (global.fetch as jest.Mock).mockImplementation(
+            (requestUrl as jest.Mock).mockImplementation(
                 () =>
                     new Promise((resolve) => {
                         setTimeout(resolve, settings.timeout + 1000);
@@ -350,6 +350,7 @@ describe('E2E: 파일 변환 플로우', () => {
             let isCancelled = false;
 
             const abortController = new AbortController();
+            (requestUrl as jest.Mock).mockImplementation(() => new Promise(() => undefined));
 
             // 변환 시작
             const transcribePromise = transcriptionService.transcribe(mockFile, {

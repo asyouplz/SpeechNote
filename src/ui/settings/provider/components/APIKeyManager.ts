@@ -684,7 +684,7 @@ export class APIKeyManager {
      * Provider 이름 가져오기
      */
     private getProviderName(provider: TranscriptionProvider): string {
-        return provider === 'whisper' ? 'OpenAI whisper' : 'Deepgram';
+        return provider === 'whisper' ? 'OpenAI Whisper' : 'Deepgram';
     }
 
     /**

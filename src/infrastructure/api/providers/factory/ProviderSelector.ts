@@ -27,7 +27,7 @@ export class ProviderSelector {
             throw new Error('No transcription providers available');
         }
 
-        const strategyFunction = this.strategies.get(strategy) ?? this.defaultStrategy;
+        const strategyFunction = this.strategies.get(strategy) ?? this.defaultStrategy.bind(this);
         return strategyFunction(availableProviders, context);
     }
 

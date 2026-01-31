@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import { App, Plugin } from 'obsidian';
 import { DependencyContainer } from '../architecture/DependencyContainer';
 
@@ -27,7 +22,9 @@ export class MockFactory {
             workspace: {
                 getActiveViewOfType: jest.fn(),
                 openLinkText: jest.fn(),
-                onLayoutReady: jest.fn((callback) => callback()),
+                onLayoutReady: jest.fn((callback: () => void) => {
+                    callback();
+                }),
                 layoutReady: true,
                 activeLeaf: null,
             } as unknown as App['workspace'],

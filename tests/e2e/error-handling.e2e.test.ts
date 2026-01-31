@@ -9,7 +9,7 @@
  * 5. 복구 메커니즘
  */
 
-import { App } from 'obsidian';
+import { App, requestUrl } from 'obsidian';
 import { TranscriptionService } from '../../src/core/transcription/TranscriptionService';
 import { WhisperService } from '../../src/infrastructure/api/WhisperService';
 import { ErrorHandler } from '../../src/utils/ErrorHandler';
@@ -107,14 +107,14 @@ describe('E2E: 에러 처리 시나리오', () => {
             const maxRetries = settings.retryAttempts;
 
             // 네트워크 에러 시뮬레이션
-            (global.fetch as jest.Mock) = jest.fn().mockImplementation(() => {
+            (requestUrl as jest.Mock).mockImplementation(() => {
                 attemptCount++;
                 if (attemptCount <= 2) {
                     return Promise.reject(new Error('Network request failed'));
                 }
                 return Promise.resolve({
-                    ok: true,
-                    text: () => Promise.resolve('변환된 텍스트'),
+                    status: 200,
+                    text: '변환된 텍스트',
                 });
             });
 
@@ -135,10 +135,10 @@ describe('E2E: 에러 처리 시나리오', () => {
 
         test('타임아웃 처리', async () => {
             // 타임아웃 시뮬레이션
-            (global.fetch as jest.Mock) = jest.fn().mockImplementation(() => {
-                return new Promise((resolve) => {
+            (requestUrl as jest.Mock).mockImplementation(() => {
+                return new Promise(() => {
                     // 타임아웃보다 긴 시간 대기
-                    setTimeout(resolve, settings.timeout + 5000);
+                    setTimeout(() => undefined, settings.timeout + 5000);
                 });
             });
 
@@ -166,9 +166,7 @@ describe('E2E: 에러 처리 시나리오', () => {
 
         test('CORS 에러 처리', async () => {
             // CORS 에러 시뮬레이션
-            (global.fetch as jest.Mock) = jest
-                .fn()
-                .mockRejectedValue(new TypeError('Failed to fetch'));
+            (requestUrl as jest.Mock).mockRejectedValue(new TypeError('Failed to fetch'));
 
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
 
@@ -188,17 +186,14 @@ describe('E2E: 에러 처리 시나리오', () => {
 
     describe('API 에러 응답 처리', () => {
         test('401 Unauthorized - API 키 에러', async () => {
-            (global.fetch as jest.Mock) = jest.fn().mockResolvedValue({
-                ok: false,
+            (requestUrl as jest.Mock).mockResolvedValue({
                 status: 401,
-                statusText: 'Unauthorized',
-                json: () =>
-                    Promise.resolve({
-                        error: {
-                            message: 'Invalid API key provided',
-                            type: 'invalid_request_error',
-                        },
-                    }),
+                json: {
+                    error: {
+                        message: 'Invalid API key provided',
+                        type: 'invalid_request_error',
+                    },
+                },
             });
 
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
@@ -220,28 +215,23 @@ describe('E2E: 에러 처리 시나리오', () => {
             let requestCount = 0;
             const retryAfter = 60; // 60초 후 재시도
 
-            (global.fetch as jest.Mock) = jest.fn().mockImplementation(() => {
+            (requestUrl as jest.Mock).mockImplementation(() => {
                 requestCount++;
                 if (requestCount === 1) {
                     return Promise.resolve({
-                        ok: false,
                         status: 429,
-                        statusText: 'Too Many Requests',
-                        headers: new Headers({
-                            'Retry-After': retryAfter.toString(),
-                        }),
-                        json: () =>
-                            Promise.resolve({
-                                error: {
-                                    message: 'Rate limit exceeded',
-                                    type: 'rate_limit_error',
-                                },
-                            }),
+                        headers: { 'retry-after': retryAfter.toString() },
+                        json: {
+                            error: {
+                                message: 'Rate limit exceeded',
+                                type: 'rate_limit_error',
+                            },
+                        },
                     });
                 }
                 return Promise.resolve({
-                    ok: true,
-                    text: () => Promise.resolve('변환된 텍스트'),
+                    status: 200,
+                    text: '변환된 텍스트',
                 });
             });
 
@@ -263,17 +253,14 @@ describe('E2E: 에러 처리 시나리오', () => {
         });
 
         test('413 Payload Too Large - 파일 크기 초과', async () => {
-            (global.fetch as jest.Mock) = jest.fn().mockResolvedValue({
-                ok: false,
+            (requestUrl as jest.Mock).mockResolvedValue({
                 status: 413,
-                statusText: 'Payload Too Large',
-                json: () =>
-                    Promise.resolve({
-                        error: {
-                            message: 'Maximum file size exceeded',
-                            type: 'invalid_request_error',
-                        },
-                    }),
+                json: {
+                    error: {
+                        message: 'Maximum file size exceeded',
+                        type: 'invalid_request_error',
+                    },
+                },
             });
 
             const largeFile = new File([new ArrayBuffer(30 * 1024 * 1024)], 'large.mp3', {
@@ -296,25 +283,22 @@ describe('E2E: 에러 처리 시나리오', () => {
         test('500 Internal Server Error - 서버 에러', async () => {
             let attemptCount = 0;
 
-            (global.fetch as jest.Mock) = jest.fn().mockImplementation(() => {
+            (requestUrl as jest.Mock).mockImplementation(() => {
                 attemptCount++;
                 if (attemptCount <= 2) {
                     return Promise.resolve({
-                        ok: false,
                         status: 500,
-                        statusText: 'Internal Server Error',
-                        json: () =>
-                            Promise.resolve({
-                                error: {
-                                    message: 'An error occurred during processing',
-                                    type: 'server_error',
-                                },
-                            }),
+                        json: {
+                            error: {
+                                message: 'An error occurred during processing',
+                                type: 'server_error',
+                            },
+                        },
                     });
                 }
                 return Promise.resolve({
-                    ok: true,
-                    text: () => Promise.resolve('변환된 텍스트'),
+                    status: 200,
+                    text: '변환된 텍스트',
                 });
             });
 
@@ -348,17 +332,14 @@ describe('E2E: 에러 처리 시나리오', () => {
         });
 
         test('손상된 오디오 파일', async () => {
-            (global.fetch as jest.Mock) = jest.fn().mockResolvedValue({
-                ok: false,
+            (requestUrl as jest.Mock).mockResolvedValue({
                 status: 400,
-                statusText: 'Bad Request',
-                json: () =>
-                    Promise.resolve({
-                        error: {
-                            message: 'Invalid audio file',
-                            type: 'invalid_request_error',
-                        },
-                    }),
+                json: {
+                    error: {
+                        message: 'Invalid audio file',
+                        type: 'invalid_request_error',
+                    },
+                },
             });
 
             const corruptedFile = new File(['corrupted data'], 'corrupted.mp3', {
@@ -399,14 +380,14 @@ describe('E2E: 에러 처리 시나리오', () => {
             const delays: number[] = [];
             let attemptCount = 0;
 
-            (global.fetch as jest.Mock) = jest.fn().mockImplementation(() => {
+            (requestUrl as jest.Mock).mockImplementation(() => {
                 attemptCount++;
                 if (attemptCount < 3) {
                     return Promise.reject(new Error('Temporary failure'));
                 }
                 return Promise.resolve({
-                    ok: true,
-                    text: () => Promise.resolve('변환된 텍스트'),
+                    status: 200,
+                    text: '변환된 텍스트',
                 });
             });
 
@@ -434,15 +415,15 @@ describe('E2E: 에러 처리 시나리오', () => {
             ];
 
             let callCount = 0;
-            (global.fetch as jest.Mock) = jest.fn().mockImplementation(() => {
+            (requestUrl as jest.Mock).mockImplementation(() => {
                 callCount++;
                 if (callCount === 2) {
                     // 두 번째 파일만 실패
                     return Promise.reject(new Error('Processing failed'));
                 }
                 return Promise.resolve({
-                    ok: true,
-                    text: () => Promise.resolve(`변환된 텍스트 ${callCount}`),
+                    status: 200,
+                    text: `변환된 텍스트 ${callCount}`,
                 });
             });
 
@@ -474,7 +455,7 @@ describe('E2E: 에러 처리 시나리오', () => {
             // 에러 리포터 등록
             errorManager.setReporter(errorReportSpy);
 
-            (global.fetch as jest.Mock) = jest.fn().mockRejectedValue(new Error('Critical error'));
+            (requestUrl as jest.Mock).mockRejectedValue(new Error('Critical error'));
 
             const mockFile = new File(['audio'], 'test.mp3', { type: 'audio/mp3' });
 
@@ -501,14 +482,14 @@ describe('E2E: 에러 처리 시나리오', () => {
             const fallbackApiUrl = 'https://fallback-api.example.com/transcribe';
 
             let apiCallCount = 0;
-            (global.fetch as jest.Mock) = jest.fn().mockImplementation((url) => {
+            (requestUrl as jest.Mock).mockImplementation((params: { url?: string }) => {
                 apiCallCount++;
-                if (url === mainApiUrl && apiCallCount === 1) {
+                if (params.url === mainApiUrl && apiCallCount === 1) {
                     return Promise.reject(new Error('Main API failed'));
                 }
                 return Promise.resolve({
-                    ok: true,
-                    text: () => Promise.resolve('폴백 API 결과'),
+                    status: 200,
+                    text: '폴백 API 결과',
                 });
             });
 

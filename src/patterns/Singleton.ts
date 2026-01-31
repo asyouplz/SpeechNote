@@ -66,18 +66,18 @@ export function createSingleton<T>(factory: () => T): () => T {
  * 클래스 데코레이터를 사용한 Singleton 패턴
  */
 export function SingletonDecorator<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mixin constructors require any[] params
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- required by TS mixin constructor typing
     T extends new (...args: any[]) => object
 >(constructor: T): T {
     let instance: InstanceType<T> | undefined;
 
     return class extends constructor {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mixin constructors require any[] params
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- required by TS mixin constructor typing
         constructor(...args: any[]) {
             if (instance) {
                 return instance;
             }
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- args are passed through to base constructor
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- required by TS mixin constructor typing
             super(...args);
             instance = this as InstanceType<T>;
         }
