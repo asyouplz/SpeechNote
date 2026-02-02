@@ -22,6 +22,7 @@ export class TranscriptionService implements ITranscriptionService {
     private eventManager: IEventManager;
     private logger: ILogger;
     private settings?: Record<string, unknown>;
+    private readonly requestUrlAvailable: boolean;
 
     constructor(
         whisperServiceOrSettings: IWhisperService | Record<string, unknown>,
@@ -45,6 +46,13 @@ export class TranscriptionService implements ITranscriptionService {
             this.textFormatter = textFormatter ?? this.createNoopTextFormatter();
             this.eventManager = eventManager ?? this.createNoopEventManager();
             this.logger = logger ?? this.createNoopLogger();
+        }
+
+        this.requestUrlAvailable = typeof requestUrl === 'function';
+        if (!this.requestUrlAvailable) {
+            this.logger.error(
+                'requestUrl API is not available. Update Obsidian to the latest version.'
+            );
         }
     }
 
@@ -199,6 +207,15 @@ export class TranscriptionService implements ITranscriptionService {
 
     getStatus(): TranscriptionStatus {
         return this.status;
+    }
+
+    private ensureRequestUrlAvailable(): void {
+        if (this.requestUrlAvailable) {
+            return;
+        }
+        throw new Error(
+            'requestUrl API is not available. Please update Obsidian to the latest version.'
+        );
     }
 
     private createNoopLogger(): ILogger {
@@ -393,9 +410,7 @@ export class TranscriptionService implements ITranscriptionService {
             headers['Authorization'] = `Bearer ${apiKey}`;
         }
 
-        if (typeof requestUrl !== 'function') {
-            throw new Error('requestUrl API not available');
-        }
+        this.ensureRequestUrlAvailable();
 
         const responsePromise = requestUrl({
             url,

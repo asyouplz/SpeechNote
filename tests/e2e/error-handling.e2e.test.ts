@@ -136,9 +136,12 @@ describe('E2E: 에러 처리 시나리오', () => {
         test('타임아웃 처리', async () => {
             // 타임아웃 시뮬레이션
             (requestUrl as jest.Mock).mockImplementation(() => {
-                return new Promise(() => {
-                    // 타임아웃보다 긴 시간 대기
-                    setTimeout(() => undefined, settings.timeout + 5000);
+                return new Promise((_, reject) => {
+                    // 타임아웃 이후에 실패하도록 지연
+                    setTimeout(
+                        () => reject(new Error('Request exceeded timeout')),
+                        settings.timeout + 50
+                    );
                 });
             });
 

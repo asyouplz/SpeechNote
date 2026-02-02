@@ -650,6 +650,7 @@ export class DeepgramSettings {
 
         const parentEl = this.estimatedCostEl.parentElement;
         if (!parentEl) {
+            this.logger.warn('Cost estimation container not available');
             return;
         }
 

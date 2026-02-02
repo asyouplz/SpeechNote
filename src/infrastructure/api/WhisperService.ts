@@ -228,6 +228,7 @@ export class WhisperService implements IWhisperService {
 
     private apiKey: string;
     private logger: ILogger;
+    private readonly requestUrlAvailable: boolean;
 
     private abortController?: AbortController;
     private retryStrategy: RetryStrategy;
@@ -251,6 +252,14 @@ export class WhisperService implements IWhisperService {
                 this.timeoutMs = config.timeout;
             }
         }
+
+        this.requestUrlAvailable = typeof requestUrl === 'function';
+        if (!this.requestUrlAvailable) {
+            this.logger.error(
+                'requestUrl API is not available. Update Obsidian to the latest version.'
+            );
+        }
+
         this.retryStrategy = new ExponentialBackoffRetry(this.logger);
         this.circuitBreaker = new CircuitBreaker(this.logger);
     }
@@ -262,6 +271,15 @@ export class WhisperService implements IWhisperService {
             warn: () => undefined,
             error: () => undefined,
         };
+    }
+
+    private ensureRequestUrlAvailable(): void {
+        if (this.requestUrlAvailable) {
+            return;
+        }
+        throw new Error(
+            'requestUrl API is not available. Please update Obsidian to the latest version.'
+        );
     }
 
     private async resolveAudioBuffer(audio: ArrayBuffer | Blob): Promise<ArrayBuffer> {
@@ -472,7 +490,9 @@ export class WhisperService implements IWhisperService {
         return formData;
     }
 
-    private buildRequestParams(formData: FormData): RequestUrlParam {
+    private buildRequestParams(
+        formData: FormData
+    ): RequestUrlParam & { body: RequestUrlParam['body']; timeout: number } {
         const requestParams = {
             url: this.API_ENDPOINT,
             method: 'POST',
@@ -482,18 +502,22 @@ export class WhisperService implements IWhisperService {
             body: formData as unknown as RequestUrlParam['body'],
             timeout: this.timeoutMs,
             throw: false,
-        } as RequestUrlParam & { timeout: number };
+        } as RequestUrlParam & { body: RequestUrlParam['body']; timeout: number };
         return requestParams;
     }
 
-    private async executeRequest(requestParams: RequestUrlParam & { timeout?: number }): Promise<{
+    private async executeRequest(
+        requestParams: RequestUrlParam & { body: RequestUrlParam['body']; timeout?: number }
+    ): Promise<{
         status: number;
         headers?: Record<string, string>;
         json?: unknown;
         text?: string;
     }> {
-        if (typeof requestUrl !== 'function') {
-            throw new Error('requestUrl API not available');
+        this.ensureRequestUrlAvailable();
+
+        if (!requestParams.body) {
+            throw new Error('Request body not set for transcription');
         }
 
         const response = await requestUrl(requestParams);
