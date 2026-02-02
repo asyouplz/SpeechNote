@@ -1,3 +1,9 @@
+## [4.0.3](https://github.com/asyouplz/SpeechNote/compare/v4.0.2...v4.0.3) (2026-02-02)
+
+### 🐛 Bug Fixes
+
+* address reviewbot feedback and update tests ([#61](https://github.com/asyouplz/SpeechNote/issues/61)) ([eefd7f1](https://github.com/asyouplz/SpeechNote/commit/eefd7f136d3751733c30e0da02989bebbb62ac3c))
+
 ## [4.0.2](https://github.com/asyouplz/SpeechNote/compare/v4.0.1...v4.0.2) (2026-01-29)
 
 ### 🐛 Bug Fixes
