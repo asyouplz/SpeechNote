@@ -22,6 +22,7 @@ export class TranscriptionService implements ITranscriptionService {
     private eventManager: IEventManager;
     private logger: ILogger;
     private settings?: Record<string, unknown>;
+    private readonly requestUrlAvailable: boolean;
 
     constructor(
         whisperServiceOrSettings: IWhisperService | Record<string, unknown>,
@@ -45,6 +46,13 @@ export class TranscriptionService implements ITranscriptionService {
             this.textFormatter = textFormatter ?? this.createNoopTextFormatter();
             this.eventManager = eventManager ?? this.createNoopEventManager();
             this.logger = logger ?? this.createNoopLogger();
+        }
+
+        this.requestUrlAvailable = typeof requestUrl === 'function';
+        if (!this.requestUrlAvailable) {
+            this.logger.error(
+                'requestUrl API is not available. Update Obsidian to the latest version.'
+            );
         }
     }
 
@@ -199,6 +207,15 @@ export class TranscriptionService implements ITranscriptionService {
 
     getStatus(): TranscriptionStatus {
         return this.status;
+    }
+
+    private ensureRequestUrlAvailable(): void {
+        if (this.requestUrlAvailable) {
+            return;
+        }
+        throw new Error(
+            'requestUrl API is not available. Please update Obsidian to the latest version.'
+        );
     }
 
     private createNoopLogger(): ILogger {
@@ -393,76 +410,26 @@ export class TranscriptionService implements ITranscriptionService {
             headers['Authorization'] = `Bearer ${apiKey}`;
         }
 
-        const requestResult =
-            typeof requestUrl === 'function'
-                ? requestUrl({
-                      url,
-                      method: 'POST',
-                      headers,
-                      body: body as string | ArrayBuffer,
-                      throw: false,
-                  })
-                : undefined;
+        this.ensureRequestUrlAvailable();
 
-        const responsePromise =
-            requestResult && typeof (requestResult as PromiseLike<unknown>).then === 'function'
-                ? (
-                      requestResult as PromiseLike<{
-                          status: number;
-                          json?: unknown;
-                          text?: string;
-                      }>
-                  ).then((response) => ({
-                      ok: response.status >= 200 && response.status < 300,
-                      status: response.status,
-                      statusText: String(response.status),
-                      json: response.json,
-                      text: response.text,
-                  }))
-                : (async () => {
-                      if (typeof fetch !== 'function') {
-                          throw new Error('Fetch API not available');
-                      }
-                      const fetchResponse = await fetch(url, {
-                          method: 'POST',
-                          headers,
-                          body: body as BodyInit,
-                          signal,
-                      });
-                      let json: unknown;
-                      let text: string | undefined;
-                      if (typeof fetchResponse.json === 'function') {
-                          try {
-                              json = await fetchResponse.json();
-                          } catch {
-                              json = undefined;
-                          }
-                      }
-                      if (json === undefined && typeof fetchResponse.text === 'function') {
-                          try {
-                              text = await fetchResponse.text();
-                          } catch {
-                              text = undefined;
-                          }
-                      }
-                      const status =
-                          typeof fetchResponse.status === 'number'
-                              ? fetchResponse.status
-                              : fetchResponse.ok
-                              ? 200
-                              : 500;
-                      const ok =
-                          typeof fetchResponse.ok === 'boolean'
-                              ? fetchResponse.ok
-                              : status >= 200 && status < 300;
-                      return {
-                          ok,
-                          status,
-                          statusText: fetchResponse.statusText ?? String(status),
-                          json,
-                          text,
-                      };
-                  })();
+        const responsePromise = requestUrl({
+            url,
+            method: 'POST',
+            headers,
+            body: body as string | ArrayBuffer,
+            throw: false,
+        }).then((response) => {
+            const status = response.status;
+            const json = response.json as unknown;
+            const text = response.text;
+            return {
+                ok: status >= 200 && status < 300,
+                status,
+                statusText: String(status),
+                json,
+                text,
+            };
+        });
 
         const effectiveFetchPromise =
             this.isTestEnvironment() && delayForAbort

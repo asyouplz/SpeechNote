@@ -228,6 +228,7 @@ export class WhisperService implements IWhisperService {
 
     private apiKey: string;
     private logger: ILogger;
+    private readonly requestUrlAvailable: boolean;
 
     private abortController?: AbortController;
     private retryStrategy: RetryStrategy;
@@ -251,6 +252,14 @@ export class WhisperService implements IWhisperService {
                 this.timeoutMs = config.timeout;
             }
         }
+
+        this.requestUrlAvailable = typeof requestUrl === 'function';
+        if (!this.requestUrlAvailable) {
+            this.logger.error(
+                'requestUrl API is not available. Update Obsidian to the latest version.'
+            );
+        }
+
         this.retryStrategy = new ExponentialBackoffRetry(this.logger);
         this.circuitBreaker = new CircuitBreaker(this.logger);
     }
@@ -262,6 +271,15 @@ export class WhisperService implements IWhisperService {
             warn: () => undefined,
             error: () => undefined,
         };
+    }
+
+    private ensureRequestUrlAvailable(): void {
+        if (this.requestUrlAvailable) {
+            return;
+        }
+        throw new Error(
+            'requestUrl API is not available. Please update Obsidian to the latest version.'
+        );
     }
 
     private async resolveAudioBuffer(audio: ArrayBuffer | Blob): Promise<ArrayBuffer> {
@@ -405,7 +423,7 @@ export class WhisperService implements IWhisperService {
                 })
             );
 
-            const response = await this.executeRequest(requestParams, formData);
+            const response = await this.executeRequest(requestParams);
             const processingTime = Date.now() - startTime;
 
             this.logger.info(`Transcription completed in ${processingTime}ms`, {
@@ -472,7 +490,9 @@ export class WhisperService implements IWhisperService {
         return formData;
     }
 
-    private buildRequestParams(formData: FormData): RequestUrlParam {
+    private buildRequestParams(
+        formData: FormData
+    ): RequestUrlParam & { body: RequestUrlParam['body']; timeout: number } {
         const requestParams = {
             url: this.API_ENDPOINT,
             method: 'POST',
@@ -482,92 +502,31 @@ export class WhisperService implements IWhisperService {
             body: formData as unknown as RequestUrlParam['body'],
             timeout: this.timeoutMs,
             throw: false,
-        } as RequestUrlParam & { timeout: number };
+        } as RequestUrlParam & { body: RequestUrlParam['body']; timeout: number };
         return requestParams;
     }
 
     private async executeRequest(
-        requestParams: RequestUrlParam & { timeout?: number },
-        formData: FormData
+        requestParams: RequestUrlParam & { body: RequestUrlParam['body']; timeout?: number }
     ): Promise<{
         status: number;
         headers?: Record<string, string>;
         json?: unknown;
         text?: string;
     }> {
-        const requestResult =
-            typeof requestUrl === 'function' ? requestUrl(requestParams) : undefined;
+        this.ensureRequestUrlAvailable();
 
-        if (requestResult && typeof (requestResult as PromiseLike<unknown>).then === 'function') {
-            const response = await requestResult;
-            return {
-                status: response.status,
-                headers: response.headers,
-                json: response.json as unknown,
-                text: response.text,
-            };
+        if (!requestParams.body) {
+            throw new Error('Request body not set for transcription');
         }
 
-        if (typeof fetch !== 'function') {
-            throw new Error('Fetch API not available');
-        }
-
-        const controller = this.abortController;
-        const timeoutMs =
-            typeof requestParams.timeout === 'number' ? requestParams.timeout : this.timeoutMs;
-        const timeoutId =
-            timeoutMs > 0 && controller
-                ? window.setTimeout(() => controller.abort(), timeoutMs)
-                : undefined;
-
-        try {
-            const fetchResponse = await fetch(requestParams.url, {
-                method: requestParams.method,
-                headers: requestParams.headers as HeadersInit,
-                body: (requestParams.body as BodyInit) ?? (formData as BodyInit),
-                signal: controller?.signal,
-            });
-
-            let json: unknown;
-            let text: string | undefined;
-            if (typeof fetchResponse.json === 'function') {
-                try {
-                    json = await fetchResponse.json();
-                } catch {
-                    json = undefined;
-                }
-            }
-            if (json === undefined && typeof fetchResponse.text === 'function') {
-                try {
-                    text = await fetchResponse.text();
-                } catch {
-                    text = undefined;
-                }
-            }
-
-            const headers: Record<string, string> = {};
-            if (fetchResponse.headers) {
-                fetchResponse.headers.forEach((value, key) => {
-                    headers[key.toLowerCase()] = value;
-                });
-            }
-
-            return {
-                status:
-                    typeof fetchResponse.status === 'number'
-                        ? fetchResponse.status
-                        : fetchResponse.ok
-                        ? 200
-                        : 500,
-                headers,
-                json,
-                text,
-            };
-        } finally {
-            if (timeoutId !== undefined) {
-                clearTimeout(timeoutId);
-            }
-        }
+        const response = await requestUrl(requestParams);
+        return {
+            status: response.status,
+            headers: response.headers,
+            json: response.json as unknown,
+            text: response.text,
+        };
     }
 
     private parseResponse(json: unknown, processingTime: number): WhisperResponse {

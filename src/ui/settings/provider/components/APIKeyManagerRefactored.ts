@@ -66,7 +66,7 @@ export class APIKeyManagerRefactored extends BaseSettingsComponent {
         [
             'whisper',
             {
-                name: 'OpenAI whisper',
+                name: 'OpenAI Whisper',
                 placeholder: 'sk-...',
                 pattern: /^sk-[A-Za-z0-9]{48,}$/,
                 validateEndpoint: 'https://api.openai.com/v1/models',

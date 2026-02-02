@@ -392,8 +392,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the transcription service provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('openai', 'OpenAI whisper')
-                    .addOption('azure', 'Azure speech services')
+                    .addOption('openai', 'OpenAI Whisper')
+                    .addOption('azure', 'Azure Speech Services')
                     .addOption('custom', 'Custom endpoint');
 
                 void this.settingsAPI.get('api').then((api) => {
@@ -620,7 +620,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         // 샘플 레이트
         new Setting(section)
             .setName('Sample rate')
-            .setDesc('Audio sample rate in hz')
+            .setDesc('Audio sample rate in Hz')
             .addDropdown((dropdown) => {
                 const rates = [8000, 16000, 22050, 44100, 48000];
                 rates.forEach((rate) => {
@@ -707,7 +707,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         new Setting(cacheSection)
             .setName('Max cache size')
-            .setDesc('Maximum cache size in mb')
+            .setDesc('Maximum cache size in MB')
             .addSlider((slider) => {
                 slider
                     .setLimits(10, 500, 10)
@@ -756,7 +756,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         new Setting(perfSection)
             .setName('Chunk size')
-            .setDesc('File chunk size in mb')
+            .setDesc('File chunk size in MB')
             .addSlider((slider) => {
                 slider
                     .setLimits(0.5, 10, 0.5)

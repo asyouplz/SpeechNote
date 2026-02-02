@@ -8,8 +8,10 @@ import { MetricsTracker } from './MetricsTracker';
 export class ProviderSelector {
     private roundRobinIndex = 0;
     private readonly strategies: Map<SelectionStrategy, SelectionFunction>;
+    private readonly defaultStrategyFn: SelectionFunction;
 
     constructor(private readonly logger: ILogger, private readonly metricsTracker: MetricsTracker) {
+        this.defaultStrategyFn = this.defaultStrategy.bind(this);
         this.strategies = this.initializeStrategies();
     }
 
@@ -27,7 +29,7 @@ export class ProviderSelector {
             throw new Error('No transcription providers available');
         }
 
-        const strategyFunction = this.strategies.get(strategy) ?? this.defaultStrategy;
+        const strategyFunction = this.strategies.get(strategy) ?? this.defaultStrategyFn;
         return strategyFunction(availableProviders, context);
     }
 
@@ -41,7 +43,7 @@ export class ProviderSelector {
             [SelectionStrategy.QUALITY_OPTIMIZED, this.selectByQuality.bind(this)],
             [SelectionStrategy.ROUND_ROBIN, this.selectRoundRobin.bind(this)],
             [SelectionStrategy.AB_TEST, this.selectForABTest.bind(this)],
-            [SelectionStrategy.MANUAL, this.defaultStrategy.bind(this)],
+            [SelectionStrategy.MANUAL, this.defaultStrategyFn],
         ]);
     }
 

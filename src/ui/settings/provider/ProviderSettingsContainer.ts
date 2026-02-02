@@ -195,7 +195,7 @@ export class ProviderSettingsContainer {
             .addDropdown((dropdown) => {
                 dropdown
                     .addOption('auto', '🤖 Automatic (recommended)')
-                    .addOption('whisper', '🎯 OpenAI whisper only')
+                    .addOption('whisper', '🎯 OpenAI Whisper only')
                     .addOption('deepgram', '🚀 Deepgram only')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
@@ -358,7 +358,7 @@ export class ProviderSettingsContainer {
      */
     private getProviderDisplayName(provider: string): string {
         const names: Record<string, string> = {
-            whisper: 'OpenAI whisper',
+            whisper: 'OpenAI Whisper',
             deepgram: 'Deepgram',
             auto: 'Automatic',
         };
@@ -400,7 +400,7 @@ export class ProviderSettingsContainer {
     private showProviderNotice(provider: string): void {
         const messages: Record<string, string> = {
             auto: '🤖 System will automatically select the best provider',
-            whisper: '🎯 Using OpenAI whisper exclusively',
+            whisper: '🎯 Using OpenAI Whisper exclusively',
             deepgram: '🚀 Using Deepgram exclusively',
         };
         new Notice(messages[provider] || 'Provider updated');
@@ -427,7 +427,7 @@ export class ProviderSettingsContainer {
                 ],
             },
             {
-                title: '🎯 OpenAI whisper',
+                title: '🎯 OpenAI Whisper',
                 bullets: [
                     'Excellent accuracy for 50+ languages',
                     'Best for long-form content',
@@ -776,7 +776,7 @@ class ProviderDetailsModal extends Modal {
     }
 
     private getProviderName(): string {
-        return this.provider === 'whisper' ? 'OpenAI whisper' : 'Deepgram';
+        return this.provider === 'whisper' ? 'OpenAI Whisper' : 'Deepgram';
     }
 
     private renderStatus(containerEl: HTMLElement): void {
@@ -785,8 +785,8 @@ class ProviderDetailsModal extends Modal {
         // TODO: 실제 상태 가져오기
         const statusItems = [
             { label: 'Connection', value: '✅ Connected', cls: 'status-good' },
-            { label: 'API Key', value: '🔑 Configured', cls: 'status-good' },
-            { label: 'Last Used', value: '5 minutes ago', cls: 'status-info' },
+            { label: 'API key', value: '🔑 Configured', cls: 'status-good' },
+            { label: 'Last used', value: '5 minutes ago', cls: 'status-info' },
             { label: 'Health', value: '100%', cls: 'status-good' },
         ];
 
@@ -803,10 +803,10 @@ class ProviderDetailsModal extends Modal {
 
         // TODO: 실제 통계 가져오기
         const stats = [
-            { label: 'Total Requests', value: '1,234' },
-            { label: 'Success Rate', value: '99.5%' },
-            { label: 'Avg. Latency', value: '1.2s' },
-            { label: 'Total Cost', value: '$12.34' },
+            { label: 'Total requests', value: '1,234' },
+            { label: 'Success rate', value: '99.5%' },
+            { label: 'Avg. latency', value: '1.2s' },
+            { label: 'Total cost', value: '$12.34' },
         ];
 
         const gridEl = containerEl.createDiv({ cls: 'stats-grid' });

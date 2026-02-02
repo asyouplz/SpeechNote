@@ -8,6 +8,7 @@
  */
 
 import '@testing-library/jest-dom';
+import { requestUrl } from 'obsidian';
 import { TextEncoder, TextDecoder } from 'util';
 
 // 전역 객체 설정
@@ -105,8 +106,8 @@ global.clearInterval = ((id: ReturnType<typeof setInterval>) => {
     return originalClearInterval(id);
 }) as typeof clearInterval;
 
-// Fetch API Mock
-global.fetch = jest.fn();
+// Obsidian requestUrl Mock
+(requestUrl as jest.Mock).mockClear();
 
 // LocalStorage Mock
 const localStorageMock = {
@@ -406,18 +407,16 @@ export const waitFor = (ms: number): Promise<void> =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
 export const mockApiResponse = (data: any, status = 200): void => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: status >= 200 && status < 300,
+    (requestUrl as jest.Mock).mockResolvedValueOnce({
         status,
-        statusText: status === 200 ? 'OK' : 'Error',
-        json: () => Promise.resolve(data),
-        text: () => Promise.resolve(JSON.stringify(data)),
+        json: data,
+        text: JSON.stringify(data),
         headers: new Headers(),
     });
 };
 
 export const mockApiError = (error: string, status = 500): void => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error(error));
+    (requestUrl as jest.Mock).mockRejectedValueOnce(new Error(error));
 };
 
 export const createMockFile = (name: string, size: number, type: string): File => {
@@ -434,7 +433,7 @@ export const dispatchCustomEvent = (element: Element, eventName: string, detail?
 beforeEach(() => {
     jest.clearAllMocks();
     localStorageMock.clear();
-    (global.fetch as jest.Mock).mockClear();
+    (requestUrl as jest.Mock).mockClear();
     document.body.innerHTML = '';
 });
 

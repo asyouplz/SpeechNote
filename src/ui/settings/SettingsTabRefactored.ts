@@ -140,7 +140,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
      * 일반 설정 섹션
      */
     private createGeneralSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'General', '기본 동작 설정');
+        const sectionEl = this.createSection(containerEl, 'Basics', '기본 동작 설정');
         const component = this.getComponent('generalSettings', GeneralSettingsWrapper);
         component?.render(sectionEl);
     }

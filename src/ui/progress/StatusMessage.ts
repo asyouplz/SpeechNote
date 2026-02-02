@@ -328,7 +328,7 @@ export class StatusMessageDisplay {
         const header = createEl('div', { cls: 'status-message-display__header' });
 
         const title = createEl('h3', {
-            text: this.getLocalizedText('Status Messages', '상태 메시지'),
+            text: this.getLocalizedText('Status messages', '상태 메시지'),
         });
         header.appendChild(title);
 
