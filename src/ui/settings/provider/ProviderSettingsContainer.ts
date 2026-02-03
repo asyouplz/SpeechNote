@@ -195,7 +195,7 @@ export class ProviderSettingsContainer {
             .addDropdown((dropdown) => {
                 dropdown
                     .addOption('auto', '🤖 Automatic (recommended)')
-                    .addOption('whisper', '🎯 OpenAI Whisper only')
+                    .addOption('whisper', '🎯 OpenAI whisper only')
                     .addOption('deepgram', '🚀 Deepgram only')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
@@ -358,7 +358,7 @@ export class ProviderSettingsContainer {
      */
     private getProviderDisplayName(provider: string): string {
         const names: Record<string, string> = {
-            whisper: 'OpenAI Whisper',
+            whisper: 'OpenAI whisper',
             deepgram: 'Deepgram',
             auto: 'Automatic',
         };
@@ -400,7 +400,7 @@ export class ProviderSettingsContainer {
     private showProviderNotice(provider: string): void {
         const messages: Record<string, string> = {
             auto: '🤖 System will automatically select the best provider',
-            whisper: '🎯 Using OpenAI Whisper exclusively',
+            whisper: '🎯 Using OpenAI whisper exclusively',
             deepgram: '🚀 Using Deepgram exclusively',
         };
         new Notice(messages[provider] || 'Provider updated');
@@ -427,7 +427,7 @@ export class ProviderSettingsContainer {
                 ],
             },
             {
-                title: '🎯 OpenAI Whisper',
+                title: '🎯 OpenAI whisper',
                 bullets: [
                     'Excellent accuracy for 50+ languages',
                     'Best for long-form content',
@@ -438,7 +438,7 @@ export class ProviderSettingsContainer {
                 title: '🚀 Deepgram',
                 bullets: [
                     'Ultra-fast real-time transcription',
-                    'Lower latency than Whisper',
+                    'Lower latency than whisper',
                     'Cost-effective for high volume',
                 ],
             },
@@ -776,7 +776,7 @@ class ProviderDetailsModal extends Modal {
     }
 
     private getProviderName(): string {
-        return this.provider === 'whisper' ? 'OpenAI Whisper' : 'Deepgram';
+        return this.provider === 'whisper' ? 'OpenAI whisper' : 'Deepgram';
     }
 
     private renderStatus(containerEl: HTMLElement): void {
