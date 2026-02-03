@@ -470,7 +470,7 @@ class ApiSettingsSection extends SectionRenderer {
         const section = this.container.createDiv('settings-section');
         new Setting(section).setName('API').setHeading();
         section.createEl('p', {
-            text: 'Openai API 설정',
+            text: 'OpenAI API 설정',
             cls: 'setting-item-description',
         });
         return section;
@@ -479,7 +479,7 @@ class ApiSettingsSection extends SectionRenderer {
     private createApiKeyInput(section: HTMLElement): void {
         const setting = new Setting(section)
             .setName('API key')
-            .setDesc('Openai API 키를 입력하세요. (sk-로 시작)');
+            .setDesc('OpenAI API 키를 입력하세요. (sk-로 시작)');
 
         const inputContainer = setting.controlEl.createDiv('api-key-container');
         const eventManager = this.eventManager;

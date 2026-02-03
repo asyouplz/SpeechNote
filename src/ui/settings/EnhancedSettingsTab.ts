@@ -392,8 +392,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the transcription service provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('openai', 'Openai whisper')
-                    .addOption('azure', 'Azure speech services')
+                    .addOption('openai', 'OpenAI Whisper')
+                    .addOption('azure', 'Azure Speech Services')
                     .addOption('custom', 'Custom endpoint');
 
                 void this.settingsAPI.get('api').then((api) => {
@@ -509,7 +509,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         if (api.provider === 'openai') {
             new Setting(section)
                 .setName('Model')
-                .setDesc('Select the openai model')
+                .setDesc('Select the OpenAI model')
                 .addDropdown((dropdown) => {
                     dropdown.addOption('whisper-1', 'Whisper v1');
                     dropdown.setValue(api.model);
@@ -583,7 +583,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the audio format for recording')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('webm', 'Webm (recommended)')
+                    .addOption('webm', 'WebM (recommended)')
                     .addOption('mp3', 'MP3')
                     .addOption('m4a', 'M4A')
                     .addOption('wav', 'Wav (lossless)');

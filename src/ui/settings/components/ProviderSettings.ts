@@ -81,7 +81,7 @@ export class ProviderSettings {
             .addDropdown((dropdown) => {
                 dropdown
                     .addOption('auto', '🤖 Automatic (recommended)')
-                    .addOption('whisper', '🎯 Openai whisper')
+                    .addOption('whisper', '🎯 OpenAI Whisper')
                     .addOption('deepgram', '🚀 Deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {

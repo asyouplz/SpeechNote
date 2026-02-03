@@ -153,7 +153,7 @@ export class SettingsTabRefactored extends PluginSettingTab {
 
         const apiKeySetting = new Setting(sectionEl)
             .setName('API key')
-            .setDesc('Openai API 키를 입력하세요. (sk-로 시작)');
+            .setDesc('OpenAI API 키를 입력하세요. (sk-로 시작)');
 
         const inputEl = apiKeySetting.controlEl.createEl('input', {
             type: 'password',

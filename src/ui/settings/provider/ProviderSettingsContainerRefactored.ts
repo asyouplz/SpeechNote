@@ -287,7 +287,7 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
         ).addDropdown((dropdown) => {
             dropdown
                 .addOption('auto', '🤖 Automatic')
-                .addOption('whisper', '🎯 Openai whisper')
+                .addOption('whisper', '🎯 OpenAI Whisper')
                 .addOption('deepgram', '🚀 Deepgram')
                 .setValue(this.state.get().currentProvider)
                 .onChange((value) => {
