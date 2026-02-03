@@ -80,9 +80,9 @@ export class ProviderSettings {
             .setDesc('Choose a specific provider or use automatic selection')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', '🤖 Automatic (recommended)')
+                    .addOption('auto', '🤖 automatic (recommended)')
                     .addOption('whisper', '🎯 OpenAI whisper')
-                    .addOption('deepgram', '🚀 Deepgram')
+                    .addOption('deepgram', '🚀 deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderValue(value)) {
@@ -573,9 +573,9 @@ export class ProviderSettings {
      */
     private showProviderInfo(provider: string): void {
         const info: Record<string, string> = {
-            auto: '🤖 System will automatically select the best provider based on performance and availability',
+            auto: '🤖 system will automatically select the best provider based on performance and availability',
             whisper: '🎯 OpenAI whisper - high accuracy, supports 50+ languages',
-            deepgram: '🚀 Deepgram - fast real-time transcription with excellent accuracy',
+            deepgram: '🚀 deepgram - fast real-time transcription with excellent accuracy',
         };
 
         new Notice(info[provider] || 'Provider selected');

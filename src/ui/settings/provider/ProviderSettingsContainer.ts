@@ -194,9 +194,9 @@ export class ProviderSettingsContainer {
             .setDesc('Select how to choose the transcription provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', '🤖 Automatic (recommended)')
+                    .addOption('auto', '🤖 automatic (recommended)')
                     .addOption('whisper', '🎯 OpenAI whisper only')
-                    .addOption('deepgram', '🚀 Deepgram only')
+                    .addOption('deepgram', '🚀 deepgram only')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderSelection(value)) {
@@ -399,9 +399,9 @@ export class ProviderSettingsContainer {
      */
     private showProviderNotice(provider: string): void {
         const messages: Record<string, string> = {
-            auto: '🤖 System will automatically select the best provider',
-            whisper: '🎯 Using OpenAI whisper exclusively',
-            deepgram: '🚀 Using Deepgram exclusively',
+            auto: '🤖 system will automatically select the best provider',
+            whisper: '🎯 using OpenAI whisper exclusively',
+            deepgram: '🚀 using deepgram exclusively',
         };
         new Notice(messages[provider] || 'Provider updated');
     }
@@ -418,7 +418,7 @@ export class ProviderSettingsContainer {
 
         const sections = [
             {
-                title: '🤖 Automatic mode',
+                title: '🤖 automatic mode',
                 description: 'The system intelligently selects the best provider based on:',
                 bullets: [
                     'Current availability and response times',
@@ -435,7 +435,7 @@ export class ProviderSettingsContainer {
                 ],
             },
             {
-                title: '🚀 Deepgram',
+                title: '🚀 deepgram',
                 bullets: [
                     'Ultra-fast real-time transcription',
                     'Lower latency than whisper',
