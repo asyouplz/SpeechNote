@@ -392,8 +392,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the transcription service provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('openai', 'OpenAI Whisper')
-                    .addOption('azure', 'Azure Speech Services')
+                    .addOption('openai', 'OpenAI whisper')
+                    .addOption('azure', 'Azure speech services')
                     .addOption('custom', 'Custom endpoint');
 
                 void this.settingsAPI.get('api').then((api) => {

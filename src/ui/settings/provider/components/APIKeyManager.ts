@@ -81,7 +81,7 @@ export class APIKeyManager {
                 inputsEl,
                 'whisper',
                 'OpenAI API key',
-                'Your OpenAI API key for Whisper',
+                'Your OpenAI API key for whisper',
                 'sk-...',
                 /^sk-[A-Za-z0-9]{48,}$/
             );
@@ -684,7 +684,7 @@ export class APIKeyManager {
      * Provider 이름 가져오기
      */
     private getProviderName(provider: TranscriptionProvider): string {
-        return provider === 'whisper' ? 'OpenAI Whisper' : 'Deepgram';
+        return provider === 'whisper' ? 'OpenAI whisper' : 'Deepgram';
     }
 
     /**
@@ -806,7 +806,7 @@ export class APIKeyManager {
 
         const whisperItem = envList.createEl('li');
         whisperItem.createEl('code', { text: 'OPENAI_API_KEY' });
-        whisperItem.appendText(' for Whisper');
+        whisperItem.appendText(' for whisper');
 
         const deepgramItem = envList.createEl('li');
         deepgramItem.createEl('code', { text: 'DEEPGRAM_API_KEY' });
