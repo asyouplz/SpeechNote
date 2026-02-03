@@ -437,7 +437,7 @@ export class SettingsTab extends PluginSettingTab {
         infoEl.empty();
 
         const descriptions = {
-            auto: '🤖 Intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
+            auto: '🤖 intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
             whisper:
                 '🎯 OpenAI whisper - high-quality transcription with support for multiple languages. Best for general-purpose transcription.',
             deepgram:

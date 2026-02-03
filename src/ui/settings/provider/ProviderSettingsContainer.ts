@@ -418,7 +418,7 @@ export class ProviderSettingsContainer {
 
         const sections = [
             {
-                title: '🤖 Automatic mode',
+                title: '🤖 automatic mode',
                 description: 'The system intelligently selects the best provider based on:',
                 bullets: [
                     'Current availability and response times',
@@ -435,7 +435,7 @@ export class ProviderSettingsContainer {
                 ],
             },
             {
-                title: '🚀 Deepgram',
+                title: '🚀 deepgram',
                 bullets: [
                     'Ultra-fast real-time transcription',
                     'Lower latency than whisper',
