@@ -194,9 +194,9 @@ export class ProviderSettingsContainer {
             .setDesc('Select how to choose the transcription provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', '🤖 automatic (recommended)')
+                    .addOption('auto', '🤖 Automatic (recommended)')
                     .addOption('whisper', '🎯 OpenAI whisper only')
-                    .addOption('deepgram', '🚀 deepgram only')
+                    .addOption('deepgram', '🚀 Deepgram only')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderSelection(value)) {
@@ -399,9 +399,9 @@ export class ProviderSettingsContainer {
      */
     private showProviderNotice(provider: string): void {
         const messages: Record<string, string> = {
-            auto: '🤖 system will automatically select the best provider',
-            whisper: '🎯 using OpenAI whisper exclusively',
-            deepgram: '🚀 using deepgram exclusively',
+            auto: '🤖 System will automatically select the best provider',
+            whisper: '🎯 Using OpenAI whisper exclusively',
+            deepgram: '🚀 Using Deepgram exclusively',
         };
         new Notice(messages[provider] || 'Provider updated');
     }

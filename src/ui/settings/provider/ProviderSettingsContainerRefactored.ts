@@ -286,9 +286,9 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
             'Select how to choose the transcription provider'
         ).addDropdown((dropdown) => {
             dropdown
-                .addOption('auto', '🤖 automatic')
+                .addOption('auto', '🤖 Automatic')
                 .addOption('whisper', '🎯 OpenAI whisper')
-                .addOption('deepgram', '🚀 deepgram')
+                .addOption('deepgram', '🚀 Deepgram')
                 .setValue(this.state.get().currentProvider)
                 .onChange((value) => {
                     void this.handleProviderChange(value);
