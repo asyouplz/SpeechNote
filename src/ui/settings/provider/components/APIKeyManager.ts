@@ -819,7 +819,7 @@ export class APIKeyManager {
 
         instructions.createEl('p', {
             cls: 'warning',
-            text: '⚠️ Environment variables take precedence over saved keys',
+            text: '⚠️ environment variables take precedence over saved keys',
         });
 
         modal.open();

@@ -219,11 +219,11 @@ export class ProviderSettings {
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality optimized')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
-                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B testing')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 cost optimized')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ performance optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ quality optimized')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 round robin')
+                    .addOption(SelectionStrategy.AB_TEST, '🧪 a/b testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -349,7 +349,7 @@ export class ProviderSettings {
     private renderMetrics(containerEl: HTMLElement): void {
         const metricsEl = containerEl.createDiv({ cls: 'metrics-container' });
 
-        metricsEl.createEl('h4', { text: '📊 Performance metrics' });
+        metricsEl.createEl('h4', { text: '📊 performance metrics' });
 
         // 각 Provider별 메트릭
         this.renderProviderMetrics(metricsEl, 'whisper');
@@ -405,7 +405,7 @@ export class ProviderSettings {
      */
     private renderComparisonChart(containerEl: HTMLElement): void {
         const chartEl = containerEl.createDiv({ cls: 'comparison-chart' });
-        chartEl.createEl('h5', { text: '📈 Provider comparison' });
+        chartEl.createEl('h5', { text: '📈 provider comparison' });
 
         // 간단한 막대 차트 (실제로는 Chart.js 등 사용 권장)
         const chartContent = chartEl.createDiv({ cls: 'chart-content' });
@@ -432,10 +432,10 @@ export class ProviderSettings {
 
         if (whisperConnected || deepgramConnected) {
             statusEl.addClass('connected');
-            statusEl.setText('✅ Connected');
+            statusEl.setText('✅ connected');
         } else {
             statusEl.addClass('disconnected');
-            statusEl.setText('⚠️ No providers configured');
+            statusEl.setText('⚠️ no providers configured');
         }
     }
 

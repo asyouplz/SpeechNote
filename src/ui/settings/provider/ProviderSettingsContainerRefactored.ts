@@ -300,9 +300,9 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
             this.createSetting(section, '선택 전략', 'Provider 선택 방법').addDropdown(
                 (dropdown) => {
                     dropdown
-                        .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
-                        .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
-                        .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
+                        .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ performance first')
+                        .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 cost optimized')
+                        .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ quality first')
                         .setValue(
                             this.plugin.settings.selectionStrategy ||
                                 SelectionStrategy.PERFORMANCE_OPTIMIZED

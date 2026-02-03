@@ -63,7 +63,7 @@ export class AdvancedSettingsPanel {
         const headerEl = containerEl.createDiv({ cls: 'advanced-panel-header' });
 
         headerEl.createEl('h4', {
-            text: '⚙️ Advanced configuration',
+            text: '⚙️ advanced configuration',
             cls: 'advanced-title',
         });
 
@@ -96,11 +96,11 @@ export class AdvancedSettingsPanel {
             .setDesc('How the system selects providers when in auto mode')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
-                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B testing')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ performance first')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 cost optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ quality first')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 round robin')
+                    .addOption(SelectionStrategy.AB_TEST, '🧪 a/b testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -880,7 +880,7 @@ export class AdvancedSettingsPanel {
      */
     private showABTestResults(): void {
         // TODO: Implement A/B test results modal
-        new Notice('A/B test results coming soon.');
+        new Notice('A/b test results coming soon.');
     }
 
     /**

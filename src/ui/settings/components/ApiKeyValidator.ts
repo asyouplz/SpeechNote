@@ -70,7 +70,7 @@ export class ApiKeyValidator {
                 );
 
                 if (!hasWhisper) {
-                    new Notice('⚠ API 키는 유효하지만 Whisper 모델 접근 권한이 없을 수 있습니다');
+                    new Notice('⚠ API 키는 유효하지만 whisper 모델 접근 권한이 없을 수 있습니다');
                 }
 
                 return true;

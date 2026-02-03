@@ -774,7 +774,7 @@ export class DeepgramService {
         json?: unknown;
         text?: unknown;
         headers?: Record<string, string>;
-    }): never {
+    }): Error {
         const errorBody = isPlainRecord(response.json) ? response.json : undefined;
         const rawText = typeof response.text === 'string' ? response.text : undefined;
         const messageFromBody =
@@ -792,7 +792,7 @@ export class DeepgramService {
 
         switch (response.status) {
             case 400:
-                throw new TranscriptionError(
+                return new TranscriptionError(
                     errorMessage || 'Invalid request',
                     'BAD_REQUEST',
                     'deepgram',
@@ -800,9 +800,9 @@ export class DeepgramService {
                     400
                 );
             case 401:
-                throw new ProviderAuthenticationError('deepgram');
+                return new ProviderAuthenticationError('deepgram');
             case 402:
-                throw new TranscriptionError(
+                return new TranscriptionError(
                     'Insufficient credits',
                     'INSUFFICIENT_CREDITS',
                     'deepgram',
@@ -811,7 +811,7 @@ export class DeepgramService {
                 );
             case 429: {
                 const retryAfter = response.headers?.['retry-after'];
-                throw new ProviderRateLimitError(
+                return new ProviderRateLimitError(
                     'deepgram',
                     retryAfter ? parseInt(retryAfter) : undefined
                 );
@@ -819,13 +819,13 @@ export class DeepgramService {
             case 500:
             case 502:
             case 503:
-                throw new ProviderUnavailableError('deepgram');
+                return new ProviderUnavailableError('deepgram');
             case 504: {
                 // Extract file size info if available
                 const sizeInfo = this.lastAudioSize
                     ? ` (${Math.round(this.lastAudioSize / (1024 * 1024))}MB)`
                     : '';
-                throw new TranscriptionError(
+                return new TranscriptionError(
                     `Server timeout processing large audio file${sizeInfo}. This often happens with very large files (>50MB). Try: 1) Breaking the file into smaller chunks (recommended: <50MB per chunk), 2) Reducing audio quality/bitrate to 64-128 kbps, 3) Using the 'enhanced' model which may be faster, or 4) Converting to a more efficient format like MP3 or OGG.`,
                     'SERVER_TIMEOUT',
                     'deepgram',
@@ -834,7 +834,7 @@ export class DeepgramService {
                 );
             }
             default:
-                throw new TranscriptionError(
+                return new TranscriptionError(
                     `API error: ${errorMessage}`,
                     'UNKNOWN_ERROR',
                     'deepgram',

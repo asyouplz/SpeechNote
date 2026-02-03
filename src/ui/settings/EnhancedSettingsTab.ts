@@ -495,7 +495,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                         new Notice(`❌ ${error}`);
                     }
                 } catch (error) {
-                    new Notice('❌ Failed to validate API key.');
+                    new Notice('❌ failed to validate API key.');
                     console.error(error);
                 } finally {
                     validateBtn.disabled = false;
@@ -509,7 +509,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         if (api.provider === 'openai') {
             new Setting(section)
                 .setName('Model')
-                .setDesc('Select the openai model')
+                .setDesc('Select the OpenAI model')
                 .addDropdown((dropdown) => {
                     dropdown.addOption('whisper-1', 'Whisper v1');
                     dropdown.setValue(api.model);
@@ -586,7 +586,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                     .addOption('webm', 'WebM (recommended)')
                     .addOption('mp3', 'MP3')
                     .addOption('m4a', 'M4A')
-                    .addOption('wav', 'WAV (lossless)');
+                    .addOption('wav', 'Wav (lossless)');
 
                 dropdown.setValue(audio.format);
                 dropdown.onChange(async (value) => {
@@ -721,7 +721,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
 
         new Setting(cacheSection)
-            .setName('Cache TTL (days)')
+            .setName('Cache ttl (days)')
             .setDesc('Cache time-to-live in days')
             .addSlider((slider) => {
                 slider
@@ -919,7 +919,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         const links = section.createDiv({ cls: 'about-links' });
 
         const githubLink = links.createEl('a', {
-            text: '📖 Documentation and guides',
+            text: '📖 documentation and guides',
             href: 'https://github.com/yourusername/obsidian-speech-to-text',
         });
         githubLink.setAttribute('target', '_blank');
@@ -927,7 +927,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         links.createEl('br');
 
         const issueLink = links.createEl('a', {
-            text: '🐛 Report an issue',
+            text: '🐛 report an issue',
             href: 'https://github.com/yourusername/obsidian-speech-to-text/issues',
         });
         issueLink.setAttribute('target', '_blank');

@@ -614,7 +614,7 @@ export class DeepgramSettings {
         });
 
         noteEl.createEl('p', {
-            text: 'For best results with very large files (>100MB), consider:',
+            text: 'For best results with very large files (>100mb), consider:',
         });
         const secondaryList = noteEl.createEl('ul');
         [

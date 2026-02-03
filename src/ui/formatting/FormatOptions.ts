@@ -268,7 +268,7 @@ export class FormatOptionsModal extends Modal {
                     .setName('Language')
                     .setDesc('Programming language for syntax highlighting')
                     .addText((text) => {
-                        text.setPlaceholder('JavaScript, Python, etc.')
+                        text.setPlaceholder('JavaScript, python, etc.')
                             .setValue(this.options.codeLanguage || '')
                             .onChange((value) => {
                                 this.options.codeLanguage = value;

@@ -262,7 +262,7 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('performance_optimized', 'Performance optimized')
                     .addOption('quality_optimized', 'Quality optimized')
                     .addOption('round_robin', 'Round robin')
-                    .addOption('ab_test', 'A/B testing')
+                    .addOption('ab_test', 'A/b testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -368,7 +368,7 @@ export class SettingsTab extends PluginSettingTab {
             .setName('OpenAI API key')
             .setDesc('Enter your OpenAI API key for Whisper transcription')
             .addText((text) => {
-                text.setPlaceholder('sk-...')
+                text.setPlaceholder('Sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
                     .onChange(async (value) => {
                         if (value && !value.includes('*')) {
