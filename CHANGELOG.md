@@ -1,3 +1,9 @@
+## [4.0.6](https://github.com/asyouplz/SpeechNote/compare/v4.0.5...v4.0.6) (2026-02-03)
+
+### 🐛 Bug Fixes
+
+* **ui:** align emoji labels with sentence case ([#64](https://github.com/asyouplz/SpeechNote/issues/64)) ([2bcaa6a](https://github.com/asyouplz/SpeechNote/commit/2bcaa6a07e81ad23d39c1645b76262e23f3b8a84))
+
 ## [4.0.5](https://github.com/asyouplz/SpeechNote/compare/v4.0.4...v4.0.5) (2026-02-03)
 
 ### 🐛 Bug Fixes
