@@ -578,7 +578,7 @@ export class DeepgramSettings {
         // Maximum chunk size
         const chunkSizeSetting = new Setting(container)
             .setName('Maximum chunk size')
-            .setDesc('Maximum size per chunk in MB (recommended: 50MB)')
+            .setDesc('Maximum size per chunk in mb (recommended: 50mb)')
             .addSlider((slider) => {
                 slider
                     .setLimits(10, 100, 10)
@@ -614,7 +614,7 @@ export class DeepgramSettings {
         });
 
         noteEl.createEl('p', {
-            text: 'For best results with very large files (>100MB), consider:',
+            text: 'For best results with very large files (>100mb), consider:',
         });
         const secondaryList = noteEl.createEl('ul');
         [

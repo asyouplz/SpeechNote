@@ -95,7 +95,7 @@ export class ProviderSettingsContainer {
 
         // 타이틀
         const titleEl = headerEl.createDiv({ cls: 'provider-title' });
-        new Setting(titleEl).setName('🎯 Transcription provider configuration').setHeading();
+        new Setting(titleEl).setName('🎯 transcription provider configuration').setHeading();
 
         // 확장/축소 토글
         const toggleBtn = headerEl.createEl('button', {
@@ -194,9 +194,9 @@ export class ProviderSettingsContainer {
             .setDesc('Select how to choose the transcription provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', '🤖 Automatic (recommended)')
-                    .addOption('whisper', '🎯 OpenAI Whisper only')
-                    .addOption('deepgram', '🚀 Deepgram only')
+                    .addOption('auto', '🤖 automatic (recommended)')
+                    .addOption('whisper', '🎯 openai whisper only')
+                    .addOption('deepgram', '🚀 deepgram only')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderSelection(value)) {
@@ -233,10 +233,10 @@ export class ProviderSettingsContainer {
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ performance first')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 cost optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ quality first')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 round robin')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -579,10 +579,10 @@ export class ProviderSettingsContainer {
             await new Promise((resolve) => setTimeout(resolve, 2000)); // 시뮬레이션
 
             notice.hide();
-            new Notice('✅ Connection successful.', 3000);
+            new Notice('✅ connection successful.', 3000);
         } catch (error) {
             notice.hide();
-            new Notice('❌ Connection failed.', 3000);
+            new Notice('❌ connection failed.', 3000);
             console.error('Connection test error:', error);
         }
     }
@@ -841,10 +841,10 @@ class ProviderDetailsModal extends Modal {
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
             notice.hide();
-            new Notice('✅ Connection test successful.', 3000);
+            new Notice('✅ connection test successful.', 3000);
         } catch {
             notice.hide();
-            new Notice('❌ Connection test failed.', 3000);
+            new Notice('❌ connection test failed.', 3000);
         }
     }
 }
@@ -856,7 +856,7 @@ class ProviderMetricsDisplay {
     constructor(private plugin: SpeechToTextPlugin) {}
 
     render(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('📊 Performance metrics').setHeading();
+        new Setting(containerEl).setName('📊 performance metrics').setHeading();
 
         // TODO: 실제 메트릭 구현
         const metricsEl = containerEl.createDiv({ cls: 'metrics-display' });

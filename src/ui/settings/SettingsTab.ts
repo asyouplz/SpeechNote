@@ -152,7 +152,7 @@ export class SettingsTab extends PluginSettingTab {
 
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI Whisper')
+                        .addOption('whisper', 'Openai whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -262,7 +262,7 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('performance_optimized', 'Performance optimized')
                     .addOption('quality_optimized', 'Quality optimized')
                     .addOption('round_robin', 'Round robin')
-                    .addOption('ab_test', 'A/B testing')
+                    .addOption('ab_test', 'A/b testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -316,7 +316,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('OpenAI API endpoint (leave the default unless using a custom endpoint)')
+            .setDesc('Openai API endpoint (leave the default unless using a custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')
@@ -354,7 +354,7 @@ export class SettingsTab extends PluginSettingTab {
         } catch (error) {
             console.error('Error rendering Deepgram settings:', error);
             deepgramContainer.createEl('p', {
-                text: 'Error loading Deepgram settings.',
+                text: 'Error loading deepgram settings.',
                 cls: 'mod-warning',
             });
         }
@@ -365,10 +365,10 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('OpenAI API key')
-            .setDesc('Enter your OpenAI API key for Whisper transcription')
+            .setName('Openai API key')
+            .setDesc('Enter your openai API key for whisper transcription')
             .addText((text) => {
-                text.setPlaceholder('sk-...')
+                text.setPlaceholder('Sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
                     .onChange(async (value) => {
                         if (value && !value.includes('*')) {
@@ -377,7 +377,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('OpenAI API key saved.');
+                            new Notice('Openai API key saved.');
                         }
                     });
 
@@ -400,9 +400,9 @@ export class SettingsTab extends PluginSettingTab {
     private renderDeepgramApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('Deepgram API key')
-            .setDesc('Enter your Deepgram API key for transcription')
+            .setDesc('Enter your deepgram API key for transcription')
             .addText((text) => {
-                text.setPlaceholder('Enter Deepgram API key...')
+                text.setPlaceholder('Enter deepgram API key...')
                     .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))
                     .onChange(async (value) => {
                         if (value && !value.includes('*')) {
@@ -524,7 +524,7 @@ export class SettingsTab extends PluginSettingTab {
         if (provider === 'whisper' || provider === 'auto') {
             new Setting(containerEl)
                 .setName('Whisper model')
-                .setDesc('Select the Whisper model to use')
+                .setDesc('Select the whisper model to use')
                 .addDropdown((dropdown) =>
                     dropdown
                         .addOption('whisper-1', 'Whisper v1 (default)')

@@ -286,9 +286,9 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
             'Select how to choose the transcription provider'
         ).addDropdown((dropdown) => {
             dropdown
-                .addOption('auto', '🤖 Automatic')
-                .addOption('whisper', '🎯 OpenAI Whisper')
-                .addOption('deepgram', '🚀 Deepgram')
+                .addOption('auto', '🤖 automatic')
+                .addOption('whisper', '🎯 openai whisper')
+                .addOption('deepgram', '🚀 deepgram')
                 .setValue(this.state.get().currentProvider)
                 .onChange((value) => {
                     void this.handleProviderChange(value);
@@ -300,9 +300,9 @@ export class ProviderSettingsContainerRefactored extends BaseSettingsComponent {
             this.createSetting(section, '선택 전략', 'Provider 선택 방법').addDropdown(
                 (dropdown) => {
                     dropdown
-                        .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance first')
-                        .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
-                        .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality first')
+                        .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ performance first')
+                        .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 cost optimized')
+                        .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ quality first')
                         .setValue(
                             this.plugin.settings.selectionStrategy ||
                                 SelectionStrategy.PERFORMANCE_OPTIMIZED

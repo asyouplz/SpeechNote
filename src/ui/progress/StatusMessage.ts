@@ -261,6 +261,18 @@ export class MessageStore {
         this.messages[key] = translations;
     }
 
+    private static formatParamValue(value: unknown): string {
+        if (value === null) return 'null';
+        if (typeof value === 'object') {
+            try {
+                return JSON.stringify(value);
+            } catch {
+                return '[unserializable]';
+            }
+        }
+        return String(value);
+    }
+
     /**
      * 메시지 가져오기
      */
@@ -272,7 +284,7 @@ export class MessageStore {
         // 파라미터 치환
         return message.replace(/\{(\w+)\}/g, (match: string, param: string) => {
             const value = params[param];
-            return value !== undefined ? String(value) : match;
+            return value !== undefined ? this.formatParamValue(value) : match;
         });
     }
 

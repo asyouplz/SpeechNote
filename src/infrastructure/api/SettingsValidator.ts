@@ -282,10 +282,22 @@ export class SettingsValidator {
                     typeof audio.sampleRate !== 'number' ||
                     !validRates.includes(audio.sampleRate)
                 ) {
-                    const sampleRateLabel =
-                        typeof audio.sampleRate === 'number'
-                            ? audio.sampleRate
-                            : JSON.stringify(audio.sampleRate) ?? String(audio.sampleRate);
+                    const sampleRateLabel = (() => {
+                        if (typeof audio.sampleRate === 'number') {
+                            return String(audio.sampleRate);
+                        }
+                        if (typeof audio.sampleRate === 'string') {
+                            return audio.sampleRate;
+                        }
+                        if (audio.sampleRate !== null && typeof audio.sampleRate === 'object') {
+                            try {
+                                return JSON.stringify(audio.sampleRate);
+                            } catch {
+                                return '[unserializable]';
+                            }
+                        }
+                        return String(audio.sampleRate);
+                    })();
                     errors.push({
                         field: 'audio.sampleRate',
                         message: `Invalid sample rate: ${sampleRateLabel}`,

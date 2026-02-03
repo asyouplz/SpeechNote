@@ -341,7 +341,7 @@ export class DeepgramServiceRefactored {
         status: number;
         json?: unknown;
         headers?: Record<string, string>;
-    }): never {
+    }): Error {
         const errorBody = isPlainRecord(response.json) ? response.json : undefined;
         const errorMessage =
             (typeof errorBody?.message === 'string' ? errorBody.message : undefined) ??
@@ -378,10 +378,10 @@ export class DeepgramServiceRefactored {
 
         const errorFactory = errorMap[response.status];
         if (errorFactory) {
-            throw errorFactory();
+            return errorFactory();
         }
 
-        throw new TranscriptionError(
+        return new TranscriptionError(
             `API error: ${errorMessage}`,
             'UNKNOWN_ERROR',
             'deepgram',

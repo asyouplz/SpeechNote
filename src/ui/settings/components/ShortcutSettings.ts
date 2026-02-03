@@ -485,7 +485,7 @@ class ShortcutModal extends Modal {
         this.isRecording = true;
         this.recordedKeys.clear();
 
-        button.setButtonText('녹음 중... (ESC로 취소)');
+        button.setButtonText('녹음 중... (esc로 취소)');
         button.buttonEl.addClass('is-recording');
 
         // 키 이벤트 리스너

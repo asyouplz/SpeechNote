@@ -392,8 +392,8 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the transcription service provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('openai', 'OpenAI Whisper')
-                    .addOption('azure', 'Azure Speech Services')
+                    .addOption('openai', 'Openai whisper')
+                    .addOption('azure', 'Azure speech services')
                     .addOption('custom', 'Custom endpoint');
 
                 void this.settingsAPI.get('api').then((api) => {
@@ -495,7 +495,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
                         new Notice(`❌ ${error}`);
                     }
                 } catch (error) {
-                    new Notice('❌ Failed to validate API key.');
+                    new Notice('❌ failed to validate API key.');
                     console.error(error);
                 } finally {
                     validateBtn.disabled = false;
@@ -583,10 +583,10 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the audio format for recording')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('webm', 'WebM (recommended)')
+                    .addOption('webm', 'Webm (recommended)')
                     .addOption('mp3', 'MP3')
                     .addOption('m4a', 'M4A')
-                    .addOption('wav', 'WAV (lossless)');
+                    .addOption('wav', 'Wav (lossless)');
 
                 dropdown.setValue(audio.format);
                 dropdown.onChange(async (value) => {
@@ -620,7 +620,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         // 샘플 레이트
         new Setting(section)
             .setName('Sample rate')
-            .setDesc('Audio sample rate in Hz')
+            .setDesc('Audio sample rate in hz')
             .addDropdown((dropdown) => {
                 const rates = [8000, 16000, 22050, 44100, 48000];
                 rates.forEach((rate) => {
@@ -707,7 +707,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         new Setting(cacheSection)
             .setName('Max cache size')
-            .setDesc('Maximum cache size in MB')
+            .setDesc('Maximum cache size in mb')
             .addSlider((slider) => {
                 slider
                     .setLimits(10, 500, 10)
@@ -721,7 +721,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             });
 
         new Setting(cacheSection)
-            .setName('Cache TTL (days)')
+            .setName('Cache ttl (days)')
             .setDesc('Cache time-to-live in days')
             .addSlider((slider) => {
                 slider
@@ -756,7 +756,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         new Setting(perfSection)
             .setName('Chunk size')
-            .setDesc('File chunk size in MB')
+            .setDesc('File chunk size in mb')
             .addSlider((slider) => {
                 slider
                     .setLimits(0.5, 10, 0.5)
@@ -919,7 +919,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         const links = section.createDiv({ cls: 'about-links' });
 
         const githubLink = links.createEl('a', {
-            text: '📖 Documentation and guides',
+            text: '📖 documentation and guides',
             href: 'https://github.com/yourusername/obsidian-speech-to-text',
         });
         githubLink.setAttribute('target', '_blank');
@@ -927,7 +927,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         links.createEl('br');
 
         const issueLink = links.createEl('a', {
-            text: '🐛 Report an issue',
+            text: '🐛 report an issue',
             href: 'https://github.com/yourusername/obsidian-speech-to-text/issues',
         });
         issueLink.setAttribute('target', '_blank');

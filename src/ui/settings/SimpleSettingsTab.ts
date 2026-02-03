@@ -39,7 +39,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     this.debug('Adding options to dropdown...');
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI Whisper')
+                        .addOption('whisper', 'Openai whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -61,11 +61,11 @@ export class SimpleSettingsTab extends PluginSettingTab {
             // Auto 모드일 때는 양쪽 API 키 모두 표시
             if (provider === 'auto' || provider === 'whisper') {
                 new Setting(containerEl)
-                    .setName('OpenAI API key')
-                    .setDesc('Enter your OpenAI API key for Whisper')
+                    .setName('Openai API key')
+                    .setDesc('Enter your openai API key for whisper')
                     .addText((text) =>
                         text
-                            .setPlaceholder('sk-...')
+                            .setPlaceholder('Sk-...')
                             .setValue(this.plugin.settings.apiKey || '')
                             .onChange(async (value) => {
                                 this.plugin.settings.apiKey = value;
@@ -78,10 +78,10 @@ export class SimpleSettingsTab extends PluginSettingTab {
             if (provider === 'auto' || provider === 'deepgram') {
                 new Setting(containerEl)
                     .setName('Deepgram API key')
-                    .setDesc('Enter your Deepgram API key')
+                    .setDesc('Enter your deepgram API key')
                     .addText((text) =>
                         text
-                            .setPlaceholder('Enter Deepgram API key...')
+                            .setPlaceholder('Enter deepgram API key...')
                             .setValue(this.plugin.settings.deepgramApiKey || '')
                             .onChange(async (value) => {
                                 this.plugin.settings.deepgramApiKey = value;
@@ -93,7 +93,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 if (provider === 'deepgram') {
                     new Setting(containerEl)
                         .setName('Deepgram model')
-                        .setDesc('Select the Deepgram model to use')
+                        .setDesc('Select the deepgram model to use')
                         .addDropdown((dropdown) =>
                             dropdown
                                 .addOption('nova-2', 'Nova 2 (premium)')

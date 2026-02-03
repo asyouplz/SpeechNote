@@ -38,7 +38,7 @@ export class AudioSettings {
         // Whisper 모델 선택
         new Setting(containerEl)
             .setName('Whisper 모델')
-            .setDesc('사용할 Whisper 모델을 선택하세요')
+            .setDesc('사용할 whisper 모델을 선택하세요')
             .addDropdown((dropdown) =>
                 dropdown
                     .addOption('whisper-1', 'Whisper-1 (기본)')
@@ -61,8 +61,8 @@ export class AudioSettings {
                     .addOption('json', 'JSON (구조화된 데이터)')
                     .addOption('text', 'Text (일반 텍스트)')
                     .addOption('verbose_json', 'Verbose JSON (상세 정보)')
-                    .addOption('srt', 'SRT (자막 형식)')
-                    .addOption('vtt', 'VTT (WebVTT 형식)')
+                    .addOption('srt', 'Srt (자막 형식)')
+                    .addOption('vtt', 'Vtt (webvtt 형식)')
                     .setValue(
                         typeof this.plugin.settings['responseFormat'] === 'string'
                             ? this.plugin.settings['responseFormat']
@@ -111,7 +111,7 @@ export class AudioSettings {
         // 파일 크기 제한
         const fileSizeSetting = new Setting(containerEl)
             .setName('최대 파일 크기')
-            .setDesc('업로드 가능한 최대 파일 크기 (MB)');
+            .setDesc('업로드 가능한 최대 파일 크기 (mb)');
 
         const sizeValue = containerEl.createDiv({ cls: 'filesize-value' });
         const currentSize = Math.round(this.plugin.settings.maxFileSize / (1024 * 1024));

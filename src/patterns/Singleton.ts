@@ -65,24 +65,22 @@ export function createSingleton<T>(factory: () => T): () => T {
 /**
  * 클래스 데코레이터를 사용한 Singleton 패턴
  */
-export function SingletonDecorator<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- required by TS mixin constructor typing
-    T extends new (...args: any[]) => object
->(constructor: T): T {
-    let instance: InstanceType<T> | undefined;
+export const SingletonDecorator: ClassDecorator = (constructor) => {
+    let instance: object | undefined;
 
-    return class extends constructor {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- required by TS mixin constructor typing
-        constructor(...args: any[]) {
+    const proxy = new Proxy(constructor, {
+        construct(target, args, newTarget) {
             if (instance) {
                 return instance;
             }
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- required by TS mixin constructor typing
-            super(...args);
-            instance = this as InstanceType<T>;
-        }
-    } as T;
-}
+            const constructed = Reflect.construct(target, args, newTarget) as object;
+            instance = constructed;
+            return constructed;
+        },
+    });
+
+    return proxy;
+};
 
 /**
  * 비동기 Singleton 팩토리
