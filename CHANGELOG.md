@@ -1,3 +1,9 @@
+## [4.0.5](https://github.com/asyouplz/SpeechNote/compare/v4.0.4...v4.0.5) (2026-02-03)
+
+### 🐛 Bug Fixes
+
+* **ui:** apply sentence case to provider labels ([#63](https://github.com/asyouplz/SpeechNote/issues/63)) ([3645309](https://github.com/asyouplz/SpeechNote/commit/3645309b5f5db4e028922337c163516b22851fbd))
+
 ## [4.0.4](https://github.com/asyouplz/SpeechNote/compare/v4.0.3...v4.0.4) (2026-02-03)
 
 ### 🐛 Bug Fixes
