@@ -80,9 +80,9 @@ export class ProviderSettings {
             .setDesc('Choose a specific provider or use automatic selection')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', '🤖 automatic (recommended)')
-                    .addOption('whisper', '🎯 openai whisper')
-                    .addOption('deepgram', '🚀 deepgram')
+                    .addOption('auto', '🤖 Automatic (recommended)')
+                    .addOption('whisper', '🎯 Openai whisper')
+                    .addOption('deepgram', '🚀 Deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderValue(value)) {
@@ -306,7 +306,7 @@ export class ProviderSettings {
     private renderABTestDetails(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('Traffic split')
-            .setDesc('Percentage of requests to send to whisper vs deepgram')
+            .setDesc('Percentage of requests to send to Whisper vs Deepgram')
             .addSlider((slider) => {
                 const currentSplit = this.plugin.settings.abTestSplit || 50;
 

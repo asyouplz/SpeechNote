@@ -524,7 +524,7 @@ export class SettingsTab extends PluginSettingTab {
         if (provider === 'whisper' || provider === 'auto') {
             new Setting(containerEl)
                 .setName('Whisper model')
-                .setDesc('Select the whisper model to use')
+                .setDesc('Select the Whisper model to use')
                 .addDropdown((dropdown) =>
                     dropdown
                         .addOption('whisper-1', 'Whisper v1 (default)')

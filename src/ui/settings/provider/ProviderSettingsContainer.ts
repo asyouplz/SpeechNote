@@ -194,9 +194,9 @@ export class ProviderSettingsContainer {
             .setDesc('Select how to choose the transcription provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', '🤖 automatic (recommended)')
-                    .addOption('whisper', '🎯 openai whisper only')
-                    .addOption('deepgram', '🚀 deepgram only')
+                    .addOption('auto', '🤖 Automatic (recommended)')
+                    .addOption('whisper', '🎯 Openai whisper only')
+                    .addOption('deepgram', '🚀 Deepgram only')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderSelection(value)) {

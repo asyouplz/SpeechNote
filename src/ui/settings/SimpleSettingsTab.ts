@@ -93,7 +93,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 if (provider === 'deepgram') {
                     new Setting(containerEl)
                         .setName('Deepgram model')
-                        .setDesc('Select the deepgram model to use')
+                        .setDesc('Select the Deepgram model to use')
                         .addDropdown((dropdown) =>
                             dropdown
                                 .addOption('nova-2', 'Nova 2 (premium)')
