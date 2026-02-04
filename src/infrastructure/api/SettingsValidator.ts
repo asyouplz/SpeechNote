@@ -284,19 +284,31 @@ export class SettingsValidator {
                 ) {
                     const sampleRateLabel = (() => {
                         if (typeof audio.sampleRate === 'number') {
-                            return String(audio.sampleRate);
+                            return audio.sampleRate.toString();
                         }
                         if (typeof audio.sampleRate === 'string') {
                             return audio.sampleRate;
                         }
-                        if (audio.sampleRate !== null && typeof audio.sampleRate === 'object') {
-                            try {
-                                return JSON.stringify(audio.sampleRate);
-                            } catch {
-                                return '[unserializable]';
-                            }
+                        if (typeof audio.sampleRate === 'boolean') {
+                            return audio.sampleRate ? 'true' : 'false';
                         }
-                        return String(audio.sampleRate);
+                        if (typeof audio.sampleRate === 'bigint') {
+                            return audio.sampleRate.toString();
+                        }
+                        if (typeof audio.sampleRate === 'symbol') {
+                            return audio.sampleRate.description ?? 'symbol';
+                        }
+                        if (audio.sampleRate === null) {
+                            return 'null';
+                        }
+                        if (audio.sampleRate === undefined) {
+                            return 'undefined';
+                        }
+                        try {
+                            return JSON.stringify(audio.sampleRate);
+                        } catch {
+                            return '[unserializable]';
+                        }
                     })();
                     errors.push({
                         field: 'audio.sampleRate',

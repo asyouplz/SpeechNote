@@ -578,7 +578,7 @@ export class DeepgramSettings {
         // Maximum chunk size
         const chunkSizeSetting = new Setting(container)
             .setName('Maximum chunk size')
-            .setDesc('Maximum size per chunk in MB (recommended: 50MB)')
+            .setDesc('Maximum size per chunk in megabytes (recommended: 50 megabytes)')
             .addSlider((slider) => {
                 slider
                     .setLimits(10, 100, 10)

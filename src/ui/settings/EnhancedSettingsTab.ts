@@ -392,7 +392,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the transcription service provider')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('openai', 'OpenAI whisper')
+                    .addOption('openai', 'Openai whisper')
                     .addOption('azure', 'Azure speech services')
                     .addOption('custom', 'Custom endpoint');
 
@@ -509,7 +509,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         if (api.provider === 'openai') {
             new Setting(section)
                 .setName('Model')
-                .setDesc('Select the OpenAI model')
+                .setDesc('Select the openai model')
                 .addDropdown((dropdown) => {
                     dropdown.addOption('whisper-1', 'Whisper v1');
                     dropdown.setValue(api.model);
@@ -583,9 +583,9 @@ export class EnhancedSettingsTab extends PluginSettingTab {
             .setDesc('Select the audio format for recording')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('webm', 'WebM (recommended)')
-                    .addOption('mp3', 'MP3')
-                    .addOption('m4a', 'M4A')
+                    .addOption('webm', 'Webm (recommended)')
+                    .addOption('mp3', 'Mp3')
+                    .addOption('m4a', 'M4a')
                     .addOption('wav', 'Wav (lossless)');
 
                 dropdown.setValue(audio.format);
@@ -620,7 +620,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
         // 샘플 레이트
         new Setting(section)
             .setName('Sample rate')
-            .setDesc('Audio sample rate in Hz')
+            .setDesc('Audio sample rate in hertz')
             .addDropdown((dropdown) => {
                 const rates = [8000, 16000, 22050, 44100, 48000];
                 rates.forEach((rate) => {
@@ -707,7 +707,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         new Setting(cacheSection)
             .setName('Max cache size')
-            .setDesc('Maximum cache size in MB')
+            .setDesc('Maximum cache size in megabytes')
             .addSlider((slider) => {
                 slider
                     .setLimits(10, 500, 10)
@@ -756,7 +756,7 @@ export class EnhancedSettingsTab extends PluginSettingTab {
 
         new Setting(perfSection)
             .setName('Chunk size')
-            .setDesc('File chunk size in MB')
+            .setDesc('File chunk size in megabytes')
             .addSlider((slider) => {
                 slider
                     .setLimits(0.5, 10, 0.5)
