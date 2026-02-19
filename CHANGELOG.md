@@ -1,3 +1,9 @@
+## [4.0.8](https://github.com/asyouplz/SpeechNote/compare/v4.0.7...v4.0.8) (2026-02-19)
+
+### ♻️ Code Refactoring
+
+* **ui:** consolidate settings architecture and wave3 fixes ([#67](https://github.com/asyouplz/SpeechNote/issues/67)) ([f62f8ee](https://github.com/asyouplz/SpeechNote/commit/f62f8eec5adee5c0c4a22498102490a3851d7e61))
+
 ## [4.0.7](https://github.com/asyouplz/SpeechNote/compare/v4.0.6...v4.0.7) (2026-02-04)
 
 ### 🐛 Bug Fixes
