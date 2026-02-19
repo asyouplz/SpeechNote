@@ -153,7 +153,7 @@ export class SettingsTab extends PluginSettingTab {
 
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI whisper')
+                        .addOption('whisper', 'Openai whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -317,7 +317,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('OpenAI API endpoint (leave the default unless using a custom endpoint)')
+            .setDesc('Openai API endpoint (leave the default unless using a custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')
@@ -355,7 +355,7 @@ export class SettingsTab extends PluginSettingTab {
         } catch (error) {
             console.error('Error rendering Deepgram settings:', error);
             deepgramContainer.createEl('p', {
-                text: 'Error loading Deepgram settings.',
+                text: 'Error loading deepgram settings.',
                 cls: 'mod-warning',
             });
         }
@@ -366,8 +366,8 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('OpenAI API key')
-            .setDesc('Enter your OpenAI API key for whisper transcription')
+            .setName('Openai API key')
+            .setDesc('Enter your openai API key for whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('Sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -378,7 +378,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('OpenAI API key saved.');
+                            new Notice('Openai API key saved.');
                         }
                     });
 
@@ -401,9 +401,9 @@ export class SettingsTab extends PluginSettingTab {
     private renderDeepgramApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('Deepgram API key')
-            .setDesc('Enter your Deepgram API key for transcription')
+            .setDesc('Enter your deepgram API key for transcription')
             .addText((text) => {
-                text.setPlaceholder('Enter Deepgram API key...')
+                text.setPlaceholder('Enter deepgram API key...')
                     .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))
                     .onChange(async (value) => {
                         if (value && !value.includes('*')) {

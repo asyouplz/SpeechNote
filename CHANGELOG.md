@@ -1,3 +1,9 @@
+## [4.0.7](https://github.com/asyouplz/SpeechNote/compare/v4.0.6...v4.0.7) (2026-02-04)
+
+### 🐛 Bug Fixes
+
+* address obsidian review findings ([#65](https://github.com/asyouplz/SpeechNote/issues/65)) ([e28c350](https://github.com/asyouplz/SpeechNote/commit/e28c35058125dab6eda98f53708634ca658cfa3c))
+
 ## [4.0.6](https://github.com/asyouplz/SpeechNote/compare/v4.0.5...v4.0.6) (2026-02-03)
 
 ### 🐛 Bug Fixes
