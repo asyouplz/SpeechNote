@@ -235,7 +235,6 @@ export const ServiceTokens = {
     ErrorHandler: Symbol.for('ErrorHandler'),
     NotificationService: Symbol.for('NotificationService'),
     StatusBarManager: Symbol.for('StatusBarManager'),
-    SettingsTabManager: Symbol.for('SettingsTabManager'),
 };
 
 /**

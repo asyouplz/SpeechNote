@@ -1,4 +1,4 @@
-# Obsidian Speech-to-Text Plugin
+# Speech to Text for Obsidian
 
 <!-- Test: Verifying Claude Code Review with new OAuth token - 2026-01-20 -->
 
@@ -1138,6 +1138,6 @@ If a bad release is pushed:
 
 **Made with ❤️ for the Obsidian community**
 
-[⬆ Back to top](#obsidian-speech-to-text-plugin)
+[⬆ Back to top](#speech-to-text-for-obsidian)
 
 </div>

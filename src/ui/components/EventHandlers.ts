@@ -1,3 +1,5 @@
+import { debounce as obsidianDebounce } from 'obsidian';
+
 /**
  * UI 이벤트 핸들러
  * - 파일 선택 이벤트
@@ -342,18 +344,11 @@ export class EventHandlers {
     /**
      * 디바운스된 이벤트 핸들러 생성
      */
-    debounce<T extends (...args: unknown[]) => void>(
-        func: T,
+    debounce<TArgs extends unknown[]>(
+        func: (...args: [...TArgs]) => void,
         wait: number
-    ): (...args: Parameters<T>) => void {
-        let timeout: NodeJS.Timeout | null = null;
-
-        return (...args: Parameters<T>) => {
-            if (timeout) {
-                clearTimeout(timeout);
-            }
-            timeout = setTimeout(() => func(...args), wait);
-        };
+    ): (...args: [...TArgs]) => void {
+        return obsidianDebounce((...args: [...TArgs]) => func(...args), wait, true);
     }
 
     /**

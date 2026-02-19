@@ -46,6 +46,7 @@ export class SettingsTab extends PluginSettingTab {
 
         // Clear existing content
         containerEl.empty();
+        containerEl.addClass('speech-to-text-settings');
 
         // Add main title
         new Setting(containerEl).setName('Speech note').setHeading();

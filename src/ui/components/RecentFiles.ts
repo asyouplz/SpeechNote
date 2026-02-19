@@ -1,4 +1,4 @@
-import { App, TFile } from 'obsidian';
+import { App, TFile, setIcon } from 'obsidian';
 
 interface RecentFileEntry {
     path: string;
@@ -51,13 +51,13 @@ export class RecentFiles {
 
         // 헤더
         const header = this.container.createDiv('recent-files-header');
-        header.createEl('h3', { text: '최근 사용 파일' });
+        header.createEl('h3', { text: 'Recent files' });
 
         // 초기화 버튼
         const clearBtn = header.createEl('button', {
             cls: 'clear-recent-btn',
-            text: '초기화',
-            title: '최근 사용 목록 초기화',
+            text: 'Clear',
+            title: 'Clear recent files',
         });
         clearBtn.addEventListener('click', () => {
             this.clearRecentFiles();
@@ -87,7 +87,7 @@ export class RecentFiles {
         if (validFiles.length === 0) {
             listContainer.createDiv({
                 cls: 'empty-state',
-                text: '최근 사용한 파일이 없습니다',
+                text: 'No recent files',
             });
             return;
         }
@@ -157,9 +157,9 @@ export class RecentFiles {
         // 선택 버튼
         const selectBtn = actions.createEl('button', {
             cls: 'select-btn',
-            title: '파일 선택',
+            title: 'Select file',
         });
-        selectBtn.appendChild(this.createSelectIcon());
+        setIcon(selectBtn, 'check');
         selectBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (this.fileCallback) {
@@ -170,9 +170,9 @@ export class RecentFiles {
         // 제거 버튼
         const removeBtn = actions.createEl('button', {
             cls: 'remove-btn',
-            title: '목록에서 제거',
+            title: 'Remove from list',
         });
-        removeBtn.appendChild(this.createRemoveIcon());
+        setIcon(removeBtn, 'x');
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.removeRecentFile(entry.path);
@@ -188,7 +188,7 @@ export class RecentFiles {
         // 파일이 존재하지 않는 경우 표시
         if (!this.app.vault.getAbstractFileByPath(entry.path)) {
             fileItem.addClass('file-not-found');
-            fileName.setText(`${file.basename} (찾을 수 없음)`);
+            fileName.setText(`${file.basename} (Not found)`);
         }
     }
 
@@ -251,9 +251,14 @@ export class RecentFiles {
                 this.recentFiles = [];
                 return;
             }
-            const stored = this.app.loadLocalStorage(this.STORAGE_KEY);
-            if (stored) {
-                this.recentFiles = JSON.parse(stored);
+            const stored = this.app.loadLocalStorage(this.STORAGE_KEY) as unknown;
+            if (typeof stored === 'string') {
+                const parsed: unknown = JSON.parse(stored);
+                if (Array.isArray(parsed)) {
+                    this.recentFiles = parsed.filter((item): item is RecentFileEntry =>
+                        this.isRecentFileEntry(item)
+                    );
+                }
             }
         } catch (error) {
             console.error('Failed to load recent files:', error);
@@ -294,21 +299,21 @@ export class RecentFiles {
         const days = Math.floor(hours / 24);
 
         if (seconds < 60) {
-            return '방금 전';
+            return 'Just now';
         } else if (minutes < 60) {
-            return `${minutes}분 전`;
+            return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
         } else if (hours < 24) {
-            return `${hours}시간 전`;
+            return `${hours} hour${hours === 1 ? '' : 's'} ago`;
         } else if (days === 1) {
-            return '어제';
+            return 'Yesterday';
         } else if (days < 7) {
-            return `${days}일 전`;
+            return `${days} days ago`;
         } else if (days < 30) {
             const weeks = Math.floor(days / 7);
-            return `${weeks}주 전`;
+            return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
         } else {
             const date = new Date(timestamp);
-            return date.toLocaleDateString();
+            return date.toLocaleDateString('en-US');
         }
     }
 
@@ -337,42 +342,13 @@ export class RecentFiles {
         return icons[extension.toLowerCase()] || '📄';
     }
 
-    /**
-     * 선택 아이콘
-     */
-    private createSelectIcon(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '16');
-        svg.setAttribute('height', '16');
-        svg.setAttribute('viewBox', '0 0 16 16');
-        svg.setAttribute('fill', 'none');
+    private isRecentFileEntry(value: unknown): value is RecentFileEntry {
+        if (typeof value !== 'object' || value === null) {
+            return false;
+        }
 
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', 'M6 12L2 8L3.4 6.6L6 9.2L12.6 2.6L14 4L6 12Z');
-        path.setAttribute('fill', 'currentColor');
-        svg.appendChild(path);
-
-        return svg;
-    }
-
-    /**
-     * 제거 아이콘
-     */
-    private createRemoveIcon(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '16');
-        svg.setAttribute('height', '16');
-        svg.setAttribute('viewBox', '0 0 16 16');
-        svg.setAttribute('fill', 'none');
-
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', 'M12 4L4 12M4 4L12 12');
-        path.setAttribute('stroke', 'currentColor');
-        path.setAttribute('stroke-width', '2');
-        path.setAttribute('stroke-linecap', 'round');
-        svg.appendChild(path);
-
-        return svg;
+        const candidate = value as Partial<RecentFileEntry>;
+        return typeof candidate.path === 'string' && typeof candidate.timestamp === 'number';
     }
 
     /**
