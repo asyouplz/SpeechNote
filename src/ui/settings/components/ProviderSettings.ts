@@ -55,7 +55,7 @@ export class ProviderSettings {
      * 섹션 헤더 렌더링
      */
     private renderHeader(containerEl: HTMLElement): void {
-        const headerEl = containerEl.createDiv({ cls: 'provider-settings-header' });
+        const headerEl = containerEl.createDiv({ cls: 'sn-provider-settings-header' });
 
         headerEl.createEl('h3', {
             text: 'Transcription provider',
@@ -145,7 +145,7 @@ export class ProviderSettings {
         const inputEl = settingEl.controlEl.createEl('input', {
             type: 'password',
             placeholder: placeholder,
-            cls: 'api-key-input',
+            cls: 'sn-api-key-input',
         });
 
         // 현재 값 설정
@@ -191,7 +191,7 @@ export class ProviderSettings {
      */
     private renderAdvancedSettings(containerEl: HTMLElement): void {
         const advancedEl = containerEl.createDiv({
-            cls: 'advanced-settings-container',
+            cls: 'sn-advanced-settings-container',
         });
 
         // Selection Strategy
@@ -425,7 +425,7 @@ export class ProviderSettings {
      * 연결 상태 표시
      */
     private renderConnectionStatus(containerEl: HTMLElement): void {
-        const statusEl = containerEl.createDiv({ cls: 'connection-status' });
+        const statusEl = containerEl.createDiv({ cls: 'sn-connection-status' });
 
         const whisperConnected = this.checkConnection('whisper');
         const deepgramConnected = this.checkConnection('deepgram');

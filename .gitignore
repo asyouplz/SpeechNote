@@ -159,6 +159,13 @@ requirment*.md
 
 # Local review notes
 REVIEW_NOTES_PR8004.md
+docs/BRANCH_PROTECTION.md
+docs/LINT_RULES.md
+docs/obsidian-review-8004-issuecomment-3839142330.md
+docs/obsidian-review-8004-issuecomment-3839840641.md
+docs/obsidian-review-8004-issuecomment-3885815068-detailed-response.md
+docs/obsidian-review-8004-issuecomment-3885815068.md
+docs/obsidian-review-8004.md
 
 # Lint and typecheck output files
 lint-output.txt
@@ -173,6 +180,8 @@ typecheck_output.txt
 AGENTS.ko.md
 AGENTS.md
 CODE_OF_CONDUCT.md
+CLAUDE.md
+CHANGELOG.md
 
 # Semantic Release
 .semantic-release-cache/
