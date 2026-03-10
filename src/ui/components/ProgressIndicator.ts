@@ -1,3 +1,5 @@
+import { createIconElement } from '../../utils/common/helpers';
+
 /**
  * 진행 상태 표시 컴포넌트
  * - 로딩 스피너
@@ -37,39 +39,39 @@ export class ProgressIndicator {
     private createProgressElement() {
         if (!this.container) return;
 
-        this.progressElement = this.container.createDiv('progress-indicator');
+        this.progressElement = this.container.createDiv('sn-progress-indicator');
         this.progressElement.addClass('sn-hidden');
         this.progressElement.addClass('sn-fade');
         this.progressElement.addClass('sn-fade-hidden');
 
         // 오버레이
-        this.progressElement.createDiv('progress-overlay');
+        this.progressElement.createDiv('sn-progress-overlay');
 
         // 컨테이너
-        const content = this.progressElement.createDiv('progress-content');
+        const content = this.progressElement.createDiv('sn-progress-content');
 
         // 스피너
-        const spinner = content.createDiv('progress-spinner');
-        spinner.appendChild(this.getSpinnerSVG());
+        const spinner = content.createDiv('sn-progress-spinner');
+        spinner.appendChild(this.getSpinnerElement());
 
         // 진행률 바 컨테이너
-        const barContainer = content.createDiv('progress-bar-container');
+        const barContainer = content.createDiv('sn-progress-bar-container');
         barContainer.addClass('sn-hidden');
 
         // 진행률 바
-        const progressBar = barContainer.createDiv('progress-bar');
-        progressBar.createDiv('progress-fill');
-        const progressText = progressBar.createDiv('progress-text');
+        const progressBar = barContainer.createDiv('sn-progress-bar');
+        progressBar.createDiv('sn-progress-fill');
+        const progressText = progressBar.createDiv('sn-progress-text');
         progressText.setText('0%');
 
         // 메시지
-        const message = content.createDiv('progress-message');
-        message.setText('처리 중...');
+        const message = content.createDiv('sn-progress-message');
+        message.setText('Processing...');
 
         // 취소 버튼
         const cancelBtn = content.createEl('button', {
-            cls: 'progress-cancel-btn',
-            text: '취소',
+            cls: 'sn-progress-cancel-btn',
+            text: 'Cancel',
         });
         cancelBtn.addClass('sn-hidden');
         cancelBtn.addEventListener('click', () => {
@@ -95,15 +97,15 @@ export class ProgressIndicator {
 
         // 메시지 설정
         if (message) {
-            const messageEl = this.progressElement.querySelector('.progress-message');
-            if (messageEl instanceof HTMLElement) {
-                messageEl.setText(message);
+            const namespacedMessageEl = this.progressElement.querySelector('.sn-progress-message');
+            if (namespacedMessageEl instanceof HTMLElement) {
+                namespacedMessageEl.setText(message);
             }
         }
 
         // 진행률 바 표시/숨김
-        const barContainer = this.progressElement.querySelector('.progress-bar-container');
-        const spinner = this.progressElement.querySelector('.progress-spinner');
+        const barContainer = this.progressElement.querySelector('.sn-progress-bar-container');
+        const spinner = this.progressElement.querySelector('.sn-progress-spinner');
 
         if (showProgressBar) {
             if (barContainer instanceof HTMLElement) {
@@ -125,7 +127,7 @@ export class ProgressIndicator {
         }
 
         // 취소 버튼 표시/숨김
-        const cancelBtn = this.progressElement.querySelector('.progress-cancel-btn');
+        const cancelBtn = this.progressElement.querySelector('.sn-progress-cancel-btn');
         if (cancelBtn instanceof HTMLElement) {
             cancelBtn.toggleClass('sn-hidden', !cancellable);
         }
@@ -161,8 +163,8 @@ export class ProgressIndicator {
         this.currentProgress = Math.min(100, Math.max(0, progress));
 
         // 진행률 바 업데이트
-        const progressFill = this.progressElement.querySelector('.progress-fill');
-        const progressText = this.progressElement.querySelector('.progress-text');
+        const progressFill = this.progressElement.querySelector('.sn-progress-fill');
+        const progressText = this.progressElement.querySelector('.sn-progress-text');
 
         if (progressFill instanceof HTMLElement && progressText instanceof HTMLElement) {
             progressFill.setAttribute('style', `--sn-progress-width:${this.currentProgress}%`);
@@ -170,19 +172,19 @@ export class ProgressIndicator {
 
             // 진행률에 따른 색상 변경
             if (this.currentProgress < 30) {
-                progressFill.removeClass('progress-warning', 'progress-success');
+                progressFill.removeClass('is-warning', 'is-success');
             } else if (this.currentProgress < 70) {
-                progressFill.addClass('progress-warning');
-                progressFill.removeClass('progress-success');
+                progressFill.addClass('is-warning');
+                progressFill.removeClass('is-success');
             } else {
-                progressFill.removeClass('progress-warning');
-                progressFill.addClass('progress-success');
+                progressFill.removeClass('is-warning');
+                progressFill.addClass('is-success');
             }
         }
 
         // 메시지 업데이트
         if (message) {
-            const messageEl = this.progressElement.querySelector('.progress-message');
+            const messageEl = this.progressElement.querySelector('.sn-progress-message');
             if (messageEl instanceof HTMLElement) {
                 messageEl.setText(message);
             }
@@ -223,7 +225,7 @@ export class ProgressIndicator {
     setMessage(message: string) {
         if (!this.progressElement) return;
 
-        const messageEl = this.progressElement.querySelector('.progress-message');
+        const messageEl = this.progressElement.querySelector('.sn-progress-message');
         if (messageEl instanceof HTMLElement) {
             messageEl.setText(message);
         }
@@ -237,12 +239,12 @@ export class ProgressIndicator {
 
         this.show(message, false, false);
 
-        const content = this.progressElement.querySelector('.progress-content');
+        const content = this.progressElement.querySelector('.sn-progress-content');
         if (content instanceof HTMLElement) {
-            content.addClass('error');
+            content.addClass('is-error');
 
             // 스피너를 에러 아이콘으로 변경
-            const spinner = content.querySelector('.progress-spinner');
+            const spinner = content.querySelector('.sn-progress-spinner');
             if (spinner instanceof HTMLElement) {
                 spinner.replaceChildren(this.getErrorIcon());
             }
@@ -260,12 +262,12 @@ export class ProgressIndicator {
 
         this.show(message, false, false);
 
-        const content = this.progressElement.querySelector('.progress-content');
+        const content = this.progressElement.querySelector('.sn-progress-content');
         if (content instanceof HTMLElement) {
-            content.addClass('success');
+            content.addClass('is-success');
 
             // 스피너를 성공 아이콘으로 변경
-            const spinner = content.querySelector('.progress-spinner');
+            const spinner = content.querySelector('.sn-progress-spinner');
             if (spinner instanceof HTMLElement) {
                 spinner.replaceChildren(this.getSuccessIcon());
             }
@@ -286,7 +288,7 @@ export class ProgressIndicator {
      * 스피너 애니메이션 시작
      */
     private startSpinnerAnimation() {
-        const spinner = this.progressElement?.querySelector('.progress-spinner');
+        const spinner = this.progressElement?.querySelector('.sn-progress-spinner');
         if (spinner instanceof HTMLElement) {
             spinner.addClass('is-spinning');
         }
@@ -296,7 +298,7 @@ export class ProgressIndicator {
      * 스피너 애니메이션 중지
      */
     private stopSpinnerAnimation() {
-        const spinner = this.progressElement?.querySelector('.progress-spinner');
+        const spinner = this.progressElement?.querySelector('.sn-progress-spinner');
         if (spinner instanceof HTMLElement) {
             spinner.removeClass('is-spinning');
         }
@@ -333,95 +335,24 @@ export class ProgressIndicator {
     /**
      * 스피너 SVG
      */
-    private getSpinnerSVG(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '40');
-        svg.setAttribute('height', '40');
-        svg.setAttribute('viewBox', '0 0 40 40');
-
-        const background = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        background.setAttribute('cx', '20');
-        background.setAttribute('cy', '20');
-        background.setAttribute('r', '18');
-        background.setAttribute('stroke', 'currentColor');
-        background.setAttribute('stroke-width', '3');
-        background.setAttribute('fill', 'none');
-        background.setAttribute('opacity', '0.2');
-        svg.appendChild(background);
-
-        const arc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        arc.setAttribute('cx', '20');
-        arc.setAttribute('cy', '20');
-        arc.setAttribute('r', '18');
-        arc.setAttribute('stroke', 'currentColor');
-        arc.setAttribute('stroke-width', '3');
-        arc.setAttribute('fill', 'none');
-        arc.setAttribute('stroke-dasharray', '80');
-        arc.setAttribute('stroke-dashoffset', '60');
-        arc.setAttribute('stroke-linecap', 'round');
-        svg.appendChild(arc);
-
-        return svg;
+    private getSpinnerElement(): HTMLElement {
+        const spinner = createEl('div', { cls: 'sn-progress-spinner__glyph' });
+        spinner.setAttribute('aria-hidden', 'true');
+        return spinner;
     }
 
     /**
      * 성공 아이콘
      */
-    private getSuccessIcon(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '40');
-        svg.setAttribute('height', '40');
-        svg.setAttribute('viewBox', '0 0 40 40');
-
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', '20');
-        circle.setAttribute('cy', '20');
-        circle.setAttribute('r', '18');
-        circle.setAttribute('stroke', 'currentColor');
-        circle.setAttribute('stroke-width', '3');
-        circle.setAttribute('fill', 'none');
-        svg.appendChild(circle);
-
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', 'M12 20L17 25L28 14');
-        path.setAttribute('stroke', 'currentColor');
-        path.setAttribute('stroke-width', '3');
-        path.setAttribute('stroke-linecap', 'round');
-        path.setAttribute('stroke-linejoin', 'round');
-        path.setAttribute('fill', 'none');
-        svg.appendChild(path);
-
-        return svg;
+    private getSuccessIcon(): HTMLElement {
+        return createIconElement('check');
     }
 
     /**
      * 에러 아이콘
      */
-    private getErrorIcon(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '40');
-        svg.setAttribute('height', '40');
-        svg.setAttribute('viewBox', '0 0 40 40');
-
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', '20');
-        circle.setAttribute('cy', '20');
-        circle.setAttribute('r', '18');
-        circle.setAttribute('stroke', 'currentColor');
-        circle.setAttribute('stroke-width', '3');
-        circle.setAttribute('fill', 'none');
-        svg.appendChild(circle);
-
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', 'M14 14L26 26M26 14L14 26');
-        path.setAttribute('stroke', 'currentColor');
-        path.setAttribute('stroke-width', '3');
-        path.setAttribute('stroke-linecap', 'round');
-        path.setAttribute('stroke-linejoin', 'round');
-        path.setAttribute('fill', 'none');
-        svg.appendChild(path);
-
-        return svg;
+    private getErrorIcon(): HTMLElement {
+        return createIconElement('x');
     }
 
     /**

@@ -1,3 +1,5 @@
+import { createIconElement } from '../../utils/common/helpers';
+
 /**
  * 드래그 앤 드롭 영역 컴포넌트
  * - 파일 드래그 앤 드롭 지원
@@ -41,28 +43,30 @@ export class DragDropZone {
     private createDropZone() {
         if (!this.container) return;
 
-        this.dropZone = this.container.createDiv('drag-drop-zone');
+        this.dropZone = this.container.createDiv('sn-drag-drop-zone');
 
         // 아이콘
-        const iconContainer = this.dropZone.createDiv('drop-zone-icon');
+        const iconContainer = this.dropZone.createDiv('sn-drop-zone-icon');
         iconContainer.appendChild(this.createUploadIcon());
 
         // 메인 텍스트
-        const mainText = this.dropZone.createDiv('drop-zone-text');
-        mainText.createEl('h3', { text: '파일을 여기에 드롭하세요' });
+        const mainText = this.dropZone.createDiv('sn-drop-zone-text');
+        mainText.createEl('h3', { text: 'Drop files here' });
 
         // 서브 텍스트
-        const subText = mainText.createEl('p', { cls: 'drop-zone-subtext' });
-        subText.setText('또는 클릭하여 파일 선택');
+        const subText = mainText.createEl('p', { cls: 'sn-drop-zone-subtext' });
+        subText.setText('or click to choose files');
 
         // 지원 형식 표시
-        const formats = mainText.createEl('p', { cls: 'drop-zone-formats' });
-        formats.setText(`지원 형식: ${this.acceptedFormats.map((f) => `.${f}`).join(', ')}`);
+        const formats = mainText.createEl('p', { cls: 'sn-drop-zone-formats' });
+        formats.setText(
+            `Supported formats: ${this.acceptedFormats.map((f) => `.${f}`).join(', ')}`
+        );
 
         // 숨겨진 파일 입력
         const fileInput = this.dropZone.createEl('input', {
             type: 'file',
-            cls: 'drop-zone-input',
+            cls: 'sn-drop-zone-input',
         });
         fileInput.accept = this.acceptedFormats.map((f) => `.${f}`).join(',');
         fileInput.multiple = true;
@@ -186,10 +190,10 @@ export class DragDropZone {
 
         if (this.dropZone) {
             if (isDragging) {
-                this.dropZone.addClass('dragging');
+                this.dropZone.addClass('is-dragging');
                 this.showDragOverlay();
             } else {
-                this.dropZone.removeClass('dragging');
+                this.dropZone.removeClass('is-dragging');
                 this.hideDragOverlay();
             }
         }
@@ -201,27 +205,27 @@ export class DragDropZone {
     private showDragOverlay() {
         if (!this.dropZone) return;
 
-        const existingOverlay = this.dropZone.querySelector('.drag-overlay');
+        const existingOverlay = this.dropZone.querySelector('.sn-drag-overlay');
         let overlay: HTMLElement;
         if (existingOverlay instanceof HTMLElement) {
             overlay = existingOverlay;
         } else {
-            overlay = this.dropZone.createDiv('drag-overlay');
-            const content = overlay.createDiv('drag-overlay-content');
-            const icon = content.createDiv('drag-overlay-icon');
+            overlay = this.dropZone.createDiv('sn-drag-overlay');
+            const content = overlay.createDiv('sn-drag-overlay-content');
+            const icon = content.createDiv('sn-drag-overlay-icon');
             icon.appendChild(this.createDropIcon());
-            content.createDiv('drag-overlay-text').setText('파일을 여기에 놓으세요');
+            content.createDiv('sn-drag-overlay-text').setText('Drop files to add them');
         }
-        overlay.addClass('active');
+        overlay.addClass('is-active');
     }
 
     /**
      * 드래그 오버레이 숨기기
      */
     private hideDragOverlay() {
-        const overlay = this.dropZone?.querySelector('.drag-overlay');
+        const overlay = this.dropZone?.querySelector('.sn-drag-overlay');
         if (overlay instanceof HTMLElement) {
-            overlay.removeClass('active');
+            overlay.removeClass('is-active');
         }
     }
 
@@ -288,7 +292,7 @@ export class DragDropZone {
         const validFiles = files.filter((file) => this.isValidFile(file));
 
         if (validFiles.length === 0) {
-            this.showError('유효한 오디오 파일이 없습니다');
+            this.showError('No supported audio files were found.');
             return;
         }
 
@@ -297,7 +301,7 @@ export class DragDropZone {
         }
 
         // 시각적 피드백
-        this.showSuccess(`${validFiles.length}개 파일 선택됨`);
+        this.showSuccess(`${validFiles.length} file(s) selected`);
     }
 
     /**
@@ -320,7 +324,7 @@ export class DragDropZone {
     private showMessage(message: string, type: 'success' | 'error') {
         if (!this.dropZone) return;
 
-        const messageEl = this.dropZone.createDiv(`drop-zone-message ${type}`);
+        const messageEl = this.dropZone.createDiv(`sn-drop-zone-message ${type}`);
         messageEl.setText(message);
 
         setTimeout(() => {
@@ -338,55 +342,15 @@ export class DragDropZone {
     /**
      * 업로드 아이콘 SVG
      */
-    private createUploadIcon(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '64');
-        svg.setAttribute('height', '64');
-        svg.setAttribute('viewBox', '0 0 64 64');
-        svg.setAttribute('fill', 'none');
-
-        const paths = [
-            'M42.667 42.667L32 32L21.333 42.667',
-            'M32 32V56',
-            'M54.373 46.373C56.871 43.875 58.667 40.617 58.667 37.333C58.667 30.707 53.293 25.333 46.667 25.333C45.827 25.333 45.013 25.44 44.24 25.64C41.795 18.747 35.488 13.333 28 13.333C18.427 13.333 10.667 21.093 10.667 30.667C10.667 31.947 10.827 33.187 11.12 34.373C6.88 35.92 4 39.947 4 44.667C4 50.56 8.773 55.333 14.667 55.333',
-        ];
-
-        paths.forEach((d) => {
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', d);
-            path.setAttribute('stroke', 'currentColor');
-            path.setAttribute('stroke-width', '2');
-            path.setAttribute('stroke-linecap', 'round');
-            path.setAttribute('stroke-linejoin', 'round');
-            svg.appendChild(path);
-        });
-
-        return svg;
+    private createUploadIcon(): HTMLElement {
+        return createIconElement('upload');
     }
 
     /**
      * 드롭 아이콘 SVG
      */
-    private createDropIcon(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '48');
-        svg.setAttribute('height', '48');
-        svg.setAttribute('viewBox', '0 0 48 48');
-        svg.setAttribute('fill', 'none');
-
-        const pathData = ['M8 30L24 14L40 30', 'M24 14V38'];
-
-        pathData.forEach((d) => {
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', d);
-            path.setAttribute('stroke', 'currentColor');
-            path.setAttribute('stroke-width', '3');
-            path.setAttribute('stroke-linecap', 'round');
-            path.setAttribute('stroke-linejoin', 'round');
-            svg.appendChild(path);
-        });
-
-        return svg;
+    private createDropIcon(): HTMLElement {
+        return createIconElement('arrow-down-to-line');
     }
 
     /**
@@ -396,12 +360,12 @@ export class DragDropZone {
         this.acceptedFormats = formats;
 
         // UI 업데이트
-        const formatsEl = this.dropZone?.querySelector('.drop-zone-formats');
+        const formatsEl = this.dropZone?.querySelector('.sn-drop-zone-formats');
         if (formatsEl instanceof HTMLElement) {
-            formatsEl.setText(`지원 형식: ${formats.map((f) => `.${f}`).join(', ')}`);
+            formatsEl.setText(`Supported formats: ${formats.map((f) => `.${f}`).join(', ')}`);
         }
 
-        const input = this.dropZone?.querySelector('.drop-zone-input');
+        const input = this.dropZone?.querySelector('.sn-drop-zone-input');
         if (input instanceof HTMLInputElement) {
             input.accept = formats.map((f) => `.${f}`).join(',');
         }

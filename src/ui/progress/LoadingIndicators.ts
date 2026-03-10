@@ -1,3 +1,5 @@
+import { createIconElement } from '../../utils/common/helpers';
+
 /**
  * 로딩 인디케이터 컴포넌트 모음
  * - 스피너 애니메이션
@@ -35,24 +37,26 @@ export class SpinnerLoader {
 
     create(): HTMLElement {
         this.element = createEl('div');
-        this.element.className = `loading-spinner loading-spinner--${this.options.size}`;
+        this.element.className = `sn-loading-spinner sn-loading-spinner--${this.options.size}`;
         this.element.setAttribute('role', 'status');
-        this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
+        this.element.setAttribute('aria-label', this.options.ariaLabel || 'Loading');
 
-        this.element.appendChild(this.createSpinnerSvg());
+        const spinnerGlyph = createEl('div');
+        spinnerGlyph.className = 'sn-loading-spinner__glyph';
+        this.element.appendChild(spinnerGlyph);
 
         if (this.options.message) {
             const messageEl = createEl('span');
-            messageEl.className = 'loading-message';
+            messageEl.className = 'sn-loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
         }
 
         // 스크린 리더용 라이브 영역
         const srOnly = createEl('span');
-        srOnly.className = 'sr-only';
+        srOnly.className = 'sn-sr-only';
         srOnly.setAttribute('aria-live', 'polite');
-        srOnly.textContent = this.options.message || '데이터를 불러오는 중입니다';
+        srOnly.textContent = this.options.message || 'Loading data';
         this.element.appendChild(srOnly);
 
         return this.element;
@@ -61,8 +65,8 @@ export class SpinnerLoader {
     updateMessage(message: string) {
         if (!this.element) return;
 
-        const messageEl = this.element.querySelector('.loading-message');
-        const srOnly = this.element.querySelector('.sr-only');
+        const messageEl = this.element.querySelector('.sn-loading-message');
+        const srOnly = this.element.querySelector('.sn-sr-only');
 
         if (messageEl) {
             messageEl.textContent = message;
@@ -75,45 +79,6 @@ export class SpinnerLoader {
     destroy() {
         this.element?.remove();
         this.element = null;
-    }
-
-    private createSpinnerSvg(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', '0 0 50 50');
-
-        const background = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        background.setAttribute('cx', '25');
-        background.setAttribute('cy', '25');
-        background.setAttribute('r', '20');
-        background.setAttribute('fill', 'none');
-        background.setAttribute('stroke', 'currentColor');
-        background.setAttribute('stroke-width', '4');
-        background.setAttribute('opacity', '0.3');
-        svg.appendChild(background);
-
-        const arc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        arc.setAttribute('cx', '25');
-        arc.setAttribute('cy', '25');
-        arc.setAttribute('r', '20');
-        arc.setAttribute('fill', 'none');
-        arc.setAttribute('stroke', 'currentColor');
-        arc.setAttribute('stroke-width', '4');
-        arc.setAttribute('stroke-dasharray', '90');
-        arc.setAttribute('stroke-dashoffset', '60');
-        arc.setAttribute('stroke-linecap', 'round');
-
-        const animate = document.createElementNS('http://www.w3.org/2000/svg', 'animateTransform');
-        animate.setAttribute('attributeName', 'transform');
-        animate.setAttribute('type', 'rotate');
-        animate.setAttribute('from', '0 25 25');
-        animate.setAttribute('to', '360 25 25');
-        animate.setAttribute('dur', '1s');
-        animate.setAttribute('repeatCount', 'indefinite');
-        arc.appendChild(animate);
-
-        svg.appendChild(arc);
-
-        return svg;
     }
 }
 
@@ -134,20 +99,20 @@ export class PulseLoader {
 
     create(): HTMLElement {
         this.element = createEl('div');
-        this.element.className = `loading-pulse loading-pulse--${this.options.size}`;
+        this.element.className = `sn-loading-pulse sn-loading-pulse--${this.options.size}`;
         this.element.setAttribute('role', 'status');
-        this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
+        this.element.setAttribute('aria-label', this.options.ariaLabel || 'Loading');
 
         // 펄스 요소들
         for (let i = 0; i < 3; i++) {
             const pulse = createEl('div');
-            pulse.className = `pulse-dot pulse-dot--${i + 1}`;
+            pulse.className = `sn-pulse-dot sn-pulse-dot--${i + 1}`;
             this.element.appendChild(pulse);
         }
 
         if (this.options.message) {
             const messageEl = createEl('span');
-            messageEl.className = 'loading-message';
+            messageEl.className = 'sn-loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
         }
@@ -192,9 +157,9 @@ export class SkeletonLoader {
 
     create(): HTMLElement {
         this.element = createEl('div');
-        this.element.className = 'loading-skeleton';
+        this.element.className = 'sn-loading-skeleton';
         this.element.setAttribute('role', 'status');
-        this.element.setAttribute('aria-label', '콘텐츠를 불러오는 중');
+        this.element.setAttribute('aria-label', 'Loading content');
 
         const lineCount = this.options.lines ?? 3;
         const heightModifier = this.getLineHeightModifier(this.options.lineHeight);
@@ -209,7 +174,7 @@ export class SkeletonLoader {
 
         for (let i = 0; i < lineCount; i++) {
             const line = createEl('div');
-            const classes = ['skeleton-line'];
+            const classes = ['sn-skeleton-line'];
             if (this.options.animated !== false) {
                 classes.push('skeleton-animated');
             }
@@ -236,16 +201,16 @@ export class SkeletonLoader {
             case '14px':
             case '0.75rem':
             case '0.875rem':
-                return 'loading-skeleton--height-sm';
+                return 'sn-loading-skeleton--height-sm';
             case 'lg':
             case 'large':
             case 'comfortable':
             case '24px':
             case '28px':
             case '1.5rem':
-                return 'loading-skeleton--height-lg';
+                return 'sn-loading-skeleton--height-lg';
             default:
-                return 'loading-skeleton--height-md';
+                return 'sn-loading-skeleton--height-md';
         }
     }
 
@@ -256,21 +221,21 @@ export class SkeletonLoader {
             case '0':
             case '0px':
             case '0rem':
-                return 'loading-skeleton--spacing-none';
+                return 'sn-loading-skeleton--spacing-none';
             case 'sm':
             case 'small':
             case 'compact':
             case '6px':
             case '0.375rem':
-                return 'loading-skeleton--spacing-sm';
+                return 'sn-loading-skeleton--spacing-sm';
             case 'lg':
             case 'large':
             case 'comfortable':
             case '16px':
             case '1rem':
-                return 'loading-skeleton--spacing-lg';
+                return 'sn-loading-skeleton--spacing-lg';
             default:
-                return 'loading-skeleton--spacing-md';
+                return 'sn-loading-skeleton--spacing-md';
         }
     }
 
@@ -297,16 +262,16 @@ export class DotsLoader {
 
     create(): HTMLElement {
         this.element = createEl('div');
-        this.element.className = `loading-dots loading-dots--${this.options.size}`;
+        this.element.className = `sn-loading-dots sn-loading-dots--${this.options.size}`;
         this.element.setAttribute('role', 'status');
-        this.element.setAttribute('aria-label', this.options.ariaLabel || '로딩 중');
+        this.element.setAttribute('aria-label', this.options.ariaLabel || 'Loading');
 
         const dotsContainer = createEl('div');
-        dotsContainer.className = 'dots-container';
+        dotsContainer.className = 'sn-dots-container';
 
         for (let i = 0; i < 3; i++) {
             const dot = createEl('span');
-            dot.className = 'dot';
+            dot.className = 'sn-dot';
             dotsContainer.appendChild(dot);
         }
 
@@ -314,7 +279,7 @@ export class DotsLoader {
 
         if (this.options.message) {
             const messageEl = createEl('span');
-            messageEl.className = 'loading-message';
+            messageEl.className = 'sn-loading-message';
             messageEl.textContent = this.options.message;
             this.element.appendChild(messageEl);
         }
@@ -343,19 +308,19 @@ export class StatusIcon {
 
     create(): HTMLElement {
         this.element = createEl('div');
-        this.element.className = `status-icon status-icon--${this.type}`;
+        this.element.className = `sn-status-icon sn-status-icon--${this.type}`;
         this.element.setAttribute('role', 'status');
 
         const icon = this.getIcon();
         const iconEl = createEl('div');
-        iconEl.className = 'status-icon__icon';
+        iconEl.className = 'sn-status-icon__icon';
         iconEl.appendChild(icon);
 
         this.element.appendChild(iconEl);
 
         if (this.message) {
             const messageEl = createEl('span');
-            messageEl.className = 'status-icon__message';
+            messageEl.className = 'sn-status-icon__message';
             messageEl.textContent = this.message;
             this.element.appendChild(messageEl);
         }
@@ -367,84 +332,23 @@ export class StatusIcon {
         return this.element;
     }
 
-    private getIcon(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', '0 0 24 24');
-        svg.setAttribute('fill', 'none');
+    private getIcon(): HTMLElement {
+        const iconMap = {
+            success: 'check',
+            error: 'x',
+            warning: 'alert-triangle',
+            info: 'info',
+        } as const;
 
-        if (this.type === 'warning') {
-            const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            triangle.setAttribute('d', 'M12 3L2 21H22L12 3Z');
-            triangle.setAttribute('stroke', 'currentColor');
-            triangle.setAttribute('stroke-width', '2');
-            triangle.setAttribute('stroke-linejoin', 'round');
-            svg.appendChild(triangle);
-
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            line.setAttribute('d', 'M12 9V13');
-            line.setAttribute('stroke', 'currentColor');
-            line.setAttribute('stroke-width', '2');
-            line.setAttribute('stroke-linecap', 'round');
-            svg.appendChild(line);
-
-            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            dot.setAttribute('cx', '12');
-            dot.setAttribute('cy', '17');
-            dot.setAttribute('r', '0.5');
-            dot.setAttribute('fill', 'currentColor');
-            svg.appendChild(dot);
-            return svg;
-        }
-
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', '12');
-        circle.setAttribute('cy', '12');
-        circle.setAttribute('r', '10');
-        circle.setAttribute('stroke', 'currentColor');
-        circle.setAttribute('stroke-width', '2');
-        svg.appendChild(circle);
-
-        if (this.type === 'success') {
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', 'M8 12L11 15L16 9');
-            path.setAttribute('stroke', 'currentColor');
-            path.setAttribute('stroke-width', '2');
-            path.setAttribute('stroke-linecap', 'round');
-            path.setAttribute('stroke-linejoin', 'round');
-            svg.appendChild(path);
-        } else if (this.type === 'error') {
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', 'M15 9L9 15M9 9L15 15');
-            path.setAttribute('stroke', 'currentColor');
-            path.setAttribute('stroke-width', '2');
-            path.setAttribute('stroke-linecap', 'round');
-            path.setAttribute('stroke-linejoin', 'round');
-            svg.appendChild(path);
-        } else if (this.type === 'info') {
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            line.setAttribute('d', 'M12 11V16');
-            line.setAttribute('stroke', 'currentColor');
-            line.setAttribute('stroke-width', '2');
-            line.setAttribute('stroke-linecap', 'round');
-            svg.appendChild(line);
-
-            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            dot.setAttribute('cx', '12');
-            dot.setAttribute('cy', '8');
-            dot.setAttribute('r', '0.5');
-            dot.setAttribute('fill', 'currentColor');
-            svg.appendChild(dot);
-        }
-
-        return svg;
+        return createIconElement(iconMap[this.type]);
     }
 
     private getAriaLabel(): string {
         const labels = {
-            success: '성공',
-            error: '오류',
-            warning: '경고',
-            info: '정보',
+            success: 'Success',
+            error: 'Error',
+            warning: 'Warning',
+            info: 'Info',
         };
 
         const baseLabel = labels[this.type];
@@ -454,12 +358,12 @@ export class StatusIcon {
     updateMessage(message: string) {
         if (!this.element) return;
 
-        const messageEl = this.element.querySelector('.status-icon__message');
+        const messageEl = this.element.querySelector('.sn-status-icon__message');
         if (messageEl) {
             messageEl.textContent = message;
         } else {
             const newMessageEl = createEl('span');
-            newMessageEl.className = 'status-icon__message';
+            newMessageEl.className = 'sn-status-icon__message';
             newMessageEl.textContent = message;
             this.element.appendChild(newMessageEl);
         }

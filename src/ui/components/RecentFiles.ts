@@ -47,7 +47,7 @@ export class RecentFiles {
         if (!this.container) return;
 
         this.container.empty();
-        this.container.addClass('recent-files');
+        this.container.addClass('sn-recent-files');
 
         // 헤더
         const header = this.container.createDiv('recent-files-header');
@@ -74,12 +74,12 @@ export class RecentFiles {
         if (!this.container) return;
 
         // 기존 목록 제거
-        const existingList = this.container.querySelector('.recent-files-list');
+        const existingList = this.container.querySelector('.sn-recent-files-list');
         if (existingList) {
             existingList.remove();
         }
 
-        const listContainer = this.container.createDiv('recent-files-list');
+        const listContainer = this.container.createDiv('sn-recent-files-list');
 
         // 유효한 파일만 필터링
         const validFiles = this.getValidRecentFiles();
@@ -110,30 +110,30 @@ export class RecentFiles {
         entry: RecentFileEntry,
         order: number
     ) {
-        const fileItem = container.createDiv('recent-file-item');
+        const fileItem = container.createDiv('sn-recent-file-item');
 
         // 순서 번호
-        const orderBadge = fileItem.createDiv('file-order');
+        const orderBadge = fileItem.createDiv('sn-file-order');
         orderBadge.setText(order.toString());
 
         // 파일 아이콘
-        const icon = fileItem.createDiv('file-icon');
+        const icon = fileItem.createDiv('sn-file-icon');
         icon.setText(this.getFileIcon(file.extension));
 
         // 파일 정보
-        const fileInfo = fileItem.createDiv('file-info');
+        const fileInfo = fileItem.createDiv('sn-file-info');
 
         // 파일명
-        const fileName = fileInfo.createDiv('file-name');
+        const fileName = fileInfo.createDiv('sn-file-name');
         fileName.setText(file.basename);
 
         // 파일 경로와 시간
-        const fileMeta = fileInfo.createDiv('file-meta');
+        const fileMeta = fileInfo.createDiv('sn-file-meta');
 
         // 경로 (폴더명만)
         if (file.parent) {
             fileMeta.createEl('span', {
-                cls: 'file-path',
+                cls: 'sn-file-path',
                 text: file.parent.path,
                 title: file.path,
             });
@@ -141,18 +141,18 @@ export class RecentFiles {
 
         // 사용 시간
         fileMeta.createEl('span', {
-            cls: 'file-time',
+            cls: 'sn-file-time',
             text: this.formatRelativeTime(entry.timestamp),
         });
 
         // 파일 크기
         fileMeta.createEl('span', {
-            cls: 'file-size',
+            cls: 'sn-file-size',
             text: this.formatFileSize(file.stat.size),
         });
 
         // 액션 버튼들
-        const actions = fileItem.createDiv('file-actions');
+        const actions = fileItem.createDiv('sn-file-actions');
 
         // 선택 버튼
         const selectBtn = actions.createEl('button', {

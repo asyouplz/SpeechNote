@@ -1,4 +1,5 @@
 import { App, TFile } from 'obsidian';
+import { createIconElement } from '../../utils/common/helpers';
 
 /**
  * 파일 브라우저 컴포넌트
@@ -44,7 +45,7 @@ export class FileBrowser {
         if (!this.container) return;
 
         this.container.empty();
-        this.container.addClass('file-browser');
+        this.container.addClass('sn-file-browser');
 
         // 툴바
         this.createToolbar();
@@ -59,14 +60,14 @@ export class FileBrowser {
     private createToolbar() {
         if (!this.container) return;
 
-        const toolbar = this.container.createDiv('file-browser-toolbar');
+        const toolbar = this.container.createDiv('sn-file-browser-toolbar');
 
         // 검색 박스
-        const searchContainer = toolbar.createDiv('search-container');
+        const searchContainer = toolbar.createDiv('sn-search-container');
         const searchInput = searchContainer.createEl('input', {
             type: 'text',
-            placeholder: '파일 검색...',
-            cls: 'search-input',
+            placeholder: 'Search files...',
+            cls: 'sn-search-input',
         });
 
         searchInput.addEventListener('input', (e) => {
@@ -78,13 +79,13 @@ export class FileBrowser {
         });
 
         // 정렬 옵션
-        const sortContainer = toolbar.createDiv('sort-container');
+        const sortContainer = toolbar.createDiv('sn-sort-container');
 
         // 정렬 기준 선택
-        const sortSelect = sortContainer.createEl('select', { cls: 'sort-select' });
-        sortSelect.createEl('option', { value: 'name', text: '이름' });
-        sortSelect.createEl('option', { value: 'date', text: '수정일' });
-        sortSelect.createEl('option', { value: 'size', text: '크기' });
+        const sortSelect = sortContainer.createEl('select', { cls: 'sn-sort-select' });
+        sortSelect.createEl('option', { value: 'name', text: 'Name' });
+        sortSelect.createEl('option', { value: 'date', text: 'Modified' });
+        sortSelect.createEl('option', { value: 'size', text: 'Size' });
         sortSelect.value = this.sortBy;
 
         sortSelect.addEventListener('change', (e) => {
@@ -100,8 +101,8 @@ export class FileBrowser {
 
         // 정렬 순서 토글
         const sortOrderBtn = sortContainer.createEl('button', {
-            cls: 'sort-order-btn',
-            title: '정렬 순서 변경',
+            cls: 'sn-sort-order-btn',
+            title: 'Toggle sort order',
         });
         sortOrderBtn.setText(this.sortOrder === 'asc' ? '↑' : '↓');
 
@@ -113,8 +114,8 @@ export class FileBrowser {
 
         // 새로고침 버튼
         const refreshBtn = toolbar.createEl('button', {
-            cls: 'refresh-btn',
-            title: '새로고침',
+            cls: 'sn-refresh-btn',
+            title: 'Refresh file list',
         });
         refreshBtn.appendChild(this.createRefreshIcon());
         refreshBtn.addEventListener('click', () => this.render());
@@ -127,20 +128,20 @@ export class FileBrowser {
         if (!this.container) return;
 
         // 기존 목록 제거
-        const existingList = this.container.querySelector('.file-browser-list');
+        const existingList = this.container.querySelector('.sn-file-browser-list');
         if (existingList) {
             existingList.remove();
         }
 
-        const listContainer = this.container.createDiv('file-browser-list');
+        const listContainer = this.container.createDiv('sn-file-browser-list');
 
         // 오디오 파일 가져오기
         const audioFiles = this.getAudioFiles();
 
         if (audioFiles.length === 0) {
             listContainer.createDiv({
-                cls: 'empty-state',
-                text: '오디오 파일이 없습니다',
+                cls: 'sn-empty-state',
+                text: 'No audio files found.',
             });
             return;
         }
@@ -153,23 +154,23 @@ export class FileBrowser {
             if (files.length === 0) return;
 
             // 폴더 헤더
-            const folderHeader = listContainer.createDiv('folder-header');
+            const folderHeader = listContainer.createDiv('sn-folder-header');
             folderHeader.createEl('span', {
-                cls: 'folder-icon',
+                cls: 'sn-folder-icon',
                 text: '📁',
             });
             folderHeader.createEl('span', {
-                cls: 'folder-name',
+                cls: 'sn-folder-name',
                 text: folderPath || 'Root',
             });
             folderHeader.createEl('span', {
-                cls: 'folder-count',
+                cls: 'sn-folder-count',
                 text: `(${files.length})`,
             });
 
             // 폴더 토글
             let isExpanded = true;
-            const fileList = listContainer.createDiv('folder-files');
+            const fileList = listContainer.createDiv('sn-folder-files');
 
             folderHeader.addEventListener('click', () => {
                 isExpanded = !isExpanded;
@@ -178,7 +179,7 @@ export class FileBrowser {
                     folderHeader.removeClass('collapsed');
                 } else {
                     fileList.hide();
-                    folderHeader.addClass('collapsed');
+                    folderHeader.addClass('is-collapsed');
                 }
             });
 
@@ -193,43 +194,43 @@ export class FileBrowser {
      * 파일 아이템 생성
      */
     private createFileItem(container: HTMLElement, file: TFile) {
-        const fileItem = container.createDiv('file-item');
+        const fileItem = container.createDiv('sn-file-item');
 
         // 파일 아이콘
-        const icon = fileItem.createDiv('file-icon');
+        const icon = fileItem.createDiv('sn-file-icon');
         icon.setText(this.getFileIcon(file.extension));
 
         // 파일 정보
-        const fileInfo = fileItem.createDiv('file-info');
+        const fileInfo = fileItem.createDiv('sn-file-info');
 
         // 파일명
-        const fileName = fileInfo.createDiv('file-name');
+        const fileName = fileInfo.createDiv('sn-file-name');
         fileName.setText(file.basename);
 
         // 파일 메타데이터
-        const fileMeta = fileInfo.createDiv('file-meta');
+        const fileMeta = fileInfo.createDiv('sn-file-meta');
         fileMeta.createEl('span', {
-            cls: 'file-size',
+            cls: 'sn-file-size',
             text: this.formatFileSize(file.stat.size),
         });
         fileMeta.createEl('span', {
-            cls: 'file-date',
+            cls: 'sn-file-date',
             text: this.formatDate(file.stat.mtime),
         });
         fileMeta.createEl('span', {
-            cls: 'file-ext',
+            cls: 'sn-file-ext',
             text: `.${file.extension}`,
         });
 
         // 클릭 이벤트
         fileItem.addEventListener('click', () => {
             this.selectFile(file);
-            fileItem.addClass('selected');
+            fileItem.addClass('is-selected');
 
             // 다른 선택 해제
-            container.querySelectorAll('.file-item').forEach((item) => {
+            container.querySelectorAll('.sn-file-item').forEach((item) => {
                 if (item !== fileItem) {
-                    item.removeClass('selected');
+                    item.removeClass('is-selected');
                 }
             });
         });
@@ -293,10 +294,12 @@ export class FileBrowser {
 
         files.forEach((file) => {
             const folderPath = file.parent?.path || '';
-            if (!grouped.has(folderPath)) {
-                grouped.set(folderPath, []);
+            const existingFiles = grouped.get(folderPath);
+            if (existingFiles) {
+                existingFiles.push(file);
+            } else {
+                grouped.set(folderPath, [file]);
             }
-            grouped.get(folderPath)!.push(file);
         });
 
         // 폴더 경로로 정렬
@@ -341,21 +344,21 @@ export class FileBrowser {
             if (hours === 0) {
                 const minutes = Math.floor(diff / (1000 * 60));
                 if (minutes === 0) {
-                    return '방금 전';
+                    return 'Just now';
                 }
-                return `${minutes}분 전`;
+                return `${minutes} min ago`;
             }
-            return `${hours}시간 전`;
+            return `${hours} hr ago`;
         } else if (days === 1) {
-            return '어제';
+            return 'Yesterday';
         } else if (days < 7) {
-            return `${days}일 전`;
+            return `${days} days ago`;
         } else if (days < 30) {
             const weeks = Math.floor(days / 7);
-            return `${weeks}주 전`;
+            return `${weeks} weeks ago`;
         } else if (days < 365) {
             const months = Math.floor(days / 30);
-            return `${months}개월 전`;
+            return `${months} months ago`;
         } else {
             return date.toLocaleDateString();
         }
@@ -380,21 +383,7 @@ export class FileBrowser {
     /**
      * 새로고침 아이콘
      */
-    private createRefreshIcon(): SVGElement {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '16');
-        svg.setAttribute('height', '16');
-        svg.setAttribute('viewBox', '0 0 16 16');
-        svg.setAttribute('fill', 'none');
-
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute(
-            'd',
-            'M13.65 2.35C12.2 0.9 10.21 0 8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C11.73 16 14.84 13.45 15.73 10H13.65C12.83 12.33 10.61 14 8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C9.66 2 11.14 2.69 12.22 3.78L9 7H16V0L13.65 2.35Z'
-        );
-        path.setAttribute('fill', 'currentColor');
-        svg.appendChild(path);
-
-        return svg;
+    private createRefreshIcon(): HTMLElement {
+        return createIconElement('refresh-cw');
     }
 }

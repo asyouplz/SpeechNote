@@ -18,6 +18,7 @@ import {
 } from '../../types/phase3-api';
 import { SimpleEventEmitter as EventEmitter } from '../../utils/SimpleEventEmitter';
 import { EventManager } from '../../application/EventManager';
+import { createIconElement } from '../../utils/common/helpers';
 
 /**
  * 알림 채널 인터페이스
@@ -244,7 +245,7 @@ class ToastChannel implements NotificationChannel {
         if (!DOM_AVAILABLE) {
             return;
         }
-        const container = createEl('div', { cls: 'toast-container' });
+        const container = createEl('div', { cls: 'sn-toast-container' });
         container.setAttribute('aria-live', 'polite');
         container.setAttribute('aria-atomic', 'true');
         this.container = container;
@@ -255,7 +256,7 @@ class ToastChannel implements NotificationChannel {
     setPosition(position: NotificationPosition): void {
         this.position = position;
         if (this.container) {
-            this.container.className = `toast-container toast-container--${position}`;
+            this.container.className = `sn-toast-container sn-toast-container--${position}`;
         }
     }
 
@@ -276,10 +277,10 @@ class ToastChannel implements NotificationChannel {
 
         if (typeof requestAnimationFrame === 'function') {
             requestAnimationFrame(() => {
-                toast.classList.add('toast--show');
+                toast.classList.add('sn-toast--show');
             });
         } else {
-            toast.classList.add('toast--show');
+            toast.classList.add('sn-toast--show');
         }
 
         if (notification.duration !== 0) {
@@ -294,13 +295,13 @@ class ToastChannel implements NotificationChannel {
             return null;
         }
 
-        const toast = createEl('div', { cls: `toast toast--${notification.type}` });
+        const toast = createEl('div', { cls: `sn-toast sn-toast--${notification.type}` });
         toast.setAttribute('role', 'alert');
         toast.setAttribute('data-notification-id', id);
 
         // 아이콘
         if (notification.icon !== false) {
-            const icon = createEl('div', { cls: 'toast__icon' });
+            const icon = createEl('div', { cls: 'sn-toast__icon' });
             const iconSvg = this.getIcon(notification.type);
             if (iconSvg) {
                 icon.appendChild(iconSvg);
@@ -309,33 +310,33 @@ class ToastChannel implements NotificationChannel {
         }
 
         // 내용
-        const content = createEl('div', { cls: 'toast__content' });
+        const content = createEl('div', { cls: 'sn-toast__content' });
 
         if (notification.title) {
-            const title = createEl('div', { cls: 'toast__title', text: notification.title });
+            const title = createEl('div', { cls: 'sn-toast__title', text: notification.title });
             content.appendChild(title);
         }
 
-        const message = createEl('div', { cls: 'toast__message', text: notification.message });
+        const message = createEl('div', { cls: 'sn-toast__message', text: notification.message });
         content.appendChild(message);
 
         toast.appendChild(content);
 
         // 닫기 버튼
         if (notification.closable !== false) {
-            const closeBtn = createEl('button', { cls: 'toast__close', text: '×' });
-            closeBtn.setAttribute('aria-label', '닫기');
+            const closeBtn = createEl('button', { cls: 'sn-toast__close', text: '×' });
+            closeBtn.setAttribute('aria-label', 'Close notification');
             closeBtn.onclick = () => this.dismiss(id);
             toast.appendChild(closeBtn);
         }
 
         // 액션 버튼
         if (notification.actions && notification.actions.length > 0) {
-            const actions = createEl('div', { cls: 'toast__actions' });
+            const actions = createEl('div', { cls: 'sn-toast__actions' });
 
             notification.actions.forEach((action) => {
                 const btn = createEl('button', {
-                    cls: `toast__action toast__action--${action.style || 'secondary'}`,
+                    cls: `sn-toast__action sn-toast__action--${action.style || 'secondary'}`,
                     text: action.label,
                 });
                 btn.onclick = async () => {
@@ -352,8 +353,8 @@ class ToastChannel implements NotificationChannel {
 
         // 진행률 바
         if (notification.progress !== undefined) {
-            const progressBar = createEl('div', { cls: 'toast__progress' });
-            const fill = createEl('div', { cls: 'toast__progress-fill' });
+            const progressBar = createEl('div', { cls: 'sn-toast__progress' });
+            const fill = createEl('div', { cls: 'sn-toast__progress-fill' });
             fill.setAttribute('style', `--sn-progress-width:${notification.progress}%`);
             progressBar.appendChild(fill);
             toast.appendChild(progressBar);
@@ -362,33 +363,15 @@ class ToastChannel implements NotificationChannel {
         return toast;
     }
 
-    private getIcon(type: NotificationType): SVGElement | null {
-        const iconConfig: Record<NotificationType, { viewBox: string; path: string }> = {
-            success: {
-                viewBox: '0 0 24 24',
-                path: 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
-            },
-            error: {
-                viewBox: '0 0 24 24',
-                path: 'M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
-            },
-            warning: {
-                viewBox: '0 0 24 24',
-                path: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
-            },
-            info: {
-                viewBox: '0 0 24 24',
-                path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z',
-            },
-        };
+    private getIcon(type: NotificationType): HTMLElement {
+        const iconMap = {
+            success: 'check',
+            error: 'x',
+            warning: 'alert-triangle',
+            info: 'info',
+        } as const;
 
-        const config = iconConfig[type] || iconConfig.info;
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('viewBox', config.viewBox);
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', config.path);
-        svg.appendChild(path);
-        return svg;
+        return createIconElement(iconMap[type]);
     }
 
     dismiss(notificationId: string): void {
@@ -399,8 +382,8 @@ class ToastChannel implements NotificationChannel {
         const toast = this.notifications.get(notificationId);
         if (!toast) return;
 
-        toast.classList.remove('toast--show');
-        toast.classList.add('toast--hide');
+        toast.classList.remove('sn-toast--show');
+        toast.classList.add('sn-toast--hide');
 
         setTimeout(() => {
             toast.remove();
@@ -445,27 +428,27 @@ class ModalChannel implements NotificationChannel {
     }
 
     private createModal(notification: NotificationOptions, id: string): HTMLElement {
-        const overlay = createEl('div', { cls: 'modal-overlay' });
+        const overlay = createEl('div', { cls: 'sn-modal-overlay' });
         overlay.setAttribute('data-notification-id', id);
 
-        const modal = createEl('div', { cls: `modal modal--${notification.type}` });
+        const modal = createEl('div', { cls: `sn-modal sn-modal--${notification.type}` });
         modal.setAttribute('role', 'dialog');
         modal.setAttribute('aria-modal', 'true');
         modal.setAttribute('aria-labelledby', `modal-title-${id}`);
 
         // 헤더
-        const header = createEl('div', { cls: 'modal__header' });
+        const header = createEl('div', { cls: 'sn-modal__header' });
 
         const title = createEl('h2', {
-            cls: 'modal__title',
+            cls: 'sn-modal__title',
             text: notification.title || this.getDefaultTitle(notification.type),
         });
         title.id = `modal-title-${id}`;
         header.appendChild(title);
 
         if (notification.closable !== false) {
-            const closeBtn = createEl('button', { cls: 'modal__close', text: '×' });
-            closeBtn.setAttribute('aria-label', '닫기');
+            const closeBtn = createEl('button', { cls: 'sn-modal__close', text: '×' });
+            closeBtn.setAttribute('aria-label', 'Close dialog');
             closeBtn.onclick = () => this.dismiss(id);
             header.appendChild(closeBtn);
         }
@@ -473,16 +456,16 @@ class ModalChannel implements NotificationChannel {
         modal.appendChild(header);
 
         // 내용
-        const content = createEl('div', { cls: 'modal__content', text: notification.message });
+        const content = createEl('div', { cls: 'sn-modal__content', text: notification.message });
         modal.appendChild(content);
 
         // 액션
         if (notification.actions && notification.actions.length > 0) {
-            const footer = createEl('div', { cls: 'modal__footer' });
+            const footer = createEl('div', { cls: 'sn-modal__footer' });
 
             notification.actions.forEach((action) => {
                 const btn = createEl('button', {
-                    cls: `modal__action modal__action--${action.style || 'secondary'}`,
+                    cls: `sn-modal__action sn-modal__action--${action.style || 'secondary'}`,
                     text: action.label,
                 });
                 btn.onclick = async () => {
@@ -511,12 +494,12 @@ class ModalChannel implements NotificationChannel {
 
     private getDefaultTitle(type: NotificationType): string {
         const titles = {
-            success: '성공',
-            error: '오류',
-            warning: '경고',
-            info: '알림',
+            success: 'Success',
+            error: 'Error',
+            warning: 'Warning',
+            info: 'Notice',
         };
-        return titles[type] || '알림';
+        return titles[type] || 'Notice';
     }
 
     private trapFocus(modal: HTMLElement): void {
@@ -552,7 +535,7 @@ class ModalChannel implements NotificationChannel {
         const modal = this.activeModals.get(notificationId);
         if (!modal) return;
 
-        modal.classList.add('modal-overlay--hide');
+        modal.classList.add('sn-modal-overlay--hide');
 
         setTimeout(() => {
             modal.remove();
@@ -582,9 +565,9 @@ class StatusBarChannel implements NotificationChannel {
     }
 
     private createStatusBar(): void {
-        this.statusBar = document.querySelector('.status-bar');
+        this.statusBar = document.querySelector('.sn-status-bar');
         if (!this.statusBar) {
-            const statusBar = createEl('div', { cls: 'status-bar' });
+            const statusBar = createEl('div', { cls: 'sn-status-bar' });
             document.body.appendChild(statusBar);
             this.statusBar = statusBar;
         }
@@ -597,9 +580,9 @@ class StatusBarChannel implements NotificationChannel {
         this.currentNotification = id;
 
         if (this.statusBar) {
-            this.statusBar.className = `status-bar status-bar--${notification.type}`;
+            this.statusBar.className = `sn-status-bar sn-status-bar--${notification.type}`;
             this.statusBar.textContent = notification.message;
-            this.statusBar.classList.add('status-bar--show');
+            this.statusBar.classList.add('sn-status-bar--show');
         }
 
         if (this.timeout) {
@@ -616,7 +599,7 @@ class StatusBarChannel implements NotificationChannel {
     dismiss(notificationId: string): void {
         if (this.currentNotification !== notificationId) return;
 
-        this.statusBar?.classList.remove('status-bar--show');
+        this.statusBar?.classList.remove('sn-status-bar--show');
         this.currentNotification = null;
 
         if (this.timeout) {
@@ -759,7 +742,7 @@ class ProgressNotification implements IProgressNotification {
 
     complete(message?: string): void {
         this.options.type = 'success';
-        this.options.message = message || '완료되었습니다';
+        this.options.message = message || 'Completed';
         this.options.progress = 100;
         this.render();
 
@@ -792,7 +775,7 @@ class ProgressNotification implements IProgressNotification {
         if (!element) return;
 
         // 메시지 업데이트
-        const messageEl = element.querySelector('.toast__message');
+        const messageEl = element.querySelector('.sn-toast__message');
         if (messageEl) {
             let text = this.options.message || '';
 
@@ -804,13 +787,13 @@ class ProgressNotification implements IProgressNotification {
         }
 
         // 진행률 바 업데이트
-        const progressFill = element.querySelector('.toast__progress-fill');
+        const progressFill = element.querySelector('.sn-toast__progress-fill');
         if (progressFill instanceof HTMLElement) {
             progressFill.setAttribute('style', `--sn-progress-width:${this.options.progress}%`);
         }
 
         // 타입별 스타일 업데이트
-        element.className = `toast toast--${this.options.type} toast--show`;
+        element.className = `sn-toast sn-toast--${this.options.type} sn-toast--show`;
     }
 }
 
@@ -1031,12 +1014,12 @@ export class NotificationManager implements INotificationAPI {
 
             void modal.send({
                 type: 'info',
-                title: options?.title || '확인',
+                title: options?.title || 'Confirm',
                 message,
                 closable: false,
                 actions: [
                     {
-                        label: options?.cancelText || '취소',
+                        label: options?.cancelText || 'Cancel',
                         style: 'secondary',
                         callback: () => {
                             modal.dismiss(id);
@@ -1044,7 +1027,7 @@ export class NotificationManager implements INotificationAPI {
                         },
                     },
                     {
-                        label: options?.confirmText || '확인',
+                        label: options?.confirmText || 'Confirm',
                         style: options?.confirmStyle || 'primary',
                         callback: () => {
                             modal.dismiss(id);
@@ -1076,11 +1059,11 @@ export class NotificationManager implements INotificationAPI {
 
             void modal.send({
                 type: 'info',
-                title: title || '알림',
+                title: title || 'Notice',
                 message,
                 actions: [
                     {
-                        label: '확인',
+                        label: 'OK',
                         style: 'primary',
                         callback: () => {
                             modal.dismiss(id);
