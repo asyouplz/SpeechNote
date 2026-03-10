@@ -1,3 +1,13 @@
+## [4.0.9](https://github.com/asyouplz/SpeechNote/compare/v4.0.8...v4.0.9) (2026-03-10)
+
+### 🐛 Bug Fixes
+
+* **ui:** address pr 8004 human review feedback ([#70](https://github.com/asyouplz/SpeechNote/issues/70)) ([0f6c3ac](https://github.com/asyouplz/SpeechNote/commit/0f6c3ac21809720c38418ec7f4e86a5a21b9ef58))
+
+### 🔧 Maintenance
+
+* **deps:** bump @tootallnate/once and jest-environment-jsdom ([#69](https://github.com/asyouplz/SpeechNote/issues/69)) ([fee0dde](https://github.com/asyouplz/SpeechNote/commit/fee0dde35cdf1cc23cdee592044e9749e24c2ac7))
+
 ## [4.0.8](https://github.com/asyouplz/SpeechNote/compare/v4.0.7...v4.0.8) (2026-02-19)
 
 ### ♻️ Code Refactoring
