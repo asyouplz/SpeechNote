@@ -1,24 +1,24 @@
-# 릴리즈 및 버전 관리 가이드
+# Release and Version Management Guide
 
-이 문서는 SpeechNote 플러그인의 릴리즈 프로세스와 버전 관리 방법을 설명합니다.
+This document describes the release process and version management approach for the SpeechNote plugin.
 
-## 버전 관리 시스템
+## Versioning System
 
-### 버전 형식
+### Version Format
 
-Semantic Versioning (x.y.z) 사용:
+Use Semantic Versioning (`x.y.z`):
 
 -   **Major (x)**: Breaking changes
--   **Minor (y)**: 새로운 기능 추가 (하위 호환)
--   **Patch (z)**: 버그 수정
+-   **Minor (y)**: New backward-compatible features
+-   **Patch (z)**: Bug fixes
 
-### 버전 관리 파일
+### Versioned Files
 
-다음 파일들이 버전을 포함하고 있으며, 버전 bump 시 자동으로 업데이트됩니다:
+The following files contain version information and are updated automatically during a version bump:
 
--   `manifest.json` - Obsidian 플러그인 버전
--   `package.json` - npm 패키지 버전
--   `versions.json` - Obsidian 버전 호환성 정보
+-   `manifest.json` - Obsidian plugin version
+-   `package.json` - npm package version
+-   `versions.json` - Obsidian version compatibility map
 
 ## 릴리즈 방법
 

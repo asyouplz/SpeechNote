@@ -1,10 +1,11 @@
 {
 	"id": "speechnote",
 	"name": "Speech to Text",
-	"version": "4.0.6",
+	"version": "4.0.8",
 	"minAppVersion": "0.15.0",
 	"description": "Convert audio recordings to text using multiple AI providers (OpenAI Whisper, Deepgram)",
 	"author": "Taesun Lee",
 	"authorUrl": "https://github.com/asyouplz",
+	"fundingUrl": "https://buymeacoffee.com/asyouplz",
 	"isDesktopOnly": false
 }

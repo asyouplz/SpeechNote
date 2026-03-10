@@ -1,5 +1,4 @@
-import { App, TFile } from 'obsidian';
-import { createIconElement, safeJsonParse } from '../../utils/common/helpers';
+import { App, TFile, setIcon } from 'obsidian';
 
 interface RecentFileEntry {
     path: string;
@@ -51,14 +50,14 @@ export class RecentFiles {
         this.container.addClass('sn-recent-files');
 
         // 헤더
-        const header = this.container.createDiv('sn-recent-files-header');
+        const header = this.container.createDiv('recent-files-header');
         header.createEl('h3', { text: 'Recent files' });
 
         // 초기화 버튼
         const clearBtn = header.createEl('button', {
-            cls: 'sn-clear-recent-btn',
+            cls: 'clear-recent-btn',
             text: 'Clear',
-            title: 'Clear recent file history',
+            title: 'Clear recent files',
         });
         clearBtn.addEventListener('click', () => {
             this.clearRecentFiles();
@@ -87,8 +86,8 @@ export class RecentFiles {
 
         if (validFiles.length === 0) {
             listContainer.createDiv({
-                cls: 'sn-empty-state',
-                text: 'No recent files.',
+                cls: 'empty-state',
+                text: 'No recent files',
             });
             return;
         }
@@ -157,10 +156,10 @@ export class RecentFiles {
 
         // 선택 버튼
         const selectBtn = actions.createEl('button', {
-            cls: 'sn-select-btn',
+            cls: 'select-btn',
             title: 'Select file',
         });
-        selectBtn.appendChild(this.createSelectIcon());
+        setIcon(selectBtn, 'check');
         selectBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (this.fileCallback) {
@@ -170,10 +169,10 @@ export class RecentFiles {
 
         // 제거 버튼
         const removeBtn = actions.createEl('button', {
-            cls: 'sn-remove-btn',
+            cls: 'remove-btn',
             title: 'Remove from list',
         });
-        removeBtn.appendChild(this.createRemoveIcon());
+        setIcon(removeBtn, 'x');
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.removeRecentFile(entry.path);
@@ -188,8 +187,8 @@ export class RecentFiles {
 
         // 파일이 존재하지 않는 경우 표시
         if (!this.app.vault.getAbstractFileByPath(entry.path)) {
-            fileItem.addClass('is-missing');
-            fileName.setText(`${file.basename} (missing)`);
+            fileItem.addClass('file-not-found');
+            fileName.setText(`${file.basename} (Not found)`);
         }
     }
 
@@ -252,16 +251,14 @@ export class RecentFiles {
                 this.recentFiles = [];
                 return;
             }
-            const stored: unknown = this.app.loadLocalStorage(this.STORAGE_KEY);
-            if (typeof stored === 'string' && stored.length > 0) {
-                const parsed = safeJsonParse<RecentFileEntry[] | null>(stored, null);
-                this.recentFiles = Array.isArray(parsed)
-                    ? parsed.filter(
-                          (entry): entry is RecentFileEntry =>
-                              typeof entry?.path === 'string' &&
-                              typeof entry?.timestamp === 'number'
-                      )
-                    : [];
+            const stored = this.app.loadLocalStorage(this.STORAGE_KEY) as unknown;
+            if (typeof stored === 'string') {
+                const parsed: unknown = JSON.parse(stored);
+                if (Array.isArray(parsed)) {
+                    this.recentFiles = parsed.filter((item): item is RecentFileEntry =>
+                        this.isRecentFileEntry(item)
+                    );
+                }
             }
         } catch (error) {
             console.error('Failed to load recent files:', error);
@@ -304,19 +301,19 @@ export class RecentFiles {
         if (seconds < 60) {
             return 'Just now';
         } else if (minutes < 60) {
-            return `${minutes} min ago`;
+            return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
         } else if (hours < 24) {
-            return `${hours} hr ago`;
+            return `${hours} hour${hours === 1 ? '' : 's'} ago`;
         } else if (days === 1) {
             return 'Yesterday';
         } else if (days < 7) {
             return `${days} days ago`;
         } else if (days < 30) {
             const weeks = Math.floor(days / 7);
-            return `${weeks} weeks ago`;
+            return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
         } else {
             const date = new Date(timestamp);
-            return date.toLocaleDateString();
+            return date.toLocaleDateString('en-US');
         }
     }
 
@@ -345,18 +342,13 @@ export class RecentFiles {
         return icons[extension.toLowerCase()] || '📄';
     }
 
-    /**
-     * 선택 아이콘
-     */
-    private createSelectIcon(): HTMLElement {
-        return createIconElement('check');
-    }
+    private isRecentFileEntry(value: unknown): value is RecentFileEntry {
+        if (typeof value !== 'object' || value === null) {
+            return false;
+        }
 
-    /**
-     * 제거 아이콘
-     */
-    private createRemoveIcon(): HTMLElement {
-        return createIconElement('x');
+        const candidate = value as Partial<RecentFileEntry>;
+        return typeof candidate.path === 'string' && typeof candidate.timestamp === 'number';
     }
 
     /**

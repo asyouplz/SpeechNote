@@ -263,14 +263,20 @@ export class MessageStore {
 
     private static formatParamValue(value: unknown): string {
         if (value === null) return 'null';
-        if (typeof value === 'object') {
-            try {
-                return JSON.stringify(value);
-            } catch {
-                return '[unserializable]';
-            }
+        if (value === undefined) return 'undefined';
+
+        if (typeof value === 'string') return value;
+        if (typeof value === 'number') return Number.isNaN(value) ? 'NaN' : value.toString();
+        if (typeof value === 'boolean') return value ? 'true' : 'false';
+        if (typeof value === 'bigint') return value.toString();
+        if (typeof value === 'symbol') return value.description ?? 'symbol';
+        if (typeof value === 'function') return '[function]';
+
+        try {
+            return JSON.stringify(value);
+        } catch {
+            return '[unserializable]';
         }
-        return String(value);
     }
 
     /**

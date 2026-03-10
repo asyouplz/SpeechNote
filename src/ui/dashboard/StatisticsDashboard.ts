@@ -193,20 +193,12 @@ export class StatisticsStore {
             return;
         }
         try {
-            const data: unknown = this.app.loadLocalStorage(this.STORAGE_KEY);
-            if (typeof data === 'string' && data.length > 0) {
-                const parsed = safeJsonParse<TranscriptionRecord[] | null>(data, null);
-                this.records = Array.isArray(parsed)
-                    ? parsed.filter((record): record is TranscriptionRecord => {
-                          return (
-                              typeof record?.id === 'string' &&
-                              typeof record?.fileName === 'string' &&
-                              typeof record?.fileSize === 'number' &&
-                              typeof record?.startTime === 'number' &&
-                              typeof record?.status === 'string'
-                          );
-                      })
-                    : [];
+            const data = this.app.loadLocalStorage(this.STORAGE_KEY) as unknown;
+            if (typeof data === 'string') {
+                const parsed: unknown = JSON.parse(data);
+                if (Array.isArray(parsed)) {
+                    this.records = parsed as TranscriptionRecord[];
+                }
             }
         } catch (e) {
             console.error('Failed to load statistics:', e);
@@ -290,17 +282,17 @@ export class StatisticsDashboard {
         const controls = createEl('div', { cls: 'sn-dashboard__controls' });
 
         // 새로고침 버튼
-        const refreshBtn = createEl('button', { cls: 'sn-dashboard__refresh', text: 'Refresh' });
+        const refreshBtn = createEl('button', { cls: 'dashboard__refresh', text: 'Refresh' });
         refreshBtn.addEventListener('click', () => this.refresh());
         controls.appendChild(refreshBtn);
 
         // 데이터 초기화 버튼
-        const clearBtn = createEl('button', { cls: 'sn-dashboard__clear', text: 'Reset data' });
+        const clearBtn = createEl('button', { cls: 'dashboard__clear', text: 'Clear data' });
         clearBtn.addEventListener('click', () => this.clearData());
         controls.appendChild(clearBtn);
 
         // 내보내기 버튼
-        const exportBtn = createEl('button', { cls: 'sn-dashboard__export', text: 'Export CSV' });
+        const exportBtn = createEl('button', { cls: 'dashboard__export', text: 'Export CSV' });
         exportBtn.addEventListener('click', () => this.exportToCSV());
         controls.appendChild(exportBtn);
 
@@ -317,11 +309,11 @@ export class StatisticsDashboard {
 
         // 통계 카드들
         const cards = [
-            { id: 'total', label: 'Total transcriptions', value: '0', icon: '📊' },
+            { id: 'total', label: 'Total', value: '0', icon: '📊' },
             { id: 'success', label: 'Success', value: '0', icon: '✅', color: 'success' },
             { id: 'failure', label: 'Failed', value: '0', icon: '❌', color: 'error' },
             { id: 'rate', label: 'Success rate', value: '0%', icon: '📈', color: 'info' },
-            { id: 'avg-time', label: 'Average processing time', value: '0 sec', icon: '⏱️' },
+            { id: 'avg-time', label: 'Average processing time', value: '0s', icon: '⏱️' },
             { id: 'data', label: 'Processed data', value: '0 MB', icon: '💾' },
             { id: 'today', label: 'Today', value: '0', icon: '📅' },
             { id: 'api-cost', label: 'API cost', value: '$0.00', icon: '💰' },
@@ -394,7 +386,7 @@ export class StatisticsDashboard {
 
         const header = createEl('div', { cls: 'sn-history__header' });
 
-        const title = createEl('h3', { text: 'Recent transcription history' });
+        const title = createEl('h3', { text: 'Recent transcriptions' });
         header.appendChild(title);
 
         // 필터
@@ -423,12 +415,10 @@ export class StatisticsDashboard {
 
         const thead = createEl('thead');
         const headerRow = createEl('tr');
-        ['Time', 'File name', 'Size', 'Processing time', 'Status', 'Word count', 'Action'].forEach(
-            (text) => {
-                const th = createEl('th', { text });
-                headerRow.appendChild(th);
-            }
-        );
+        ['Time', 'File name', 'Size', 'Duration', 'Status', 'Words', 'Action'].forEach((text) => {
+            const th = createEl('th', { text });
+            headerRow.appendChild(th);
+        });
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
@@ -468,9 +458,7 @@ export class StatisticsDashboard {
         };
 
         Object.entries(updates).forEach(([id, value]) => {
-            const card = this.element?.querySelector(
-                `[data-stat-id="${id}"] .sn-stats-card__value`
-            );
+            const card = this.element?.querySelector(`[data-stat-id="${id}"] .stats-card__value`);
             if (card) {
                 card.textContent = value;
             }
@@ -503,7 +491,7 @@ export class StatisticsDashboard {
             hourCounts[hour]++;
         });
 
-        const maxCount = Math.max(...hourCounts, 1);
+        const maxCount = hourCounts.reduce((max, count) => Math.max(max, count), 1);
 
         chartEl.replaceChildren();
         const chartContainer = createEl('div', { cls: 'sn-bar-chart' });
@@ -519,7 +507,7 @@ export class StatisticsDashboard {
             });
             bar.appendChild(valueLabel);
 
-            const barLabel = createEl('span', { cls: 'sn-bar-chart__label', text: `${hour}:00` });
+            const barLabel = createEl('span', { cls: 'bar-chart__label', text: `${hour}:00` });
             bar.appendChild(barLabel);
 
             chartContainer.appendChild(bar);
@@ -540,7 +528,7 @@ export class StatisticsDashboard {
         const dailyStats: { [date: string]: { success: number; total: number } } = {};
 
         records.forEach((record) => {
-            const date = new Date(record.startTime).toLocaleDateString();
+            const date = new Date(record.startTime).toLocaleDateString('en-US');
             if (!dailyStats[date]) {
                 dailyStats[date] = { success: 0, total: 0 };
             }
@@ -606,7 +594,7 @@ export class StatisticsDashboard {
             const row = createEl('tr');
 
             const startTimeCell = createEl('td', {
-                text: new Date(record.startTime).toLocaleString(),
+                text: new Date(record.startTime).toLocaleString('en-US'),
             });
             row.appendChild(startTimeCell);
 
@@ -637,7 +625,7 @@ export class StatisticsDashboard {
             row.appendChild(wordCountCell);
 
             const actionCell = createEl('td');
-            const actionBtn = createEl('button', { cls: 'sn-action-btn', text: 'View' });
+            const actionBtn = createEl('button', { cls: 'action-btn', text: 'View' });
             actionBtn.dataset.recordId = record.id;
             actionBtn.dataset.action = 'view';
             actionBtn.addEventListener('click', () => {
@@ -693,11 +681,11 @@ export class StatisticsDashboard {
         const hours = Math.floor(minutes / 60);
 
         if (hours > 0) {
-            return `${hours} hr ${minutes % 60} min`;
+            return `${hours}h ${minutes % 60}m`;
         } else if (minutes > 0) {
-            return `${minutes} min ${seconds % 60} sec`;
+            return `${minutes}m ${seconds % 60}s`;
         } else {
-            return `${seconds} sec`;
+            return `${seconds}s`;
         }
     }
 
@@ -721,14 +709,14 @@ export class StatisticsDashboard {
         // StatisticsStore에 app이 설정되어 있어야 함
         const app = StatisticsStore['app']; // private 필드 접근
         if (!app) {
-            new Notice('App instance is not available.');
+            new Notice('App instance not found');
             return;
         }
 
         new ConfirmationModal(
             app,
             'Clear statistics',
-            'Reset all statistics data? This action cannot be undone.',
+            'Do you want to clear all statistics data? This action cannot be undone.',
             () => {
                 StatisticsStore.clear();
                 this.refresh();
@@ -743,13 +731,13 @@ export class StatisticsDashboard {
         const records = StatisticsStore.getAllRecords();
 
         const headers = [
-            'Time',
-            'File name',
-            'Size (bytes)',
-            'Processing time (ms)',
-            'Status',
-            'Word count',
-            'API cost',
+            'time',
+            'file_name',
+            'size_bytes',
+            'duration_ms',
+            'status',
+            'word_count',
+            'api_cost',
         ];
         const rows = records.map((r) => [
             new Date(r.startTime).toISOString(),

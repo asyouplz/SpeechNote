@@ -1,4 +1,12 @@
-import { App, MarkdownView, Editor, EditorPosition, EditorRange, Notice } from 'obsidian';
+import {
+    App,
+    Component,
+    MarkdownView,
+    Editor,
+    EditorPosition,
+    EditorRange,
+    Notice,
+} from 'obsidian';
 import { Logger } from '../infrastructure/logging/Logger';
 import { EventManager } from './EventManager';
 
@@ -12,7 +20,7 @@ import { EventManager } from './EventManager';
  * - 에디터 상태 관리
  * - Undo/Redo 지원
  */
-export class EditorService {
+export class EditorService extends Component {
     private activeEditor: Editor | null = null;
     private activeView: MarkdownView | null = null;
     private readonly logger: Logger;
@@ -20,16 +28,28 @@ export class EditorService {
     private readonly redoHistory: EditorAction[] = [];
     private readonly maxHistorySize = 50;
     private destroyed = false;
-    private readonly eventRefs: Array<{ event: string; callback: (...args: unknown[]) => void }> =
-        [];
 
     constructor(
         private app: App,
         private eventManager: EventManager = EventManager.getInstance(),
         logger?: Logger
     ) {
+        super();
         this.logger = logger || new Logger('EditorService');
+    }
+
+    onload(): void {
+        this.destroyed = false;
         this.setupEventListeners();
+        this.updateActiveEditor();
+    }
+
+    onunload(): void {
+        this.destroyed = true;
+        this.clearHistory();
+        this.activeEditor = null;
+        this.activeView = null;
+        this.logger.debug('EditorService unloaded');
     }
 
     private normalizeError(error: unknown): Error {
@@ -65,8 +85,7 @@ export class EditorService {
             }
             this.updateActiveEditor();
         };
-        workspace.on('active-leaf-change', activeLeafCallback);
-        this.eventRefs.push({ event: 'active-leaf-change', callback: activeLeafCallback });
+        this.registerEvent(workspace.on('active-leaf-change', activeLeafCallback));
 
         // 에디터 변경 감지
         const editorChangeCallback = (...args: unknown[]) => {
@@ -80,8 +99,7 @@ export class EditorService {
             this.activeEditor = editor;
             this.eventManager.emit('editor:changed', { editor });
         };
-        workspace.on('editor-change', editorChangeCallback);
-        this.eventRefs.push({ event: 'editor-change', callback: editorChangeCallback });
+        this.registerEvent(workspace.on('editor-change', editorChangeCallback));
     }
 
     /**
@@ -667,20 +685,7 @@ export class EditorService {
      * 클린업
      */
     destroy(): void {
-        this.destroyed = true;
-
-        // Remove all event listeners
-        for (const ref of this.eventRefs) {
-            if (typeof this.app.workspace.off === 'function') {
-                this.app.workspace.off(ref.event, ref.callback);
-            }
-        }
-        this.eventRefs.length = 0;
-
-        this.clearHistory();
-        this.activeEditor = null;
-        this.activeView = null;
-        this.logger.debug('EditorService destroyed');
+        this.unload();
     }
 }
 

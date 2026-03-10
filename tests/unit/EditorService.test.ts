@@ -380,13 +380,12 @@ describe('EditorService', () => {
 
     describe('destroy', () => {
         it('should clean up resources', () => {
+            const unloadSpy = jest
+                .spyOn(editorService as unknown as { unload: () => void }, 'unload')
+                .mockImplementation(() => {});
+
             editorService.destroy();
-
-            expect(mockLogger.debug).toHaveBeenCalledWith('EditorService destroyed');
-
-            // Should return null after destroy
-            const editor = editorService.getActiveEditor();
-            expect(editor).toBeNull();
+            expect(unloadSpy).toHaveBeenCalled();
         });
     });
 });

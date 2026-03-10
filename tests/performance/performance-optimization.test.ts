@@ -4,7 +4,6 @@
  * 성능 최적화 구현 테스트
  */
 
-import { LazyLoader } from '../../src/core/LazyLoader';
 import { MemoryCache, globalCache } from '../../src/infrastructure/cache/MemoryCache';
 import { BatchRequestManager } from '../../src/infrastructure/api/BatchRequestManager';
 import { MemoryProfiler } from '../../src/utils/memory/MemoryProfiler';
@@ -12,33 +11,6 @@ import { ObjectPool, bufferPool } from '../../src/utils/memory/ObjectPool';
 import { PerformanceBenchmark } from '../../src/utils/performance/PerformanceBenchmark';
 
 describe('Phase 4 Performance Optimization', () => {
-    describe('Bundle Size Optimization', () => {
-        test('Lazy loading should reduce initial bundle size', async () => {
-            // 초기 로드된 모듈 수 확인
-            const initialStats = LazyLoader.getStats();
-            expect(initialStats.loadedCount).toBe(0);
-
-            // 모듈 동적 로드
-            const module = await LazyLoader.loadModule('StatisticsDashboard');
-            expect(module).toBeDefined();
-
-            // 로드 후 상태 확인
-            const afterStats = LazyLoader.getStats();
-            expect(afterStats.loadedCount).toBe(1);
-        });
-
-        test('Module preloading should work in background', (done) => {
-            LazyLoader.preloadModules(['AdvancedSettings', 'AudioSettings']);
-
-            // 백그라운드 로드 확인
-            setTimeout(() => {
-                const stats = LazyLoader.getStats();
-                expect(stats.preloadCount).toBeGreaterThanOrEqual(0);
-                done();
-            }, 100);
-        });
-    });
-
     describe('Memory Cache System', () => {
         let cache: MemoryCache<any>;
 

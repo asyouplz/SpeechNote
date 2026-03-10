@@ -1,7 +1,6 @@
 /* Settings view aggregator for Speech-to-Text plugin */
 /* Imports existing UI styles so a single stylesheet can be referenced. */
 
-@import url('../styles/provider-settings.css');
 @import url('../styles/progress.css');
 @import url('../styles/notifications.css');
 @import url('../styles/file-picker.css');

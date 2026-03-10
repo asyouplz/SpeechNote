@@ -77,10 +77,7 @@ export default class SpeechToTextPlugin extends Plugin {
         this.cleanupEventHandlers();
         this.cancelPendingOperations();
 
-        // Clean up editor services
-        if (this.editorService) {
-            this.editorService.destroy();
-        }
+        // EditorService is registered as a child component and unloaded automatically.
         if (this.textInsertionHandler) {
             this.textInsertionHandler.destroy();
         }
@@ -142,6 +139,7 @@ export default class SpeechToTextPlugin extends Plugin {
 
         // Initialize editor services
         this.editorService = new EditorService(this.app, this.eventManager, this.logger);
+        this.addChild(this.editorService);
 
         this.textInsertionHandler = new TextInsertionHandler(
             this.editorService,
