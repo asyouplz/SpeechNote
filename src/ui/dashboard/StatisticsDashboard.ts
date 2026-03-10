@@ -8,6 +8,7 @@
 
 import type { App } from 'obsidian';
 import { EventManager } from '../../application/EventManager';
+import { safeJsonParse } from '../../utils/common/helpers';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { Notice } from 'obsidian';
 
@@ -133,8 +134,10 @@ export class StatisticsStore {
         const cancelledRecords = this.records.filter((r) => r.status === 'cancelled');
 
         const processingTimes = completedRecords
-            .filter((r) => r.endTime)
-            .map((r) => (r.endTime! - r.startTime) / 1000); // 초 단위
+            .filter(
+                (r): r is TranscriptionRecord & { endTime: number } => typeof r.endTime === 'number'
+            )
+            .map((r) => (r.endTime - r.startTime) / 1000); // 초 단위
 
         const totalProcessingTime = processingTimes.reduce((sum, time) => sum + time, 0);
         const averageProcessingTime =
@@ -190,9 +193,20 @@ export class StatisticsStore {
             return;
         }
         try {
-            const data = this.app.loadLocalStorage(this.STORAGE_KEY);
-            if (data) {
-                this.records = JSON.parse(data);
+            const data: unknown = this.app.loadLocalStorage(this.STORAGE_KEY);
+            if (typeof data === 'string' && data.length > 0) {
+                const parsed = safeJsonParse<TranscriptionRecord[] | null>(data, null);
+                this.records = Array.isArray(parsed)
+                    ? parsed.filter((record): record is TranscriptionRecord => {
+                          return (
+                              typeof record?.id === 'string' &&
+                              typeof record?.fileName === 'string' &&
+                              typeof record?.fileSize === 'number' &&
+                              typeof record?.startTime === 'number' &&
+                              typeof record?.status === 'string'
+                          );
+                      })
+                    : [];
             }
         } catch (e) {
             console.error('Failed to load statistics:', e);
@@ -230,9 +244,9 @@ export class StatisticsDashboard {
      * 대시보드 생성
      */
     create(container: HTMLElement): HTMLElement {
-        this.element = createEl('div', { cls: 'statistics-dashboard' });
+        this.element = createEl('div', { cls: 'sn-statistics-dashboard' });
         this.element.setAttribute('role', 'region');
-        this.element.setAttribute('aria-label', '통계 대시보드');
+        this.element.setAttribute('aria-label', 'Statistics dashboard');
 
         // 헤더
         const header = this.createHeader();
@@ -268,25 +282,25 @@ export class StatisticsDashboard {
      * 헤더 생성
      */
     private createHeader(): HTMLElement {
-        const header = createEl('div', { cls: 'dashboard__header' });
+        const header = createEl('div', { cls: 'sn-dashboard__header' });
 
-        const title = createEl('h2', { text: '변환 통계' });
+        const title = createEl('h2', { text: 'Transcription statistics' });
         header.appendChild(title);
 
-        const controls = createEl('div', { cls: 'dashboard__controls' });
+        const controls = createEl('div', { cls: 'sn-dashboard__controls' });
 
         // 새로고침 버튼
-        const refreshBtn = createEl('button', { cls: 'dashboard__refresh', text: '새로고침' });
+        const refreshBtn = createEl('button', { cls: 'sn-dashboard__refresh', text: 'Refresh' });
         refreshBtn.addEventListener('click', () => this.refresh());
         controls.appendChild(refreshBtn);
 
         // 데이터 초기화 버튼
-        const clearBtn = createEl('button', { cls: 'dashboard__clear', text: '데이터 초기화' });
+        const clearBtn = createEl('button', { cls: 'sn-dashboard__clear', text: 'Reset data' });
         clearBtn.addEventListener('click', () => this.clearData());
         controls.appendChild(clearBtn);
 
         // 내보내기 버튼
-        const exportBtn = createEl('button', { cls: 'dashboard__export', text: 'CSV 내보내기' });
+        const exportBtn = createEl('button', { cls: 'sn-dashboard__export', text: 'Export CSV' });
         exportBtn.addEventListener('click', () => this.exportToCSV());
         controls.appendChild(exportBtn);
 
@@ -299,35 +313,37 @@ export class StatisticsDashboard {
      * 통계 그리드 생성
      */
     private createStatsGrid(): HTMLElement {
-        const grid = createEl('div', { cls: 'dashboard__stats-grid' });
+        const grid = createEl('div', { cls: 'sn-dashboard__stats-grid' });
 
         // 통계 카드들
         const cards = [
-            { id: 'total', label: '전체 변환', value: '0', icon: '📊' },
-            { id: 'success', label: '성공', value: '0', icon: '✅', color: 'success' },
-            { id: 'failure', label: '실패', value: '0', icon: '❌', color: 'error' },
-            { id: 'rate', label: '성공률', value: '0%', icon: '📈', color: 'info' },
-            { id: 'avg-time', label: '평균 처리 시간', value: '0초', icon: '⏱️' },
-            { id: 'data', label: '처리된 데이터', value: '0 MB', icon: '💾' },
-            { id: 'today', label: '오늘', value: '0', icon: '📅' },
-            { id: 'api-cost', label: 'API 비용', value: '$0.00', icon: '💰' },
+            { id: 'total', label: 'Total transcriptions', value: '0', icon: '📊' },
+            { id: 'success', label: 'Success', value: '0', icon: '✅', color: 'success' },
+            { id: 'failure', label: 'Failed', value: '0', icon: '❌', color: 'error' },
+            { id: 'rate', label: 'Success rate', value: '0%', icon: '📈', color: 'info' },
+            { id: 'avg-time', label: 'Average processing time', value: '0 sec', icon: '⏱️' },
+            { id: 'data', label: 'Processed data', value: '0 MB', icon: '💾' },
+            { id: 'today', label: 'Today', value: '0', icon: '📅' },
+            { id: 'api-cost', label: 'API cost', value: '$0.00', icon: '💰' },
         ];
 
         cards.forEach((card) => {
             const cardEl = createEl('div', {
-                cls: card.color ? ['stats-card', `stats-card--${card.color}`] : 'stats-card',
+                cls: card.color
+                    ? ['sn-stats-card', `sn-stats-card--${card.color}`]
+                    : 'sn-stats-card',
             });
             cardEl.setAttribute('data-stat-id', card.id);
 
-            const icon = createEl('div', { cls: 'stats-card__icon', text: card.icon });
+            const icon = createEl('div', { cls: 'sn-stats-card__icon', text: card.icon });
             cardEl.appendChild(icon);
 
-            const content = createEl('div', { cls: 'stats-card__content' });
+            const content = createEl('div', { cls: 'sn-stats-card__content' });
 
-            const value = createEl('div', { cls: 'stats-card__value', text: card.value });
+            const value = createEl('div', { cls: 'sn-stats-card__value', text: card.value });
             content.appendChild(value);
 
-            const label = createEl('div', { cls: 'stats-card__label', text: card.label });
+            const label = createEl('div', { cls: 'sn-stats-card__label', text: card.label });
             content.appendChild(label);
 
             cardEl.appendChild(content);
@@ -341,27 +357,27 @@ export class StatisticsDashboard {
      * 차트 영역 생성
      */
     private createCharts(): HTMLElement {
-        const charts = createEl('div', { cls: 'dashboard__charts' });
+        const charts = createEl('div', { cls: 'sn-dashboard__charts' });
 
         // 시간대별 차트
-        const timeChart = createEl('div', { cls: 'chart-container' });
+        const timeChart = createEl('div', { cls: 'sn-chart-container' });
 
-        const timeChartTitle = createEl('h3', { text: '시간대별 변환 횟수' });
+        const timeChartTitle = createEl('h3', { text: 'Transcriptions by hour' });
         timeChart.appendChild(timeChartTitle);
 
-        const timeChartCanvas = createEl('div', { cls: 'chart-canvas' });
+        const timeChartCanvas = createEl('div', { cls: 'sn-chart-canvas' });
         timeChartCanvas.id = 'time-chart';
         timeChart.appendChild(timeChartCanvas);
 
         charts.appendChild(timeChart);
 
         // 성공률 차트
-        const successChart = createEl('div', { cls: 'chart-container' });
+        const successChart = createEl('div', { cls: 'sn-chart-container' });
 
-        const successChartTitle = createEl('h3', { text: '성공률 추이' });
+        const successChartTitle = createEl('h3', { text: 'Success rate trend' });
         successChart.appendChild(successChartTitle);
 
-        const successChartCanvas = createEl('div', { cls: 'chart-canvas' });
+        const successChartCanvas = createEl('div', { cls: 'sn-chart-canvas' });
         successChartCanvas.id = 'success-chart';
         successChart.appendChild(successChartCanvas);
 
@@ -374,22 +390,22 @@ export class StatisticsDashboard {
      * 히스토리 테이블 생성
      */
     private createHistoryTable(): HTMLElement {
-        const container = createEl('div', { cls: 'dashboard__history' });
+        const container = createEl('div', { cls: 'sn-dashboard__history' });
 
-        const header = createEl('div', { cls: 'history__header' });
+        const header = createEl('div', { cls: 'sn-history__header' });
 
-        const title = createEl('h3', { text: '최근 변환 기록' });
+        const title = createEl('h3', { text: 'Recent transcription history' });
         header.appendChild(title);
 
         // 필터
-        const filter = createEl('select', { cls: 'history__filter' });
+        const filter = createEl('select', { cls: 'sn-history__filter' });
 
         const filterOptions = [
-            { value: 'all', label: '전체' },
-            { value: 'completed', label: '성공' },
-            { value: 'failed', label: '실패' },
-            { value: 'processing', label: '처리 중' },
-            { value: 'cancelled', label: '취소됨' },
+            { value: 'all', label: 'All' },
+            { value: 'completed', label: 'Completed' },
+            { value: 'failed', label: 'Failed' },
+            { value: 'processing', label: 'Processing' },
+            { value: 'cancelled', label: 'Cancelled' },
         ];
 
         filterOptions.forEach((optionInfo) => {
@@ -403,18 +419,20 @@ export class StatisticsDashboard {
         container.appendChild(header);
 
         // 테이블
-        const table = createEl('table', { cls: 'history__table' });
+        const table = createEl('table', { cls: 'sn-history__table' });
 
         const thead = createEl('thead');
         const headerRow = createEl('tr');
-        ['시간', '파일명', '크기', '처리 시간', '상태', '단어 수', '작업'].forEach((text) => {
-            const th = createEl('th', { text });
-            headerRow.appendChild(th);
-        });
+        ['Time', 'File name', 'Size', 'Processing time', 'Status', 'Word count', 'Action'].forEach(
+            (text) => {
+                const th = createEl('th', { text });
+                headerRow.appendChild(th);
+            }
+        );
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
-        const tbody = createEl('tbody', { cls: 'history__tbody' });
+        const tbody = createEl('tbody', { cls: 'sn-history__tbody' });
         table.appendChild(tbody);
 
         container.appendChild(table);
@@ -450,7 +468,9 @@ export class StatisticsDashboard {
         };
 
         Object.entries(updates).forEach(([id, value]) => {
-            const card = this.element!.querySelector(`[data-stat-id="${id}"] .stats-card__value`);
+            const card = this.element?.querySelector(
+                `[data-stat-id="${id}"] .sn-stats-card__value`
+            );
             if (card) {
                 card.textContent = value;
             }
@@ -476,7 +496,7 @@ export class StatisticsDashboard {
         if (!chartEl) return;
 
         const records = StatisticsStore.getAllRecords();
-        const hourCounts = new Array(24).fill(0);
+        const hourCounts = Array.from({ length: 24 }, () => 0);
 
         records.forEach((record) => {
             const hour = new Date(record.startTime).getHours();
@@ -486,17 +506,20 @@ export class StatisticsDashboard {
         const maxCount = Math.max(...hourCounts, 1);
 
         chartEl.replaceChildren();
-        const chartContainer = createEl('div', { cls: 'bar-chart' });
+        const chartContainer = createEl('div', { cls: 'sn-bar-chart' });
 
         hourCounts.forEach((count, hour) => {
-            const bar = createEl('div', { cls: 'bar-chart__bar' });
+            const bar = createEl('div', { cls: 'sn-bar-chart__bar' });
             const height = (count / maxCount) * 100;
             bar.setAttribute('style', `--sn-bar-height:${height}%`);
 
-            const valueLabel = createEl('span', { cls: 'bar-chart__value', text: String(count) });
+            const valueLabel = createEl('span', {
+                cls: 'sn-bar-chart__value',
+                text: String(count),
+            });
             bar.appendChild(valueLabel);
 
-            const barLabel = createEl('span', { cls: 'bar-chart__label', text: `${hour}시` });
+            const barLabel = createEl('span', { cls: 'sn-bar-chart__label', text: `${hour}:00` });
             bar.appendChild(barLabel);
 
             chartContainer.appendChild(bar);
@@ -530,22 +553,22 @@ export class StatisticsDashboard {
         const dates = Object.keys(dailyStats).slice(-7);
 
         chartEl.replaceChildren();
-        const lineChart = createEl('div', { cls: 'line-chart' });
+        const lineChart = createEl('div', { cls: 'sn-line-chart' });
 
         dates.forEach((date) => {
             const stat = dailyStats[date];
             const rate = stat.total > 0 ? (stat.success / stat.total) * 100 : 0;
 
-            const point = createEl('div', { cls: 'line-chart__point' });
+            const point = createEl('div', { cls: 'sn-line-chart__point' });
 
             const valueLabel = createEl('span', {
-                cls: 'line-chart__value',
+                cls: 'sn-line-chart__value',
                 text: `${rate.toFixed(0)}%`,
             });
             point.appendChild(valueLabel);
 
             const dateLabel = createEl('span', {
-                cls: 'line-chart__label',
+                cls: 'sn-line-chart__label',
                 text: date.split('/').slice(0, 2).join('/'),
             });
             point.appendChild(dateLabel);
@@ -560,7 +583,7 @@ export class StatisticsDashboard {
      * 히스토리 테이블 업데이트
      */
     private updateHistoryTable(filter = 'all') {
-        const tbody = this.element?.querySelector('.history__tbody');
+        const tbody = this.element?.querySelector('.sn-history__tbody');
         if (!tbody) return;
 
         let records = StatisticsStore.getAllRecords();
@@ -602,7 +625,7 @@ export class StatisticsDashboard {
 
             const statusCell = createEl('td');
             const statusBadge = createEl('span', {
-                cls: ['status', `status--${record.status}`],
+                cls: ['sn-status', `sn-status--${record.status}`],
                 text: this.getStatusText(record.status),
             });
             statusCell.appendChild(statusBadge);
@@ -614,7 +637,7 @@ export class StatisticsDashboard {
             row.appendChild(wordCountCell);
 
             const actionCell = createEl('td');
-            const actionBtn = createEl('button', { cls: 'action-btn', text: '보기' });
+            const actionBtn = createEl('button', { cls: 'sn-action-btn', text: 'View' });
             actionBtn.dataset.recordId = record.id;
             actionBtn.dataset.action = 'view';
             actionBtn.addEventListener('click', () => {
@@ -652,11 +675,11 @@ export class StatisticsDashboard {
      */
     private getStatusText(status: TranscriptionRecord['status']): string {
         const texts = {
-            pending: '대기 중',
-            processing: '처리 중',
-            completed: '완료',
-            failed: '실패',
-            cancelled: '취소됨',
+            pending: 'Pending',
+            processing: 'Processing',
+            completed: 'Completed',
+            failed: 'Failed',
+            cancelled: 'Cancelled',
         };
         return texts[status] || status;
     }
@@ -670,11 +693,11 @@ export class StatisticsDashboard {
         const hours = Math.floor(minutes / 60);
 
         if (hours > 0) {
-            return `${hours}시간 ${minutes % 60}분`;
+            return `${hours} hr ${minutes % 60} min`;
         } else if (minutes > 0) {
-            return `${minutes}분 ${seconds % 60}초`;
+            return `${minutes} min ${seconds % 60} sec`;
         } else {
-            return `${seconds}초`;
+            return `${seconds} sec`;
         }
     }
 
@@ -698,14 +721,14 @@ export class StatisticsDashboard {
         // StatisticsStore에 app이 설정되어 있어야 함
         const app = StatisticsStore['app']; // private 필드 접근
         if (!app) {
-            new Notice('앱 인스턴스를 찾을 수 없습니다');
+            new Notice('App instance is not available.');
             return;
         }
 
         new ConfirmationModal(
             app,
             'Clear statistics',
-            '모든 통계 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+            'Reset all statistics data? This action cannot be undone.',
             () => {
                 StatisticsStore.clear();
                 this.refresh();
@@ -720,13 +743,13 @@ export class StatisticsDashboard {
         const records = StatisticsStore.getAllRecords();
 
         const headers = [
-            '시간',
-            '파일명',
-            '크기(bytes)',
-            '처리시간(ms)',
-            '상태',
-            '단어수',
-            'API비용',
+            'Time',
+            'File name',
+            'Size (bytes)',
+            'Processing time (ms)',
+            'Status',
+            'Word count',
+            'API cost',
         ];
         const rows = records.map((r) => [
             new Date(r.startTime).toISOString(),

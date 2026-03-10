@@ -1,3 +1,5 @@
+import { setIcon } from 'obsidian';
+
 /**
  * 공통 헬퍼 유틸리티 함수들
  * 자주 사용되는 유틸리티 로직을 중앙화
@@ -65,7 +67,7 @@ export async function retry<T>(
 ): Promise<T> {
     const { maxAttempts = 3, delay = 1000, backoff = true, onRetry } = options;
 
-    let lastError: Error;
+    let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -85,7 +87,7 @@ export async function retry<T>(
         }
     }
 
-    throw lastError!;
+    throw lastError ?? new Error('Operation failed after retry attempts');
 }
 
 /**
@@ -93,7 +95,7 @@ export async function retry<T>(
  */
 export function safeJsonParse<T = unknown>(jsonString: string, fallback: T): T {
     try {
-        return JSON.parse(jsonString);
+        return JSON.parse(jsonString) as T;
     } catch {
         return fallback;
     }
@@ -111,8 +113,9 @@ export function deepClone<T>(obj: T): T {
         return new Date(obj.getTime()) as unknown as T;
     }
 
-    if (obj instanceof Array) {
-        return obj.map((item) => deepClone(item)) as unknown as T;
+    if (Array.isArray(obj)) {
+        const clonedArray = (obj as unknown[]).map((item) => deepClone(item));
+        return clonedArray as unknown as T;
     }
 
     if (obj instanceof Map) {
@@ -283,4 +286,23 @@ export function memoize<T extends (...args: unknown[]) => unknown>(
         cache.set(key, result);
         return result;
     }) as T;
+}
+
+/**
+ * Obsidian 아이콘 요소 생성
+ */
+export function createIconElement(iconName: string, className?: string): HTMLSpanElement {
+    const iconEl = document.createElement('span');
+    if (className) {
+        iconEl.className = className;
+    }
+
+    if (typeof setIcon === 'function') {
+        setIcon(iconEl, iconName);
+    } else {
+        iconEl.dataset.icon = iconName;
+        iconEl.setAttribute('aria-hidden', 'true');
+    }
+
+    return iconEl;
 }

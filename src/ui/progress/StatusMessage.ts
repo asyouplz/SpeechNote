@@ -331,13 +331,13 @@ export class StatusMessageDisplay {
      * 컴포넌트 생성
      */
     create(container: HTMLElement): HTMLElement {
-        this.element = createEl('div', { cls: 'status-message-display' });
+        this.element = createEl('div', { cls: 'sn-status-message-display' });
         this.element.setAttribute('role', 'log');
-        this.element.setAttribute('aria-label', '상태 메시지 로그');
+        this.element.setAttribute('aria-label', 'Status message log');
         this.element.setAttribute('aria-live', 'polite');
 
         // 헤더
-        const header = createEl('div', { cls: 'status-message-display__header' });
+        const header = createEl('div', { cls: 'sn-status-message-display__header' });
 
         const title = createEl('h3', {
             text: this.getLocalizedText('Status messages', '상태 메시지'),
@@ -345,11 +345,11 @@ export class StatusMessageDisplay {
         header.appendChild(title);
 
         // 컨트롤
-        const controls = createEl('div', { cls: 'status-message-display__controls' });
+        const controls = createEl('div', { cls: 'sn-status-message-display__controls' });
 
         // 언어 선택
-        const langSelect = createEl('select', { cls: 'status-message-display__lang-select' });
-        langSelect.setAttribute('aria-label', '언어 선택');
+        const langSelect = createEl('select', { cls: 'sn-status-message-display__lang-select' });
+        langSelect.setAttribute('aria-label', 'Language selection');
 
         const languages = [
             { value: 'ko', label: '한국어' },
@@ -382,7 +382,7 @@ export class StatusMessageDisplay {
 
         // 클리어 버튼
         const clearBtn = createEl('button', {
-            cls: 'status-message-display__clear',
+            cls: 'sn-status-message-display__clear',
             text: this.getLocalizedText('Clear', '지우기'),
         });
         clearBtn.addEventListener('click', () => this.clear());
@@ -392,7 +392,7 @@ export class StatusMessageDisplay {
         this.element.appendChild(header);
 
         // 메시지 컨테이너
-        const messageContainer = createEl('div', { cls: 'status-message-display__messages' });
+        const messageContainer = createEl('div', { cls: 'sn-status-message-display__messages' });
         this.element.appendChild(messageContainer);
 
         container.appendChild(this.element);
@@ -427,17 +427,17 @@ export class StatusMessageDisplay {
     private renderMessage(message: StatusMessage) {
         if (!this.element) return;
 
-        const messageContainer = this.element.querySelector('.status-message-display__messages');
+        const messageContainer = this.element.querySelector('.sn-status-message-display__messages');
         if (!messageContainer) return;
 
         const messageEl = createEl('div', {
-            cls: `status-message status-message--${message.type}`,
+            cls: `sn-status-message sn-status-message--${message.type}`,
         });
 
         // 타임스탬프
         if (this.showTimestamp && message.timestamp) {
             const timestamp = createEl('span', {
-                cls: 'status-message__timestamp',
+                cls: 'sn-status-message__timestamp',
                 text: this.formatTimestamp(message.timestamp),
             });
             messageEl.appendChild(timestamp);
@@ -445,14 +445,14 @@ export class StatusMessageDisplay {
 
         // 아이콘
         const icon = createEl('span', {
-            cls: 'status-message__icon',
+            cls: 'sn-status-message__icon',
             text: this.getMessageIcon(message.type),
         });
         messageEl.appendChild(icon);
 
         // 메시지 텍스트
         const text = createEl('span', {
-            cls: 'status-message__text',
+            cls: 'sn-status-message__text',
             text: MessageStore.getMessage(message.key, this.currentLanguage, message.params),
         });
         messageEl.appendChild(text);
@@ -466,7 +466,7 @@ export class StatusMessageDisplay {
 
         // 애니메이션
         requestAnimationFrame(() => {
-            messageEl.classList.add('status-message--show');
+            messageEl.classList.add('sn-status-message--show');
         });
     }
 
@@ -510,7 +510,7 @@ export class StatusMessageDisplay {
     private rerender() {
         if (!this.element) return;
 
-        const messageContainer = this.element.querySelector('.status-message-display__messages');
+        const messageContainer = this.element.querySelector('.sn-status-message-display__messages');
         if (!messageContainer) return;
 
         // 기존 메시지 제거
@@ -530,7 +530,7 @@ export class StatusMessageDisplay {
 
         if (this.element) {
             const messageContainer = this.element.querySelector(
-                '.status-message-display__messages'
+                '.sn-status-message-display__messages'
             );
             if (messageContainer) {
                 messageContainer.replaceChildren();
@@ -586,7 +586,7 @@ export class StatusMessageManager {
         const lang = navigator.language.toLowerCase();
 
         if (lang.startsWith('ko')) {
-            this.currentLanguage = 'ko';
+            this.currentLanguage = 'en';
         } else if (lang.startsWith('ja')) {
             this.currentLanguage = 'ja';
         } else if (lang.startsWith('zh')) {

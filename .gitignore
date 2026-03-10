@@ -8,7 +8,6 @@ dist/
 build/
 out/
 main.js
-styles.css
 *.js
 *.js.map
 *.d.ts
@@ -159,6 +158,7 @@ requirment*.md
 
 # Local review notes
 REVIEW_NOTES_PR8004.md
+/docs/local-pr8004-work-plan.md
 
 # Lint and typecheck output files
 lint-output.txt
