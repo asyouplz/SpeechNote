@@ -80,9 +80,9 @@ export class ProviderSettings {
             .setDesc('Choose a specific provider or use automatic selection')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', '🤖 automatic (recommended)')
-                    .addOption('whisper', '🎯 openai whisper')
-                    .addOption('deepgram', '🚀 deepgram')
+                    .addOption('auto', '🤖 Automatic (recommended)')
+                    .addOption('whisper', '🎯 OpenAI Whisper')
+                    .addOption('deepgram', '🚀 Deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderValue(value)) {
@@ -104,15 +104,15 @@ export class ProviderSettings {
      */
     private renderApiKeyInputs(containerEl: HTMLElement): void {
         const apiKeysContainer = containerEl.createDiv({
-            cls: 'api-keys-container',
+            cls: 'sn-api-keys-container',
         });
 
         // Whisper API Key
         this.renderSingleApiKey(
             apiKeysContainer,
             'whisper',
-            'Openai API key',
-            'Enter your openai API key (starts with sk-)',
+            'OpenAI API key',
+            'Enter your OpenAI API key (starts with sk-)',
             'sk-...'
         );
 
@@ -219,11 +219,11 @@ export class ProviderSettings {
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 cost optimized')
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ performance optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ quality optimized')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 round robin')
-                    .addOption(SelectionStrategy.AB_TEST, '🧪 a/b testing')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality optimized')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
+                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -279,10 +279,10 @@ export class ProviderSettings {
      * A/B Testing 설정
      */
     private renderABTestSettings(containerEl: HTMLElement): void {
-        const abTestEl = containerEl.createDiv({ cls: 'ab-test-settings' });
+        const abTestEl = containerEl.createDiv({ cls: 'sn-ab-test-settings' });
 
         new Setting(abTestEl)
-            .setName('Enable a/b testing')
+            .setName('Enable A/B testing')
             .setDesc('Compare providers to find the best one for your use case')
             .addToggle((toggle) => {
                 toggle
@@ -319,7 +319,7 @@ export class ProviderSettings {
                     });
 
                 // 분할 비율 표시
-                const displayEl = containerEl.createDiv({ cls: 'split-display' });
+                const displayEl = containerEl.createDiv({ cls: 'sn-split-display' });
                 displayEl.createEl('span', { text: `Whisper: ${currentSplit}%` });
                 displayEl.createEl('span', { text: `Deepgram: ${100 - currentSplit}%` });
             });
@@ -347,9 +347,9 @@ export class ProviderSettings {
      * 메트릭 표시
      */
     private renderMetrics(containerEl: HTMLElement): void {
-        const metricsEl = containerEl.createDiv({ cls: 'metrics-container' });
+        const metricsEl = containerEl.createDiv({ cls: 'sn-metrics-container' });
 
-        metricsEl.createEl('h4', { text: '📊 performance metrics' });
+        metricsEl.createEl('h4', { text: '📊 Performance metrics' });
 
         // 각 Provider별 메트릭
         this.renderProviderMetrics(metricsEl, 'whisper');
@@ -365,10 +365,12 @@ export class ProviderSettings {
     private renderProviderMetrics(containerEl: HTMLElement, provider: TranscriptionProvider): void {
         const stats = this.getProviderStats(provider);
 
-        const statsEl = containerEl.createDiv({ cls: `provider-stats ${provider}` });
+        const statsEl = containerEl.createDiv({
+            cls: `sn-provider-stats sn-provider-stats--${provider}`,
+        });
         statsEl.createEl('h5', { text: this.getProviderDisplayName(provider) });
 
-        const statGrid = statsEl.createDiv({ cls: 'stat-grid' });
+        const statGrid = statsEl.createDiv({ cls: 'sn-stat-grid' });
 
         const statItems = [
             {
@@ -391,9 +393,9 @@ export class ProviderSettings {
         ];
 
         statItems.forEach((item) => {
-            const itemEl = statGrid.createDiv({ cls: 'stat-item' });
-            itemEl.createEl('span', { cls: 'stat-label', text: item.label });
-            const valueSpan = itemEl.createEl('span', { cls: 'stat-value', text: item.value });
+            const itemEl = statGrid.createDiv({ cls: 'sn-stat-item' });
+            itemEl.createEl('span', { cls: 'sn-stat-label', text: item.label });
+            const valueSpan = itemEl.createEl('span', { cls: 'sn-stat-value', text: item.value });
             if (item.className) {
                 valueSpan.addClass(item.className);
             }
@@ -404,20 +406,20 @@ export class ProviderSettings {
      * 비교 차트 렌더링
      */
     private renderComparisonChart(containerEl: HTMLElement): void {
-        const chartEl = containerEl.createDiv({ cls: 'comparison-chart' });
-        chartEl.createEl('h5', { text: '📈 provider comparison' });
+        const chartEl = containerEl.createDiv({ cls: 'sn-comparison-chart' });
+        chartEl.createEl('h5', { text: '📈 Provider comparison' });
 
         // 간단한 막대 차트 (실제로는 Chart.js 등 사용 권장)
-        const chartContent = chartEl.createDiv({ cls: 'chart-content' });
-        const bars = chartContent.createDiv({ cls: 'chart-bars' });
+        const chartContent = chartEl.createDiv({ cls: 'sn-chart-content' });
+        const bars = chartContent.createDiv({ cls: 'sn-chart-bars' });
 
-        const whisperBar = bars.createDiv({ cls: 'chart-bar chart-bar--whisper' });
-        whisperBar.createEl('span', { cls: 'bar-label', text: 'Whisper' });
+        const whisperBar = bars.createDiv({ cls: 'sn-chart-bar sn-chart-bar--whisper' });
+        whisperBar.createEl('span', { cls: 'sn-bar-label', text: 'Whisper' });
 
-        const deepgramBar = bars.createDiv({ cls: 'chart-bar chart-bar--deepgram' });
-        deepgramBar.createEl('span', { cls: 'bar-label', text: 'Deepgram' });
+        const deepgramBar = bars.createDiv({ cls: 'sn-chart-bar sn-chart-bar--deepgram' });
+        deepgramBar.createEl('span', { cls: 'sn-bar-label', text: 'Deepgram' });
 
-        const legend = chartContent.createDiv({ cls: 'chart-legend' });
+        const legend = chartContent.createDiv({ cls: 'sn-chart-legend' });
         legend.createEl('span', { text: 'Overall performance score' });
     }
 
@@ -431,10 +433,10 @@ export class ProviderSettings {
         const deepgramConnected = this.checkConnection('deepgram');
 
         if (whisperConnected || deepgramConnected) {
-            statusEl.addClass('connected');
+            statusEl.addClass('sn-connection-status--connected');
             statusEl.setText('✅ connected');
         } else {
-            statusEl.addClass('disconnected');
+            statusEl.addClass('sn-connection-status--disconnected');
             statusEl.setText('⚠️ no providers configured');
         }
     }
@@ -459,7 +461,7 @@ export class ProviderSettings {
     ): void {
         const toggleBtn = containerEl.createEl('button', {
             text: '👁',
-            cls: 'visibility-toggle',
+            cls: 'sn-visibility-toggle',
         });
 
         let isVisible = false;
@@ -489,7 +491,7 @@ export class ProviderSettings {
     ): void {
         const validateBtn = containerEl.createEl('button', {
             text: 'Verify',
-            cls: 'mod-cta validate-btn',
+            cls: 'mod-cta sn-validate-btn',
         });
 
         validateBtn.addEventListener('click', () => {
@@ -500,10 +502,10 @@ export class ProviderSettings {
 
             if (isValid) {
                 new Notice(`✅ ${this.getProviderDisplayName(provider)} API key verified!`);
-                inputEl.addClass('valid');
+                inputEl.addClass('sn-api-key-input--valid');
             } else {
                 new Notice(`❌ Invalid ${this.getProviderDisplayName(provider)} API key`);
-                inputEl.addClass('invalid');
+                inputEl.addClass('sn-api-key-input--invalid');
             }
 
             validateBtn.disabled = false;
@@ -526,9 +528,9 @@ export class ProviderSettings {
                 if (this.validateKeyFormat(provider, value)) {
                     this.apiKeys.set(provider, value);
                     await this.saveApiKey(provider, value);
-                    inputEl.removeClass('invalid');
+                    inputEl.removeClass('sn-api-key-input--invalid');
                 } else {
-                    inputEl.addClass('invalid');
+                    inputEl.addClass('sn-api-key-input--invalid');
                     new Notice(`Invalid ${this.getProviderDisplayName(provider)} key format`);
                 }
             })();
@@ -544,16 +546,16 @@ export class ProviderSettings {
 
         if (this.currentProvider === 'auto') {
             // Auto mode: 모든 키 표시
-            whisperEl?.removeClass('hidden');
-            deepgramEl?.removeClass('hidden');
+            whisperEl?.removeClass('sn-hidden');
+            deepgramEl?.removeClass('sn-hidden');
         } else if (this.currentProvider === 'whisper') {
             // Whisper only
-            whisperEl?.removeClass('hidden');
-            deepgramEl?.addClass('hidden');
+            whisperEl?.removeClass('sn-hidden');
+            deepgramEl?.addClass('sn-hidden');
         } else if (this.currentProvider === 'deepgram') {
             // Deepgram only
-            whisperEl?.addClass('hidden');
-            deepgramEl?.removeClass('hidden');
+            whisperEl?.addClass('sn-hidden');
+            deepgramEl?.removeClass('sn-hidden');
         }
     }
 
@@ -574,7 +576,7 @@ export class ProviderSettings {
     private showProviderInfo(provider: string): void {
         const info: Record<string, string> = {
             auto: '🤖 System will automatically select the best provider based on performance and availability',
-            whisper: '🎯 OpenAI whisper - high accuracy, supports 50+ languages',
+            whisper: '🎯 OpenAI Whisper - high accuracy, supports 50+ languages',
             deepgram: '🚀 Deepgram - fast real-time transcription with excellent accuracy',
         };
 
@@ -601,7 +603,7 @@ export class ProviderSettings {
      */
     private getProviderDisplayName(provider: TranscriptionProvider): string {
         const names: Record<TranscriptionProvider, string> = {
-            whisper: 'OpenAI whisper',
+            whisper: 'OpenAI Whisper',
             deepgram: 'Deepgram',
         };
         return names[provider] || provider;
@@ -611,10 +613,10 @@ export class ProviderSettings {
      * 통계 클래스 가져오기
      */
     private getStatClass(value: number): string {
-        if (value >= 0.95) return 'stat-excellent';
-        if (value >= 0.85) return 'stat-good';
-        if (value >= 0.7) return 'stat-fair';
-        return 'stat-poor';
+        if (value >= 0.95) return 'sn-stat-excellent';
+        if (value >= 0.85) return 'sn-stat-good';
+        if (value >= 0.7) return 'sn-stat-fair';
+        return 'sn-stat-poor';
     }
 
     /**

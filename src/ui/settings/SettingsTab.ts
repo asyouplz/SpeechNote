@@ -49,7 +49,7 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.addClass('speech-to-text-settings');
 
         // Add main title
-        new Setting(containerEl).setName('Speech note').setHeading();
+        new Setting(containerEl).setName('Speech Note').setHeading();
         this.debug('Title setting created');
 
         // Add debug info section at the top
@@ -127,7 +127,7 @@ export class SettingsTab extends PluginSettingTab {
         this.createProviderSelection(providerContainer);
 
         // Provider별 설정 컨테이너
-        const settingsContainer = containerEl.createEl('div', { cls: 'provider-settings' });
+        const settingsContainer = containerEl.createEl('div', { cls: 'sn-provider-settings' });
 
         // 선택된 Provider에 따라 동적으로 설정 표시
         const currentProvider = this.plugin.settings.provider || 'auto';
@@ -153,7 +153,7 @@ export class SettingsTab extends PluginSettingTab {
 
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'Openai whisper')
+                        .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -166,14 +166,14 @@ export class SettingsTab extends PluginSettingTab {
 
                             // Provider별 설정 UI 업데이트
                             const settingsContainer =
-                                containerEl.parentElement?.querySelector('.provider-settings');
+                                containerEl.parentElement?.querySelector('.sn-provider-settings');
                             this.debug('Settings container found:', !!settingsContainer);
 
                             if (settingsContainer instanceof HTMLElement) {
                                 this.debug('Updating provider settings UI for:', value);
                                 this.renderProviderSettings(settingsContainer, value);
                             } else {
-                                console.error('Could not find .provider-settings container');
+                                console.error('Could not find .sn-provider-settings container');
                             }
 
                             // Provider 정보 업데이트
@@ -182,7 +182,7 @@ export class SettingsTab extends PluginSettingTab {
                                 this.updateProviderInfo(infoEl, value);
                             }
 
-                            new Notice(`Provider changed to: ${value}`);
+                            new Notice(`Provider changed to ${this.getProviderLabel(value)}.`);
                         });
 
                     this.debug('Dropdown setup complete');
@@ -263,7 +263,7 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('performance_optimized', 'Performance optimized')
                     .addOption('quality_optimized', 'Quality optimized')
                     .addOption('round_robin', 'Round robin')
-                    .addOption('ab_test', 'A/b testing')
+                    .addOption('ab_test', 'A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -317,7 +317,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('Openai API endpoint (leave the default unless using a custom endpoint)')
+            .setDesc('OpenAI API endpoint (leave the default unless using a custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')
@@ -340,7 +340,7 @@ export class SettingsTab extends PluginSettingTab {
 
         // Deepgram 전용 컨테이너 생성
         const deepgramContainer = containerEl.createEl('div', {
-            cls: 'deepgram-settings-container',
+            cls: 'sn-deepgram-settings-container',
         });
 
         this.debug('Deepgram container created:', deepgramContainer);
@@ -366,8 +366,8 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Openai API key')
-            .setDesc('Enter your openai API key for whisper transcription')
+            .setName('OpenAI API key')
+            .setDesc('Enter your OpenAI API key for Whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('Sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -378,7 +378,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('Openai API key saved.');
+                            new Notice('OpenAI API key saved.');
                         }
                     });
 
@@ -440,7 +440,7 @@ export class SettingsTab extends PluginSettingTab {
         const descriptions = {
             auto: '🤖 intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
             whisper:
-                '🎯 OpenAI whisper - high-quality transcription with support for multiple languages. Best for general-purpose transcription.',
+                '🎯 OpenAI Whisper - high-quality transcription with support for multiple languages. Best for general-purpose transcription.',
             deepgram:
                 '⚡ Deepgram - fast, accurate transcription with advanced AI features. Best for real-time processing and speaker diarization.',
         };
@@ -459,11 +459,11 @@ export class SettingsTab extends PluginSettingTab {
                 dropdown
                     .addOption('auto', 'Auto-detect')
                     .addOption('en', 'English')
-                    .addOption('ko', '한국어')
-                    .addOption('ja', '日本語')
-                    .addOption('zh', '中文')
-                    .addOption('es', 'Español')
-                    .addOption('fr', 'Français')
+                    .addOption('ko', 'Korean')
+                    .addOption('ja', 'Japanese')
+                    .addOption('zh', 'Chinese')
+                    .addOption('es', 'Spanish')
+                    .addOption('fr', 'French')
                     .addOption('de', 'Deutsch')
                     .setValue(this.plugin.settings.language || 'auto')
                     .onChange(async (value) => {
@@ -525,7 +525,7 @@ export class SettingsTab extends PluginSettingTab {
         if (provider === 'whisper' || provider === 'auto') {
             new Setting(containerEl)
                 .setName('Whisper model')
-                .setDesc('Select the whisper model to use')
+                .setDesc('Select the Whisper model to use')
                 .addDropdown((dropdown) =>
                     dropdown
                         .addOption('whisper-1', 'Whisper v1 (default)')
@@ -649,7 +649,7 @@ export class SettingsTab extends PluginSettingTab {
             .setDesc('If you find this plugin helpful, consider buying me a coffee ☕')
             .addButton((button) =>
                 button
-                    .setButtonText('☕ buy me a coffee')
+                    .setButtonText('☕ Buy me a coffee')
                     .setCta()
                     .onClick(() => {
                         window.open('https://buymeacoffee.com/asyouplz', '_blank');
@@ -659,6 +659,18 @@ export class SettingsTab extends PluginSettingTab {
 
     private isProviderValue(value: string): value is 'auto' | 'whisper' | 'deepgram' {
         return value === 'auto' || value === 'whisper' || value === 'deepgram';
+    }
+
+    private getProviderLabel(provider: 'auto' | 'whisper' | 'deepgram'): string {
+        switch (provider) {
+            case 'whisper':
+                return 'OpenAI Whisper';
+            case 'deepgram':
+                return 'Deepgram';
+            case 'auto':
+            default:
+                return 'Automatic';
+        }
     }
 
     private isSelectionStrategy(value: string): value is SelectionStrategy {

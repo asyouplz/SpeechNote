@@ -87,7 +87,7 @@ export class FilePickerModal extends Modal {
             const maxFileSizeMb =
                 typeof settings?.maxFileSize === 'number' ? settings.maxFileSize : 25;
             this.options = this.mergeOptions({
-                title: '오디오 파일 선택',
+                title: 'Select audio files',
                 accept: ['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm'],
                 maxFileSize: maxFileSizeMb * 1024 * 1024,
                 multiple: false,
@@ -188,13 +188,13 @@ export class FilePickerModal extends Modal {
         const subtitle = header.createEl('p', { cls: 'file-picker-subtitle' });
         if (this.options.accept.length > 0) {
             subtitle.setText(
-                `지원 형식: ${this.options.accept.map((ext) => `.${ext}`).join(', ')}`
+                `Supported formats: ${this.options.accept.map((ext) => `.${ext}`).join(', ')}`
             );
         }
 
         if (this.options.maxFileSize > 0) {
             const sizeLimit = this.formatFileSize(this.options.maxFileSize);
-            subtitle.appendText(` | 최대 크기: ${sizeLimit}`);
+            subtitle.appendText(` | Maximum size: ${sizeLimit}`);
         }
     }
 
@@ -240,7 +240,7 @@ export class FilePickerModal extends Modal {
 
     private createSelectedFilesSection(container: HTMLElement) {
         const section = container.createDiv('selected-files-section');
-        section.createEl('h3', { text: '선택된 파일' });
+        section.createEl('h3', { text: 'Selected files' });
 
         const fileList = section.createDiv('selected-files-list');
         this.updateSelectedFilesList(fileList);
@@ -251,7 +251,7 @@ export class FilePickerModal extends Modal {
 
         if (this.selectedFiles.length === 0) {
             container.createEl('p', {
-                text: '선택된 파일이 없습니다',
+                text: 'No files selected',
                 cls: 'no-files-message',
             });
             return;
@@ -285,7 +285,7 @@ export class FilePickerModal extends Modal {
 
             // 제거 버튼
             const removeBtn = fileItem.createEl('button', {
-                text: '제거',
+                text: 'Remove',
                 cls: 'remove-file-btn',
             });
             removeBtn.onclick = () => {
@@ -300,14 +300,14 @@ export class FilePickerModal extends Modal {
 
         new Setting(footer)
             .addButton((btn) =>
-                btn.setButtonText('취소').onClick(() => {
+                btn.setButtonText('Cancel').onClick(() => {
                     this.onCancel();
                     this.close();
                 })
             )
             .addButton((btn) =>
                 btn
-                    .setButtonText(`선택 (${this.selectedFiles.length})`)
+                    .setButtonText(`Select (${this.selectedFiles.length})`)
                     .setCta()
                     .setDisabled(this.selectedFiles.length === 0)
                     .onClick(() => {
@@ -319,7 +319,7 @@ export class FilePickerModal extends Modal {
     private async handleFileSelection(file: TFile) {
         // 중복 체크
         if (this.selectedFiles.some((f) => f.path === file.path)) {
-            new Notice('이미 선택된 파일입니다');
+            new Notice('That file has already been selected.');
             return;
         }
 
@@ -335,15 +335,15 @@ export class FilePickerModal extends Modal {
 
         if (!validation.valid) {
             const errors =
-                validation.errors?.map((error) => error.message).join('\n') || '알 수 없는 오류';
-            new Notice(`파일 검증 실패:\n${errors}`);
+                validation.errors?.map((error) => error.message).join('\n') || 'Unknown error';
+            new Notice(`File validation failed:\n${errors}`);
             return;
         }
 
         // 경고가 있는 경우
         if (validation.warnings && validation.warnings.length > 0) {
             const warnings = validation.warnings.map((warning) => warning.message).join('\n');
-            new Notice(`경고:\n${warnings}`);
+            new Notice(`Warnings:\n${warnings}`);
         }
 
         this.selectedFiles.push(file);
@@ -351,7 +351,7 @@ export class FilePickerModal extends Modal {
     }
 
     private async handleDroppedFiles(files: File[]) {
-        this.progressIndicator.show('파일 처리 중...');
+        this.progressIndicator.show('Processing files...');
 
         for (const file of files) {
             // Obsidian Vault에서 파일 찾기
@@ -359,7 +359,7 @@ export class FilePickerModal extends Modal {
             if (vaultFile) {
                 await this.handleFileSelection(vaultFile);
             } else {
-                new Notice(`Vault에서 파일을 찾을 수 없습니다: ${file.name}`);
+                new Notice(`Could not find the file in the vault: ${file.name}`);
             }
         }
 
@@ -377,7 +377,10 @@ export class FilePickerModal extends Modal {
             return {
                 valid: false,
                 errors: [
-                    { code: 'VALIDATION_ERROR', message: `검증 실패: ${normalizedError.message}` },
+                    {
+                        code: 'VALIDATION_ERROR',
+                        message: `Validation failed: ${normalizedError.message}`,
+                    },
                 ],
             };
         }
@@ -385,11 +388,11 @@ export class FilePickerModal extends Modal {
 
     private processSelectedFiles() {
         if (this.selectedFiles.length === 0) {
-            new Notice('선택된 파일이 없습니다');
+            new Notice('No files selected.');
             return;
         }
 
-        this.progressIndicator.show('파일 처리 중...', true);
+        this.progressIndicator.show('Processing files...', true);
 
         const results: FilePickerResult[] = [];
 
@@ -416,7 +419,7 @@ export class FilePickerModal extends Modal {
             this.onChoose(results);
             this.close();
         } else {
-            new Notice('유효한 파일이 없습니다');
+            new Notice('No valid files were selected.');
         }
     }
 
@@ -490,13 +493,13 @@ export class FilePickerModal extends Modal {
         const submitBtn = this.modalEl.querySelector('.mod-cta');
         if (submitBtn instanceof HTMLButtonElement) {
             submitBtn.disabled = this.selectedFiles.length === 0;
-            submitBtn.setText(`선택 (${this.selectedFiles.length})`);
+            submitBtn.setText(`Select (${this.selectedFiles.length})`);
         }
     }
 
     private mergeOptions(options: FilePickerOptions): Required<FilePickerOptions> {
         return {
-            title: options.title || '오디오 파일 선택',
+            title: options.title || 'Select audio files',
             accept: options.accept || ['m4a', 'mp3', 'wav', 'mp4'],
             maxFileSize: options.maxFileSize || 25 * 1024 * 1024, // 25MB
             multiple: options.multiple ?? false,

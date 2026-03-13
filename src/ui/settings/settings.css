@@ -6,11 +6,11 @@
 @import url('../styles/file-picker.css');
 
 /* Minimal layout tweaks for settings containers */
-.deepgram-settings-container {
+.sn-deepgram-settings-container {
     display: block;
     margin-top: 8px;
 }
 
-.provider-settings {
+.sn-provider-settings {
     display: block;
 }

@@ -55,7 +55,7 @@ export class DragDropZone {
 
         // 서브 텍스트
         const subText = mainText.createEl('p', { cls: 'sn-drop-zone-subtext' });
-        subText.setText('or click to choose files');
+        subText.setText('Or click to choose files');
 
         // 지원 형식 표시
         const formats = mainText.createEl('p', { cls: 'sn-drop-zone-formats' });

@@ -8,6 +8,7 @@
 
 import type { App } from 'obsidian';
 import { EventManager } from '../../application/EventManager';
+import { safeJsonParse } from '../../utils/common/helpers';
 import { StatusIcon } from '../progress/LoadingIndicators';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -39,6 +40,12 @@ export interface NotificationAction {
     style?: 'primary' | 'secondary' | 'link';
 }
 
+type StoredNotification = {
+    id: string;
+    options: NotificationOptions;
+    timestamp: number;
+};
+
 /**
  * Toast 알림 컴포넌트
  */
@@ -65,7 +72,7 @@ export class ToastNotification {
                 cls: `toast-container toast-container--${position}`,
                 attr: {
                     role: 'region',
-                    'aria-label': '알림 영역',
+                    'aria-label': 'Notification area',
                     'aria-live': 'polite',
                     'aria-atomic': 'false',
                 },
@@ -152,7 +159,7 @@ export class ToastNotification {
             const closeBtn = createEl('button', {
                 cls: 'toast__close',
                 text: '×',
-                attr: { 'aria-label': '알림 닫기' },
+                attr: { 'aria-label': 'Dismiss notification' },
             });
             closeBtn.addEventListener('click', () => this.dismiss(id));
             toast.appendChild(closeBtn);
@@ -274,8 +281,18 @@ export class ToastNotification {
             return;
         }
         try {
-            const storedData = this.app.loadLocalStorage('notifications');
-            const notifications = storedData ? JSON.parse(storedData) : [];
+            const storedData: unknown = this.app.loadLocalStorage('notifications');
+            if (typeof storedData !== 'string') {
+                this.app.saveLocalStorage(
+                    'notifications',
+                    JSON.stringify([
+                        { id, options, timestamp: Date.now() } satisfies StoredNotification,
+                    ])
+                );
+                return;
+            }
+
+            const notifications = safeJsonParse<StoredNotification[]>(storedData, []);
             notifications.push({ id, options, timestamp: Date.now() });
             this.app.saveLocalStorage('notifications', JSON.stringify(notifications));
         } catch (e) {
@@ -291,8 +308,12 @@ export class ToastNotification {
             return;
         }
         try {
-            const storedData = this.app.loadLocalStorage('notifications');
-            const notifications = storedData ? JSON.parse(storedData) : [];
+            const storedData: unknown = this.app.loadLocalStorage('notifications');
+            if (typeof storedData !== 'string') {
+                return;
+            }
+
+            const notifications = safeJsonParse<StoredNotification[]>(storedData, []);
             const filtered = notifications.filter((n: { id: string }) => n.id !== id);
             this.app.saveLocalStorage('notifications', JSON.stringify(filtered));
         } catch (e) {
@@ -373,7 +394,7 @@ export class ModalNotification {
                 const closeBtn = createEl('button', {
                     cls: 'modal-notification__close',
                     text: '×',
-                    attr: { 'aria-label': '닫기' },
+                    attr: { 'aria-label': 'Close' },
                 });
                 closeBtn.addEventListener('click', () => {
                     this.dismiss();
@@ -544,7 +565,7 @@ export class StatusBarNotification {
             const closeBtn = createEl('button', {
                 cls: 'statusbar-notification__close',
                 text: '×',
-                attr: { 'aria-label': '닫기' },
+                attr: { 'aria-label': 'Close' },
             });
             closeBtn.addEventListener('click', () => this.hide());
             this.currentNotification.appendChild(closeBtn);
@@ -662,11 +683,11 @@ export class NotificationManager {
     static confirm(message: string, title?: string): Promise<boolean> {
         return ModalNotification.show({
             type: 'warning',
-            title: title || '확인',
+            title: title || 'Confirm',
             message,
             actions: [
-                { label: '취소', callback: () => {}, style: 'secondary' },
-                { label: '확인', callback: () => {}, style: 'primary' },
+                { label: 'Cancel', callback: () => {}, style: 'secondary' },
+                { label: 'Confirm', callback: () => {}, style: 'primary' },
             ],
         });
     }

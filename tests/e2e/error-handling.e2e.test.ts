@@ -514,11 +514,11 @@ describe('E2E: 에러 처리 시나리오', () => {
     describe('사용자 친화적 에러 메시지', () => {
         test('기술적 에러를 사용자 친화적 메시지로 변환', () => {
             const technicalErrors = [
-                { error: 'ECONNREFUSED', message: '서버에 연결할 수 없습니다.' },
-                { error: 'ETIMEDOUT', message: '연결 시간이 초과되었습니다.' },
-                { error: 'ENOTFOUND', message: '서버를 찾을 수 없습니다.' },
-                { error: 'EPERM', message: '권한이 없습니다.' },
-                { error: 'ENOSPC', message: '저장 공간이 부족합니다.' },
+                { error: 'ECONNREFUSED', message: 'Could not connect to the server.' },
+                { error: 'ETIMEDOUT', message: 'The connection timed out.' },
+                { error: 'ENOTFOUND', message: 'The server could not be found.' },
+                { error: 'EPERM', message: 'Permission denied.' },
+                { error: 'ENOSPC', message: 'Not enough storage space is available.' },
             ];
 
             technicalErrors.forEach(({ error, message }) => {
@@ -530,8 +530,8 @@ describe('E2E: 에러 처리 시나리오', () => {
         test('에러 코드별 해결 방법 제시', () => {
             const errorWithSolution = {
                 code: 'INVALID_API_KEY',
-                message: 'API 키가 유효하지 않습니다.',
-                solution: '설정에서 올바른 API 키를 입력해주세요.',
+                message: 'Invalid API key.',
+                solution: 'Enter a valid API key in settings.',
             };
 
             const solution = errorHandler.getSolution(errorWithSolution.code);

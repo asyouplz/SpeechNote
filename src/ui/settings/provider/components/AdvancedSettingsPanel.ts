@@ -847,23 +847,23 @@ export class AdvancedSettingsPanel {
      * Split Display 업데이트
      */
     private updateSplitDisplay(containerEl: HTMLElement): void {
-        let displayEl = containerEl.querySelector('.split-display');
+        let displayEl = containerEl.querySelector('.sn-split-display');
 
         if (!(displayEl instanceof HTMLElement)) {
-            displayEl = containerEl.createDiv({ cls: 'split-display' });
+            displayEl = containerEl.createDiv({ cls: 'sn-split-display' });
         }
 
-        const visualization = createEl('div', { cls: 'split-visualization' });
+        const visualization = createEl('div', { cls: 'sn-split-visualization' });
 
-        const splitBar = createEl('div', { cls: 'split-bar' });
+        const splitBar = createEl('div', { cls: 'sn-split-bar' });
 
-        const providerA = createEl('div', { cls: 'split-a' });
+        const providerA = createEl('div', { cls: 'sn-split-a' });
         providerA.setAttribute('style', `--sn-width-pct:${this.abTestSplit}%`);
         const providerALabel = createEl('span', { text: `Provider A: ${this.abTestSplit}%` });
         providerA.appendChild(providerALabel);
 
         const providerBWidth = 100 - this.abTestSplit;
-        const providerB = createEl('div', { cls: 'split-b' });
+        const providerB = createEl('div', { cls: 'sn-split-b' });
         providerB.setAttribute('style', `--sn-width-pct:${providerBWidth}%`);
         const providerBLabel = createEl('span', { text: `Provider B: ${providerBWidth}%` });
         providerB.appendChild(providerBLabel);

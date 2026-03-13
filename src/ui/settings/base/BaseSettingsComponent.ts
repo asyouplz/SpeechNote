@@ -107,7 +107,7 @@ export abstract class BaseSettingsComponent {
      */
     protected async withErrorHandling<T>(
         operation: () => Promise<T>,
-        errorMessage = '작업 중 오류가 발생했습니다'
+        errorMessage = 'An error occurred while processing the request.'
     ): Promise<T | null> {
         try {
             return await operation();
@@ -168,7 +168,7 @@ export abstract class BaseSettingsComponent {
      */
     protected async saveSettings(): Promise<void> {
         await this.plugin.saveSettings();
-        this.showNotice('설정이 저장되었습니다');
+        this.showNotice('Settings saved.');
     }
 
     /**

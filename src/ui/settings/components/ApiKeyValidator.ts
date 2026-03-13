@@ -16,20 +16,20 @@ export class ApiKeyValidator {
      */
     validateFormat(apiKey: string): { valid: boolean; message?: string } {
         if (!apiKey) {
-            return { valid: false, message: 'API 키를 입력해주세요' };
+            return { valid: false, message: 'Enter an API key.' };
         }
 
         if (!apiKey.startsWith('sk-')) {
-            return { valid: false, message: 'API 키는 "sk-"로 시작해야 합니다' };
+            return { valid: false, message: 'The API key must start with "sk-".' };
         }
 
         if (apiKey.length < 40) {
-            return { valid: false, message: 'API 키가 너무 짧습니다' };
+            return { valid: false, message: 'The API key is too short.' };
         }
 
         // 프로젝트 키 형식 검증 (sk-proj-)
         if (apiKey.startsWith('sk-proj-') && apiKey.length < 50) {
-            return { valid: false, message: '프로젝트 API 키가 너무 짧습니다' };
+            return { valid: false, message: 'The project API key is too short.' };
         }
 
         return { valid: true };
@@ -42,7 +42,7 @@ export class ApiKeyValidator {
         // 먼저 형식 검증
         const formatValidation = this.validateFormat(apiKey);
         if (!formatValidation.valid) {
-            new Notice(formatValidation.message || '유효하지 않은 API 키 형식');
+            new Notice(formatValidation.message || 'Invalid API key format.');
             return false;
         }
 
@@ -70,7 +70,7 @@ export class ApiKeyValidator {
                 );
 
                 if (!hasWhisper) {
-                    new Notice('⚠ API 키는 유효하지만 whisper 모델 접근 권한이 없을 수 있습니다');
+                    new Notice('The API key is valid, but it may not have access to Whisper.');
                 }
 
                 return true;
@@ -81,19 +81,19 @@ export class ApiKeyValidator {
             const status = this.getErrorStatus(error);
             // 401: 인증 실패 (잘못된 키)
             if (status === 401) {
-                new Notice('❌ 유효하지 않은 API 키입니다');
+                new Notice('Invalid API key.');
                 return false;
             }
 
             // 429: Rate limit (키는 유효하지만 한도 초과)
             if (status === 429) {
-                new Notice('⚠ API 키는 유효하지만 사용 한도를 초과했습니다');
+                new Notice('The API key is valid, but the usage limit has been exceeded.');
                 return true; // 키 자체는 유효함
             }
 
             // 기타 네트워크 오류
-            console.error('API 키 검증 실패:', error);
-            new Notice('네트워크 오류로 API 키를 검증할 수 없습니다');
+            console.error('API key validation failed:', error);
+            new Notice('The API key could not be validated because of a network error.');
             return false;
         }
     }
@@ -130,7 +130,7 @@ export class ApiKeyValidator {
                 remaining,
             };
         } catch (error) {
-            console.error('사용량 조회 실패:', error);
+            console.error('Failed to fetch API usage:', error);
             return null;
         }
     }
@@ -165,7 +165,7 @@ export class ApiKeyValidator {
             const reversed = encoded.split('').reverse().join('');
             return btoa(reversed);
         } catch (error) {
-            console.error('API 키 암호화 실패:', error);
+            console.error('Failed to encrypt API key:', error);
             return '';
         }
     }
@@ -182,7 +182,7 @@ export class ApiKeyValidator {
             const encoded = reversed.split('').reverse().join('');
             return atob(encoded);
         } catch (error) {
-            console.error('API 키 복호화 실패:', error);
+            console.error('Failed to decrypt API key:', error);
             return '';
         }
     }

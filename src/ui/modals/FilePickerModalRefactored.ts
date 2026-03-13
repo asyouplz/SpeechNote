@@ -284,7 +284,7 @@ export class FilePickerModalRefactored extends Modal {
         try {
             // Check for duplicates
             if (this.state.selectedFiles.some((f) => f.path === file.path)) {
-                new Notice('이미 선택된 파일입니다');
+                new Notice('That file has already been selected.');
                 return;
             }
 
@@ -313,7 +313,7 @@ export class FilePickerModalRefactored extends Modal {
         } catch (error) {
             const normalizedError = this.normalizeError(error);
             this.logger?.error('File selection failed', normalizedError);
-            new Notice(`파일 선택 실패: ${normalizedError.message}`);
+            new Notice(`File selection failed: ${normalizedError.message}`);
         }
     }, 300);
 
@@ -324,7 +324,7 @@ export class FilePickerModalRefactored extends Modal {
         if (this.state.isProcessing) return;
 
         this.state.isProcessing = true;
-        this.components.progressIndicator.show('파일 처리 중...');
+        this.components.progressIndicator.show('Processing files...');
 
         try {
             const results = await Promise.allSettled(
@@ -335,7 +335,7 @@ export class FilePickerModalRefactored extends Modal {
             const failed = results.filter((r) => r.status === 'rejected').length;
 
             if (failed > 0) {
-                new Notice(`${failed}개 파일 처리 실패`);
+                new Notice(`${failed} file(s) failed to process.`);
             }
 
             if (successful > 0) {
@@ -353,7 +353,7 @@ export class FilePickerModalRefactored extends Modal {
     private async processDroppedFile(file: File): Promise<void> {
         const vaultFile = this.findVaultFile(file.name);
         if (!vaultFile) {
-            throw new Error(`Vault에서 파일을 찾을 수 없습니다: ${file.name}`);
+            throw new Error(`Could not find the file in the vault: ${file.name}`);
         }
 
         await this.handleFileSelection(vaultFile);
@@ -372,7 +372,10 @@ export class FilePickerModalRefactored extends Modal {
             return {
                 valid: false,
                 errors: [
-                    { code: 'VALIDATION_ERROR', message: `검증 실패: ${normalizedError.message}` },
+                    {
+                        code: 'VALIDATION_ERROR',
+                        message: `Validation failed: ${normalizedError.message}`,
+                    },
                 ],
             };
         }
@@ -404,7 +407,7 @@ export class FilePickerModalRefactored extends Modal {
      */
     private renderEmptyState(container: HTMLElement): void {
         container.createEl('p', {
-            text: '선택된 파일이 없습니다',
+            text: 'No files selected',
             cls: 'no-files-message',
         });
     }
@@ -438,7 +441,7 @@ export class FilePickerModalRefactored extends Modal {
         }
 
         this.state.isProcessing = true;
-        this.components.progressIndicator.show('파일 처리 중...', true);
+        this.components.progressIndicator.show('Processing files...', true);
 
         try {
             const results = this.processSelectedFiles();
@@ -448,12 +451,12 @@ export class FilePickerModalRefactored extends Modal {
                 this.onChoose(results);
                 this.close();
             } else {
-                new Notice('유효한 파일이 없습니다');
+                new Notice('No valid files were selected.');
             }
         } catch (error) {
             const normalizedError = this.normalizeError(error);
             this.logger?.error('Submit failed', normalizedError);
-            new Notice(`처리 실패: ${normalizedError.message}`);
+            new Notice(`Processing failed: ${normalizedError.message}`);
         } finally {
             this.state.isProcessing = false;
             this.components.progressIndicator.hide();
@@ -515,7 +518,7 @@ export class FilePickerModalRefactored extends Modal {
             const submitBtn = this.modalEl.querySelector('.mod-cta');
             if (submitBtn instanceof HTMLButtonElement) {
                 submitBtn.disabled = this.state.selectedFiles.length === 0;
-                submitBtn.setText(`선택 (${this.state.selectedFiles.length})`);
+                submitBtn.setText(`Select (${this.state.selectedFiles.length})`);
             }
         });
     }
@@ -525,8 +528,8 @@ export class FilePickerModalRefactored extends Modal {
      */
     private showValidationError(validation: ValidationResult): void {
         const errors =
-            validation.errors?.map((error) => error.message).join('\n') || '알 수 없는 오류';
-        new Notice(`파일 검증 실패:\n${errors}`);
+            validation.errors?.map((error) => error.message).join('\n') || 'Unknown error';
+        new Notice(`File validation failed:\n${errors}`);
     }
 
     /**
@@ -535,7 +538,7 @@ export class FilePickerModalRefactored extends Modal {
     private showValidationWarnings(validation: ValidationResult): void {
         const warnings = validation.warnings?.map((warning) => warning.message).join('\n') || '';
         if (warnings) {
-            new Notice(`경고:\n${warnings}`);
+            new Notice(`Warnings:\n${warnings}`);
         }
     }
 
@@ -551,7 +554,7 @@ export class FilePickerModalRefactored extends Modal {
      */
     private mergeOptions(options: FilePickerOptions): Required<FilePickerOptions> {
         return {
-            title: options.title || '오디오 파일 선택',
+            title: options.title || 'Select audio files',
             accept: options.accept || ['m4a', 'mp3', 'wav', 'mp4'],
             maxFileSize: options.maxFileSize || 25 * 1024 * 1024, // 25MB
             multiple: options.multiple ?? false,
@@ -629,11 +632,13 @@ class FilePickerUIBuilder {
         const parts: string[] = [];
 
         if (this.options.accept.length > 0) {
-            parts.push(`지원 형식: ${this.options.accept.map((ext) => `.${ext}`).join(', ')}`);
+            parts.push(
+                `Supported formats: ${this.options.accept.map((ext) => `.${ext}`).join(', ')}`
+            );
         }
 
         if (this.options.maxFileSize > 0) {
-            parts.push(`최대 크기: ${this.formatFileSize(this.options.maxFileSize)}`);
+            parts.push(`Maximum size: ${this.formatFileSize(this.options.maxFileSize)}`);
         }
 
         subtitle.setText(parts.join(' | '));
@@ -687,7 +692,7 @@ class FilePickerUIBuilder {
 
     buildSelectedFilesSection(updateCallback: (container: HTMLElement) => void): void {
         const section = this.container.createDiv('selected-files-section');
-        section.createEl('h3', { text: '선택된 파일' });
+        section.createEl('h3', { text: 'Selected files' });
 
         const fileList = section.createDiv('selected-files-list');
         updateCallback(fileList);
@@ -701,10 +706,10 @@ class FilePickerUIBuilder {
         const footer = this.container.createDiv('file-picker-footer');
 
         new Setting(footer)
-            .addButton((btn) => btn.setButtonText('취소').onClick(onCancel))
+            .addButton((btn) => btn.setButtonText('Cancel').onClick(onCancel))
             .addButton((btn) =>
                 btn
-                    .setButtonText(`선택 (${fileCount})`)
+                    .setButtonText(`Select (${fileCount})`)
                     .setCta()
                     .setDisabled(fileCount === 0)
                     .onClick(onSubmit)
@@ -768,7 +773,7 @@ class SelectedFilesListRenderer {
 
     private renderRemoveButton(container: HTMLElement, file: TFile): void {
         const removeBtn = container.createEl('button', {
-            text: '제거',
+            text: 'Remove',
             cls: 'remove-file-btn',
         });
 

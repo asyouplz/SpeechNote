@@ -164,7 +164,7 @@ export class FileValidator {
                 valid: false,
                 error: {
                     code: 'INVALID_EXTENSION',
-                    message: `지원하지 않는 형식: .${extension}. 지원 형식: ${supported}`,
+                    message: `Unsupported format: .${extension}. Supported formats: ${supported}`,
                     field: 'extension',
                 },
             };
@@ -186,7 +186,7 @@ export class FileValidator {
                 valid: false,
                 error: {
                     code: 'FILE_TOO_SMALL',
-                    message: `파일이 너무 작습니다 (${size} bytes). 최소 크기: ${this.MIN_FILE_SIZE} bytes`,
+                    message: `File is too small (${size} bytes). Minimum size: ${this.MIN_FILE_SIZE} bytes`,
                     field: 'size',
                 },
             };
@@ -237,7 +237,7 @@ export class FileValidator {
                 valid: false,
                 warning: {
                     code: 'PROBLEMATIC_FILENAME',
-                    message: '파일명에 문제가 될 수 있는 문자가 포함되어 있습니다',
+                    message: 'The filename contains characters that may cause problems.',
                 },
             };
         }
@@ -249,7 +249,7 @@ export class FileValidator {
                 valid: true,
                 warning: {
                     code: 'SPECIAL_CHARS_IN_FILENAME',
-                    message: '파일명에 특수 문자가 많이 포함되어 있습니다',
+                    message: 'The filename contains many special characters.',
                 },
             };
         }
@@ -278,7 +278,7 @@ export class FileValidator {
                 valid: false,
                 error: {
                     code: 'INVALID_FILE_STRUCTURE',
-                    message: '파일 구조가 올바르지 않습니다',
+                    message: 'The file structure is invalid.',
                     field: 'format',
                 },
             };
@@ -300,7 +300,7 @@ export class FileValidator {
                 valid: false,
                 error: {
                     code: 'INVALID_FORMAT',
-                    message: `파일 내용이 예상된 ${extension.toUpperCase()} 형식과 일치하지 않습니다`,
+                    message: `The file contents do not match the expected ${extension.toUpperCase()} format`,
                     field: 'format',
                 },
             };

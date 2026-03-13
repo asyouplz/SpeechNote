@@ -26,7 +26,7 @@ export class ShortcutSettings {
         // 단축키 설명
         const descEl = containerEl.createDiv({ cls: 'shortcut-description' });
         descEl.createEl('p', {
-            text: '각 기능에 대한 단축키를 설정할 수 있습니다. 단축키를 클릭하여 변경하세요.',
+            text: 'Configure a shortcut for each action. Click a shortcut to change it.',
         });
 
         // 단축키 목록
@@ -34,17 +34,17 @@ export class ShortcutSettings {
 
         // 기본값 복원 버튼
         new Setting(containerEl)
-            .setName('단축키 초기화')
-            .setDesc('모든 단축키를 기본값으로 복원합니다')
+            .setName('Reset shortcuts')
+            .setDesc('Restore all shortcuts to their default values')
             .addButton((button) =>
                 button
-                    .setButtonText('기본값 복원')
+                    .setButtonText('Restore defaults')
                     .setWarning()
                     .onClick(() => {
                         new ConfirmationModal(
                             this.app,
-                            '단축키 초기화',
-                            '모든 단축키를 기본값으로 복원하시겠습니까?',
+                            'Reset shortcuts',
+                            'Do you want to restore all shortcuts to their default values?',
                             async () => {
                                 await this.resetToDefaults();
                                 this.render(containerEl); // UI 새로고침
@@ -66,38 +66,38 @@ export class ShortcutSettings {
         const shortcuts = [
             {
                 id: 'transcribe-audio',
-                name: '음성 파일 변환',
-                desc: '음성 파일을 선택하여 텍스트로 변환합니다',
+                name: 'Transcribe audio file',
+                desc: 'Select an audio file and transcribe it to text',
             },
             {
                 id: 'transcribe-clipboard',
-                name: '클립보드 음성 변환',
-                desc: '클립보드의 음성을 텍스트로 변환합니다',
+                name: 'Transcribe clipboard audio',
+                desc: 'Transcribe audio content from the clipboard',
             },
             {
                 id: 'show-format-options',
-                name: '포맷 옵션 표시',
-                desc: '텍스트 포맷 옵션을 표시합니다',
+                name: 'Show format options',
+                desc: 'Show text formatting options',
             },
             {
                 id: 'show-history',
-                name: '변환 기록 표시',
-                desc: '최근 변환 기록을 표시합니다',
+                name: 'Show transcription history',
+                desc: 'Show recent transcription history',
             },
             {
                 id: 'cancel-transcription',
-                name: '변환 취소',
-                desc: '진행 중인 변환을 취소합니다',
+                name: 'Cancel transcription',
+                desc: 'Cancel the current transcription task',
             },
             {
                 id: 'undo-insertion',
-                name: '삽입 취소',
-                desc: '마지막 텍스트 삽입을 취소합니다',
+                name: 'Undo insertion',
+                desc: 'Undo the most recent text insertion',
             },
             {
                 id: 'redo-insertion',
-                name: '삽입 다시 실행',
-                desc: '취소한 텍스트 삽입을 다시 실행합니다',
+                name: 'Redo insertion',
+                desc: 'Redo the last undone text insertion',
             },
         ];
 
@@ -109,13 +109,13 @@ export class ShortcutSettings {
             const keyEl = setting.controlEl.createDiv({ cls: 'shortcut-key' });
 
             const keyDisplay = keyEl.createEl('kbd', {
-                text: currentKey || '설정 안 됨',
+                text: currentKey || 'Not set',
                 cls: currentKey ? 'shortcut-set' : 'shortcut-unset',
             });
 
             // 변경 버튼
             setting.addButton((button) =>
-                button.setButtonText('변경').onClick(() => {
+                button.setButtonText('Change').onClick(() => {
                     this.openShortcutModal(shortcut.id, shortcut.name, (newKey) => {
                         if (newKey) {
                             void this.setShortcut(shortcut.id, newKey);
@@ -130,11 +130,11 @@ export class ShortcutSettings {
             if (currentKey) {
                 setting.addButton((button) =>
                     button
-                        .setButtonText('삭제')
+                        .setButtonText('Remove')
                         .setWarning()
                         .onClick(async () => {
                             await this.removeShortcut(shortcut.id);
-                            keyDisplay.textContent = '설정 안 됨';
+                            keyDisplay.textContent = 'Not set';
                             keyDisplay.className = 'shortcut-unset';
                         })
                 );
@@ -150,12 +150,12 @@ export class ShortcutSettings {
 
         if (conflicts.length > 0) {
             const conflictEl = containerEl.createDiv({ cls: 'shortcut-conflicts' });
-            conflictEl.createEl('h4', { text: '⚠️ 단축키 충돌 감지됨' });
+            conflictEl.createEl('h4', { text: '⚠️ Shortcut conflicts detected' });
 
             const conflictList = conflictEl.createEl('ul');
             conflicts.forEach((conflict) => {
                 conflictList.createEl('li', {
-                    text: `"${conflict.key}"가 "${conflict.commands.join('", "')}"에서 중복됩니다`,
+                    text: `"${conflict.key}" is assigned to "${conflict.commands.join('", "')}".`,
                 });
             });
         }
@@ -180,8 +180,8 @@ export class ShortcutSettings {
                     if (existingCommand && existingCommand !== commandId) {
                         new ConfirmationModal(
                             this.app,
-                            '단축키 충돌',
-                            `"${key}"는 이미 다른 명령에 할당되어 있습니다. 덮어쓰시겠습니까?`,
+                            'Shortcut conflict',
+                            `"${key}" is already assigned to another command. Do you want to overwrite it?`,
                             () => {
                                 // 기존 단축키 제거
                                 void this.removeShortcut(existingCommand);
@@ -267,7 +267,7 @@ export class ShortcutSettings {
         // Obsidian 명령에 단축키 등록
         this.registerHotkey(commandId, key);
 
-        new Notice(`단축키가 설정되었습니다: ${key}`);
+        new Notice(`Shortcut set: ${key}`);
     }
 
     /**
@@ -293,7 +293,7 @@ export class ShortcutSettings {
         // Obsidian에서 단축키 제거
         this.unregisterHotkey(commandId);
 
-        new Notice('단축키가 제거되었습니다');
+        new Notice('Shortcut removed.');
     }
 
     /**
@@ -314,7 +314,7 @@ export class ShortcutSettings {
         this.plugin.settings['shortcuts'] = {};
         await this.plugin.saveSettings();
 
-        new Notice('단축키가 기본값으로 복원되었습니다');
+        new Notice('Shortcuts restored to defaults.');
     }
 
     /**
@@ -410,33 +410,33 @@ class ShortcutModal extends Modal {
     onOpen() {
         const { contentEl } = this;
 
-        contentEl.createEl('h2', { text: `단축키 설정: ${this.commandName}` });
+        contentEl.createEl('h2', { text: `Configure shortcut: ${this.commandName}` });
 
         // 현재 단축키 표시
         const currentKeyEl = contentEl.createDiv({ cls: 'current-shortcut' });
-        currentKeyEl.createEl('span', { text: '현재 단축키: ' });
+        currentKeyEl.createEl('span', { text: 'Current shortcut: ' });
         const keyDisplay = currentKeyEl.createEl('kbd', {
-            text: this.currentKey || '설정 안 됨',
+            text: this.currentKey || 'Not set',
             cls: 'shortcut-display',
         });
 
         // 녹음 영역
         const recordEl = contentEl.createDiv({ cls: 'shortcut-record' });
-        recordEl.createEl('p', { text: '새 단축키를 입력하려면 아래 버튼을 클릭하세요:' });
+        recordEl.createEl('p', { text: 'Click the button below to record a new shortcut:' });
 
         const recordButton = new ButtonComponent(recordEl)
-            .setButtonText('단축키 녹음 시작')
+            .setButtonText('Start recording')
             .onClick(() => {
                 this.startRecording(recordButton, keyDisplay);
             });
 
         // 입력 필드 (직접 입력)
         const manualEl = contentEl.createDiv({ cls: 'shortcut-manual' });
-        manualEl.createEl('p', { text: '또는 직접 입력:' });
+        manualEl.createEl('p', { text: 'Or enter one manually:' });
 
         const inputEl = manualEl.createEl('input', {
             type: 'text',
-            placeholder: '예: Ctrl+Shift+T',
+            placeholder: 'Example: Ctrl+Shift+T',
             value: this.currentKey,
         });
 
@@ -444,20 +444,20 @@ class ShortcutModal extends Modal {
             const target = e.target;
             if (target instanceof HTMLInputElement) {
                 this.currentKey = target.value;
-                keyDisplay.textContent = this.currentKey || '설정 안 됨';
+                keyDisplay.textContent = this.currentKey || 'Not set';
             }
         });
 
         // 버튼
         const buttonContainer = contentEl.createDiv({ cls: 'modal-button-container' });
 
-        new ButtonComponent(buttonContainer).setButtonText('취소').onClick(() => {
+        new ButtonComponent(buttonContainer).setButtonText('Cancel').onClick(() => {
             this.onSubmit(null);
             this.close();
         });
 
         new ButtonComponent(buttonContainer)
-            .setButtonText('삭제')
+            .setButtonText('Remove')
             .setWarning()
             .onClick(() => {
                 this.onSubmit('');
@@ -465,7 +465,7 @@ class ShortcutModal extends Modal {
             });
 
         new ButtonComponent(buttonContainer)
-            .setButtonText('저장')
+            .setButtonText('Save')
             .setCta()
             .onClick(() => {
                 this.onSubmit(this.currentKey);
@@ -485,7 +485,7 @@ class ShortcutModal extends Modal {
         this.isRecording = true;
         this.recordedKeys.clear();
 
-        button.setButtonText('녹음 중... (esc로 취소)');
+        button.setButtonText('Recording... (Esc to cancel)');
         button.buttonEl.addClass('is-recording');
 
         // 키 이벤트 리스너
@@ -531,7 +531,7 @@ class ShortcutModal extends Modal {
      */
     private stopRecording(button: ButtonComponent): void {
         this.isRecording = false;
-        button.setButtonText('단축키 녹음 시작');
+        button.setButtonText('Start recording');
         button.buttonEl.removeClass('is-recording');
     }
 

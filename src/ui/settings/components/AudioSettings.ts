@@ -11,23 +11,23 @@ export class AudioSettings {
     render(containerEl: HTMLElement): void {
         // 언어 설정
         new Setting(containerEl)
-            .setName('언어')
-            .setDesc('음성 인식 언어를 선택하세요 (자동 감지 권장)')
+            .setName('Language')
+            .setDesc('Choose the speech recognition language (auto-detect recommended)')
             .addDropdown((dropdown) =>
                 dropdown
-                    .addOption('auto', '자동 감지')
+                    .addOption('auto', 'Auto-detect')
                     .addOption('en', 'English')
-                    .addOption('ko', '한국어')
-                    .addOption('ja', '日本語')
-                    .addOption('zh', '中文')
-                    .addOption('es', 'Español')
-                    .addOption('fr', 'Français')
+                    .addOption('ko', 'Korean')
+                    .addOption('ja', 'Japanese')
+                    .addOption('zh', 'Chinese')
+                    .addOption('es', 'Spanish')
+                    .addOption('fr', 'French')
                     .addOption('de', 'Deutsch')
-                    .addOption('it', 'Italiano')
-                    .addOption('pt', 'Português')
-                    .addOption('ru', 'Русский')
-                    .addOption('ar', 'العربية')
-                    .addOption('hi', 'हिन्दी')
+                    .addOption('it', 'Italian')
+                    .addOption('pt', 'Portuguese')
+                    .addOption('ru', 'Russian')
+                    .addOption('ar', 'Arabic')
+                    .addOption('hi', 'Hindi')
                     .setValue(this.plugin.settings.language)
                     .onChange(async (value) => {
                         this.plugin.settings.language = value;
@@ -37,11 +37,11 @@ export class AudioSettings {
 
         // Whisper 모델 선택
         new Setting(containerEl)
-            .setName('Whisper 모델')
-            .setDesc('사용할 whisper 모델을 선택하세요')
+            .setName('Whisper model')
+            .setDesc('Choose which Whisper model to use')
             .addDropdown((dropdown) =>
                 dropdown
-                    .addOption('whisper-1', 'Whisper-1 (기본)')
+                    .addOption('whisper-1', 'Whisper-1 (default)')
                     .setValue(this.plugin.settings.model)
                     .onChange(async (value: string) => {
                         if (value === 'whisper-1') {
@@ -54,15 +54,15 @@ export class AudioSettings {
 
         // 응답 형식
         new Setting(containerEl)
-            .setName('응답 형식')
-            .setDesc('API 응답 형식을 선택하세요')
+            .setName('Response format')
+            .setDesc('Choose the API response format')
             .addDropdown((dropdown) =>
                 dropdown
-                    .addOption('json', 'JSON (구조화된 데이터)')
-                    .addOption('text', 'Text (일반 텍스트)')
-                    .addOption('verbose_json', 'Verbose JSON (상세 정보)')
-                    .addOption('srt', 'Srt (자막 형식)')
-                    .addOption('vtt', 'Vtt (webvtt 형식)')
+                    .addOption('json', 'JSON (structured data)')
+                    .addOption('text', 'Text (plain text)')
+                    .addOption('verbose_json', 'Verbose JSON (detailed output)')
+                    .addOption('srt', 'SRT (subtitle format)')
+                    .addOption('vtt', 'VTT (WebVTT format)')
                     .setValue(
                         typeof this.plugin.settings['responseFormat'] === 'string'
                             ? this.plugin.settings['responseFormat']
@@ -76,8 +76,8 @@ export class AudioSettings {
 
         // 온도 설정
         const temperatureSetting = new Setting(containerEl)
-            .setName('온도 (temperature)')
-            .setDesc('텍스트 생성의 창의성 수준 (0: 보수적, 1: 창의적)');
+            .setName('Temperature')
+            .setDesc('Creativity level for generated text (0 = focused, 1 = more varied)');
 
         const tempValue = containerEl.createDiv({ cls: 'temperature-value' });
         tempValue.setText(String(this.plugin.settings.temperature || 0));
@@ -96,11 +96,11 @@ export class AudioSettings {
 
         // 프롬프트 설정
         new Setting(containerEl)
-            .setName('커스텀 프롬프트')
-            .setDesc('음성 인식을 가이드할 프롬프트를 입력하세요 (선택사항)')
+            .setName('Custom prompt')
+            .setDesc('Enter an optional prompt to guide speech recognition')
             .addTextArea((text) =>
                 text
-                    .setPlaceholder('예: 의학 용어가 포함된 대화입니다.')
+                    .setPlaceholder('Example: This recording contains medical terminology.')
                     .setValue(this.plugin.settings.prompt || '')
                     .onChange(async (value) => {
                         this.plugin.settings.prompt = value;
@@ -110,8 +110,8 @@ export class AudioSettings {
 
         // 파일 크기 제한
         const fileSizeSetting = new Setting(containerEl)
-            .setName('최대 파일 크기')
-            .setDesc('업로드 가능한 최대 파일 크기 (mb)');
+            .setName('Maximum file size')
+            .setDesc('Maximum upload size in MB');
 
         const sizeValue = containerEl.createDiv({ cls: 'filesize-value' });
         const currentSize = Math.round(this.plugin.settings.maxFileSize / (1024 * 1024));
@@ -131,8 +131,8 @@ export class AudioSettings {
 
         // 오디오 품질 설정
         new Setting(containerEl)
-            .setName('오디오 전처리')
-            .setDesc('업로드 전 오디오 파일을 최적화합니다')
+            .setName('Audio preprocessing')
+            .setDesc('Optimize audio files before upload')
             .addToggle((toggle) =>
                 toggle.setValue(false).onChange(async (_value) => {
                     // 오디오 전처리 설정
@@ -142,8 +142,8 @@ export class AudioSettings {
 
         // 노이즈 제거
         new Setting(containerEl)
-            .setName('노이즈 제거')
-            .setDesc('배경 소음을 자동으로 제거합니다 (실험적)')
+            .setName('Noise reduction')
+            .setDesc('Automatically remove background noise (experimental)')
             .addToggle((toggle) =>
                 toggle.setValue(false).onChange(async (_value) => {
                     // 노이즈 제거 설정
@@ -154,17 +154,17 @@ export class AudioSettings {
 
         // 지원 파일 형식
         const formatInfo = containerEl.createDiv({ cls: 'format-info' });
-        formatInfo.createEl('h4', { text: '지원 파일 형식' });
+        formatInfo.createEl('h4', { text: 'Supported file formats' });
 
         const formatList = formatInfo.createEl('ul');
         const formats = [
-            { ext: 'm4a', desc: 'Apple 오디오' },
-            { ext: 'mp3', desc: 'MP3 오디오' },
-            { ext: 'wav', desc: 'WAV 오디오' },
-            { ext: 'mp4', desc: 'MP4 비디오 (오디오 추출)' },
-            { ext: 'mpeg', desc: 'MPEG 오디오' },
-            { ext: 'mpga', desc: 'MPEG 오디오' },
-            { ext: 'webm', desc: 'WebM 오디오' },
+            { ext: 'm4a', desc: 'Apple audio' },
+            { ext: 'mp3', desc: 'MP3 audio' },
+            { ext: 'wav', desc: 'WAV audio' },
+            { ext: 'mp4', desc: 'MP4 video (audio extracted)' },
+            { ext: 'mpeg', desc: 'MPEG audio' },
+            { ext: 'mpga', desc: 'MPEG audio' },
+            { ext: 'webm', desc: 'WebM audio' },
         ];
 
         formats.forEach((format) => {
@@ -175,14 +175,14 @@ export class AudioSettings {
 
         // 제한사항 안내
         const limitations = containerEl.createDiv({ cls: 'limitations-info' });
-        limitations.createEl('h4', { text: '제한사항' });
+        limitations.createEl('h4', { text: 'Limits' });
 
         const limitList = limitations.createEl('ul');
         const limits = [
-            '최대 파일 크기: 25MB',
-            '최대 오디오 길이: 제한 없음 (큰 파일은 자동 분할)',
-            '동시 처리: 1개 파일',
-            'API 요청 제한: 분당 50회',
+            'Maximum file size: 25 MB',
+            'Maximum audio length: unlimited (large files are split automatically)',
+            'Concurrent processing: 1 file',
+            'API request limit: 50 requests per minute',
         ];
 
         limits.forEach((limit) => {

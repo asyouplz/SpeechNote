@@ -8,6 +8,7 @@
 
 import type { App } from 'obsidian';
 import type { EventManager } from '../../application/EventManager';
+import { safeJsonParse } from '../common/helpers';
 
 /**
  * 에러 타입 정의
@@ -93,7 +94,8 @@ export class GlobalErrorManager {
     private setupGlobalHandlers(): void {
         // Unhandled rejection 처리
         window.addEventListener('unhandledrejection', (event) => {
-            void this.handleError(new Error(event.reason), {
+            const rejectionError = normalizeError(event.reason);
+            void this.handleError(rejectionError, {
                 type: ErrorType.UNKNOWN,
                 severity: ErrorSeverity.HIGH,
                 context: { promise: true },
@@ -103,7 +105,13 @@ export class GlobalErrorManager {
 
         // 일반 에러 처리
         window.addEventListener('error', (event) => {
-            void this.handleError(event.error || new Error(event.message), {
+            const eventError =
+                event.error instanceof Error
+                    ? event.error
+                    : new Error(
+                          typeof event.message === 'string' ? event.message : 'Unknown error'
+                      );
+            void this.handleError(eventError, {
                 type: ErrorType.UNKNOWN,
                 severity: ErrorSeverity.HIGH,
                 context: {
@@ -226,7 +234,10 @@ export class GlobalErrorManager {
         if (!this.strategies.has(type)) {
             this.strategies.set(type, []);
         }
-        this.strategies.get(type)!.push(strategy);
+        const strategies = this.strategies.get(type);
+        if (strategies) {
+            strategies.push(strategy);
+        }
     }
 
     /**
@@ -364,8 +375,12 @@ export class LocalStorageErrorReporter implements ErrorReporter {
 
     getLogs(): ErrorInfo[] {
         try {
-            const data = this.app.loadLocalStorage(this.storageKey);
-            return data ? JSON.parse(data) : [];
+            const data: unknown = this.app.loadLocalStorage(this.storageKey);
+            if (typeof data !== 'string') {
+                return [];
+            }
+
+            return safeJsonParse<ErrorInfo[]>(data, []);
         } catch {
             return [];
         }
@@ -488,10 +503,10 @@ export class ErrorBoundary {
     private showDefaultFallback(error: Error): void {
         this.element.empty();
         const container = this.element.createDiv('error-boundary-fallback');
-        container.createEl('h3', { text: '문제가 발생했습니다' });
+        container.createEl('h3', { text: 'Something went wrong' });
         container.createEl('p', { text: error.message });
         container.createEl('button', {
-            text: '다시 시도',
+            text: 'Retry',
             cls: 'error-boundary-retry',
         });
     }
@@ -596,14 +611,20 @@ export async function tryCatchAsync<T>(
  */
 export function retryOnError(maxAttempts = 3, delay = 1000) {
     return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
-        const originalMethod = descriptor.value;
+        void target;
+        void propertyKey;
+        const originalMethod = descriptor.value as ((...args: unknown[]) => unknown) | undefined;
 
         descriptor.value = async function (...args: unknown[]) {
+            if (typeof originalMethod !== 'function') {
+                throw new Error('retryOnError can only be applied to methods');
+            }
+
             let lastError: Error | null = null;
 
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                 try {
-                    return await originalMethod.apply(this, args);
+                    return await Promise.resolve(originalMethod.apply(this, args));
                 } catch (error) {
                     lastError = normalizeError(error);
 
