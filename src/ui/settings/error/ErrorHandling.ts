@@ -34,13 +34,13 @@ export class SettingsError extends Error {
      */
     getUserMessage(): string {
         const messages: Record<ErrorType, string> = {
-            [ErrorType.VALIDATION]: '입력값이 올바르지 않습니다',
-            [ErrorType.NETWORK]: '네트워크 연결을 확인해주세요',
-            [ErrorType.AUTHENTICATION]: '인증에 실패했습니다. API 키를 확인해주세요',
-            [ErrorType.CONFIGURATION]: '설정에 문제가 있습니다',
-            [ErrorType.PERMISSION]: '권한이 없습니다',
-            [ErrorType.STORAGE]: '저장소 접근에 실패했습니다',
-            [ErrorType.UNKNOWN]: '알 수 없는 오류가 발생했습니다',
+            [ErrorType.VALIDATION]: 'The input is invalid.',
+            [ErrorType.NETWORK]: 'Check your network connection.',
+            [ErrorType.AUTHENTICATION]: 'Authentication failed. Check your API key.',
+            [ErrorType.CONFIGURATION]: 'There is a problem with the settings.',
+            [ErrorType.PERMISSION]: 'Permission denied.',
+            [ErrorType.STORAGE]: 'Failed to access storage.',
+            [ErrorType.UNKNOWN]: 'An unknown error occurred.',
         };
 
         return messages[this.type] || this.message;
@@ -115,7 +115,7 @@ export class ErrorHandlerChain {
 
         // 기본 핸들러
         console.error('Unhandled error:', error);
-        new Notice('예기치 않은 오류가 발생했습니다');
+        new Notice('An unexpected error occurred.');
     }
 }
 
@@ -129,7 +129,7 @@ export class ValidationErrorHandler implements ErrorHandler {
 
     handle(error: Error): void {
         if (!(error instanceof SettingsError)) {
-            new Notice('입력값이 올바르지 않습니다');
+            new Notice('The input is invalid.');
             return;
         }
 
@@ -164,13 +164,13 @@ export class NetworkErrorHandler implements ErrorHandler {
 
     handle(error: Error): void {
         if (!(error instanceof SettingsError)) {
-            new Notice('네트워크 연결을 확인해주세요');
+            new Notice('Check your network connection.');
             return;
         }
 
         if (this.retryCount < this.maxRetries && error.recoverable) {
             this.retryCount++;
-            new Notice(`네트워크 오류 (재시도 ${this.retryCount}/${this.maxRetries})`);
+            new Notice(`Network error (retry ${this.retryCount}/${this.maxRetries})`);
 
             // 재시도 로직
             setTimeout(() => {
@@ -181,7 +181,7 @@ export class NetworkErrorHandler implements ErrorHandler {
                 }
             }, 1000 * this.retryCount);
         } else {
-            new Notice('네트워크 연결을 확인해주세요');
+            new Notice('Check your network connection.');
             this.retryCount = 0;
         }
     }
@@ -264,7 +264,7 @@ export class ErrorBoundary {
         const isRecoverable = error instanceof SettingsError && error.isRecoverable();
         const container = this.fallbackUI.createDiv({ cls: 'error-container' });
         container.createDiv({ cls: 'error-icon', text: '⚠️' });
-        container.createEl('h3', { text: '문제가 발생했습니다' });
+        container.createEl('h3', { text: 'Something went wrong' });
         container.createEl('p', {
             cls: 'error-message',
             text: this.getSafeErrorMessage(error),
@@ -273,21 +273,21 @@ export class ErrorBoundary {
         if (isRecoverable) {
             container.createEl('button', {
                 cls: 'mod-cta retry-button',
-                text: '다시 시도',
+                text: 'Retry',
             });
             container.createEl('button', {
                 cls: 'reset-button',
-                text: '설정 초기화',
+                text: 'Reset settings',
             });
         } else {
             container.createEl('button', {
                 cls: 'refresh-button',
-                text: '새로고침',
+                text: 'Reload',
             });
         }
 
         const detailsEl = container.createEl('details', { cls: 'error-details' });
-        detailsEl.createEl('summary', { text: '기술적 세부사항' });
+        detailsEl.createEl('summary', { text: 'Technical details' });
         detailsEl.createEl('pre', { text: this.getErrorDetails(error) });
 
         // 버튼 이벤트 핸들러
@@ -428,7 +428,7 @@ class AuthenticationErrorHandler implements ErrorHandler {
 
     handle(error: Error): void {
         if (!(error instanceof SettingsError)) {
-            new Notice('인증에 실패했습니다. API 키를 확인해주세요');
+            new Notice('Authentication failed. Check your API key.');
             return;
         }
         new Notice(error.getUserMessage());
@@ -452,7 +452,7 @@ class StorageErrorHandler implements ErrorHandler {
 
     handle(error: Error): void {
         if (!(error instanceof SettingsError)) {
-            new Notice('저장소 접근에 실패했습니다');
+            new Notice('Failed to access storage.');
             return;
         }
         new Notice(error.getUserMessage());
@@ -462,7 +462,7 @@ class StorageErrorHandler implements ErrorHandler {
             void navigator.storage.estimate().then((estimate) => {
                 const percentUsed = ((estimate.usage || 0) / (estimate.quota || 1)) * 100;
                 if (percentUsed > 90) {
-                    new Notice('저장 공간이 부족합니다. 일부 데이터를 정리해주세요.');
+                    new Notice('Storage is almost full. Free up some space and try again.');
                 }
             });
         }
@@ -537,17 +537,17 @@ export class ErrorRecoveryStrategy {
      */
     private registerDefaultStrategies(): void {
         this.strategies.set(ErrorType.NETWORK, () => {
-            new Notice('네트워크 오류가 발생했습니다. 오프라인 모드로 전환합니다.');
+            new Notice('A network error occurred. Switching to offline mode.');
             // 오프라인 모드 활성화
         });
 
         this.strategies.set(ErrorType.AUTHENTICATION, () => {
-            new Notice('인증 실패. API 키를 다시 입력해주세요.');
+            new Notice('Authentication failed. Enter the API key again.');
             // API 키 재입력 다이얼로그 표시
         });
 
         this.strategies.set(ErrorType.STORAGE, () => {
-            new Notice('저장 실패. 임시 저장소를 사용합니다.');
+            new Notice('Saving failed. Falling back to temporary storage.');
             // 메모리 저장소로 전환
         });
     }

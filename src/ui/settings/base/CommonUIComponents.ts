@@ -329,12 +329,12 @@ export class UIComponentFactory {
 
         if (details) {
             const detailsEl = errorEl.createEl('details');
-            detailsEl.createEl('summary', { text: '자세히 보기' });
+            detailsEl.createEl('summary', { text: 'View details' });
             detailsEl.createEl('pre', { text: details, cls: 'error-details' });
         }
 
         if (onRetry) {
-            new ButtonComponent(errorEl).setButtonText('다시 시도').onClick(onRetry);
+            new ButtonComponent(errorEl).setButtonText('Retry').onClick(onRetry);
         }
 
         return errorEl;
@@ -346,8 +346,8 @@ export class UIComponentFactory {
     static showConfirmDialog(
         title: string,
         message: string,
-        confirmText = '확인',
-        cancelText = '취소'
+        confirmText = 'Confirm',
+        cancelText = 'Cancel'
     ): Promise<boolean> {
         return new Promise((resolve) => {
             const modal = createEl('div', { cls: 'modal-container' });
@@ -412,7 +412,7 @@ export class FormValidator {
      */
     required(field: string, value: unknown, message?: string): this {
         if (!value || (typeof value === 'string' && value.trim() === '')) {
-            this.errors.set(field, message || `${field}는 필수 항목입니다`);
+            this.errors.set(field, message || `${field} is required.`);
         }
         return this;
     }
@@ -422,7 +422,7 @@ export class FormValidator {
      */
     minLength(field: string, value: string, min: number, message?: string): this {
         if (value.length < min) {
-            this.errors.set(field, message || `${field}는 최소 ${min}자 이상이어야 합니다`);
+            this.errors.set(field, message || `${field} must be at least ${min} characters.`);
         }
         return this;
     }
@@ -432,7 +432,7 @@ export class FormValidator {
      */
     maxLength(field: string, value: string, max: number, message?: string): this {
         if (value.length > max) {
-            this.errors.set(field, message || `${field}는 최대 ${max}자까지 입력 가능합니다`);
+            this.errors.set(field, message || `${field} must be ${max} characters or fewer.`);
         }
         return this;
     }
@@ -442,7 +442,7 @@ export class FormValidator {
      */
     pattern(field: string, value: string, pattern: RegExp, message?: string): this {
         if (!pattern.test(value)) {
-            this.errors.set(field, message || `${field} 형식이 올바르지 않습니다`);
+            this.errors.set(field, message || `${field} has an invalid format.`);
         }
         return this;
     }
@@ -452,7 +452,7 @@ export class FormValidator {
      */
     range(field: string, value: number, min: number, max: number, message?: string): this {
         if (value < min || value > max) {
-            this.errors.set(field, message || `${field}는 ${min}에서 ${max} 사이여야 합니다`);
+            this.errors.set(field, message || `${field} must be between ${min} and ${max}.`);
         }
         return this;
     }

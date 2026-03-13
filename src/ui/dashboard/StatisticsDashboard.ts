@@ -8,7 +8,6 @@
 
 import type { App } from 'obsidian';
 import { EventManager } from '../../application/EventManager';
-import { safeJsonParse } from '../../utils/common/helpers';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { Notice } from 'obsidian';
 

@@ -37,7 +37,7 @@ export class AccessibilityManager {
     private setupAriaRegions(): void {
         // 메인 영역
         this.container.setAttribute('role', 'main');
-        this.container.setAttribute('aria-label', '설정 패널');
+        this.container.setAttribute('aria-label', 'Settings panel');
 
         // 라이브 리전 생성
         this.announcer.createLiveRegion();
@@ -46,7 +46,7 @@ export class AccessibilityManager {
         const nav = this.container.querySelector('.settings-nav');
         if (nav) {
             nav.setAttribute('role', 'navigation');
-            nav.setAttribute('aria-label', '설정 네비게이션');
+            nav.setAttribute('aria-label', 'Settings navigation');
         }
     }
 
@@ -55,17 +55,17 @@ export class AccessibilityManager {
      */
     private setupKeyboardShortcuts(): void {
         this.keyboardNav.registerShortcut('Alt+S', () => {
-            this.announcer.announce('설정 저장');
+            this.announcer.announce('Settings saved');
             // 저장 로직
         });
 
         this.keyboardNav.registerShortcut('Alt+R', () => {
-            this.announcer.announce('설정 초기화');
+            this.announcer.announce('Settings reset');
             // 초기화 로직
         });
 
         this.keyboardNav.registerShortcut('Escape', () => {
-            this.announcer.announce('설정 패널 닫기');
+            this.announcer.announce('Settings panel closed');
             // 닫기 로직
         });
     }
@@ -151,10 +151,15 @@ export class ScreenReaderAnnouncer {
             this.createLiveRegion();
         }
 
+        const liveRegion = this.liveRegion;
+        if (!liveRegion) {
+            return;
+        }
+
         this.announcementQueue.push(message);
 
         if (priority === 'assertive') {
-            this.liveRegion!.setAttribute('aria-live', 'assertive');
+            liveRegion.setAttribute('aria-live', 'assertive');
         }
 
         void this.processQueue();
@@ -169,7 +174,10 @@ export class ScreenReaderAnnouncer {
         this.isProcessing = true;
 
         while (this.announcementQueue.length > 0) {
-            const message = this.announcementQueue.shift()!;
+            const message = this.announcementQueue.shift();
+            if (!message) {
+                continue;
+            }
 
             if (this.liveRegion) {
                 this.liveRegion.textContent = message;
@@ -255,7 +263,10 @@ export class KeyboardNavigationManager {
         const shortcut = this.getShortcutKey(e);
         if (this.shortcuts.has(shortcut)) {
             e.preventDefault();
-            this.shortcuts.get(shortcut)!();
+            const handler = this.shortcuts.get(shortcut);
+            if (handler) {
+                handler();
+            }
             return;
         }
 
@@ -547,7 +558,7 @@ export class AriaHelper {
         element.setAttribute('aria-busy', String(isLoading));
 
         if (isLoading) {
-            element.setAttribute('aria-label', '로딩 중...');
+            element.setAttribute('aria-label', 'Loading...');
         } else {
             element.removeAttribute('aria-label');
         }

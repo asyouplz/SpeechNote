@@ -39,7 +39,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     this.debug('Adding options to dropdown...');
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'Openai whisper')
+                        .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -61,8 +61,8 @@ export class SimpleSettingsTab extends PluginSettingTab {
             // Auto 모드일 때는 양쪽 API 키 모두 표시
             if (provider === 'auto' || provider === 'whisper') {
                 new Setting(containerEl)
-                    .setName('Openai API key')
-                    .setDesc('Enter your openai API key for whisper')
+                    .setName('OpenAI API key')
+                    .setDesc('Enter your OpenAI API key for Whisper')
                     .addText((text) =>
                         text
                             .setPlaceholder('Sk-...')
@@ -129,9 +129,9 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     dropdown
                         .addOption('auto', 'Auto-detect')
                         .addOption('en', 'English')
-                        .addOption('ko', '한국어')
-                        .addOption('ja', '日本語')
-                        .addOption('zh', '中文')
+                        .addOption('ko', 'Korean')
+                        .addOption('ja', 'Japanese')
+                        .addOption('zh', 'Chinese')
                         .setValue(this.plugin.settings.language || 'auto')
                         .onChange(async (value) => {
                             this.plugin.settings.language = value;

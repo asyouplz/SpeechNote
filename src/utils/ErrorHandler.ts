@@ -6,11 +6,11 @@ export class ErrorHandler {
 
     getUserFriendlyMessage(error: Error): string {
         const codeMessageMap: Record<string, string> = {
-            ECONNREFUSED: '서버에 연결할 수 없습니다.',
-            ETIMEDOUT: '연결 시간이 초과되었습니다.',
-            ENOTFOUND: '서버를 찾을 수 없습니다.',
-            EPERM: '권한이 없습니다.',
-            ENOSPC: '저장 공간이 부족합니다.',
+            ECONNREFUSED: 'Could not connect to the server.',
+            ETIMEDOUT: 'The connection timed out.',
+            ENOTFOUND: 'The server could not be found.',
+            EPERM: 'Permission denied.',
+            ENOSPC: 'Not enough storage space is available.',
         };
 
         for (const [code, message] of Object.entries(codeMessageMap)) {
@@ -24,14 +24,14 @@ export class ErrorHandler {
 
     getSolution(code: string): string {
         const solutions: Record<string, string> = {
-            INVALID_API_KEY: '설정에서 올바른 API 키를 입력해주세요.',
-            NETWORK_ERROR: '네트워크 연결을 확인한 뒤 다시 시도해주세요.',
-            TIMEOUT: '잠시 후 다시 시도하거나 타임아웃 값을 늘려주세요.',
-            FILE_TOO_LARGE: '파일 크기를 줄이거나 다른 파일을 선택해주세요.',
-            UNSUPPORTED_FORMAT: '지원되는 오디오 형식을 사용해주세요.',
+            INVALID_API_KEY: 'Enter a valid API key in settings.',
+            NETWORK_ERROR: 'Check your network connection and try again.',
+            TIMEOUT: 'Try again later or increase the timeout value.',
+            FILE_TOO_LARGE: 'Reduce the file size or choose a different file.',
+            UNSUPPORTED_FORMAT: 'Use a supported audio format.',
         };
 
-        return solutions[code] ?? '문제를 확인하고 다시 시도해주세요.';
+        return solutions[code] ?? 'Check the problem and try again.';
     }
 
     handle(error: unknown, context?: Record<string, unknown>): void {

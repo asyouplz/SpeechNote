@@ -120,7 +120,7 @@ export class ProgressBar {
         if (this.options.showTimeRemaining && !this.options.indeterminate) {
             this.timeRemainingElement = createEl('span', {
                 cls: 'progress-bar__time-remaining',
-                text: '계산 중...',
+                text: 'Calculating...',
             });
             infoContainer.appendChild(this.timeRemainingElement);
         }
@@ -228,7 +228,7 @@ export class ProgressBar {
 
         if (!this.startTime) {
             this.startTime = Date.now();
-            this.timeRemainingElement.textContent = '계산 중...';
+            this.timeRemainingElement.textContent = 'Calculating...';
             return;
         }
 
@@ -237,9 +237,9 @@ export class ProgressBar {
         const remaining = estimatedTotal - elapsed;
 
         if (remaining > 0) {
-            this.timeRemainingElement.textContent = `남은 시간: ${this.formatTime(remaining)}`;
+            this.timeRemainingElement.textContent = `Time remaining: ${this.formatTime(remaining)}`;
         } else {
-            this.timeRemainingElement.textContent = '거의 완료...';
+            this.timeRemainingElement.textContent = 'Almost done...';
         }
     }
 
@@ -252,11 +252,11 @@ export class ProgressBar {
         const hours = Math.floor(minutes / 60);
 
         if (hours > 0) {
-            return `${hours}시간 ${minutes % 60}분`;
+            return `${hours}h ${minutes % 60}m`;
         } else if (minutes > 0) {
-            return `${minutes}분 ${seconds % 60}초`;
+            return `${minutes}m ${seconds % 60}s`;
         } else {
-            return `${seconds}초`;
+            return `${seconds}s`;
         }
     }
 
@@ -504,14 +504,14 @@ export class MultiStepProgressBar {
             // ARIA 속성 업데이트
             switch (status) {
                 case 'completed':
-                    stepEl.setAttribute('aria-label', `${step.label} 완료`);
+                    stepEl.setAttribute('aria-label', `${step.label} completed`);
                     break;
                 case 'active':
-                    stepEl.setAttribute('aria-label', `${step.label} 진행 중`);
+                    stepEl.setAttribute('aria-label', `${step.label} in progress`);
                     stepEl.setAttribute('aria-current', 'step');
                     break;
                 case 'error':
-                    stepEl.setAttribute('aria-label', `${step.label} 오류`);
+                    stepEl.setAttribute('aria-label', `${step.label} error`);
                     break;
             }
         }
@@ -541,7 +541,7 @@ export class MultiStepProgressBar {
     setError(stepId: string, error: string) {
         this.updateStepStatus(stepId, 'error');
         this.progressBar.setColor('error');
-        this.progressBar.setLabel(`오류: ${error}`);
+        this.progressBar.setLabel(`Error: ${error}`);
 
         // 이벤트 발생
         this.eventManager.emit('step:error', { stepId, error });
