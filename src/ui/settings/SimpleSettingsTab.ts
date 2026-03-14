@@ -65,7 +65,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     .setDesc('Enter your OpenAI API key for Whisper')
                     .addText((text) =>
                         text
-                            .setPlaceholder('Sk-...')
+                            .setPlaceholder('sk-...')
                             .setValue(this.plugin.settings.apiKey || '')
                             .onChange(async (value) => {
                                 this.plugin.settings.apiKey = value;
