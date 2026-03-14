@@ -80,9 +80,9 @@ export class ProviderSettings {
             .setDesc('Choose a specific provider or use automatic selection')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', 'Automatic (recommended)')
-                    .addOption('whisper', 'OpenAI whisper')
-                    .addOption('deepgram', 'Deepgram')
+                    .addOption('auto', '🤖 Automatic (recommended)')
+                    .addOption('whisper', '🎯 OpenAI Whisper')
+                    .addOption('deepgram', '🚀 Deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderValue(value)) {
@@ -219,11 +219,11 @@ export class ProviderSettings {
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, 'Cost optimized')
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, 'Performance optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, 'Quality optimized')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, 'Round robin')
-                    .addOption(SelectionStrategy.AB_TEST, 'A/B testing')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost optimized')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality optimized')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round robin')
+                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -282,7 +282,7 @@ export class ProviderSettings {
         const abTestEl = containerEl.createDiv({ cls: 'sn-ab-test-settings' });
 
         new Setting(abTestEl)
-            .setName('Enable A/B tests')
+            .setName('Enable A/B testing')
             .setDesc('Compare providers to find the best one for your use case')
             .addToggle((toggle) => {
                 toggle
@@ -349,7 +349,7 @@ export class ProviderSettings {
     private renderMetrics(containerEl: HTMLElement): void {
         const metricsEl = containerEl.createDiv({ cls: 'sn-metrics-container' });
 
-        metricsEl.createEl('h4', { text: 'Performance metrics' });
+        metricsEl.createEl('h4', { text: '📊 Performance metrics' });
 
         // 각 Provider별 메트릭
         this.renderProviderMetrics(metricsEl, 'whisper');
@@ -407,7 +407,7 @@ export class ProviderSettings {
      */
     private renderComparisonChart(containerEl: HTMLElement): void {
         const chartEl = containerEl.createDiv({ cls: 'sn-comparison-chart' });
-        chartEl.createEl('h5', { text: 'Provider comparison' });
+        chartEl.createEl('h5', { text: '📈 Provider comparison' });
 
         // 간단한 막대 차트 (실제로는 Chart.js 등 사용 권장)
         const chartContent = chartEl.createDiv({ cls: 'sn-chart-content' });

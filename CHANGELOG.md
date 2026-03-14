@@ -1,3 +1,14 @@
+## [4.0.10](https://github.com/asyouplz/SpeechNote/compare/v4.0.9...v4.0.10) (2026-03-13)
+
+### 🐛 Bug Fixes
+
+* **ui:** align settings review follow-ups ([#73](https://github.com/asyouplz/SpeechNote/issues/73)) ([1686d84](https://github.com/asyouplz/SpeechNote/commit/1686d84e85e5c4a69316121ae4874f4eb7ae0e60))
+
+### 🔧 Maintenance
+
+* **deps:** bump minimatch ([#72](https://github.com/asyouplz/SpeechNote/issues/72)) ([f5638bf](https://github.com/asyouplz/SpeechNote/commit/f5638bf4a4535ba97648e2fef2d3a57c65c18a04))
+* **deps:** bump tar and npm ([#71](https://github.com/asyouplz/SpeechNote/issues/71)) ([e1e6521](https://github.com/asyouplz/SpeechNote/commit/e1e6521b5e8bfe7d8f37d4b8ab90b8b32fad38dd))
+
 ## [4.0.9](https://github.com/asyouplz/SpeechNote/compare/v4.0.8...v4.0.9) (2026-03-10)
 
 ### 🐛 Bug Fixes

@@ -49,7 +49,7 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.addClass('speech-to-text-settings');
 
         // Add main title
-        new Setting(containerEl).setName('Speech note').setHeading();
+        new Setting(containerEl).setName('Speech Note').setHeading();
         this.debug('Title setting created');
 
         // Add debug info section at the top
@@ -153,7 +153,7 @@ export class SettingsTab extends PluginSettingTab {
 
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI whisper')
+                        .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -317,7 +317,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('Use the default OpenAI API endpoint unless you need a custom endpoint.')
+            .setDesc('OpenAI API endpoint (leave the default unless using a custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')
@@ -367,7 +367,7 @@ export class SettingsTab extends PluginSettingTab {
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
             .setName('OpenAI API key')
-            .setDesc('Enter your OpenAI API key for whisper transcription')
+            .setDesc('Enter your OpenAI API key for Whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('Sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -378,7 +378,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('Saved the OpenAI API key.');
+                            new Notice('OpenAI API key saved.');
                         }
                     });
 
@@ -525,7 +525,7 @@ export class SettingsTab extends PluginSettingTab {
         if (provider === 'whisper' || provider === 'auto') {
             new Setting(containerEl)
                 .setName('Whisper model')
-                .setDesc('Select the whisper model to use')
+                .setDesc('Select the Whisper model to use')
                 .addDropdown((dropdown) =>
                     dropdown
                         .addOption('whisper-1', 'Whisper v1 (default)')
@@ -649,7 +649,7 @@ export class SettingsTab extends PluginSettingTab {
             .setDesc('If you find this plugin helpful, consider buying me a coffee ☕')
             .addButton((button) =>
                 button
-                    .setButtonText('Buy me a coffee')
+                    .setButtonText('☕ Buy me a coffee')
                     .setCta()
                     .onClick(() => {
                         window.open('https://buymeacoffee.com/asyouplz', '_blank');

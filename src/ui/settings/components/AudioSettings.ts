@@ -38,7 +38,7 @@ export class AudioSettings {
         // Whisper 모델 선택
         new Setting(containerEl)
             .setName('Whisper model')
-            .setDesc('Choose which whisper model to use')
+            .setDesc('Choose which Whisper model to use')
             .addDropdown((dropdown) =>
                 dropdown
                     .addOption('whisper-1', 'Whisper-1 (default)')
@@ -61,8 +61,8 @@ export class AudioSettings {
                     .addOption('json', 'JSON (structured data)')
                     .addOption('text', 'Text (plain text)')
                     .addOption('verbose_json', 'Verbose JSON (detailed output)')
-                    .addOption('srt', 'Subtitle format (SRT)')
-                    .addOption('vtt', 'WebVTT format (VTT)')
+                    .addOption('srt', 'SRT (subtitle format)')
+                    .addOption('vtt', 'VTT (WebVTT format)')
                     .setValue(
                         typeof this.plugin.settings['responseFormat'] === 'string'
                             ? this.plugin.settings['responseFormat']
@@ -100,7 +100,7 @@ export class AudioSettings {
             .setDesc('Enter an optional prompt to guide speech recognition')
             .addTextArea((text) =>
                 text
-                    .setPlaceholder('For example, this recording contains medical terminology.')
+                    .setPlaceholder('Example: This recording contains medical terminology.')
                     .setValue(this.plugin.settings.prompt || '')
                     .onChange(async (value) => {
                         this.plugin.settings.prompt = value;
@@ -111,7 +111,7 @@ export class AudioSettings {
         // 파일 크기 제한
         const fileSizeSetting = new Setting(containerEl)
             .setName('Maximum file size')
-            .setDesc('Set the maximum upload size in MB.');
+            .setDesc('Maximum upload size in MB');
 
         const sizeValue = containerEl.createDiv({ cls: 'filesize-value' });
         const currentSize = Math.round(this.plugin.settings.maxFileSize / (1024 * 1024));

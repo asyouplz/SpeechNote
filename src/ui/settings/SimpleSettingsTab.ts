@@ -39,7 +39,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     this.debug('Adding options to dropdown...');
                     dropdown
                         .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI whisper')
+                        .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -62,7 +62,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
             if (provider === 'auto' || provider === 'whisper') {
                 new Setting(containerEl)
                     .setName('OpenAI API key')
-                    .setDesc('Enter your OpenAI API key for whisper')
+                    .setDesc('Enter your OpenAI API key for Whisper')
                     .addText((text) =>
                         text
                             .setPlaceholder('Sk-...')

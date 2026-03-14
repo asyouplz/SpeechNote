@@ -70,7 +70,7 @@ export class ApiKeyValidator {
                 );
 
                 if (!hasWhisper) {
-                    new Notice('The API key is valid, but it may not have access to whisper.');
+                    new Notice('The API key is valid, but it may not have access to Whisper.');
                 }
 
                 return true;
