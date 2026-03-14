@@ -369,7 +369,7 @@ export class SettingsTab extends PluginSettingTab {
             .setName('OpenAI API key')
             .setDesc('Enter your OpenAI API key for Whisper transcription')
             .addText((text) => {
-                text.setPlaceholder('Sk-...')
+                text.setPlaceholder('sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
                     .onChange(async (value) => {
                         if (value && !value.includes('*')) {
