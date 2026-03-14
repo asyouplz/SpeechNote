@@ -1,3 +1,9 @@
+## [4.0.12](https://github.com/asyouplz/SpeechNote/compare/v4.0.11...v4.0.12) (2026-03-14)
+
+### 🐛 Bug Fixes
+
+* **ui:** use lowercase openai key placeholders ([#79](https://github.com/asyouplz/SpeechNote/issues/79)) ([fcae62a](https://github.com/asyouplz/SpeechNote/commit/fcae62a84512f91b9b4b35cb4afb973a75cc9686))
+
 ## [4.0.11](https://github.com/asyouplz/SpeechNote/compare/v4.0.10...v4.0.11) (2026-03-14)
 
 ### 🐛 Bug Fixes
