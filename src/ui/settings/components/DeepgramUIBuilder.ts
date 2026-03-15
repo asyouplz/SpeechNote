@@ -168,7 +168,7 @@ export class DeepgramUIBuilder {
             const warningEl =
                 container.querySelector(`.budget-warning`) ||
                 container.createEl('p', { cls: 'budget-warning' });
-            warningEl.textContent = `⚠️ Exceeds monthly budget of $${budget}`;
+            warningEl.textContent = `Exceeds monthly budget of $${budget}`;
             warningEl.classList.add(UI_CONSTANTS.CLASSES.WARNING);
         }
     }

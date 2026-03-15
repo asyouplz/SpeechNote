@@ -304,7 +304,7 @@ export class DeepgramSettings {
         this.updateUIAfterModelChange();
 
         if (this.selectedModel) {
-            new Notice(`Selected model: ${this.selectedModel.name}`);
+            new Notice('Model selected.');
         }
     }
 
@@ -606,7 +606,7 @@ export class DeepgramSettings {
 
         const primaryList = noteEl.createEl('ul');
         [
-            'Files larger than 50MB may experience timeout errors',
+            'Files larger than 50 megabytes may experience timeout errors',
             'Auto-chunking splits files into manageable pieces',
             'Each chunk is processed separately and results are merged',
         ].forEach((item) => {

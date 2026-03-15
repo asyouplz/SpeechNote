@@ -80,9 +80,9 @@ export class ProviderSettings {
             .setDesc('Choose a specific provider or use automatic selection')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('auto', '🤖 Automatic (recommended)')
-                    .addOption('whisper', '🎯 OpenAI Whisper')
-                    .addOption('deepgram', '🚀 Deepgram')
+                    .addOption('auto', 'Automatic (recommended)')
+                    .addOption('whisper', 'General transcription')
+                    .addOption('deepgram', 'Fast transcription')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
                         if (this.isProviderValue(value)) {
@@ -111,18 +111,18 @@ export class ProviderSettings {
         this.renderSingleApiKey(
             apiKeysContainer,
             'whisper',
-            'API key for OpenAI',
-            'Enter your API key for OpenAI (starts with sk-)',
-            'sk-...'
+            'General provider API key',
+            'Enter your API key (starts with sk-)',
+            'Enter sk-...'
         );
 
         // Deepgram API Key
         this.renderSingleApiKey(
             apiKeysContainer,
             'deepgram',
-            'Deepgram API key',
-            'Enter your deepgram API key',
-            'your-deepgram-api-key'
+            'Fast provider API key',
+            'Enter your API key',
+            'Enter your API key...'
         );
     }
 
@@ -219,11 +219,11 @@ export class ProviderSettings {
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 Cost-optimized')
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ Performance-optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ Quality-optimized')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 Round-robin')
-                    .addOption(SelectionStrategy.AB_TEST, '🧪 A/B tests')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, 'Cost-optimized')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, 'Performance-optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, 'Quality-optimized')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, 'Round-robin')
+                    .addOption(SelectionStrategy.AB_TEST, 'Split testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -282,7 +282,7 @@ export class ProviderSettings {
         const abTestEl = containerEl.createDiv({ cls: 'sn-ab-test-settings' });
 
         new Setting(abTestEl)
-            .setName('Enable A/B tests')
+            .setName('Enable split testing')
             .setDesc('Compare providers to find the best one for your use case')
             .addToggle((toggle) => {
                 toggle
@@ -320,8 +320,8 @@ export class ProviderSettings {
 
                 // 분할 비율 표시
                 const displayEl = containerEl.createDiv({ cls: 'sn-split-display' });
-                displayEl.createEl('span', { text: `Whisper: ${currentSplit}%` });
-                displayEl.createEl('span', { text: `Deepgram: ${100 - currentSplit}%` });
+                displayEl.createEl('span', { text: `General: ${currentSplit}%` });
+                displayEl.createEl('span', { text: `Fast: ${100 - currentSplit}%` });
             });
     }
 
@@ -349,7 +349,7 @@ export class ProviderSettings {
     private renderMetrics(containerEl: HTMLElement): void {
         const metricsEl = containerEl.createDiv({ cls: 'sn-metrics-container' });
 
-        metricsEl.createEl('h4', { text: '📊 Performance metrics' });
+        metricsEl.createEl('h4', { text: 'Performance metrics' });
 
         // 각 Provider별 메트릭
         this.renderProviderMetrics(metricsEl, 'whisper');
@@ -407,17 +407,17 @@ export class ProviderSettings {
      */
     private renderComparisonChart(containerEl: HTMLElement): void {
         const chartEl = containerEl.createDiv({ cls: 'sn-comparison-chart' });
-        chartEl.createEl('h5', { text: '📈 Provider comparison' });
+        chartEl.createEl('h5', { text: 'Provider comparison' });
 
         // 간단한 막대 차트 (실제로는 Chart.js 등 사용 권장)
         const chartContent = chartEl.createDiv({ cls: 'sn-chart-content' });
         const bars = chartContent.createDiv({ cls: 'sn-chart-bars' });
 
         const whisperBar = bars.createDiv({ cls: 'sn-chart-bar sn-chart-bar--whisper' });
-        whisperBar.createEl('span', { cls: 'sn-bar-label', text: 'Whisper' });
+        whisperBar.createEl('span', { cls: 'sn-bar-label', text: 'General' });
 
         const deepgramBar = bars.createDiv({ cls: 'sn-chart-bar sn-chart-bar--deepgram' });
-        deepgramBar.createEl('span', { cls: 'sn-bar-label', text: 'Deepgram' });
+        deepgramBar.createEl('span', { cls: 'sn-bar-label', text: 'Fast' });
 
         const legend = chartContent.createDiv({ cls: 'sn-chart-legend' });
         legend.createEl('span', { text: 'Overall performance score' });
@@ -434,10 +434,10 @@ export class ProviderSettings {
 
         if (whisperConnected || deepgramConnected) {
             statusEl.addClass('sn-connection-status--connected');
-            statusEl.setText('✅ connected');
+            statusEl.setText('Connected');
         } else {
             statusEl.addClass('sn-connection-status--disconnected');
-            statusEl.setText('⚠️ no providers configured');
+            statusEl.setText('No providers configured');
         }
     }
 
@@ -575,9 +575,9 @@ export class ProviderSettings {
      */
     private showProviderInfo(provider: string): void {
         const info: Record<string, string> = {
-            auto: '🤖 System will automatically select the best provider based on performance and availability',
-            whisper: '🎯 OpenAI Whisper - high accuracy, supports 50+ languages',
-            deepgram: '🚀 Deepgram - fast real-time transcription with excellent accuracy',
+            auto: 'The system will automatically select the best provider based on performance and availability.',
+            whisper: 'Balanced transcription with strong multilingual support.',
+            deepgram: 'Fast transcription with strong real-time performance.',
         };
 
         new Notice(info[provider] || 'Provider selected');
@@ -588,11 +588,11 @@ export class ProviderSettings {
      */
     private showStrategyInfo(strategy: string): void {
         const info: Record<string, string> = {
-            [SelectionStrategy.COST_OPTIMIZED]: '💰 Will choose the most cost-effective provider',
-            [SelectionStrategy.PERFORMANCE_OPTIMIZED]: '⚡ Will choose the fastest provider',
-            [SelectionStrategy.QUALITY_OPTIMIZED]: '✨ Will choose the most accurate provider',
-            [SelectionStrategy.ROUND_ROBIN]: '🔄 Will alternate between providers equally',
-            [SelectionStrategy.AB_TEST]: '🧪 Will split traffic for comparison',
+            [SelectionStrategy.COST_OPTIMIZED]: 'Will choose the most cost-effective provider.',
+            [SelectionStrategy.PERFORMANCE_OPTIMIZED]: 'Will choose the fastest provider.',
+            [SelectionStrategy.QUALITY_OPTIMIZED]: 'Will choose the most accurate provider.',
+            [SelectionStrategy.ROUND_ROBIN]: 'Will alternate between providers equally.',
+            [SelectionStrategy.AB_TEST]: 'Will split traffic for comparison.',
         };
 
         new Notice(info[strategy] || 'Strategy selected');
@@ -603,8 +603,8 @@ export class ProviderSettings {
      */
     private getProviderDisplayName(provider: TranscriptionProvider): string {
         const names: Record<TranscriptionProvider, string> = {
-            whisper: 'OpenAI Whisper',
-            deepgram: 'Deepgram',
+            whisper: 'General transcription',
+            deepgram: 'Fast transcription',
         };
         return names[provider] || provider;
     }

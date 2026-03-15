@@ -32,32 +32,32 @@ export const UI_CONSTANTS = {
 
     // 텍스트 메시지
     MESSAGES: {
-        HEADER: 'Deepgram configuration',
+        HEADER: 'Fast provider configuration',
         DESCRIPTION:
-            'Configure Deepgram for advanced speech recognition with multiple language support and AI features.',
-        REGISTRY_WARNING: '⚠️ Model registry not available. Using default configuration.',
-        API_KEY_LABEL: 'Deepgram API key',
-        API_KEY_DESC: 'Enter your Deepgram API key for transcription',
+            'Configure the fast transcription provider with multilingual support and advanced processing features.',
+        REGISTRY_WARNING: 'Model registry is not available. Using the default configuration.',
+        API_KEY_LABEL: 'Fast provider API key',
+        API_KEY_DESC: 'Enter your API key for transcription',
         API_KEY_PLACEHOLDER: 'Enter API key...',
-        API_KEY_SAVED: 'Deepgram API key saved',
-        API_KEY_REQUIRED: 'Please enter your Deepgram API key first',
-        MODEL_LABEL: 'Deepgram model',
-        MODEL_DESC: 'Select the Deepgram model for transcription',
+        API_KEY_SAVED: 'API key saved.',
+        API_KEY_REQUIRED: 'Enter your API key first.',
+        MODEL_LABEL: 'Fast model',
+        MODEL_DESC: 'Select the model for transcription',
         MODEL_PLACEHOLDER: 'Select a model...',
         FEATURES_HEADER: 'Features',
         ADVANCED_HEADER: 'Advanced settings',
         COST_HEADER: 'Cost estimation',
         VALIDATION_LABEL: 'Validate configuration',
-        VALIDATION_DESC: 'Test your Deepgram API key and settings',
+        VALIDATION_DESC: 'Test your API key and settings',
         VALIDATION_BUTTON: 'Validate',
         VALIDATING: 'Validating...',
-        VALIDATION_SUCCESS: '✅ Deepgram configuration is valid',
-        VALIDATION_ERROR: '❌ Invalid Deepgram API key or configuration',
-        FALLBACK_ERROR_TITLE: '⚠️ Deepgram settings error',
+        VALIDATION_SUCCESS: 'Configuration is valid.',
+        VALIDATION_ERROR: 'Invalid API key or configuration.',
+        FALLBACK_ERROR_TITLE: 'Provider settings error',
         FALLBACK_ERROR_DESC:
             'Unable to load full configuration. Basic settings are available below.',
         CRITICAL_ERROR:
-            'Deepgram settings could not be loaded. Please check the console for errors.',
+            'Provider settings could not be loaded. Please check the console for errors.',
     },
 
     // 스타일

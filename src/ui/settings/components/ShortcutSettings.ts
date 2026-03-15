@@ -150,7 +150,7 @@ export class ShortcutSettings {
 
         if (conflicts.length > 0) {
             const conflictEl = containerEl.createDiv({ cls: 'shortcut-conflicts' });
-            conflictEl.createEl('h4', { text: '⚠️ Shortcut conflicts detected' });
+            conflictEl.createEl('h4', { text: 'Shortcut conflicts detected' });
 
             const conflictList = conflictEl.createEl('ul');
             conflicts.forEach((conflict) => {
@@ -485,7 +485,7 @@ class ShortcutModal extends Modal {
         this.isRecording = true;
         this.recordedKeys.clear();
 
-        button.setButtonText('Recording... (Esc to cancel)');
+        button.setButtonText('Recording... (press escape to cancel)');
         button.buttonEl.addClass('is-recording');
 
         // 키 이벤트 리스너

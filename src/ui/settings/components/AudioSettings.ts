@@ -37,11 +37,11 @@ export class AudioSettings {
 
         // Whisper 모델 선택
         new Setting(containerEl)
-            .setName('Whisper model')
-            .setDesc('Choose which Whisper model to use')
+            .setName('General model')
+            .setDesc('Choose which model to use')
             .addDropdown((dropdown) =>
                 dropdown
-                    .addOption('whisper-1', 'Whisper-1 default model')
+                    .addOption('whisper-1', 'Default model')
                     .setValue(this.plugin.settings.model)
                     .onChange(async (value: string) => {
                         if (value === 'whisper-1') {
@@ -61,8 +61,8 @@ export class AudioSettings {
                     .addOption('json', 'JSON (structured data)')
                     .addOption('text', 'Text (plain text)')
                     .addOption('verbose_json', 'Detailed JSON output')
-                    .addOption('srt', 'Subtitle format (SRT)')
-                    .addOption('vtt', 'WebVTT format (VTT)')
+                    .addOption('srt', 'Subtitle format (.srt)')
+                    .addOption('vtt', 'Caption format (.vtt)')
                     .setValue(
                         typeof this.plugin.settings['responseFormat'] === 'string'
                             ? this.plugin.settings['responseFormat']
@@ -111,11 +111,11 @@ export class AudioSettings {
         // 파일 크기 제한
         const fileSizeSetting = new Setting(containerEl)
             .setName('Maximum file size')
-            .setDesc('Maximum upload size in MB');
+            .setDesc('Maximum upload size in megabytes');
 
         const sizeValue = containerEl.createDiv({ cls: 'filesize-value' });
         const currentSize = Math.round(this.plugin.settings.maxFileSize / (1024 * 1024));
-        sizeValue.setText(`${currentSize} MB`);
+        sizeValue.setText(`${currentSize} megabytes`);
 
         fileSizeSetting.addSlider((slider) =>
             slider
@@ -123,7 +123,7 @@ export class AudioSettings {
                 .setValue(currentSize)
                 .onChange(async (value) => {
                     this.plugin.settings.maxFileSize = value * 1024 * 1024;
-                    sizeValue.setText(`${value} MB`);
+                    sizeValue.setText(`${value} megabytes`);
                     await this.plugin.saveSettings();
                 })
                 .setDynamicTooltip()
@@ -179,7 +179,7 @@ export class AudioSettings {
 
         const limitList = limitations.createEl('ul');
         const limits = [
-            'Maximum file size: 25 MB',
+            'Maximum file size: 25 megabytes',
             'Maximum audio length: unlimited (large files are split automatically)',
             'Concurrent processing: 1 file',
             'API request limit: 50 requests per minute',

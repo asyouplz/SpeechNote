@@ -49,7 +49,7 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.addClass('speech-to-text-settings');
 
         // Add main title
-        new Setting(containerEl).setName('Speech Note').setHeading();
+        new Setting(containerEl).setName('Speech to text').setHeading();
         this.debug('Title setting created');
 
         // Add debug info section at the top
@@ -153,8 +153,8 @@ export class SettingsTab extends PluginSettingTab {
 
                     dropdown
                         .addOption('auto', 'Automatic (recommended)')
-                        .addOption('whisper', 'OpenAI Whisper')
-                        .addOption('deepgram', 'Deepgram')
+                        .addOption('whisper', 'General transcription')
+                        .addOption('deepgram', 'Fast transcription')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
                             this.debug('Provider dropdown changed to:', value);
@@ -263,7 +263,7 @@ export class SettingsTab extends PluginSettingTab {
                     .addOption('performance_optimized', 'Performance-optimized')
                     .addOption('quality_optimized', 'Quality-optimized')
                     .addOption('round_robin', 'Round-robin')
-                    .addOption('ab_test', 'A/B tests')
+                    .addOption('ab_test', 'Split testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -309,7 +309,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private renderWhisperSettings(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('Whisper').setHeading();
+        new Setting(containerEl).setName('General transcription').setHeading();
 
         // Whisper API Key
         this.renderWhisperApiKey(containerEl);
@@ -317,7 +317,7 @@ export class SettingsTab extends PluginSettingTab {
         // API Endpoint
         new Setting(containerEl)
             .setName('API endpoint')
-            .setDesc('OpenAI API endpoint (leave the default unless using a custom endpoint)')
+            .setDesc('API endpoint (leave the default unless using a custom endpoint)')
             .addText((text) =>
                 text
                     .setPlaceholder('https://api.openai.com/v1')
@@ -366,10 +366,10 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('API key for OpenAI')
-            .setDesc('Enter your API key for OpenAI Whisper transcription')
+            .setName('General provider API key')
+            .setDesc('Enter your API key for transcription')
             .addText((text) => {
-                text.setPlaceholder('sk-...')
+                text.setPlaceholder('Enter sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
                     .onChange(async (value) => {
                         if (value && !value.includes('*')) {
@@ -378,7 +378,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('Saved the API key for OpenAI.');
+                            new Notice('Saved the API key.');
                         }
                     });
 
@@ -400,10 +400,10 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderDeepgramApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('Deepgram API key')
-            .setDesc('Enter your deepgram API key for transcription')
+            .setName('Fast provider API key')
+            .setDesc('Enter your API key for transcription')
             .addText((text) => {
-                text.setPlaceholder('Enter deepgram API key...')
+                text.setPlaceholder('Enter your API key...')
                     .setValue(this.maskApiKey(this.plugin.settings.deepgramApiKey || ''))
                     .onChange(async (value) => {
                         if (value && !value.includes('*')) {
@@ -411,7 +411,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('Deepgram API key saved.');
+                            new Notice('Saved the API key.');
                         }
                     });
 
@@ -438,11 +438,11 @@ export class SettingsTab extends PluginSettingTab {
         infoEl.empty();
 
         const descriptions = {
-            auto: '🤖 intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
+            auto: 'Intelligent selection between providers based on your configured strategy. Automatically chooses the best provider for each request.',
             whisper:
-                '🎯 OpenAI Whisper - high-quality transcription with support for multiple languages. Best for general-purpose transcription.',
+                'Balanced transcription with broad language support. Best for general-purpose transcription.',
             deepgram:
-                '⚡ Deepgram - fast, accurate transcription with advanced AI features. Best for real-time processing and speaker diarization.',
+                'Fast transcription with advanced processing features. Best for real-time processing and speaker labeling.',
         };
 
         infoEl.createEl('p', { text: descriptions[provider] });
@@ -524,11 +524,11 @@ export class SettingsTab extends PluginSettingTab {
         const provider = this.plugin.settings.provider || 'auto';
         if (provider === 'whisper' || provider === 'auto') {
             new Setting(containerEl)
-                .setName('Whisper model')
-                .setDesc('Select the Whisper model to use')
+                .setName('General model')
+                .setDesc('Select the model to use')
                 .addDropdown((dropdown) =>
                     dropdown
-                        .addOption('whisper-1', 'Whisper v1 (default)')
+                        .addOption('whisper-1', 'Default model (v1)')
                         .setValue(this.plugin.settings.model || 'whisper-1')
                         .onChange(async (value) => {
                             this.plugin.settings.model = value;
@@ -649,7 +649,7 @@ export class SettingsTab extends PluginSettingTab {
             .setDesc('If you find this plugin helpful, consider buying me a coffee ☕')
             .addButton((button) =>
                 button
-                    .setButtonText('☕ Buy me a coffee')
+                    .setButtonText('Buy me a coffee')
                     .setCta()
                     .onClick(() => {
                         window.open('https://buymeacoffee.com/asyouplz', '_blank');
@@ -664,9 +664,9 @@ export class SettingsTab extends PluginSettingTab {
     private getProviderLabel(provider: 'auto' | 'whisper' | 'deepgram'): string {
         switch (provider) {
             case 'whisper':
-                return 'OpenAI Whisper';
+                return 'General transcription';
             case 'deepgram':
-                return 'Deepgram';
+                return 'Fast transcription';
             case 'auto':
             default:
                 return 'Automatic';

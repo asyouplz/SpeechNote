@@ -63,7 +63,7 @@ export class AdvancedSettingsPanel {
         const headerEl = containerEl.createDiv({ cls: 'advanced-panel-header' });
 
         headerEl.createEl('h4', {
-            text: '⚙️ advanced configuration',
+            text: 'Advanced configuration',
             cls: 'advanced-title',
         });
 
@@ -96,11 +96,11 @@ export class AdvancedSettingsPanel {
             .setDesc('How the system selects providers when in auto mode')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, '⚡ performance first')
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, '💰 cost optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, '✨ quality first')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, '🔄 round robin')
-                    .addOption(SelectionStrategy.AB_TEST, '🧪 a/b testing')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, 'Performance first')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, 'Cost-optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, 'Quality first')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, 'Round-robin')
+                    .addOption(SelectionStrategy.AB_TEST, 'Split testing')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -206,7 +206,7 @@ export class AdvancedSettingsPanel {
         // Monthly Budget
         new Setting(sectionEl)
             .setName('Monthly budget')
-            .setDesc('Maximum monthly spending in usd (leave empty for unlimited)')
+            .setDesc('Maximum monthly spending in dollars (leave empty for unlimited)')
             .addText((text) => {
                 text.setPlaceholder('50.00')
                     .setValue(this.plugin.settings.monthlyBudget?.toString() || '')
@@ -298,7 +298,7 @@ export class AdvancedSettingsPanel {
         // Post-processing
         new Setting(sectionEl)
             .setName('Enable post-processing')
-            .setDesc('Apply nlp corrections to improve accuracy')
+            .setDesc('Apply text corrections to improve accuracy')
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.enablePostProcessing || true)
@@ -321,11 +321,11 @@ export class AdvancedSettingsPanel {
      * A/B Testing 섹션
      */
     private renderABTestingSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'A/B tests', 'ab-test-section');
+        const sectionEl = this.createSection(containerEl, 'Split testing', 'ab-test-section');
 
         // Enable A/B Testing
         new Setting(sectionEl)
-            .setName('Enable a/b testing')
+            .setName('Enable split testing')
             .setDesc('Compare providers to find optimal configuration')
             .addToggle((toggle) => {
                 toggle.setValue(this.abTestEnabled).onChange(async (value) => {
@@ -399,7 +399,7 @@ export class AdvancedSettingsPanel {
             // Test Results Button
             new Setting(sectionEl)
                 .setName('View results')
-                .setDesc('See current a/b test results')
+                .setDesc('See current test results')
                 .addButton((button) => {
                     button
                         .setButtonText('View results')
@@ -880,7 +880,7 @@ export class AdvancedSettingsPanel {
      */
     private showABTestResults(): void {
         // TODO: Implement A/B test results modal
-        new Notice('A/b test results coming soon.');
+        new Notice('Test results are coming soon.');
     }
 
     /**
