@@ -81,7 +81,7 @@ export class ProviderSettings {
             .addDropdown((dropdown) => {
                 dropdown
                     .addOption('auto', 'Automatic (recommended)')
-                    .addOption('whisper', 'OpenAI whisper')
+                    .addOption('whisper', 'OpenAI Whisper')
                     .addOption('deepgram', 'Deepgram')
                     .setValue(this.currentProvider)
                     .onChange(async (value) => {
@@ -111,8 +111,8 @@ export class ProviderSettings {
         this.renderSingleApiKey(
             apiKeysContainer,
             'whisper',
-            'OpenAI API key',
-            'Enter your OpenAI API key (starts with sk-)',
+            'API key for OpenAI',
+            'Enter your API key for OpenAI (starts with sk-)',
             'sk-...'
         );
 
@@ -219,11 +219,11 @@ export class ProviderSettings {
             .setDesc('How should the system choose between providers?')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption(SelectionStrategy.COST_OPTIMIZED, 'Cost optimized')
-                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, 'Performance optimized')
-                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, 'Quality optimized')
-                    .addOption(SelectionStrategy.ROUND_ROBIN, 'Round robin')
-                    .addOption(SelectionStrategy.AB_TEST, 'A/B testing')
+                    .addOption(SelectionStrategy.COST_OPTIMIZED, 'Cost-optimized')
+                    .addOption(SelectionStrategy.PERFORMANCE_OPTIMIZED, 'Performance-optimized')
+                    .addOption(SelectionStrategy.QUALITY_OPTIMIZED, 'Quality-optimized')
+                    .addOption(SelectionStrategy.ROUND_ROBIN, 'Round-robin')
+                    .addOption(SelectionStrategy.AB_TEST, 'A/B tests')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED

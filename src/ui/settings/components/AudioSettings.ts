@@ -41,7 +41,7 @@ export class AudioSettings {
             .setDesc('Choose which whisper model to use')
             .addDropdown((dropdown) =>
                 dropdown
-                    .addOption('whisper-1', 'Whisper-1 (default)')
+                    .addOption('whisper-1', 'Whisper-1 default model')
                     .setValue(this.plugin.settings.model)
                     .onChange(async (value: string) => {
                         if (value === 'whisper-1') {
@@ -60,7 +60,7 @@ export class AudioSettings {
                 dropdown
                     .addOption('json', 'JSON (structured data)')
                     .addOption('text', 'Text (plain text)')
-                    .addOption('verbose_json', 'Verbose JSON (detailed output)')
+                    .addOption('verbose_json', 'Detailed JSON output')
                     .addOption('srt', 'Subtitle format (SRT)')
                     .addOption('vtt', 'WebVTT format (VTT)')
                     .setValue(

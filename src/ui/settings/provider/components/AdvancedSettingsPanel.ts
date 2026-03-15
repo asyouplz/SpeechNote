@@ -321,7 +321,7 @@ export class AdvancedSettingsPanel {
      * A/B Testing 섹션
      */
     private renderABTestingSection(containerEl: HTMLElement): void {
-        const sectionEl = this.createSection(containerEl, 'A/B testing', 'ab-test-section');
+        const sectionEl = this.createSection(containerEl, 'A/B tests', 'ab-test-section');
 
         // Enable A/B Testing
         new Setting(sectionEl)

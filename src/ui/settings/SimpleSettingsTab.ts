@@ -38,8 +38,8 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 .addDropdown((dropdown) => {
                     this.debug('Adding options to dropdown...');
                     dropdown
-                        .addOption('auto', 'Auto (intelligent selection)')
-                        .addOption('whisper', 'OpenAI whisper')
+                        .addOption('auto', 'Automatic (recommended)')
+                        .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
                         .onChange(async (value) => {
@@ -61,8 +61,8 @@ export class SimpleSettingsTab extends PluginSettingTab {
             // Auto 모드일 때는 양쪽 API 키 모두 표시
             if (provider === 'auto' || provider === 'whisper') {
                 new Setting(containerEl)
-                    .setName('OpenAI API key')
-                    .setDesc('Enter your OpenAI API key for whisper')
+                    .setName('API key for OpenAI')
+                    .setDesc('Enter your API key for OpenAI Whisper')
                     .addText((text) =>
                         text
                             .setPlaceholder('Sk-...')
@@ -92,14 +92,14 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 // Deepgram 모델 선택
                 if (provider === 'deepgram') {
                     new Setting(containerEl)
-                        .setName('Deepgram model')
+                        .setName('Model for Deepgram')
                         .setDesc('Select the deepgram model to use')
                         .addDropdown((dropdown) =>
                             dropdown
                                 .addOption('nova-2', 'Nova 2 (premium)')
                                 .addOption('nova', 'Nova (standard)')
-                                .addOption('enhanced', 'Enhanced')
-                                .addOption('base', 'Base (economy)')
+                                .addOption('enhanced', 'Enhanced model')
+                                .addOption('base', 'Base model (economy)')
                                 .setValue(
                                     this.plugin.settings.transcription?.deepgram?.model || 'nova-2'
                                 )
@@ -152,7 +152,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 );
 
             // 디버그 정보
-            new Setting(containerEl).setName('Debug information').setHeading();
+            new Setting(containerEl).setName('Debug details').setHeading();
 
             const debugInfo = {
                 provider: this.plugin.settings.provider,
