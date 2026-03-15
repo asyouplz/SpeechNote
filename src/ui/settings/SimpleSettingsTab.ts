@@ -65,7 +65,7 @@ export class SimpleSettingsTab extends PluginSettingTab {
                     .setDesc('Enter your API key for OpenAI Whisper')
                     .addText((text) =>
                         text
-                            .setPlaceholder('Sk-...')
+                            .setPlaceholder('sk-...')
                             .setValue(this.plugin.settings.apiKey || '')
                             .onChange(async (value) => {
                                 this.plugin.settings.apiKey = value;
@@ -92,14 +92,14 @@ export class SimpleSettingsTab extends PluginSettingTab {
                 // Deepgram 모델 선택
                 if (provider === 'deepgram') {
                     new Setting(containerEl)
-                        .setName('Model for Deepgram')
+                        .setName('Deepgram model')
                         .setDesc('Select the deepgram model to use')
                         .addDropdown((dropdown) =>
                             dropdown
                                 .addOption('nova-2', 'Nova 2 (premium)')
                                 .addOption('nova', 'Nova (standard)')
-                                .addOption('enhanced', 'Enhanced model')
-                                .addOption('base', 'Base model (economy)')
+                                .addOption('enhanced', 'Enhanced')
+                                .addOption('base', 'Base (economy)')
                                 .setValue(
                                     this.plugin.settings.transcription?.deepgram?.model || 'nova-2'
                                 )

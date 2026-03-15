@@ -1,3 +1,31 @@
+## [4.0.12](https://github.com/asyouplz/SpeechNote/compare/v4.0.11...v4.0.12) (2026-03-14)
+
+### 🐛 Bug Fixes
+
+* **ui:** use lowercase openai key placeholders ([#79](https://github.com/asyouplz/SpeechNote/issues/79)) ([fcae62a](https://github.com/asyouplz/SpeechNote/commit/fcae62a84512f91b9b4b35cb4afb973a75cc9686))
+
+## [4.0.11](https://github.com/asyouplz/SpeechNote/compare/v4.0.10...v4.0.11) (2026-03-14)
+
+### 🐛 Bug Fixes
+
+* **ui:** use lowercase openai key placeholders ([#78](https://github.com/asyouplz/SpeechNote/issues/78)) ([e7f4139](https://github.com/asyouplz/SpeechNote/commit/e7f4139979eeb5a249911c6f8b5058b88e807ada))
+
+### 🔧 Maintenance
+
+* **ci:** update actions for node 24 runners ([#77](https://github.com/asyouplz/SpeechNote/issues/77)) ([cbdb374](https://github.com/asyouplz/SpeechNote/commit/cbdb374e9d778587da555c1928e16a3599d90308))
+* **deps:** bump undici and @actions/http-client ([#74](https://github.com/asyouplz/SpeechNote/issues/74)) ([68312a2](https://github.com/asyouplz/SpeechNote/commit/68312a2b1fb2f4282abf49a464c17b4f4afdd79e))
+
+## [4.0.10](https://github.com/asyouplz/SpeechNote/compare/v4.0.9...v4.0.10) (2026-03-13)
+
+### 🐛 Bug Fixes
+
+* **ui:** align settings review follow-ups ([#73](https://github.com/asyouplz/SpeechNote/issues/73)) ([1686d84](https://github.com/asyouplz/SpeechNote/commit/1686d84e85e5c4a69316121ae4874f4eb7ae0e60))
+
+### 🔧 Maintenance
+
+* **deps:** bump minimatch ([#72](https://github.com/asyouplz/SpeechNote/issues/72)) ([f5638bf](https://github.com/asyouplz/SpeechNote/commit/f5638bf4a4535ba97648e2fef2d3a57c65c18a04))
+* **deps:** bump tar and npm ([#71](https://github.com/asyouplz/SpeechNote/issues/71)) ([e1e6521](https://github.com/asyouplz/SpeechNote/commit/e1e6521b5e8bfe7d8f37d4b8ab90b8b32fad38dd))
+
 ## [4.0.9](https://github.com/asyouplz/SpeechNote/compare/v4.0.8...v4.0.9) (2026-03-10)
 
 ### 🐛 Bug Fixes
