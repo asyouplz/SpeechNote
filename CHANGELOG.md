@@ -1,3 +1,9 @@
+## [4.0.13](https://github.com/asyouplz/SpeechNote/compare/v4.0.12...v4.0.13) (2026-03-15)
+
+### 🐛 Bug Fixes
+
+* **release:** trigger patch release for sentence case follow-ups ([d420ecc](https://github.com/asyouplz/SpeechNote/commit/d420ecc67bfa9a4798778dd915678b361f80e569)), closes [#80](https://github.com/asyouplz/SpeechNote/issues/80)
+
 ## [4.0.12](https://github.com/asyouplz/SpeechNote/compare/v4.0.11...v4.0.12) (2026-03-14)
 
 ### 🐛 Bug Fixes
