@@ -54,7 +54,7 @@ export class SettingsTab extends PluginSettingTab {
 
         // Add debug info section at the top
         const debugSection = containerEl.createEl('details', { cls: 'speech-to-text-debug' });
-        debugSection.createEl('summary', { text: 'Debug information' });
+        debugSection.createEl('summary', { text: 'Debug details' });
         debugSection.createEl('pre', {
             text: JSON.stringify(
                 {
@@ -152,7 +152,7 @@ export class SettingsTab extends PluginSettingTab {
                     this.debug('Dropdown component:', dropdown);
 
                     dropdown
-                        .addOption('auto', 'Auto (intelligent selection)')
+                        .addOption('auto', 'Automatic (recommended)')
                         .addOption('whisper', 'OpenAI Whisper')
                         .addOption('deepgram', 'Deepgram')
                         .setValue(this.plugin.settings.provider || 'auto')
@@ -259,11 +259,11 @@ export class SettingsTab extends PluginSettingTab {
             .setDesc('How to choose between available providers')
             .addDropdown((dropdown) => {
                 dropdown
-                    .addOption('cost_optimized', 'Cost optimized')
-                    .addOption('performance_optimized', 'Performance optimized')
-                    .addOption('quality_optimized', 'Quality optimized')
-                    .addOption('round_robin', 'Round robin')
-                    .addOption('ab_test', 'A/B testing')
+                    .addOption('cost_optimized', 'Cost-optimized')
+                    .addOption('performance_optimized', 'Performance-optimized')
+                    .addOption('quality_optimized', 'Quality-optimized')
+                    .addOption('round_robin', 'Round-robin')
+                    .addOption('ab_test', 'A/B tests')
                     .setValue(
                         this.plugin.settings.selectionStrategy ||
                             SelectionStrategy.PERFORMANCE_OPTIMIZED
@@ -295,7 +295,7 @@ export class SettingsTab extends PluginSettingTab {
             });
 
         // API Keys for both providers
-        new Setting(containerEl).setName('Provider API keys').setHeading();
+        new Setting(containerEl).setName('API keys for providers').setHeading();
         containerEl.createEl('p', {
             text: 'Configure API keys for each provider to enable automatic selection',
             cls: 'setting-item-description',
@@ -366,8 +366,8 @@ export class SettingsTab extends PluginSettingTab {
 
     private renderWhisperApiKey(containerEl: HTMLElement): void {
         new Setting(containerEl)
-            .setName('OpenAI API key')
-            .setDesc('Enter your OpenAI API key for Whisper transcription')
+            .setName('API key for OpenAI')
+            .setDesc('Enter your API key for OpenAI Whisper transcription')
             .addText((text) => {
                 text.setPlaceholder('sk-...')
                     .setValue(this.maskApiKey(this.plugin.settings.apiKey || ''))
@@ -378,7 +378,7 @@ export class SettingsTab extends PluginSettingTab {
                             await this.plugin.saveSettings();
 
                             text.setValue(this.maskApiKey(value));
-                            new Notice('OpenAI API key saved.');
+                            new Notice('Saved the API key for OpenAI.');
                         }
                     });
 

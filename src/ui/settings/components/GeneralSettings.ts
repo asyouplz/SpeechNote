@@ -129,7 +129,7 @@ export class GeneralSettings {
             .setDesc('Choose the plugin UI theme')
             .addDropdown((dropdown) =>
                 dropdown
-                    .addOption('auto', 'Auto (follow system)')
+                    .addOption('auto', 'Automatic (follow system)')
                     .addOption('light', 'Light')
                     .addOption('dark', 'Dark')
                     .setValue('auto')
