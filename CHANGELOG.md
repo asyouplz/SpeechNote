@@ -1,3 +1,9 @@
+## [4.0.14](https://github.com/asyouplz/SpeechNote/compare/v4.0.13...v4.0.14) (2026-03-15)
+
+### 🐛 Bug Fixes
+
+* **settings:** normalize review bot sentence case text ([90e5026](https://github.com/asyouplz/SpeechNote/commit/90e502638618bc659cc396d7e1807c088e0f1cac))
+
 ## [4.0.13](https://github.com/asyouplz/SpeechNote/compare/v4.0.12...v4.0.13) (2026-03-15)
 
 ### 🐛 Bug Fixes
