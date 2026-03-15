@@ -16,6 +16,7 @@ SpeechNote 플러그인의 릴리스 프로세스 문서입니다.
    ```
 
 2. PR을 `main` 브랜치로 머지합니다.
+   - semantic-release는 `main`에 실제로 들어간 최종 커밋 제목을 분석하므로, squash merge를 사용할 때도 머지 커밋 제목을 Conventional Commit 형식으로 유지해야 합니다.
 
 3. GitHub Actions가 자동으로:
    - 버전 업데이트
