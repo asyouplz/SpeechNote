@@ -20,7 +20,7 @@ SpeechNote 플러그인의 릴리스 프로세스 문서입니다.
 
 3. GitHub Actions가 자동으로:
    - 버전 업데이트
-   - CHANGELOG.md 생성
+   - GitHub Release 노트 생성
    - GitHub Release 생성
    - 빌드 아티팩트 업로드
 

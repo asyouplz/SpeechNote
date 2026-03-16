@@ -1058,7 +1058,7 @@ This project uses **semantic-release** for fully automated versioning and releas
 2.  **CI/CD Pipeline**: GitHub Actions triggered on push to `main` will:
     - Analyze commits to determine the next version (feat -> minor, fix -> patch, BREAKING CHANGE -> major).
     - Update `manifest.json`, `package.json`, and `versions.json`.
-    - Generate `CHANGELOG.md`.
+    - Generate GitHub Release notes.
     - Create a git tag and GitHub Release with built assets.
 
 ### 📝 Conventional Commits
