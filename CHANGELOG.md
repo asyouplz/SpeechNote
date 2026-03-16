@@ -1,3 +1,9 @@
+## [4.0.15](https://github.com/asyouplz/SpeechNote/compare/v4.0.14...v4.0.15) (2026-03-16)
+
+### 🐛 Bug Fixes
+
+* address obsidian review bot settings copy ([#82](https://github.com/asyouplz/SpeechNote/issues/82)) ([de37e9f](https://github.com/asyouplz/SpeechNote/commit/de37e9f814e063f3a6d74808199dd20a2ae38b99))
+
 ## [4.0.14](https://github.com/asyouplz/SpeechNote/compare/v4.0.13...v4.0.14) (2026-03-15)
 
 ### 🐛 Bug Fixes
