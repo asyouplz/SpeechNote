@@ -179,7 +179,7 @@ Fixes #456
 Releases are managed by maintainers:
 
 1. Version bump in `package.json` and `manifest.json`
-2. Update `CHANGELOG.md`
+2. Publish release notes on GitHub
 3. Create a GitHub release with release notes
 4. Publish to Obsidian Community Plugins (maintainers only)
 

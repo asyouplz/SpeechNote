@@ -162,9 +162,12 @@ docs/BRANCH_PROTECTION.md
 docs/LINT_RULES.md
 docs/obsidian-review-8004-issuecomment-3839142330.md
 docs/obsidian-review-8004-issuecomment-3839840641.md
+docs/obsidian-review-8004-issuecomment-3840783932.md
 docs/obsidian-review-8004-issuecomment-3885815068-detailed-response.md
 docs/obsidian-review-8004-issuecomment-3885815068.md
+docs/obsidian-review-8004-issuecomment-4007884875-plan.md
 docs/obsidian-review-8004.md
+docs/obsidian-review-8004-sentence-case-followup-plan.md
 
 # Lint and typecheck output files
 lint-output.txt
@@ -181,6 +184,7 @@ AGENTS.md
 CODE_OF_CONDUCT.md
 CLAUDE.md
 CHANGELOG.md
+SECURITY.md
 
 # Semantic Release
 .semantic-release-cache/
