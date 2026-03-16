@@ -100,7 +100,7 @@ export class AudioSettings {
             .setDesc('Enter an optional prompt to guide speech recognition')
             .addTextArea((text) =>
                 text
-                    .setPlaceholder('Example: This recording contains medical terminology.')
+                    .setPlaceholder('For example: this recording contains medical terminology.')
                     .setValue(this.plugin.settings.prompt || '')
                     .onChange(async (value) => {
                         this.plugin.settings.prompt = value;

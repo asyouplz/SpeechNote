@@ -48,9 +48,7 @@ export class SettingsTab extends PluginSettingTab {
         containerEl.empty();
         containerEl.addClass('speech-to-text-settings');
 
-        // Add main title
-        new Setting(containerEl).setName('Speech to text').setHeading();
-        this.debug('Title setting created');
+        this.debug('Using plugin settings container without a duplicate title heading');
 
         // Add debug info section at the top
         const debugSection = containerEl.createEl('details', { cls: 'speech-to-text-debug' });
@@ -309,7 +307,7 @@ export class SettingsTab extends PluginSettingTab {
     }
 
     private renderWhisperSettings(containerEl: HTMLElement): void {
-        new Setting(containerEl).setName('General transcription').setHeading();
+        new Setting(containerEl).setName('Transcription defaults').setHeading();
 
         // Whisper API Key
         this.renderWhisperApiKey(containerEl);
