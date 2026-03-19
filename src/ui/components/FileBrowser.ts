@@ -176,10 +176,10 @@ export class FileBrowser {
                 isExpanded = !isExpanded;
                 if (isExpanded) {
                     fileList.show();
-                    folderHeader.removeClass('collapsed');
+                    folderHeader.removeClass('sn-is-collapsed');
                 } else {
                     fileList.hide();
-                    folderHeader.addClass('is-collapsed');
+                    folderHeader.addClass('sn-is-collapsed');
                 }
             });
 
@@ -225,12 +225,12 @@ export class FileBrowser {
         // 클릭 이벤트
         fileItem.addEventListener('click', () => {
             this.selectFile(file);
-            fileItem.addClass('is-selected');
+            fileItem.addClass('sn-is-selected');
 
             // 다른 선택 해제
             container.querySelectorAll('.sn-file-item').forEach((item) => {
                 if (item !== fileItem) {
-                    item.removeClass('is-selected');
+                    item.removeClass('sn-is-selected');
                 }
             });
         });

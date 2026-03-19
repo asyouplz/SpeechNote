@@ -65,7 +65,7 @@ export class ProgressBar {
 
     create(container: HTMLElement): HTMLElement {
         this.element = createEl('div', {
-            cls: `progress-bar progress-bar--${this.options.size} progress-bar--${this.options.color}`,
+            cls: `sn-progress-bar sn-progress-bar--${this.options.size} sn-progress-bar--${this.options.color}`,
         });
         this.element.setAttribute('role', 'progressbar');
         this.element.setAttribute('aria-valuemin', String(this.options.min));
@@ -79,24 +79,24 @@ export class ProgressBar {
         // 라벨
         if (this.options.label) {
             this.labelElement = createEl('div', {
-                cls: 'progress-bar__label',
+                cls: 'sn-progress-bar__label',
                 text: this.options.label,
             });
             this.element.appendChild(this.labelElement);
         }
 
         // 진행률 바 컨테이너
-        const barContainer = createEl('div', { cls: 'progress-bar__container' });
+        const barContainer = createEl('div', { cls: 'sn-progress-bar__container' });
 
         // 진행률 채우기
-        this.progressFill = createEl('div', { cls: 'progress-bar__fill' });
+        this.progressFill = createEl('div', { cls: 'sn-progress-bar__fill' });
 
         if (this.options.striped) {
-            this.progressFill.classList.add('progress-bar__fill--striped');
+            this.progressFill.classList.add('sn-progress-bar__fill--striped');
         }
 
         if (this.options.indeterminate) {
-            this.progressFill.classList.add('progress-bar__fill--indeterminate');
+            this.progressFill.classList.add('sn-progress-bar__fill--indeterminate');
         } else {
             this.updateProgress(this.currentValue);
         }
@@ -105,12 +105,12 @@ export class ProgressBar {
         this.element.appendChild(barContainer);
 
         // 정보 표시 영역
-        const infoContainer = createEl('div', { cls: 'progress-bar__info' });
+        const infoContainer = createEl('div', { cls: 'sn-progress-bar__info' });
 
         // 퍼센트 표시
         if (this.options.showPercentage && !this.options.indeterminate) {
             this.percentageElement = createEl('span', {
-                cls: 'progress-bar__percentage',
+                cls: 'sn-progress-bar__percentage',
                 text: '0%',
             });
             infoContainer.appendChild(this.percentageElement);
@@ -119,7 +119,7 @@ export class ProgressBar {
         // 예상 시간 표시
         if (this.options.showTimeRemaining && !this.options.indeterminate) {
             this.timeRemainingElement = createEl('span', {
-                cls: 'progress-bar__time-remaining',
+                cls: 'sn-progress-bar__time-remaining',
                 text: 'Calculating...',
             });
             infoContainer.appendChild(this.timeRemainingElement);
@@ -292,14 +292,14 @@ export class ProgressBar {
 
         // 기존 색상 클래스 제거
         this.element.classList.remove(
-            'progress-bar--primary',
-            'progress-bar--success',
-            'progress-bar--warning',
-            'progress-bar--error'
+            'sn-progress-bar--primary',
+            'sn-progress-bar--success',
+            'sn-progress-bar--warning',
+            'sn-progress-bar--error'
         );
 
         // 새 색상 클래스 추가
-        this.element.classList.add(`progress-bar--${color}`);
+        this.element.classList.add(`sn-progress-bar--${color}`);
         this.options.color = color;
     }
 
@@ -308,7 +308,7 @@ export class ProgressBar {
      */
     setLabel(label: string) {
         if (!this.labelElement) {
-            this.labelElement = createEl('div', { cls: 'progress-bar__label' });
+            this.labelElement = createEl('div', { cls: 'sn-progress-bar__label' });
             this.element?.insertBefore(this.labelElement, this.element.firstChild);
         }
 
@@ -325,7 +325,7 @@ export class ProgressBar {
         if (!this.progressFill) return;
 
         if (indeterminate) {
-            this.progressFill.classList.add('progress-bar__fill--indeterminate');
+            this.progressFill.classList.add('sn-progress-bar__fill--indeterminate');
             this.progressFill.removeAttribute('style');
 
             if (this.percentageElement) {
@@ -335,7 +335,7 @@ export class ProgressBar {
                 this.timeRemainingElement.classList.add('sn-hidden');
             }
         } else {
-            this.progressFill.classList.remove('progress-bar__fill--indeterminate');
+            this.progressFill.classList.remove('sn-progress-bar__fill--indeterminate');
             this.updateProgress(this.currentValue);
 
             if (this.percentageElement) {
@@ -387,10 +387,10 @@ export class MultiStepProgressBar {
     }
 
     create(container: HTMLElement): HTMLElement {
-        this.element = createEl('div', { cls: 'multi-step-progress' });
+        this.element = createEl('div', { cls: 'sn-multi-step-progress' });
 
         // 단계 표시
-        this.stepsContainer = createEl('div', { cls: 'multi-step-progress__steps' });
+        this.stepsContainer = createEl('div', { cls: 'sn-multi-step-progress__steps' });
         const stepsContainer = this.stepsContainer;
         if (!stepsContainer) {
             container.appendChild(this.element);
@@ -402,12 +402,12 @@ export class MultiStepProgressBar {
             stepEl.setAttribute('data-step-id', step.id);
 
             const stepNumber = createEl('span', {
-                cls: 'step__number',
+                cls: 'sn-step__number',
                 text: String(index + 1),
             });
 
             const stepLabel = createEl('span', {
-                cls: 'step__label',
+                cls: 'sn-step__label',
                 text: step.label,
             });
 
@@ -426,7 +426,7 @@ export class MultiStepProgressBar {
         this.element.appendChild(stepsContainer);
 
         // 전체 진행률 바
-        const progressContainer = createEl('div', { cls: 'multi-step-progress__bar' });
+        const progressContainer = createEl('div', { cls: 'sn-multi-step-progress__bar' });
         this.progressBar.create(progressContainer);
         this.element.appendChild(progressContainer);
 
@@ -499,7 +499,7 @@ export class MultiStepProgressBar {
 
         const stepEl = this.stepsContainer?.querySelector(`[data-step-id="${stepId}"]`);
         if (stepEl) {
-            stepEl.className = `step step--${status}`;
+            stepEl.className = `sn-step sn-step--${status}`;
 
             // ARIA 속성 업데이트
             switch (status) {

@@ -25,7 +25,7 @@ export class UIComponentFactory {
         });
 
         if (icon) {
-            statusEl.createSpan({ text: icon, cls: 'status-icon' });
+            statusEl.createSpan({ text: icon, cls: 'sn-status-icon' });
         }
 
         statusEl.createSpan({ text, cls: 'status-text' });
@@ -53,7 +53,7 @@ export class UIComponentFactory {
         }
 
         const progressBar = progressContainer.createDiv({
-            cls: 'progress-bar',
+            cls: 'sn-progress-bar',
             attr: {
                 role: 'progressbar',
                 'aria-valuenow': String(value),
@@ -64,7 +64,7 @@ export class UIComponentFactory {
         });
 
         const progressFill = progressBar.createDiv({
-            cls: 'progress-fill',
+            cls: 'sn-progress-fill',
             attr: {
                 style: `width: ${(value / max) * 100}%`,
             },
@@ -73,7 +73,7 @@ export class UIComponentFactory {
         // 접근성을 위한 텍스트
         progressFill.createSpan({
             text: `${Math.round((value / max) * 100)}%`,
-            cls: 'progress-text',
+            cls: 'sn-progress-text',
         });
 
         return progressContainer;
@@ -198,7 +198,7 @@ export class UIComponentFactory {
             // 탭 버튼
             const tabButton = tabList.createEl('button', {
                 text: tab.label,
-                cls: `tab-button ${tab.id === activeTab ? 'active' : ''}`,
+                cls: `sn-tab-button ${tab.id === activeTab ? 'sn-is-active' : ''}`,
                 attr: {
                     role: 'tab',
                     id: `tab-${tab.id}`,
@@ -210,7 +210,7 @@ export class UIComponentFactory {
 
             // 탭 패널
             const tabPanel = tabPanels.createDiv({
-                cls: `tab-panel ${tab.id === activeTab ? 'active' : ''}`,
+                cls: `sn-tab-panel ${tab.id === activeTab ? 'sn-is-active' : ''}`,
                 attr: {
                     role: 'tabpanel',
                     id: `panel-${tab.id}`,
@@ -226,14 +226,14 @@ export class UIComponentFactory {
             // 이벤트 핸들러
             tabButton.onclick = () => {
                 // 모든 탭 비활성화
-                tabList.querySelectorAll('.tab-button').forEach((btn) => {
-                    btn.classList.remove('active');
+                tabList.querySelectorAll('.sn-tab-button').forEach((btn) => {
+                    btn.classList.remove('sn-is-active');
                     btn.setAttribute('aria-selected', 'false');
                     btn.setAttribute('tabindex', '-1');
                 });
 
-                tabPanels.querySelectorAll('.tab-panel').forEach((panel) => {
-                    panel.classList.remove('active');
+                tabPanels.querySelectorAll('.sn-tab-panel').forEach((panel) => {
+                    panel.classList.remove('sn-is-active');
                     panel.setAttribute('hidden', 'true');
                     if (panel instanceof HTMLElement) {
                         panel.empty();
@@ -241,11 +241,11 @@ export class UIComponentFactory {
                 });
 
                 // 선택된 탭 활성화
-                tabButton.classList.add('active');
+                tabButton.classList.add('sn-is-active');
                 tabButton.setAttribute('aria-selected', 'true');
                 tabButton.setAttribute('tabindex', '0');
 
-                tabPanel.classList.add('active');
+                tabPanel.classList.add('sn-is-active');
                 tabPanel.removeAttribute('hidden');
                 tabPanel.appendChild(tab.content());
 
@@ -269,7 +269,7 @@ export class UIComponentFactory {
                 }
 
                 e.preventDefault();
-                const newTab = tabList.querySelectorAll('.tab-button')[newIndex];
+                const newTab = tabList.querySelectorAll('.sn-tab-button')[newIndex];
                 if (newTab instanceof HTMLElement) {
                     newTab.click();
                     newTab.focus();
@@ -294,7 +294,7 @@ export class UIComponentFactory {
      */
     static createLoadingSpinner(containerEl: HTMLElement, text = 'Loading...'): HTMLElement {
         const spinnerEl = containerEl.createDiv({
-            cls: 'loading-spinner',
+            cls: 'sn-loading-spinner',
             attr: {
                 role: 'status',
                 'aria-label': text,
@@ -302,7 +302,7 @@ export class UIComponentFactory {
         });
 
         spinnerEl.createDiv({ cls: 'spinner' });
-        spinnerEl.createSpan({ text, cls: 'spinner-text' });
+        spinnerEl.createSpan({ text, cls: 'sn-loading-message' });
 
         return spinnerEl;
     }

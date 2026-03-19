@@ -457,7 +457,7 @@ export class StatisticsDashboard {
         };
 
         Object.entries(updates).forEach(([id, value]) => {
-            const card = this.element?.querySelector(`[data-stat-id="${id}"] .stats-card__value`);
+            const card = this.element?.querySelector(`[data-stat-id="${id}"] .sn-stats-card__value`);
             if (card) {
                 card.textContent = value;
             }
@@ -506,7 +506,7 @@ export class StatisticsDashboard {
             });
             bar.appendChild(valueLabel);
 
-            const barLabel = createEl('span', { cls: 'bar-chart__label', text: `${hour}:00` });
+            const barLabel = createEl('span', { cls: 'sn-bar-chart__label', text: `${hour}:00` });
             bar.appendChild(barLabel);
 
             chartContainer.appendChild(bar);
@@ -624,7 +624,7 @@ export class StatisticsDashboard {
             row.appendChild(wordCountCell);
 
             const actionCell = createEl('td');
-            const actionBtn = createEl('button', { cls: 'action-btn', text: 'View' });
+            const actionBtn = createEl('button', { cls: 'sn-action-btn', text: 'View' });
             actionBtn.dataset.recordId = record.id;
             actionBtn.dataset.action = 'view';
             actionBtn.addEventListener('click', () => {

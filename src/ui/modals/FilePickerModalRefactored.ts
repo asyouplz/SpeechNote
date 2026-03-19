@@ -144,7 +144,7 @@ export class FilePickerModalRefactored extends Modal {
      * 모달 설정 - 단일 책임
      */
     private setupModal(): void {
-        this.modalEl.addClass('file-picker-modal', 'speech-to-text-modal');
+        this.modalEl.addClass('sn-file-picker-modal', 'speech-to-text-modal');
     }
 
     onOpen() {
@@ -219,16 +219,16 @@ export class FilePickerModalRefactored extends Modal {
 
         // Remove all active classes
         [browseTab, browseContent, recentTab, recentContent].forEach((el) => {
-            el?.removeClass('active');
+            el?.removeClass('sn-is-active');
         });
 
         // Add active class to selected tab
         if (tab === 'browse') {
-            browseTab.addClass('active');
-            browseContent.addClass('active');
+            browseTab.addClass('sn-is-active');
+            browseContent.addClass('sn-is-active');
         } else if (recentTab && recentContent) {
-            recentTab.addClass('active');
-            recentContent.addClass('active');
+            recentTab.addClass('sn-is-active');
+            recentContent.addClass('sn-is-active');
         }
 
         this.state.activeTab = tab;
@@ -509,7 +509,7 @@ export class FilePickerModalRefactored extends Modal {
     private refreshUI(): void {
         requestAnimationFrame(() => {
             // Update selected files list
-            const listContainer = this.modalEl.querySelector('.selected-files-list');
+            const listContainer = this.modalEl.querySelector('.sn-selected-files-list');
             if (listContainer instanceof HTMLElement) {
                 this.updateSelectedFilesList(listContainer);
             }
@@ -621,10 +621,10 @@ class FilePickerUIBuilder {
     ) {}
 
     buildHeader(): void {
-        const header = this.container.createDiv('file-picker-header');
+        const header = this.container.createDiv('sn-file-picker-header');
         header.createEl('h2', { text: this.options.title });
 
-        const subtitle = header.createEl('p', { cls: 'file-picker-subtitle' });
+        const subtitle = header.createEl('p', { cls: 'sn-file-picker-subtitle' });
         this.buildSubtitle(subtitle);
     }
 
@@ -647,20 +647,20 @@ class FilePickerUIBuilder {
     buildDragDropSection(): void {
         if (!this.options.enableDragDrop || !this.components.dragDropZone) return;
 
-        const dropSection = this.container.createDiv('drag-drop-section');
+        const dropSection = this.container.createDiv('sn-drag-drop-section');
         this.components.dragDropZone.mount(dropSection);
     }
 
     buildTabContainer(): TabContainer {
-        const tabContainer = this.container.createDiv('file-picker-tabs');
-        const tabHeader = tabContainer.createDiv('tab-header');
+        const tabContainer = this.container.createDiv('sn-file-picker-tabs');
+        const tabHeader = tabContainer.createDiv('sn-tab-header');
 
         const browseTab = this.createTab(tabHeader, 'Browse', true);
         const recentTab = this.options.showRecentFiles
             ? this.createTab(tabHeader, 'Recent', false)
             : null;
 
-        const tabContent = tabContainer.createDiv('tab-content');
+        const tabContent = tabContainer.createDiv('sn-tab-content');
         const browseContent = this.createBrowseContent(tabContent);
         const recentContent = this.options.showRecentFiles
             ? this.createRecentContent(tabContent)
@@ -671,19 +671,19 @@ class FilePickerUIBuilder {
 
     private createTab(container: HTMLElement, label: string, active: boolean): HTMLElement {
         return container.createDiv({
-            cls: `tab-button ${active ? 'active' : ''}`,
+            cls: `sn-tab-button ${active ? 'sn-is-active' : ''}`,
             text: label,
         });
     }
 
     private createBrowseContent(container: HTMLElement): HTMLElement {
-        const content = container.createDiv('browse-content active');
+        const content = container.createDiv('sn-browse-content sn-is-active');
         this.components.fileBrowser.mount(content);
         return content;
     }
 
     private createRecentContent(container: HTMLElement): HTMLElement {
-        const content = container.createDiv('recent-content');
+        const content = container.createDiv('sn-recent-content');
         if (this.components.recentFiles) {
             this.components.recentFiles.mount(content);
         }
@@ -691,10 +691,10 @@ class FilePickerUIBuilder {
     }
 
     buildSelectedFilesSection(updateCallback: (container: HTMLElement) => void): void {
-        const section = this.container.createDiv('selected-files-section');
+        const section = this.container.createDiv('sn-selected-files-section');
         section.createEl('h3', { text: 'Selected files' });
 
-        const fileList = section.createDiv('selected-files-list');
+        const fileList = section.createDiv('sn-selected-files-list');
         updateCallback(fileList);
     }
 
@@ -703,7 +703,7 @@ class FilePickerUIBuilder {
     }
 
     buildFooter(onCancel: () => void, onSubmit: () => void, fileCount: number): void {
-        const footer = this.container.createDiv('file-picker-footer');
+        const footer = this.container.createDiv('sn-file-picker-footer');
 
         new Setting(footer)
             .addButton((btn) => btn.setButtonText('Cancel').onClick(onCancel))
@@ -739,7 +739,7 @@ class SelectedFilesListRenderer {
     }
 
     private renderFileItem(file: TFile): void {
-        const fileItem = this.container.createDiv('selected-file-item');
+        const fileItem = this.container.createDiv('sn-selected-file-item');
 
         this.renderFileInfo(fileItem, file);
         this.renderValidationStatus(fileItem, file);
@@ -747,11 +747,11 @@ class SelectedFilesListRenderer {
     }
 
     private renderFileInfo(container: HTMLElement, file: TFile): void {
-        const fileInfo = container.createDiv('file-info');
-        fileInfo.createEl('span', { text: file.name, cls: 'file-name' });
+        const fileInfo = container.createDiv('sn-file-info');
+        fileInfo.createEl('span', { text: file.name, cls: 'sn-file-name' });
         fileInfo.createEl('span', {
             text: this.formatFileSize(file.stat.size),
-            cls: 'file-size',
+            cls: 'sn-file-size',
         });
     }
 
@@ -759,13 +759,13 @@ class SelectedFilesListRenderer {
         const validation = this.validationResults.get(file.path);
         if (!validation) return;
 
-        const statusIcon = container.createDiv('validation-status');
+        const statusIcon = container.createDiv('sn-validation-status');
 
         if (validation.valid) {
-            statusIcon.addClass('valid');
+            statusIcon.addClass('sn-is-valid');
             statusIcon.setText('✓');
         } else {
-            statusIcon.addClass('invalid');
+            statusIcon.addClass('sn-is-invalid');
             statusIcon.setText('✗');
             statusIcon.title = validation.errors?.map((error) => error.message).join('\n') || '';
         }
@@ -774,7 +774,7 @@ class SelectedFilesListRenderer {
     private renderRemoveButton(container: HTMLElement, file: TFile): void {
         const removeBtn = container.createEl('button', {
             text: 'Remove',
-            cls: 'remove-file-btn',
+            cls: 'sn-remove-file-btn',
         });
 
         removeBtn.onclick = () => this.onRemove(file);
