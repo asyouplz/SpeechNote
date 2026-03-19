@@ -120,7 +120,7 @@ export class FilePickerModal extends Modal {
         }
 
         // 모달 클래스 추가
-        this.modalEl?.classList?.add('file-picker-modal');
+        this.modalEl?.classList?.add('sn-file-picker-modal');
         this.modalEl?.classList?.add('speech-to-text-modal');
     }
 
@@ -149,17 +149,17 @@ export class FilePickerModal extends Modal {
         }
 
         // 탭 컨테이너
-        const tabContainer = contentEl.createDiv('file-picker-tabs');
+        const tabContainer = contentEl.createDiv('sn-file-picker-tabs');
 
         // 탭 헤더
-        const tabHeader = tabContainer.createDiv('tab-header');
+        const tabHeader = tabContainer.createDiv('sn-tab-header');
         const browseTab = this.createTab(tabHeader, 'Browse', true);
         const recentTab = this.options.showRecentFiles
             ? this.createTab(tabHeader, 'Recent', false)
             : null;
 
         // 탭 콘텐츠
-        const tabContent = tabContainer.createDiv('tab-content');
+        const tabContent = tabContainer.createDiv('sn-tab-content');
         const browseContent = this.createBrowseContent(tabContent);
         const recentContent = this.options.showRecentFiles
             ? this.createRecentContent(tabContent)
@@ -182,10 +182,10 @@ export class FilePickerModal extends Modal {
     }
 
     private createHeader(container: HTMLElement) {
-        const header = container.createDiv('file-picker-header');
+        const header = container.createDiv('sn-file-picker-header');
         header.createEl('h2', { text: this.options.title });
 
-        const subtitle = header.createEl('p', { cls: 'file-picker-subtitle' });
+        const subtitle = header.createEl('p', { cls: 'sn-file-picker-subtitle' });
         if (this.options.accept.length > 0) {
             subtitle.setText(
                 `Supported formats: ${this.options.accept.map((ext) => `.${ext}`).join(', ')}`
@@ -201,7 +201,7 @@ export class FilePickerModal extends Modal {
     private createDragDropSection(container: HTMLElement) {
         if (!this.dragDropZone) return;
 
-        const dropSection = container.createDiv('drag-drop-section');
+        const dropSection = container.createDiv('sn-drag-drop-section');
 
         this.dragDropZone.mount(dropSection);
         this.dragDropZone.onFilesDropped((files) => {
@@ -210,7 +210,7 @@ export class FilePickerModal extends Modal {
     }
 
     private createBrowseContent(container: HTMLElement): HTMLElement {
-        const browseContent = container.createDiv('browse-content active');
+        const browseContent = container.createDiv('sn-browse-content sn-is-active');
 
         // 파일 브라우저 마운트
         this.fileBrowser.mount(browseContent);
@@ -224,7 +224,7 @@ export class FilePickerModal extends Modal {
     }
 
     private createRecentContent(container: HTMLElement): HTMLElement {
-        const recentContent = container.createDiv('recent-content');
+        const recentContent = container.createDiv('sn-recent-content');
 
         if (this.recentFiles) {
             this.recentFiles.mount(recentContent);
@@ -239,10 +239,10 @@ export class FilePickerModal extends Modal {
     }
 
     private createSelectedFilesSection(container: HTMLElement) {
-        const section = container.createDiv('selected-files-section');
+        const section = container.createDiv('sn-selected-files-section');
         section.createEl('h3', { text: 'Selected files' });
 
-        const fileList = section.createDiv('selected-files-list');
+        const fileList = section.createDiv('sn-selected-files-list');
         this.updateSelectedFilesList(fileList);
     }
 
@@ -252,31 +252,31 @@ export class FilePickerModal extends Modal {
         if (this.selectedFiles.length === 0) {
             container.createEl('p', {
                 text: 'No files selected',
-                cls: 'no-files-message',
+                cls: 'sn-no-files-message',
             });
             return;
         }
 
         this.selectedFiles.forEach((file) => {
-            const fileItem = container.createDiv('selected-file-item');
+            const fileItem = container.createDiv('sn-selected-file-item');
 
             // 파일 정보
-            const fileInfo = fileItem.createDiv('file-info');
-            fileInfo.createEl('span', { text: file.name, cls: 'file-name' });
+            const fileInfo = fileItem.createDiv('sn-file-info');
+            fileInfo.createEl('span', { text: file.name, cls: 'sn-file-name' });
             fileInfo.createEl('span', {
                 text: this.formatFileSize(file.stat.size),
-                cls: 'file-size',
+                cls: 'sn-file-size',
             });
 
             // 검증 상태
             const validation = this.validationResults.get(file.path);
             if (validation) {
-                const statusIcon = fileItem.createDiv('validation-status');
+                const statusIcon = fileItem.createDiv('sn-validation-status');
                 if (validation.valid) {
-                    statusIcon.addClass('valid');
+                    statusIcon.addClass('sn-is-valid');
                     statusIcon.setText('✓');
                 } else {
-                    statusIcon.addClass('invalid');
+                    statusIcon.addClass('sn-is-invalid');
                     statusIcon.setText('✗');
                     statusIcon.title =
                         validation.errors?.map((error) => error.message).join('\n') || '';
@@ -286,7 +286,7 @@ export class FilePickerModal extends Modal {
             // 제거 버튼
             const removeBtn = fileItem.createEl('button', {
                 text: 'Remove',
-                cls: 'remove-file-btn',
+                cls: 'sn-remove-file-btn',
             });
             removeBtn.onclick = () => {
                 this.removeFile(file);
@@ -296,7 +296,7 @@ export class FilePickerModal extends Modal {
     }
 
     private createFooter(container: HTMLElement) {
-        const footer = container.createDiv('file-picker-footer');
+        const footer = container.createDiv('sn-file-picker-footer');
 
         new Setting(footer)
             .addButton((btn) =>
@@ -438,7 +438,7 @@ export class FilePickerModal extends Modal {
 
     private createTab(container: HTMLElement, label: string, active: boolean): HTMLElement {
         const tab = container.createDiv({
-            cls: `tab-button ${active ? 'active' : ''}`,
+            cls: `sn-tab-button ${active ? 'sn-is-active' : ''}`,
             text: label,
         });
         return tab;
@@ -451,21 +451,21 @@ export class FilePickerModal extends Modal {
         recentContent: HTMLElement | null
     ) {
         browseTab.onclick = () => {
-            browseTab.addClass('active');
-            browseContent.addClass('active');
+            browseTab.addClass('sn-is-active');
+            browseContent.addClass('sn-is-active');
 
             if (recentTab && recentContent) {
-                recentTab.removeClass('active');
-                recentContent.removeClass('active');
+                recentTab.removeClass('sn-is-active');
+                recentContent.removeClass('sn-is-active');
             }
         };
 
         if (recentTab && recentContent) {
             recentTab.onclick = () => {
-                recentTab.addClass('active');
-                recentContent.addClass('active');
-                browseTab.removeClass('active');
-                browseContent.removeClass('active');
+                recentTab.addClass('sn-is-active');
+                recentContent.addClass('sn-is-active');
+                browseTab.removeClass('sn-is-active');
+                browseContent.removeClass('sn-is-active');
             };
         }
     }
@@ -484,7 +484,7 @@ export class FilePickerModal extends Modal {
     }
 
     private refreshUI() {
-        const selectedSection = this.modalEl.querySelector('.selected-files-list');
+        const selectedSection = this.modalEl.querySelector('.sn-selected-files-list');
         if (selectedSection instanceof HTMLElement) {
             this.updateSelectedFilesList(selectedSection);
         }

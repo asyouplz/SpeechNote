@@ -50,12 +50,12 @@ export class RecentFiles {
         this.container.addClass('sn-recent-files');
 
         // 헤더
-        const header = this.container.createDiv('recent-files-header');
+        const header = this.container.createDiv('sn-recent-files-header');
         header.createEl('h3', { text: 'Recent files' });
 
         // 초기화 버튼
         const clearBtn = header.createEl('button', {
-            cls: 'clear-recent-btn',
+            cls: 'sn-clear-recent-btn',
             text: 'Clear',
             title: 'Clear recent files',
         });
@@ -86,7 +86,7 @@ export class RecentFiles {
 
         if (validFiles.length === 0) {
             listContainer.createDiv({
-                cls: 'empty-state',
+                cls: 'sn-empty-state',
                 text: 'No recent files',
             });
             return;
@@ -156,7 +156,7 @@ export class RecentFiles {
 
         // 선택 버튼
         const selectBtn = actions.createEl('button', {
-            cls: 'select-btn',
+            cls: 'sn-select-btn',
             title: 'Select file',
         });
         setIcon(selectBtn, 'check');
@@ -169,7 +169,7 @@ export class RecentFiles {
 
         // 제거 버튼
         const removeBtn = actions.createEl('button', {
-            cls: 'remove-btn',
+            cls: 'sn-remove-btn',
             title: 'Remove from list',
         });
         setIcon(removeBtn, 'x');
@@ -187,7 +187,7 @@ export class RecentFiles {
 
         // 파일이 존재하지 않는 경우 표시
         if (!this.app.vault.getAbstractFileByPath(entry.path)) {
-            fileItem.addClass('file-not-found');
+            fileItem.addClass('sn-is-file-not-found');
             fileName.setText(`${file.basename} (Not found)`);
         }
     }

@@ -113,7 +113,7 @@ export class ProgressIndicator {
             }
             if (spinner instanceof HTMLElement) {
                 spinner.addClass('sn-hidden');
-                spinner.removeClass('is-spinning');
+                spinner.removeClass('sn-is-spinning');
             }
             this.update(0);
         } else {
@@ -172,13 +172,13 @@ export class ProgressIndicator {
 
             // 진행률에 따른 색상 변경
             if (this.currentProgress < 30) {
-                progressFill.removeClass('is-warning', 'is-success');
+                progressFill.removeClass('sn-is-warning', 'sn-is-success');
             } else if (this.currentProgress < 70) {
-                progressFill.addClass('is-warning');
-                progressFill.removeClass('is-success');
+                progressFill.addClass('sn-is-warning');
+                progressFill.removeClass('sn-is-success');
             } else {
-                progressFill.removeClass('is-warning');
-                progressFill.addClass('is-success');
+                progressFill.removeClass('sn-is-warning');
+                progressFill.addClass('sn-is-success');
             }
         }
 
@@ -241,7 +241,7 @@ export class ProgressIndicator {
 
         const content = this.progressElement.querySelector('.sn-progress-content');
         if (content instanceof HTMLElement) {
-            content.addClass('is-error');
+            content.addClass('sn-is-error');
 
             // 스피너를 에러 아이콘으로 변경
             const spinner = content.querySelector('.sn-progress-spinner');
@@ -264,7 +264,7 @@ export class ProgressIndicator {
 
         const content = this.progressElement.querySelector('.sn-progress-content');
         if (content instanceof HTMLElement) {
-            content.addClass('is-success');
+            content.addClass('sn-is-success');
 
             // 스피너를 성공 아이콘으로 변경
             const spinner = content.querySelector('.sn-progress-spinner');
@@ -290,7 +290,7 @@ export class ProgressIndicator {
     private startSpinnerAnimation() {
         const spinner = this.progressElement?.querySelector('.sn-progress-spinner');
         if (spinner instanceof HTMLElement) {
-            spinner.addClass('is-spinning');
+            spinner.addClass('sn-is-spinning');
         }
     }
 
@@ -300,7 +300,7 @@ export class ProgressIndicator {
     private stopSpinnerAnimation() {
         const spinner = this.progressElement?.querySelector('.sn-progress-spinner');
         if (spinner instanceof HTMLElement) {
-            spinner.removeClass('is-spinning');
+            spinner.removeClass('sn-is-spinning');
         }
     }
 

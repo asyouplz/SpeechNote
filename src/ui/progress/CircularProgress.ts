@@ -44,7 +44,7 @@ export class CircularProgress {
     }
 
     create(container: HTMLElement): HTMLElement {
-        this.element = createEl('div', { cls: 'circular-progress' });
+        this.element = createEl('div', { cls: 'sn-circular-progress' });
         this.element.style.setProperty('--cp-size', `${this.options.size}px`);
         this.element.style.setProperty(
             '--cp-animation-duration',
@@ -96,7 +96,7 @@ export class CircularProgress {
         this.progressCircle.setAttribute('stroke-dashoffset', String(offset));
 
         // 애니메이션 설정
-        this.progressCircle.classList.add('circular-progress__circle');
+        this.progressCircle.classList.add('sn-circular-progress__circle');
 
         this.svg.appendChild(this.backgroundCircle);
         this.svg.appendChild(this.progressCircle);
@@ -263,7 +263,7 @@ export class CircularProgress {
  */
 export class SemiCircularProgress extends CircularProgress {
     create(container: HTMLElement): HTMLElement {
-        this.element = createEl('div', { cls: 'semi-circular-progress' });
+        this.element = createEl('div', { cls: 'sn-semi-circular-progress' });
         this.element.style.setProperty('--cp-size', `${this.options.size}px`);
         this.element.style.setProperty(
             '--cp-animation-duration',
@@ -296,7 +296,7 @@ export class SemiCircularProgress extends CircularProgress {
         this.progressCircle.setAttribute('stroke-width', String(this.options.strokeWidth));
         this.progressCircle.setAttribute('stroke-linecap', 'round');
         this.progressCircle.setAttribute('stroke-dasharray', String(circumference));
-        this.progressCircle.classList.add('semi-circular-progress__circle');
+        this.progressCircle.classList.add('sn-semi-circular-progress__circle');
 
         // 초기 진행률 설정
         const offset = circumference - (this.currentProgress / 100) * circumference;

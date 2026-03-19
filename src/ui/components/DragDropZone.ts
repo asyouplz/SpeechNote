@@ -190,10 +190,10 @@ export class DragDropZone {
 
         if (this.dropZone) {
             if (isDragging) {
-                this.dropZone.addClass('is-dragging');
+                this.dropZone.addClass('sn-is-dragging');
                 this.showDragOverlay();
             } else {
-                this.dropZone.removeClass('is-dragging');
+                this.dropZone.removeClass('sn-is-dragging');
                 this.hideDragOverlay();
             }
         }
@@ -216,7 +216,7 @@ export class DragDropZone {
             icon.appendChild(this.createDropIcon());
             content.createDiv('sn-drag-overlay-text').setText('Drop files to add them');
         }
-        overlay.addClass('is-active');
+        overlay.addClass('sn-is-active');
     }
 
     /**
@@ -225,7 +225,7 @@ export class DragDropZone {
     private hideDragOverlay() {
         const overlay = this.dropZone?.querySelector('.sn-drag-overlay');
         if (overlay instanceof HTMLElement) {
-            overlay.removeClass('is-active');
+            overlay.removeClass('sn-is-active');
         }
     }
 
@@ -324,7 +324,7 @@ export class DragDropZone {
     private showMessage(message: string, type: 'success' | 'error') {
         if (!this.dropZone) return;
 
-        const messageEl = this.dropZone.createDiv(`sn-drop-zone-message ${type}`);
+        const messageEl = this.dropZone.createDiv(`sn-drop-zone-message sn-drop-zone-message--${type}`);
         messageEl.setText(message);
 
         setTimeout(() => {

@@ -130,7 +130,7 @@ describe('NotificationManager', () => {
 
             // DOM에서 확인 버튼 찾기
             setTimeout(() => {
-                const confirmBtn = document.querySelector('.modal__action--primary') as HTMLElement;
+                const confirmBtn = document.querySelector('.sn-modal__action--primary') as HTMLElement;
                 confirmBtn?.click();
             }, 10);
 
@@ -143,7 +143,7 @@ describe('NotificationManager', () => {
 
             // DOM에서 확인 버튼 찾기
             setTimeout(() => {
-                const okBtn = document.querySelector('.modal__action--primary') as HTMLElement;
+                const okBtn = document.querySelector('.sn-modal__action--primary') as HTMLElement;
                 okBtn?.click();
             }, 10);
 
@@ -171,7 +171,7 @@ describe('NotificationManager', () => {
             progress.update(50, 'Halfway there');
 
             // DOM 확인
-            const toastEl = document.querySelector('.toast');
+            const toastEl = document.querySelector('.sn-toast');
             expect(toastEl).toBeDefined();
         });
 
@@ -181,7 +181,7 @@ describe('NotificationManager', () => {
             progress.complete('Done!');
 
             // DOM 확인
-            const toastEl = document.querySelector('.toast--success');
+            const toastEl = document.querySelector('.sn-toast--success');
             expect(toastEl).toBeDefined();
         });
 
@@ -191,7 +191,7 @@ describe('NotificationManager', () => {
             progress.error('Failed to load');
 
             // DOM 확인
-            const toastEl = document.querySelector('.toast--error');
+            const toastEl = document.querySelector('.sn-toast--error');
             expect(toastEl).toBeDefined();
         });
     });
@@ -293,17 +293,17 @@ describe('NotificationManager', () => {
         it('Toast 컨테이너를 생성해야 함', () => {
             manager.info('Test');
 
-            const container = document.querySelector('.toast-container');
+            const container = document.querySelector('.sn-toast-container');
             expect(container).toBeDefined();
         });
 
         it('Toast 요소를 생성해야 함', () => {
             manager.info('Test message');
 
-            const toast = document.querySelector('.toast');
+            const toast = document.querySelector('.sn-toast');
             expect(toast).toBeDefined();
 
-            const message = toast?.querySelector('.toast__message');
+            const message = toast?.querySelector('.sn-toast__message');
             expect(message?.textContent).toBe('Test message');
         });
 
@@ -316,7 +316,7 @@ describe('NotificationManager', () => {
 
             // urgent priority는 Modal을 사용
             setTimeout(() => {
-                const overlay = document.querySelector('.modal-overlay');
+                const overlay = document.querySelector('.sn-modal-overlay');
                 expect(overlay).toBeDefined();
             }, 10);
         });
@@ -329,7 +329,7 @@ describe('NotificationManager', () => {
             });
 
             // low priority는 StatusBar를 사용
-            const statusBar = document.querySelector('.status-bar');
+            const statusBar = document.querySelector('.sn-status-bar');
             expect(statusBar).toBeDefined();
         });
     });
