@@ -457,7 +457,9 @@ export class StatisticsDashboard {
         };
 
         Object.entries(updates).forEach(([id, value]) => {
-            const card = this.element?.querySelector(`[data-stat-id="${id}"] .sn-stats-card__value`);
+            const card = this.element?.querySelector(
+                `[data-stat-id="${id}"] .sn-stats-card__value`
+            );
             if (card) {
                 card.textContent = value;
             }
