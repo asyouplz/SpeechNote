@@ -324,7 +324,9 @@ export class DragDropZone {
     private showMessage(message: string, type: 'success' | 'error') {
         if (!this.dropZone) return;
 
-        const messageEl = this.dropZone.createDiv(`sn-drop-zone-message sn-drop-zone-message--${type}`);
+        const messageEl = this.dropZone.createDiv(
+            `sn-drop-zone-message sn-drop-zone-message--${type}`
+        );
         messageEl.setText(message);
 
         setTimeout(() => {

@@ -130,7 +130,9 @@ describe('NotificationManager', () => {
 
             // DOM에서 확인 버튼 찾기
             setTimeout(() => {
-                const confirmBtn = document.querySelector('.sn-modal__action--primary') as HTMLElement;
+                const confirmBtn = document.querySelector(
+                    '.sn-modal__action--primary'
+                ) as HTMLElement;
                 confirmBtn?.click();
             }, 10);
 
